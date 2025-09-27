@@ -7,12 +7,9 @@ routing, and lifecycle events.
 
 Key Features:
 - CORS middleware for cross-origin requests
-- API versioning with legacy compatibility
+- API versioning via /api/v1
 - Structured logging and monitoring
 - Graceful startup and shutdown handling
-
-The application supports both versioned (/api/v1/) and legacy (/api/) routes
-to ensure backward compatibility during migration.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,14 +42,8 @@ app.add_middleware(
 )
 
 # Include the main API router with versioned prefix
-# All endpoints will be available under /api/v1/ (e.g., /api/v1/chat/send)
+# All endpoints are exposed under /api/v1/*
 app.include_router(api_router, prefix="/api/v1")
-
-# Legacy compatibility layer - include the same router without versioning
-# This maintains backward compatibility for existing frontend code
-# Endpoints are available under /api/ (e.g., /api/chat/send)
-# TODO: Remove this once frontend is fully migrated to versioned APIs
-app.include_router(api_router, prefix="/api")
 
 # ==================== Frontend Static File Serving ====================
 # Mount static files for the React frontend

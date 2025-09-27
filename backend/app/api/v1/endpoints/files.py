@@ -8,8 +8,8 @@ This module handles file operations including:
 - File count statistics
 """
 from fastapi import APIRouter, HTTPException
-from web_backend.services.conversation_service import conversation_manager
-from web_backend.services.file_service import file_service
+from app.services.conversation_service import conversation_manager
+from app.services.file_service import file_service
 from common.env_manager import env_manager
 from schemas import (
     SetDirectoryRequest,
@@ -76,10 +76,10 @@ def update_files(conversation_id: str, request: UpdateFilesRequest):
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
-    session.clear_files()
-    for file_path in request.files:
-        session.add_file(file_path)
-
+    session.update_selected_files(
+        request.selected_files,
+        make_persistent=request.persistent,
+    )
     return _session_summary_model(session)
 
 

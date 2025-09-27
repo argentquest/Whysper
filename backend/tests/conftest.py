@@ -95,7 +95,7 @@ graph TD
 @pytest.fixture
 def mock_file_service():
     """Mock the file service."""
-    with patch('web_backend.services.file_service.file_service') as mock_service:
+    with patch('app.services.file_service.file_service') as mock_service:
         mock_service.read_file_content.return_value = "def sample_function(): pass"
         yield mock_service
 
@@ -103,12 +103,10 @@ def mock_file_service():
 @pytest.fixture
 def mock_conversation_manager():
     """Mock the conversation manager."""
-    with patch('web_backend.services.conversation_service.conversation_manager') as mock_manager:
+    with patch('app.api.v1.endpoints.chat.conversation_manager') as mock_manager:
         # Setup default behavior
         mock_manager.get_session.return_value = None
-        mock_manager.create_conversation.return_value = Mock()
-        mock_manager.ask_question.return_value = Mock()
-        mock_manager.update_selected_files.return_value = None
+        mock_manager.create_session.return_value = Mock()
         mock_manager._sessions = {}
         yield mock_manager
 

@@ -43,7 +43,7 @@ def test_extraction():
     """Test our code extraction endpoint."""
     
     # Start the server first (you may need to run this separately)
-    url = "http://localhost:8001/api/code/extract"
+    url = "http://localhost:8001/api/v1/code/extract"
     
     payload = {
         "messageId": "test-message-123",
@@ -70,7 +70,7 @@ def test_extraction():
             print(response.text)
             
     except requests.exceptions.ConnectionError:
-        print("❌ Could not connect to server. Make sure web_backend_v2 is running on port 8001")
+        print("❌ Could not connect to server. Make sure the backend is running on port 8001")
     except Exception as e:
         print(f"❌ Error: {e}")
 

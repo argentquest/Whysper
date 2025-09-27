@@ -16,7 +16,12 @@ import os
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import app, _load_env_defaults, _session_summary_model, _conversation_state_response
+from app.main import app
+from app.api.v1.endpoints.chat import (
+    _session_summary_model,
+    _conversation_state_response,
+)
+from app.core.config import load_env_defaults
 
 client = TestClient(app)
 
@@ -24,8 +29,8 @@ client = TestClient(app)
 class TestLoadEnvDefaults:
     """Test environment defaults loading."""
     
-    @patch('api.env_manager')
-    def test_load_env_defaults_with_values(self, mock_env_manager):
+    @patch('app.core.config.env_manager')
+    def testload_env_defaults_with_values(self, mock_env_manager):
         """Test loading environment defaults with all values set."""
         mock_env_manager.load_env_file.return_value = {
             "PROVIDER": "anthropic",
@@ -34,19 +39,19 @@ class TestLoadEnvDefaults:
             "API_KEY": "test-api-key-123"
         }
         
-        api_key, provider, models, default_model = _load_env_defaults()
+        api_key, provider, models, default_model = load_env_defaults()
         
         assert api_key == "test-api-key-123"
         assert provider == "anthropic"
         assert models == ["claude-3-sonnet", "claude-3-haiku", "gpt-4"]
         assert default_model == "claude-3-sonnet"
     
-    @patch('api.env_manager')
-    def test_load_env_defaults_fallbacks(self, mock_env_manager):
+    @patch('app.core.config.env_manager')
+    def testload_env_defaults_fallbacks(self, mock_env_manager):
         """Test loading environment defaults with fallback values."""
         mock_env_manager.load_env_file.return_value = {}
         
-        api_key, provider, models, default_model = _load_env_defaults()
+        api_key, provider, models, default_model = load_env_defaults()
         
         assert api_key == ""
         assert provider == "openrouter"
@@ -58,7 +63,7 @@ class TestLoadEnvDefaults:
 class TestUtilityFunctions:
     """Test utility functions."""
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_session_summary_model(self, mock_conversation_manager):
         """Test session summary model creation."""
         # Create a mock session with summary
@@ -83,8 +88,8 @@ class TestUtilityFunctions:
         assert result.selected_directory == "/test/dir"
         assert result.selected_files == ["file1.py", "file2.js"]
     
-    @patch('api.conversation_manager')
-    @patch('api.env_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
+    @patch('app.core.config.env_manager')
     def test_conversation_state_response(self, mock_env_manager, mock_conversation_manager):
         """Test conversation state response creation."""
         # Mock environment loading
@@ -138,7 +143,7 @@ const result = calculate(5, 10);
 </code></pre>
         '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "html-test-123",
             "content": html_content
         })
@@ -171,7 +176,7 @@ const result = calculate(5, 10);
 </code></pre>
         '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "entities-test",
             "content": html_with_entities
         })
@@ -203,7 +208,7 @@ SELECT * FROM unknown_table;
 ```
         '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "no-lang-test",
             "content": content_no_lang
         })
@@ -239,7 +244,7 @@ More valid code:
 SELECT 1;
 ```'''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "empty-test",
             "content": content_with_empty
         })
@@ -261,10 +266,10 @@ class TestAdvancedMermaidRendering:
     
     def test_mermaid_svg_format(self):
         """Test Mermaid rendering with SVG format."""
-        with patch('api._render_with_mermaid_cli') as mock_cli:
+        with patch('app.utils.mermaid_helpers.render_with_mermaid_cli') as mock_cli:
             mock_cli.return_value = (True, "data:image/svg+xml;base64,fake_svg_data")
             
-            response = client.post("/api/mermaid/render", json={
+            response = client.post("/api/v1/mermaid/render", json={
                 "code": "graph LR\nA --> B",
                 "format": "svg"
             })
@@ -294,10 +299,10 @@ class TestAdvancedMermaidRendering:
             end
         '''
         
-        with patch('api._render_with_python_mermaid') as mock_python:
+        with patch('app.utils.mermaid_helpers.render_with_python_mermaid') as mock_python:
             mock_python.return_value = (True, "data:image/svg+xml;base64,complex_diagram")
             
-            response = client.post("/api/mermaid/render", json={
+            response = client.post("/api/v1/mermaid/render", json={
                 "code": complex_diagram,
                 "title": "complex_workflow"
             })
@@ -310,16 +315,16 @@ class TestAdvancedMermaidRendering:
     
     def test_mermaid_all_methods_fail(self):
         """Test Mermaid rendering when all methods fail."""
-        with patch('api._render_with_mermaid_cli') as mock_cli, \
-             patch('api._render_with_puppeteer') as mock_puppeteer, \
-             patch('api._render_with_python_mermaid') as mock_python:
+        with patch('app.utils.mermaid_helpers.render_with_mermaid_cli') as mock_cli, \
+             patch('app.utils.mermaid_helpers.render_with_puppeteer') as mock_puppeteer, \
+             patch('app.utils.mermaid_helpers.render_with_python_mermaid') as mock_python:
             
             # All methods fail
             mock_cli.return_value = (False, "")
             mock_puppeteer.return_value = (False, "")
             mock_python.return_value = (False, "")
             
-            response = client.post("/api/mermaid/render", json={
+            response = client.post("/api/v1/mermaid/render", json={
                 "code": "graph TD\nA --> B"
             })
             
@@ -358,7 +363,7 @@ class TestEdgeCases:
     def test_extract_code_malformed_json_request(self):
         """Test code extraction with malformed request."""
         # Test with missing messageId but valid content
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "content": "```python\nprint('test')\n```"
         })
         
@@ -367,7 +372,7 @@ class TestEdgeCases:
     
     def test_mermaid_empty_code(self):
         """Test Mermaid rendering with empty code."""
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": "",
             "title": "empty"
         })
@@ -380,7 +385,7 @@ class TestEdgeCases:
         long_message = "A" * 10000  # 10KB message
         
         # This should be handled gracefully
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": long_message
         })
         
@@ -408,7 +413,7 @@ const greet = (name) => {
 ```
         '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "unicode-test-456",
             "content": unicode_content
         })

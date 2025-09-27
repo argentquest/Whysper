@@ -128,12 +128,16 @@ class ConversationSession:
         return True, "Directory scanned successfully", files
 
     def update_selected_files(
-        self, selected_files: Optional[List[str]] = None, make_persistent: bool = False
+        self,
+        selected_files: Optional[List[str]] = None,
+        make_persistent: bool = False,
     ) -> None:
         selected_files = selected_files or []
-        self.selected_files = selected_files
+        # Preserve order while removing duplicates
+        unique_files = list(dict.fromkeys(selected_files))
+        self.selected_files = unique_files
         if make_persistent:
-            self.app_state.set_persistent_files(selected_files)
+            self.app_state.set_persistent_files(unique_files)
         self.logger.debug(
             "Updated file selection",
             extra={
@@ -141,6 +145,32 @@ class ConversationSession:
                 "selected": len(selected_files),
                 "persistent": len(self.app_state.get_persistent_files()),
             },
+        )
+
+    def add_file(self, file_path: str, make_persistent: bool = False) -> None:
+        """Add a single file to the current selection."""
+        if not file_path:
+            return
+        if file_path not in self.selected_files:
+            self.selected_files.append(file_path)
+        if make_persistent:
+            self.app_state.set_persistent_files(self.selected_files)
+        self.logger.debug(
+            "File added to selection",
+            extra={
+                "session_id": self.session_id,
+                "file_path": file_path,
+                "selected": len(self.selected_files),
+            },
+        )
+
+    def clear_files(self) -> None:
+        """Clear all selected and persistent files."""
+        self.selected_files = []
+        self.app_state.set_persistent_files([])
+        self.logger.debug(
+            "Cleared selected files",
+            extra={"session_id": self.session_id},
         )
 
     # ------------------------------------------------------------------
@@ -358,9 +388,19 @@ class ConversationManager:
         provider: str,
         models: List[str],
         default_model: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> ConversationSession:
-        logger.info(f"Creating conversation session for provider {provider}")
-        session_id = str(uuid.uuid4())
+        logger.info(
+            "Creating conversation session",
+            extra={"provider": provider, "requested_id": session_id},
+        )
+        session_id = session_id or str(uuid.uuid4())
+        if session_id in self._sessions:
+            self._logger.info(
+                "Replacing existing session",
+                extra={"session_id": session_id},
+            )
+            self._sessions.pop(session_id, None)
         ai_processor = create_ai_processor(api_key=api_key, provider=provider)
         default_model = default_model or (models[0] if models else "")
         session = ConversationSession(
@@ -372,13 +412,17 @@ class ConversationManager:
         )
         session.set_api_key(api_key)
         self._sessions[session_id] = session
-        logger.info(f"Session created: {session_id}")
+        logger.info("Session created", extra={"session_id": session_id})
         return session
 
     def get_session(self, session_id: str) -> ConversationSession:
         if session_id not in self._sessions:
             raise KeyError(f"Conversation {session_id} not found")
         return self._sessions[session_id]
+
+    def list_sessions(self) -> List[ConversationSession]:
+        """Return all active conversation sessions."""
+        return list(self._sessions.values())
 
     def drop_session(self, session_id: str) -> None:
         if session_id in self._sessions:

@@ -16,7 +16,7 @@ import os
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -24,8 +24,8 @@ client = TestClient(app)
 class TestCompleteWorkflow:
     """Test complete chat workflow with code extraction and Mermaid rendering."""
     
-    @patch('api.conversation_manager')
-    @patch('api._load_env_defaults')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.load_env_defaults')
     def test_complete_chat_and_extract_workflow(self, mock_load_env, mock_conversation_manager):
         """Test complete workflow: chat -> extract code -> render diagram."""
         
@@ -45,7 +45,7 @@ class TestCompleteWorkflow:
         mock_session.get_summary.return_value = mock_summary
         
         mock_conversation_manager.get_session.return_value = None
-        mock_conversation_manager.create_conversation.return_value = mock_session
+        mock_conversation_manager.create_session.return_value = mock_session
         
         # Mock AI response with code and mermaid
         ai_response_content = '''
@@ -88,7 +88,7 @@ This function handles data processing with validation.
         mock_conversation_manager.ask_question.return_value = mock_response
         
         # Step 1: Send chat message
-        chat_response = client.post("/api/chat", json={
+        chat_response = client.post("/api/v1/chat", json={
             "message": "Can you show me a data processing function with a flow diagram?",
             "conversationId": "new-conversation",
             "settings": {"model": "gpt-4"}
@@ -102,7 +102,7 @@ This function handles data processing with validation.
         assert "mermaid" in chat_data["data"]["message"]["content"]
         
         # Step 2: Extract code from the response
-        extract_response = client.post("/api/code/extract", json={
+        extract_response = client.post("/api/v1/code/extract", json={
             "messageId": "test-message-id",
             "content": ai_response_content
         })
@@ -132,10 +132,10 @@ This function handles data processing with validation.
             mermaid_match = re.search(r'```mermaid\n(.*?)```', ai_response_content, re.DOTALL)
             mermaid_code = mermaid_match.group(1) if mermaid_match else "graph TD\nA --> B"
         
-        with patch('api._render_with_mermaid_cli') as mock_cli:
+        with patch('app.utils.mermaid_helpers.render_with_mermaid_cli') as mock_cli:
             mock_cli.return_value = (True, "data:image/png;base64,fake_diagram_data")
             
-            mermaid_response = client.post("/api/mermaid/render", json={
+            mermaid_response = client.post("/api/v1/mermaid/render", json={
                 "code": mermaid_code,
                 "title": "data_processing_flow"
             })
@@ -146,7 +146,7 @@ This function handles data processing with validation.
             assert mermaid_data["success"] is True
             assert "data:image/png;base64," in mermaid_data["data"]
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_multi_conversation_management(self, mock_conversation_manager):
         """Test managing multiple conversations simultaneously."""
         
@@ -187,7 +187,7 @@ This function handles data processing with validation.
         
         # Test multiple conversations
         for i in range(3):
-            response = client.post("/api/chat", json={
+            response = client.post("/api/v1/chat", json={
                 "message": f"Hello from session {i}",
                 "conversationId": f"session-{i}"
             })
@@ -205,7 +205,7 @@ This function handles data processing with validation.
         # Test code extraction with malformed content
         malformed_content = "```python\n# Missing closing backticks\ndef broken_func():\n    pass"
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "malformed-test",
             "content": malformed_content
         })
@@ -216,16 +216,16 @@ This function handles data processing with validation.
         # Test Mermaid rendering with invalid syntax
         invalid_mermaid = "invalid mermaid syntax that should fail"
         
-        with patch('api._render_with_mermaid_cli') as mock_cli, \
-             patch('api._render_with_puppeteer') as mock_puppeteer, \
-             patch('api._render_with_python_mermaid') as mock_python:
+        with patch('app.utils.mermaid_helpers.render_with_mermaid_cli') as mock_cli, \
+             patch('app.utils.mermaid_helpers.render_with_puppeteer') as mock_puppeteer, \
+             patch('app.utils.mermaid_helpers.render_with_python_mermaid') as mock_python:
             
             # All rendering methods fail
             mock_cli.return_value = (False, "")
             mock_puppeteer.return_value = (False, "")
             mock_python.return_value = (False, "")
             
-            response = client.post("/api/mermaid/render", json={
+            response = client.post("/api/v1/mermaid/render", json={
                 "code": invalid_mermaid
             })
             
@@ -250,7 +250,7 @@ class TestPerformanceAndScaling:
             large_code_content += f"def function_{i}():\n    return {i}\n\n"
         large_code_content += "```"
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "large-content-test",
             "content": large_code_content
         })
@@ -276,7 +276,7 @@ class TestPerformanceAndScaling:
         
         def make_request(request_id):
             try:
-                response = client.get("/api/health")
+                response = client.get("/api/v1/health")
                 results.append({
                     "id": request_id,
                     "status": response.status_code,
@@ -332,7 +332,7 @@ document.write("<script>alert('XSS')</script>");
 ```
 '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "security-test",
             "content": malicious_content
         })
@@ -355,7 +355,7 @@ document.write("<script>alert('XSS')</script>");
         # Create very large message
         huge_message = "A" * (10 * 1024 * 1024)  # 10MB of data
         
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": huge_message
         })
         
@@ -377,7 +377,7 @@ def unicode_test():
 ```
 '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "unicode-test",
             "content": unicode_content
         })

@@ -35,22 +35,11 @@ api_router.include_router(
 )
 
 # ==================== Chat Endpoints ====================
-# AI conversation management with dual routing for legacy compatibility
-# Primary route: /api/v1/chat/* (send, conversations, etc.)
+# AI conversation management under /api/v1/chat/*
 api_router.include_router(
     chat.router,
     prefix="/chat",      # URL prefix for chat operations
     tags=["chat"],       # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
-)
-
-# Legacy conversation route for backward compatibility
-# Alternative route: /api/v1/conversations/* (same endpoints as /chat/*)
-# This maintains compatibility with existing frontend code
-api_router.include_router(
-    chat.router,
-    prefix="/conversations",  # Alternative URL prefix
-    tags=["conversations"],   # Separate OpenAPI tag for clarity
     responses={404: {"description": "Not found"}},
 )
 

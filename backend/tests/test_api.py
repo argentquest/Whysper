@@ -21,7 +21,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the FastAPI app from our API module
-from api import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -31,7 +31,7 @@ class TestHealthEndpoint:
     
     def test_health_check(self):
         """Test basic health check functionality."""
-        response = client.get("/api/health")
+        response = client.get("/api/v1/health")
         assert response.status_code == 200
         
         data = response.json()
@@ -43,15 +43,15 @@ class TestHealthEndpoint:
 class TestChatEndpoint:
     """Test the enhanced chat endpoint with AI integration."""
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_chat_missing_message(self, mock_conversation_manager):
         """Test chat endpoint with missing message."""
-        response = client.post("/api/chat", json={})
+        response = client.post("/api/v1/chat", json={})
         assert response.status_code == 400
         assert "message is required" in response.json()["detail"]
     
-    @patch('api.conversation_manager')
-    @patch('api._load_env_defaults')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.load_env_defaults')
     def test_chat_new_conversation(self, mock_load_env, mock_conversation_manager):
         """Test chat with new conversation creation."""
         # Mock environment defaults
@@ -70,7 +70,7 @@ class TestChatEndpoint:
         mock_session.get_summary.return_value = mock_summary
         
         mock_conversation_manager.get_session.return_value = None
-        mock_conversation_manager.create_conversation.return_value = mock_session
+        mock_conversation_manager.create_session.return_value = mock_session
         
         # Mock AI response
         mock_response = Mock()
@@ -82,7 +82,7 @@ class TestChatEndpoint:
         mock_conversation_manager.ask_question.return_value = mock_response
         
         # Test the endpoint
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": "Hello, how are you?",
             "conversationId": "new-conversation",
             "settings": {"model": "gpt-4"}
@@ -97,7 +97,7 @@ class TestChatEndpoint:
         assert data["data"]["message"]["content"] == "Hello! I'm an AI assistant."
         assert data["data"]["conversationId"] == "test-session-123"
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_chat_existing_conversation(self, mock_conversation_manager):
         """Test chat with existing conversation."""
         # Mock existing session
@@ -124,7 +124,7 @@ class TestChatEndpoint:
         mock_conversation_manager.ask_question.return_value = mock_response
         
         # Test the endpoint
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": "Can you explain Python functions?",
             "conversationId": "existing-session-456"
         })
@@ -136,8 +136,8 @@ class TestChatEndpoint:
         assert data["data"]["message"]["content"] == "I understand your question about Python."
         assert data["data"]["usage"]["completionTokens"] == 25
     
-    @patch('api.conversation_manager')
-    @patch('api.file_service')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
+    @patch('app.services.file_service.file_service')
     def test_chat_with_context_files(self, mock_file_service, mock_conversation_manager):
         """Test chat with context files."""
         # Mock file service
@@ -168,7 +168,7 @@ class TestChatEndpoint:
         mock_conversation_manager.ask_question.return_value = mock_response
         
         # Test the endpoint
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": "Explain this code",
             "conversationId": "context-session-789",
             "contextFiles": ["test.py", "utils.py"]
@@ -189,7 +189,7 @@ class TestCodeExtractionEndpoint:
     
     def test_extract_code_missing_message_id(self):
         """Test code extraction with missing messageId."""
-        response = client.post("/api/code/extract", json={})
+        response = client.post("/api/v1/code/extract", json={})
         assert response.status_code == 400
         assert "messageId is required" in response.json()["detail"]
     
@@ -214,7 +214,7 @@ function greet(name) {
 Also some inline code: `print("hello")` and `npm install`.
 '''
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "test-message-123",
             "content": message_content
         })
@@ -237,7 +237,7 @@ Also some inline code: `print("hello")` and `npm install`.
         assert "function greet" in js_block["code"]
         assert js_block["filename"].endswith(".js")
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_extract_code_from_conversation(self, mock_conversation_manager):
         """Test code extraction from conversation history."""
         # Mock conversation with code in history
@@ -256,7 +256,7 @@ SELECT name, age FROM users WHERE age > 18;
             "test-session": mock_session
         }
         
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "msg-test-session-1"
         })
         
@@ -272,7 +272,7 @@ SELECT name, age FROM users WHERE age > 18;
     
     def test_extract_code_no_content_found(self):
         """Test code extraction when no content is found."""
-        response = client.post("/api/code/extract", json={
+        response = client.post("/api/v1/code/extract", json={
             "messageId": "non-existent-message"
         })
         
@@ -289,11 +289,11 @@ class TestMermaidRenderingEndpoint:
     
     def test_mermaid_missing_code(self):
         """Test Mermaid rendering with missing code."""
-        response = client.post("/api/mermaid/render", json={})
+        response = client.post("/api/v1/mermaid/render", json={})
         assert response.status_code == 400
         assert "mermaid code is required" in response.json()["detail"]
     
-    @patch('api._render_with_mermaid_cli')
+    @patch('app.utils.mermaid_helpers.render_with_mermaid_cli')
     def test_mermaid_successful_cli_render(self, mock_cli_render):
         """Test successful Mermaid rendering with CLI."""
         mock_cli_render.return_value = (True, "data:image/png;base64,fake_png_data")
@@ -304,7 +304,7 @@ graph TD
     B --> C[End]
 '''
         
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": mermaid_code,
             "title": "test_diagram"
         })
@@ -317,8 +317,8 @@ graph TD
         assert "rendered successfully" in data["message"]
         assert data["format"] == "png"
     
-    @patch('api._render_with_mermaid_cli')
-    @patch('api._render_with_puppeteer')
+    @patch('app.utils.mermaid_helpers.render_with_mermaid_cli')
+    @patch('app.utils.mermaid_helpers.render_with_puppeteer')
     def test_mermaid_fallback_to_puppeteer(self, mock_puppeteer, mock_cli):
         """Test Mermaid rendering fallback to Puppeteer."""
         mock_cli.return_value = (False, "")
@@ -326,7 +326,7 @@ graph TD
         
         mermaid_code = "graph LR\n    A --> B"
         
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": mermaid_code
         })
         
@@ -336,9 +336,9 @@ graph TD
         assert data["success"] is True
         assert "puppeteer_data" in data["data"]
     
-    @patch('api._render_with_mermaid_cli')
-    @patch('api._render_with_puppeteer')
-    @patch('api._render_with_python_mermaid')
+    @patch('app.utils.mermaid_helpers.render_with_mermaid_cli')
+    @patch('app.utils.mermaid_helpers.render_with_puppeteer')
+    @patch('app.utils.mermaid_helpers.render_with_python_mermaid')
     def test_mermaid_fallback_to_python(self, mock_python, mock_puppeteer, mock_cli):
         """Test Mermaid rendering fallback to Python."""
         mock_cli.return_value = (False, "")
@@ -347,7 +347,7 @@ graph TD
         
         mermaid_code = "flowchart TD\n    Start --> End"
         
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": mermaid_code
         })
         
@@ -357,9 +357,9 @@ graph TD
         assert data["success"] is True
         assert "svg_data" in data["data"]
     
-    @patch('api._render_with_mermaid_cli')
-    @patch('api._render_with_puppeteer')
-    @patch('api._render_with_python_mermaid')
+    @patch('app.utils.mermaid_helpers.render_with_mermaid_cli')
+    @patch('app.utils.mermaid_helpers.render_with_puppeteer')
+    @patch('app.utils.mermaid_helpers.render_with_python_mermaid')
     def test_mermaid_client_side_fallback(self, mock_python, mock_puppeteer, mock_cli):
         """Test Mermaid rendering final fallback to client-side."""
         mock_cli.return_value = (False, "")
@@ -368,7 +368,7 @@ graph TD
         
         mermaid_code = "graph TD\n    A --> B"
         
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": mermaid_code
         })
         
@@ -386,39 +386,39 @@ class TestCodeExtractionHelpers:
     
     def test_detect_language_python(self):
         """Test Python language detection."""
-        from api import _detect_language
-        
+        from app.utils.language_detection import detect_language
+
         python_code = "def hello():\n    print('Hello')\n    import os"
-        assert _detect_language(python_code) == "python"
+        assert detect_language(python_code) == "python"
     
     def test_detect_language_javascript(self):
         """Test JavaScript language detection."""
-        from api import _detect_language
-        
+        from app.utils.language_detection import detect_language
+
         js_code = "function test() {\n    console.log('test');\n    const x = 5;"
-        assert _detect_language(js_code) == "javascript"
+        assert detect_language(js_code) == "javascript"
     
     def test_detect_language_sql(self):
         """Test SQL language detection."""
-        from api import _detect_language
-        
+        from app.utils.language_detection import detect_language
+
         sql_code = "SELECT * FROM users WHERE id = 1;"
-        assert _detect_language(sql_code) == "sql"
+        assert detect_language(sql_code) == "sql"
     
     def test_detect_language_fallback(self):
         """Test language detection fallback to text."""
-        from api import _detect_language
-        
+        from app.utils.language_detection import detect_language
+
         unknown_code = "This is just plain text without any code indicators"
-        assert _detect_language(unknown_code) == "text"
+        assert detect_language(unknown_code) == "text"
     
     def test_generate_filename(self):
         """Test filename generation."""
-        from api import _generate_filename
-        
-        assert _generate_filename("python", 1) == "extracted_code_1.py"
-        assert _generate_filename("javascript", 2) == "extracted_code_2.js"
-        assert _generate_filename("unknown", 3) == "extracted_code_3.txt"
+        from app.utils.language_detection import generate_filename
+
+        assert generate_filename("python", 1) == "extracted_code_1.py"
+        assert generate_filename("javascript", 2) == "extracted_code_2.js"
+        assert generate_filename("unknown", 3) == "extracted_code_3.txt"
 
 
 class TestMermaidRenderingHelpers:
@@ -426,10 +426,10 @@ class TestMermaidRenderingHelpers:
     
     def test_create_simple_flowchart_svg(self):
         """Test simple SVG flowchart creation."""
-        from api import _create_simple_flowchart_svg
-        
+        from app.utils.mermaid_helpers import create_simple_flowchart_svg
+
         mermaid_code = "graph TD\n    A --> B\n    B --> C"
-        svg_content = _create_simple_flowchart_svg(mermaid_code)
+        svg_content = create_simple_flowchart_svg(mermaid_code)
         
         assert svg_content.startswith('<svg')
         assert 'Start' in svg_content
@@ -441,12 +441,12 @@ class TestMermaidRenderingHelpers:
 class TestErrorHandling:
     """Test error handling across all endpoints."""
     
-    @patch('api.conversation_manager')
+    @patch('app.api.v1.endpoints.chat.conversation_manager')
     def test_chat_error_handling(self, mock_conversation_manager):
         """Test chat endpoint error handling."""
         mock_conversation_manager.get_session.side_effect = Exception("Database error")
         
-        response = client.post("/api/chat", json={
+        response = client.post("/api/v1/chat", json={
             "message": "Test message"
         })
         
@@ -456,8 +456,8 @@ class TestErrorHandling:
     def test_code_extraction_error_handling(self):
         """Test code extraction error handling."""
         # Test with invalid JSON that would cause an error
-        with patch('api.conversation_manager._sessions', side_effect=Exception("Error")):
-            response = client.post("/api/code/extract", json={
+        with patch('app.services.conversation_service.conversation_manager._sessions', side_effect=Exception("Error")):
+            response = client.post("/api/v1/code/extract", json={
                 "messageId": "test-id"
             })
             
@@ -469,7 +469,7 @@ class TestErrorHandling:
         # Test with very large code that might cause memory issues
         large_code = "graph TD\n" + "\n".join([f"    A{i} --> A{i+1}" for i in range(1000)])
         
-        response = client.post("/api/mermaid/render", json={
+        response = client.post("/api/v1/mermaid/render", json={
             "code": large_code
         })
         

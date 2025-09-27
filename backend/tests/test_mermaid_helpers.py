@@ -15,18 +15,18 @@ import os
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import (
-    _render_with_mermaid_cli, 
-    _render_with_puppeteer, 
-    _render_with_python_mermaid,
-    _create_simple_flowchart_svg
+from app.utils.mermaid_helpers import (
+    render_with_mermaid_cli as _render_with_mermaid_cli,
+    render_with_puppeteer as _render_with_puppeteer,
+    render_with_python_mermaid as _render_with_python_mermaid,
+    create_simple_flowchart_svg as _create_simple_flowchart_svg,
 )
 
 
 class TestMermaidCLIRendering:
     """Test mermaid-cli rendering method."""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_mermaid_cli_success(self, mock_run):
         """Test successful mermaid-cli rendering."""
         # Mock version check success
@@ -49,7 +49,7 @@ class TestMermaidCLIRendering:
             assert success is True
             assert "data:image/png;base64," in result
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_mermaid_cli_not_installed(self, mock_run):
         """Test mermaid-cli not installed."""
         # Mock version check failure
@@ -65,7 +65,7 @@ class TestMermaidCLIRendering:
             assert success is False
             assert result == ""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_mermaid_cli_render_failure(self, mock_run):
         """Test mermaid-cli render command failure."""
         # Mock version check success, render failure
@@ -84,7 +84,7 @@ class TestMermaidCLIRendering:
             assert success is False
             assert result == ""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_mermaid_cli_timeout(self, mock_run):
         """Test mermaid-cli timeout."""
         mock_run.side_effect = subprocess.TimeoutExpired("mmdc", 30)
@@ -103,7 +103,7 @@ class TestMermaidCLIRendering:
 class TestPuppeteerRendering:
     """Test Puppeteer rendering method."""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_puppeteer_success(self, mock_run):
         """Test successful Puppeteer rendering."""
         mock_run.return_value = Mock(returncode=0, stdout="SUCCESS", stderr="")
@@ -120,7 +120,7 @@ class TestPuppeteerRendering:
             assert success is True
             assert "data:image/png;base64," in result
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_puppeteer_failure(self, mock_run):
         """Test Puppeteer rendering failure."""
         mock_run.return_value = Mock(returncode=1, stderr="Node.js error")
@@ -134,7 +134,7 @@ class TestPuppeteerRendering:
             assert success is False
             assert result == ""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_puppeteer_file_not_created(self, mock_run):
         """Test Puppeteer when output file is not created."""
         mock_run.return_value = Mock(returncode=0, stdout="SUCCESS", stderr="")
@@ -241,7 +241,7 @@ class TestMermaidHelperEdgeCases:
         assert success is False
         assert result == ""
     
-    @patch('api.subprocess.run')
+    @patch('app.utils.mermaid_helpers.subprocess.run')
     def test_puppeteer_exception_handling(self, mock_run):
         """Test Puppeteer exception handling."""
         mock_run.side_effect = Exception("Unexpected error")

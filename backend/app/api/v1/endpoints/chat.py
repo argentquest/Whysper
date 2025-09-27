@@ -5,8 +5,7 @@ This module provides the core chat functionality of the WhisperCode application,
 handling real AI integration, conversation management, and session persistence.
 
 Key Features:
-- Real AI chat integration using AIProviderFactory
-- Multi-provider support (OpenRouter, Anthropic, OpenAI)
+- Multi-provider chat integration
 - Conversation session management and persistence
 - Model and API key runtime configuration
 - Markdown to HTML conversion for frontend display
@@ -23,19 +22,15 @@ Endpoints:
 - POST /conversations/import: Import conversation data
 """
 # Standard library imports
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 # FastAPI framework imports
 from fastapi import APIRouter, HTTPException
 
-# Common library imports for AI and conversation management
-from common.ai import AIProviderFactory                      # Multi-provider AI integration
-from common.models import ConversationMessage                # Conversation data models
+# Common library imports for conversation management
 from app.core.config import load_env_defaults              # Environment configuration
-
-# Import api module to access mocked services in tests
-import api
+from app.services.conversation_service import conversation_manager
 
 # Pydantic schema imports for request/response validation
 from schemas import (
@@ -65,110 +60,91 @@ router = APIRouter()
 
 
 @router.post("/")
-@router.post("")  # Handle both /api/chat/ and /api/chat
+@router.post("")  # Handle both /api/v1/chat/ and /api/v1/chat
 def send_message_root(request: dict):
-    """
-    Root chat endpoint for frontend compatibility.
-    
-    This endpoint validates basic requirements and integrates with the
-    conversation management system for proper testing and functionality.
-    """
-    # Check if message is provided (field can be 'message' or 'question')
+    """Primary chat endpoint used by the frontend."""
+
+    if not isinstance(request, dict):
+        raise HTTPException(status_code=400, detail="Invalid request payload")
+
     message = request.get("message") or request.get("question")
-    if not request or not message:
-        raise HTTPException(
-            status_code=400,
-            detail="message is required"
-        )
-    
-    # Extract conversation ID, settings, and context files
-    conversation_id = request.get("conversationId", "default")
-    settings = request.get("settings", {})
-    context_files = request.get("contextFiles", [])
-    
+    if not message or not str(message).strip():
+        raise HTTPException(status_code=400, detail="message is required")
+
+    conversation_id = request.get("conversationId") or None
+    settings = request.get("settings") or {}
+    context_files = request.get("contextFiles") or []
+
+    env_api_key, env_provider, models, env_default_model = load_env_defaults()
+
+    api_key = settings.get("apiKey") or env_api_key
+    provider = settings.get("provider") or env_provider
+    model = settings.get("model") or env_default_model or (models[0] if models else None)
+
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API key is required")
+
     try:
-        # Try to get existing session first
         session = None
-        try:
-            session = api.conversation_manager.get_session(conversation_id)
-        except (KeyError, AttributeError):
-            pass
-        
+        if conversation_id:
+            try:
+                session = conversation_manager.get_session(conversation_id)
+            except KeyError:
+                session = None
+
         if session is None:
-            # Create new session if it doesn't exist
-            # Use create_conversation method for test compatibility
-            if hasattr(api.conversation_manager, 'create_conversation'):
-                session = api.conversation_manager.create_conversation()
-            else:
-                # Fallback for when not mocked
-                env_api_key, env_provider, models, env_default_model = load_env_defaults()
-                session = api.conversation_manager.create_session(
-                    conversation_id,
-                    provider=env_provider,
-                    api_key=env_api_key,
-                    models=models
-                )
-                session.set_model(env_default_model or "gpt-4")
-        
-        # Process context files if provided
+            session = conversation_manager.create_session(
+                api_key=api_key,
+                provider=provider,
+                models=models,
+                default_model=model,
+                session_id=conversation_id,
+            )
+
+        session.set_api_key(api_key)
+        session.set_provider(provider)
+        if model:
+            session.set_model(model)
+        if models:
+            session.update_available_models(models)
+
         if context_files:
-            for file_path in context_files:
-                try:
-                    # Read file content using file_service
-                    if hasattr(api, 'file_service'):
-                        content = api.file_service.read_file_content(file_path)
-                        # Add file to session if it has add_file method
-                        if hasattr(session, 'add_file'):
-                            session.add_file(file_path)
-                except Exception:
-                    # Continue if file reading fails
-                    pass
-        
-        # Ask the question and get response
-        if hasattr(api.conversation_manager, 'ask_question'):
-            # Use conversation_manager.ask_question for test compatibility
-            response = api.conversation_manager.ask_question(message)
-        else:
-            # Fallback: ask the session directly
-            response = session.ask_question(message)
-        
-        # Format the response for frontend
+            session.update_selected_files(context_files, make_persistent=True)
+
+        result = session.ask_question(str(message))
+
+        assistant_message = {
+            "id": f"msg-{session.session_id}-{datetime.utcnow().timestamp():.6f}",
+            "role": "assistant",
+            "content": result["response"],
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "metadata": {
+                "rawMarkdown": result.get("rawMarkdown", ""),
+                "tokens": result.get("tokens_used", 0),
+                "processing_time": result.get("processing_time", 0.0),
+                "question_index": result.get("question_index", 0),
+            },
+        }
+
         return {
             "success": True,
             "data": {
-                "message": {
-                    "id": f"msg-{conversation_id}-{hash(str(datetime.utcnow()))}",
-                    "role": "assistant", 
-                    "content": getattr(response, 'response', response),
-                    "timestamp": getattr(response, 'timestamp', datetime.utcnow().isoformat() + 'Z'),
-                    "metadata": {
-                        "tokens": getattr(response, 'tokens_used', 0),
-                        "processing_time": getattr(response, 'processing_time', 0)
-                    }
-                },
+                "message": assistant_message,
                 "usage": {
-                    "completionTokens": getattr(response, 'tokens_used', 0),
+                    "completionTokens": result.get("tokens_used", 0),
                     "promptTokens": 0,
-                    "totalTokens": getattr(response, 'tokens_used', 0)
+                    "totalTokens": result.get("tokens_used", 0),
                 },
-                "conversationId": getattr(session, 'session_id', None) or conversation_id
-            }
+                "conversationId": session.session_id,
+            },
         }
-        
-    except Exception as e:
-        # Fallback to static response if something fails
-        return {
-            "success": True,
-            "data": {
-                "message": {
-                    "id": "msg-fallback-123",
-                    "role": "assistant", 
-                    "content": "Hello! This is a test response from the backend.",
-                    "timestamp": "2024-01-01T00:00:00Z"
-                },
-                "conversationId": conversation_id
-            }
-        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.exception("Error processing chat message", exc_info=exc)
+        raise HTTPException(status_code=500, detail="Failed to process chat request")
+
 
 
 def _session_summary_model(session) -> ConversationSummaryModel:

@@ -35,7 +35,7 @@ import type {
 } from '../types';
 
 // Backend API base URL - matches the FastAPI server port
-const API_BASE_URL = 'http://localhost:8001';
+const API_BASE_URL = 'http://localhost:8001/api/v1';
 
 /**
  * Axios HTTP client configuration

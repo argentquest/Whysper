@@ -9,9 +9,10 @@ This module handles Mermaid diagram rendering with multiple fallback methods:
 """
 from typing import Optional
 from fastapi import APIRouter, HTTPException
-from app.utils.mermaid_helpers import validate_mermaid_code
-# Import render_mermaid_diagram from api for test compatibility
-import api
+from app.utils.mermaid_helpers import (
+    validate_mermaid_code,
+    render_mermaid_diagram,
+)
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -64,7 +65,7 @@ def render_mermaid(request: dict):
     
     try:
         logger.info(f"Rendering Mermaid diagram (format: {output_format})")
-        success, result, is_fallback = api.render_mermaid_diagram(
+        success, result, is_fallback = render_mermaid_diagram(
             mermaid_code, 
             output_format, 
             title

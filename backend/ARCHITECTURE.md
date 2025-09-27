@@ -118,8 +118,6 @@ web_backend_v2/
 │       ├── test_api/            # API endpoint tests
 │       ├── test_services/       # Service layer tests
 │       └── test_utils/          # Utility function tests
-├── api_legacy.py                # Original monolithic API (preserved)
-├── api.py                       # Compatibility layer
 └── requirements.txt             # Python dependencies
 ```
 

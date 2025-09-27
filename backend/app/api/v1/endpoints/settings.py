@@ -7,8 +7,8 @@ This module handles application settings including:
 - System message management
 """
 from fastapi import APIRouter, HTTPException
-from web_backend.services.settings_service import settings_service
-from web_backend.services.system_service import system_message_service
+from app.services.settings_service import settings_service
+from app.services.system_service import system_message_service
 from schemas import (
     SettingsUpdateRequest,
     ThemeToggleResponse,

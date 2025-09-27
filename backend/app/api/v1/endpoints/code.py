@@ -9,8 +9,7 @@ from app.utils.code_extraction import (
     extract_code_blocks_from_content,
     find_message_content
 )
-# Import from api for test compatibility
-import api
+from app.services.conversation_service import conversation_manager
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,7 +43,7 @@ def extract_code_blocks(request: dict):
     try:
         # If content is provided, use it directly; otherwise try to find the message
         if not message_content:
-            message_content = find_message_content(message_id, api.conversation_manager)
+            message_content = find_message_content(message_id, conversation_manager)
         
         if not message_content:
             return {
