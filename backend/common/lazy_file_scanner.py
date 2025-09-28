@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Generator
 from dataclasses import dataclass
+from collections import OrderedDict
+
 from dotenv import load_dotenv
 import hashlib
 from .file_filters import _normalize_patterns, _matches_any
@@ -68,8 +70,8 @@ class LazyCodebaseScanner:
         self.cache_size = cache_size
         self.max_file_size = max_file_size
 
-        # File content cache
-        self._content_cache: Dict[str, FileContent] = {}
+        # File content cache using OrderedDict for efficient LRU
+        self._content_cache: OrderedDict[str, FileContent] = OrderedDict()
         self._cache_access_times: Dict[str, float] = {}
 
         # File metadata cache
@@ -333,7 +335,8 @@ class LazyCodebaseScanner:
             try:
                 current_mtime = os.path.getmtime(file_path)
                 if current_mtime <= cached_content.timestamp:
-                    self._cache_access_times[file_path] = time.time()
+                    # Move to end of OrderedDict (most recently used)
+                    self._content_cache.move_to_end(file_path)
                     self.stats["cache_hits"] += 1
                     self.logger.debug(
                         "Cache hit for file", file=os.path.basename(file_path)
@@ -498,7 +501,6 @@ class LazyCodebaseScanner:
     def clear_cache(self):
         """Clear all caches."""
         self._content_cache.clear()
-        self._cache_access_times.clear()
         self._file_info_cache.clear()
         self._directory_scan_times.clear()
         self.stats["files_cached"] = 0
@@ -613,24 +615,24 @@ class LazyCodebaseScanner:
         self, file_path: str, content: str, content_hash: str, size: int
     ):
         """Cache file content with LRU eviction."""
+        # Update existing entry and move to end (most recently used)
+        if file_path in self._content_cache:
+            del self._content_cache[file_path]
+        
         # Remove oldest entries if cache is full
         while len(self._content_cache) >= self.cache_size:
-            oldest_file = min(
-                self._cache_access_times.keys(),
-                key=lambda k: self._cache_access_times[k],
-            )
-            self._remove_from_cache(oldest_file)
+            # Popitem(last=False) removes the first (least recently used) item
+            self._content_cache.popitem(last=False)
+            self.stats["files_cached"] -= 1
 
-        # Add to cache
+        # Add new content to end
         self._content_cache[file_path] = FileContent(
             content=content, hash=content_hash, timestamp=time.time(), size=size
         )
-        self._cache_access_times[file_path] = time.time()
         self.stats["files_cached"] += 1
 
     def _remove_from_cache(self, file_path: str):
         """Remove file from cache."""
         if file_path in self._content_cache:
             del self._content_cache[file_path]
-        if file_path in self._cache_access_times:
-            del self._cache_access_times[file_path]
+            self.stats["files_cached"] -= 1
