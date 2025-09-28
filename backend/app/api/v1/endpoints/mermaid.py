@@ -21,6 +21,7 @@ router = APIRouter()
 
 @router.post("/render")
 def render_mermaid(request: dict):
+    logger.debug("render_mermaid endpoint started")
     """
     Render a Mermaid diagram using multiple fallback methods.
     

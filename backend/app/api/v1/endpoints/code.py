@@ -18,6 +18,7 @@ router = APIRouter()
 
 @router.post("/extract")
 def extract_code_blocks(request: dict):
+    logger.debug("extract_code_blocks endpoint started")
     """
     Extract code blocks from a message with real parsing.
     

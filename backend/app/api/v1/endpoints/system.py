@@ -19,6 +19,7 @@ router = APIRouter()
 
 @router.get("/")
 def root():
+    logger.debug("root endpoint started")
     """Root endpoint with API information."""
     return {
         "message": f"Welcome to {settings.api_title}",
@@ -31,7 +32,9 @@ def root():
 
 
 @router.get("/health")
+    logger.debug("health_check endpoint started")
 def health_check():
+    logger.debug("health_check endpoint started")
     """
     Health check endpoint for monitoring and load balancers.
     

@@ -48,6 +48,7 @@ def _session_summary_model(session) -> ConversationSummaryModel:
 
 @router.post("/conversations/{conversation_id}/directory", response_model=SetDirectoryResponse)
 def set_directory(conversation_id: str, request: SetDirectoryRequest):
+    logger.debug(f"set_directory endpoint started for conversation_id: {conversation_id}")
     """Set the working directory for a conversation."""
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -70,6 +71,7 @@ def set_directory(conversation_id: str, request: SetDirectoryRequest):
 
 @router.post("/conversations/{conversation_id}/files", response_model=ConversationSummaryModel)
 def update_files(conversation_id: str, request: UpdateFilesRequest):
+    logger.debug(f"update_files endpoint started for conversation_id: {conversation_id}")
     """Update selected files for a conversation."""
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -84,6 +86,7 @@ def update_files(conversation_id: str, request: UpdateFilesRequest):
 
 
 @router.post("/scan", response_model=DirectoryScanResponse)
+    logger.debug("scan_directory endpoint started")
 def scan_directory(request: DirectoryScanRequest):
     """
     Scan a directory for files and build a file tree.
@@ -108,6 +111,7 @@ def scan_directory(request: DirectoryScanRequest):
 
 
 @router.post("/content", response_model=FileContentResponse)
+    logger.debug("get_file_content endpoint started")
 def get_file_content(request: FileContentRequest):
     """
     Read and combine content from multiple files.

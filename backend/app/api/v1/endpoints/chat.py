@@ -62,6 +62,8 @@ router = APIRouter()
 @router.post("/")
 @router.post("")  # Handle both /api/v1/chat/ and /api/v1/chat
 def send_message_root(request: dict):
+    logger.debug("send_message_root endpoint started")
+    logger.debug("send_message_root endpoint started")
     """Primary chat endpoint used by the frontend."""
 
     if not isinstance(request, dict):
@@ -84,10 +86,12 @@ def send_message_root(request: dict):
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
 
+    
     try:
         session = None
         if conversation_id:
-            try:
+            
+    try:
                 session = conversation_manager.get_session(conversation_id)
             except KeyError:
                 session = None
@@ -126,6 +130,7 @@ def send_message_root(request: dict):
             },
         }
 
+        logger.debug("send_message_root endpoint ready to return content")
         return {
             "success": True,
             "data": {
@@ -138,6 +143,8 @@ def send_message_root(request: dict):
                 "conversationId": session.session_id,
             },
         }
+        logger.debug("send_message_root endpoint ready to return content")
+        return response
 
     except HTTPException:
         raise
@@ -175,13 +182,16 @@ def _conversation_state_response(session) -> ConversationCreateResponse:
 
 
 @router.post("/chat", response_model=AskQuestionResponse)
+    
 def send_chat_message(request: AskQuestionRequest):
     """
     Send a chat message and get AI response.
     
     This endpoint handles real AI chat integration using the AIProviderFactory
     to communicate with various AI providers (OpenRouter, Anthropic, OpenAI, etc.).
+    
     """
+    
     try:
         # Load environment defaults for AI configuration
         env_api_key, env_provider, models, env_default_model = load_env_defaults()
@@ -207,7 +217,8 @@ def send_chat_message(request: AskQuestionRequest):
         # Get or create conversation session
         conversation_id = request.conversation_id or "default"
         
-        try:
+        
+    try:
             session = conversation_manager.get_session(conversation_id)
         except KeyError:
             # Create new session if it doesn't exist
@@ -256,6 +267,7 @@ def send_chat_message(request: AskQuestionRequest):
 
 @router.post("/conversations", response_model=ConversationCreateResponse)
 def create_conversation(request: ConversationCreateRequest):
+    logger.debug("create_conversation endpoint started")
     """Create a new conversation session."""
     logger.info("Creating new conversation")
     env_api_key, env_provider, models, env_default_model = load_env_defaults()
@@ -280,6 +292,8 @@ def create_conversation(request: ConversationCreateRequest):
 @router.get("/conversations/{conversation_id}/summary", response_model=ConversationSummaryModel)
 def get_conversation_summary(conversation_id: str):
     """Get conversation summary."""
+    logger.debug(f"get_conversation_summary endpoint started for conversation_id: {conversation_id}")
+    
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -290,7 +304,9 @@ def get_conversation_summary(conversation_id: str):
 
 @router.put("/conversations/{conversation_id}/model", response_model=ConversationCreateResponse)
 def update_model(conversation_id: str, request: UpdateModelRequest):
+    logger.debug(f"update_model endpoint started for conversation_id: {conversation_id}")
     """Update the AI model for a conversation."""
+    
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -300,9 +316,11 @@ def update_model(conversation_id: str, request: UpdateModelRequest):
     return _conversation_state_response(session)
 
 
+    logger.debug(f"update_api_key endpoint started for conversation_id: {conversation_id}")
 @router.put("/conversations/{conversation_id}/api-key", response_model=ConversationCreateResponse)
 def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
     """Update the API key for a conversation."""
+    
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -310,11 +328,13 @@ def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
 
     session.set_api_key(request.api_key)
     return _conversation_state_response(session)
+    logger.debug(f"export_conversation endpoint started for conversation_id: {conversation_id}")
 
 
 @router.get("/conversations/{conversation_id}/export", response_model=ExportConversationResponse)
 def export_conversation(conversation_id: str):
     """Export conversation data."""
+    
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -322,6 +342,7 @@ def export_conversation(conversation_id: str):
 
     summary_model = _session_summary_model(session)
     return ExportConversationResponse(summary=summary_model)
+    logger.debug("import_conversation endpoint started")
 
 
 @router.post("/conversations/import", response_model=ConversationCreateResponse)

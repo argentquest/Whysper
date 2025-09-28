@@ -29,6 +29,7 @@ router = APIRouter()
 
 @router.get("/")
 def get_settings():
+    logger.debug("get_settings endpoint started")
     """Get current application settings."""
     return settings_service.get_settings()
 

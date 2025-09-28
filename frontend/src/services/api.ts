@@ -166,7 +166,7 @@ export class ApiService {
   static async getFiles(directory?: string): Promise<ApiResponse<FileItem[]>> {
     try {
       const params = directory ? { directory } : {};
-      const response = await api.get('/files', { params });
+      const response = await api.get('/files/', { params });
       return response.data;
     } catch (error: unknown) {
       return {
