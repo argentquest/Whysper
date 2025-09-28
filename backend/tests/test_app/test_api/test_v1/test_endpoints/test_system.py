@@ -14,7 +14,7 @@ def test_root_endpoint(test_client: TestClient):
     assert response.status_code == 200
     data = response.json()
     assert "message" in data
-    assert "WhisperCode" in data["message"]
+    assert "WhysperCode" in data["message"]
     assert "version" in data
 
 

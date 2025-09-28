@@ -50,6 +50,10 @@ export interface AppSettings {
   contextFiles: string[];
   maxTokens: number;
   temperature: number;
+  values?: {[key: string]: any};
+  masked?: {[key: string]: boolean};
+  agentPrompts?: AgentPrompt[];
+  subagentCommands?: SubagentCommand[];
 }
 
 export interface FileItem {
@@ -82,4 +86,16 @@ export interface ChatResponse {
     completionTokens: number;
     totalTokens: number;
   };
+}
+
+export interface AgentPrompt {
+  name: string;
+  title: string;
+  filename: string;
+}
+
+export interface SubagentCommand {
+  category: string;
+  title: string;
+  subcommand: string;
 }

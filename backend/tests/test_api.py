@@ -1,5 +1,5 @@
 """
-Comprehensive unit tests for WhisperCode Web2 Backend API.
+Comprehensive unit tests for WhysperCode Web2 Backend API.
 
 Tests cover all endpoints including:
 - AI chat integration
@@ -36,7 +36,7 @@ class TestHealthEndpoint:
         
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["service"] == "WhisperCode Web2 Backend"
+        assert data["service"] == "WhysperCode Web2 Backend"
         assert data["version"] == "2.0.0"
 
 

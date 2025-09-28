@@ -704,7 +704,7 @@ class EnvValidator:
             'UI_THEME': "Use 'light', 'dark', or 'auto'",
             'WINDOW_SIZE': "Use format like '1200x800' for a 1200px wide by 800px tall window",
             'LOG_LEVEL': "Use DEBUG for development, INFO for normal operation, WARNING/ERROR for production",
-            'LOG_DIR': "Use a relative path like 'logs' or absolute path like '/var/log/minicli'",
+            'LOG_DIR': "Use a relative path like 'logs' or absolute path like '/var/log/whysper'",
             'DIR_SAVE': "Use a relative path like 'results' or 'output' for saving analysis results",
             'API_PORT': "Use port 8000 for development, or any available port between 1024-65535 for production",
             'API_HOST': "Use '0.0.0.0' to accept connections from all interfaces, or '127.0.0.1' for localhost only",

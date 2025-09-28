@@ -1,7 +1,7 @@
 """
-Main FastAPI application for WhisperCode Web2 Backend.
+Main FastAPI application for WhysperCode Web2 Backend.
 
-This module serves as the entry point for the WhisperCode Web2 Backend API.
+This module serves as the entry point for the WhysperCode Web2 Backend API.
 It creates and configures the FastAPI application with essential middleware,
 routing, and lifecycle events.
 
@@ -49,7 +49,18 @@ app.include_router(api_router, prefix="/api/v1")
 # Mount static files for the React frontend
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.exists(static_dir):
+    # Mount the assets directory for CSS/JS files
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    
+    # Mount the root static files (like vite.svg)
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    
+    @app.get("/vite.svg")
+    def serve_vite_svg():
+        """Serve vite.svg from static directory."""
+        return FileResponse(os.path.join(static_dir, "vite.svg"))
     
     @app.get("/")
     def serve_frontend():
@@ -62,6 +73,10 @@ if os.path.exists(static_dir):
         # Don't interfere with API routes
         if full_path.startswith("api/"):
             return {"error": "API endpoint not found"}
+        
+        # Don't interfere with assets
+        if full_path.startswith("assets/") or full_path.startswith("static/"):
+            return {"error": "Static file not found"}
         
         # Serve static files if they exist
         file_path = os.path.join(static_dir, full_path)
@@ -94,7 +109,7 @@ async def shutdown_event():
     Called when the FastAPI application is shutting down. Logs
     shutdown information for monitoring and cleanup purposes.
     """
-    logger.info("Shutting down WhisperCode Web2 Backend")
+    logger.info("Shutting down WhysperCode Web2 Backend")
 
 
 # Direct execution entry point for development

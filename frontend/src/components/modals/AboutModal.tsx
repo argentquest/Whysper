@@ -24,7 +24,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
   return (
     <Modal
-      title="About WhisperCode"
+      title="About WhysperCode"
       open={open}
       onCancel={onCancel}
       width={600}
@@ -40,7 +40,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Logo and Title */}
         <div>
           <div className="text-6xl mb-4">🧠</div>
-          <Title level={2} className="!mb-2">WhisperCode</Title>
+          <Title level={2} className="!mb-2">WhysperCode</Title>
           <Text type="secondary" className="text-lg">
             AI-Powered Code Analysis & Development Assistant
           </Text>
@@ -63,7 +63,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Description */}
         <div className="text-left space-y-4">
           <Paragraph>
-            WhisperCode is a modern, full-stack web application that brings AI assistance 
+            WhysperCode is a modern, full-stack web application that brings AI assistance 
             directly to your development workflow. It enables developers to select any 
             codebase, choose from specialized AI experts, and get intelligent insights, 
             code reviews, and architectural guidance through an intuitive web interface.
@@ -111,7 +111,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<GithubOutlined />}
-            href="https://github.com/your-org/whispercode"
+            href="https://github.com/your-org/whyspercode"
             target="_blank"
           >
             Source Code
@@ -119,7 +119,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<BookOutlined />}
-            href="https://docs.whispercode.dev"
+            href="https://docs.whyspercode.dev"
             target="_blank"
           >
             Documentation
@@ -127,7 +127,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<BugOutlined />}
-            href="https://github.com/your-org/whispercode/issues"
+            href="https://github.com/your-org/whyspercode/issues"
             target="_blank"
           >
             Report Bug
@@ -137,7 +137,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Credits */}
         <div className="text-center">
           <Text type="secondary" className="text-sm flex items-center justify-center gap-1">
-            Made with <HeartOutlined className="text-red-500" /> by the WhisperCode Team
+            Made with <HeartOutlined className="text-red-500" /> by the WhysperCode Team
           </Text>
         </div>
       </div>

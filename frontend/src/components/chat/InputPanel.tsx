@@ -29,12 +29,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 }) => {
   const [message, setMessage] = useState('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
-    const textAreaRef = useRef<TextAreaRef>(null);
+  const textAreaRef = useRef<TextAreaRef>(null);
 
   // Auto-resize textarea
   useEffect(() => {
-    if (textAreaRef.current?.resizableTextArea) {
-      textAreaRef.current.resizableTextArea.resizeTextarea?.();
+    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [message]);
 
@@ -79,7 +81,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     // Focus textarea after inserting command
     setTimeout(() => {
       textAreaRef.current?.focus();
-      textAreaRef.current?.resizableTextArea?.resizeTextarea?.();
+      const textarea = textAreaRef.current?.resizableTextArea?.textArea;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
     }, 0);
   };
 
@@ -204,4 +210,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 };
 
 export default InputPanel;
+
+
+
+
+
 

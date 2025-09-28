@@ -1,5 +1,5 @@
 """
-Integration tests for WhisperCode Web2 Backend.
+Integration tests for WhysperCode Web2 Backend.
 
 Tests the complete workflow and integration between components.
 """

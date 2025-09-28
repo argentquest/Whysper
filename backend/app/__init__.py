@@ -1,1 +1,1 @@
-"""WhisperCode Web2 Backend Application."""
+"""WhysperCode Web2 Backend Application."""

@@ -63,24 +63,24 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     }
   };
 
-  // const loadDirectory = async (path: string) => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await ApiService.loadDirectory(path);
-  //     if (response.success && response.data) {
-  //       setFiles(response.data);
-  //       setCurrentDirectory(path);
-  //       message.success('Directory loaded successfully');
-  //     } else {
-  //       message.error(response.error || 'Failed to load directory');
-  //     }
-  //   } catch (error) {
-  //     message.error('Error loading directory');
-  //     console.error('Error loading directory:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const loadDirectory = async (path?: string) => {
+    setLoading(true);
+    try {
+      const response = await ApiService.getFiles(path === 'Root (All Files)' ? undefined : path);
+      if (response.success && response.data) {
+        setFiles(response.data);
+        setCurrentDirectory(path || 'Root (All Files)');
+        message.success('Directory loaded successfully');
+      } else {
+        message.error(response.error || 'Failed to load directory');
+      }
+    } catch (error) {
+      message.error('Error loading directory');
+      console.error('Error loading directory:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredFiles = files.filter(file =>
     file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,11 +130,20 @@ export const ContextModal: React.FC<ContextModalProps> = ({
 
   const directoryOptions = [
     'Root (All Files)',
-    'src/',
-    'components/',
-    'services/',
-    'types/',
-    'utils/',
+    'backend/',
+    'backend/app/',
+    'backend/app/api/v1/endpoints/',
+    'backend/app/services/',
+    'backend/app/utils/',
+    'backend/common/',
+    'backend/tests/',
+    'frontend/',
+    'frontend/src/',
+    'frontend/src/components/',
+    'frontend/src/services/',
+    'frontend/src/types/',
+    'prompts/',
+    'prompts/coding/agent/',
   ];
 
   return (
@@ -154,7 +163,10 @@ export const ContextModal: React.FC<ContextModalProps> = ({
             <Text className="block mb-2 text-sm font-medium">Select Folder</Text>
             <Select
               value={currentDirectory}
-              onChange={setCurrentDirectory}
+              onChange={(value) => {
+                setCurrentDirectory(value);
+                loadDirectory(value);
+              }}
               className="w-full"
               placeholder="Choose directory"
             >
@@ -166,7 +178,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           
           <Button
             icon={<ReloadOutlined />}
-            onClick={loadFiles}
+            onClick={() => loadDirectory(currentDirectory)}
             loading={loading}
             className="mt-6"
           >

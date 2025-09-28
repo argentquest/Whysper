@@ -1,8 +1,8 @@
-# WhisperCode Web2 Backend Architecture
+# WhysperCode Web2 Backend Architecture
 
 ## Overview
 
-WhisperCode Web2 Backend is a modern FastAPI-based backend system that provides AI chat capabilities, code extraction, and Mermaid diagram rendering. This document describes the complete architecture, design decisions, and implementation details of the refactored v2 backend.
+WhysperCode Web2 Backend is a modern FastAPI-based backend system that provides AI chat capabilities, code extraction, and Mermaid diagram rendering. This document describes the complete architecture, design decisions, and implementation details of the refactored v2 backend.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ WhisperCode Web2 Backend is a modern FastAPI-based backend system that provides 
 
 ## System Overview
 
-WhisperCode Web2 Backend is a complete rewrite of the original React-based AI chat interface, built with modern technologies and architectural best practices. The system provides:
+WhysperCode Web2 Backend is a complete rewrite of the original React-based AI chat interface, built with modern technologies and architectural best practices. The system provides:
 
 - **Real AI Integration**: Multi-provider AI chat using OpenRouter, Anthropic, and OpenAI
 - **Code Extraction**: Intelligent parsing of code blocks from AI responses
@@ -149,7 +149,7 @@ Centralized configuration using Pydantic BaseSettings:
 ```python
 class Settings(BaseSettings):
     # API Configuration
-    api_title: str = "WhisperCode Web2 Backend"
+    api_title: str = "WhysperCode Web2 Backend"
     api_version: str = "2.0.0"
     
     # Server Configuration
@@ -371,7 +371,7 @@ The system supports comprehensive configuration through environment variables:
 
 ```bash
 # API Configuration
-API_TITLE="WhisperCode Web2 Backend"
+API_TITLE="WhysperCode Web2 Backend"
 API_VERSION="2.0.0"
 DEBUG=false
 
@@ -629,8 +629,8 @@ The migration maintains full backward compatibility:
 
 ## Conclusion
 
-WhisperCode Web2 Backend represents a significant architectural improvement over the original implementation. The modular design, comprehensive testing, and modern FastAPI features provide a solid foundation for future development and scaling.
+WhysperCode Web2 Backend represents a significant architectural improvement over the original implementation. The modular design, comprehensive testing, and modern FastAPI features provide a solid foundation for future development and scaling.
 
 The refactoring successfully transformed a monolithic 1156-line file into a well-organized, maintainable codebase with clear separation of concerns and comprehensive test coverage. The system now supports multiple AI providers, robust code extraction, and flexible Mermaid rendering while maintaining full backward compatibility.
 
-This architecture document serves as the authoritative reference for understanding, maintaining, and extending the WhisperCode Web2 Backend system.
+This architecture document serves as the authoritative reference for understanding, maintaining, and extending the WhysperCode Web2 Backend system.

@@ -1,5 +1,5 @@
 """
-Configuration management for WhisperCode Web2 Backend.
+Configuration management for WhysperCode Web2 Backend.
 
 This module provides centralized configuration management using Pydantic BaseSettings.
 It handles environment variables, .env file loading, and provides type-safe access
@@ -13,7 +13,7 @@ Key Features:
 - Security and rate limiting settings
 - Development and production profiles
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import Field
 try:
     # Try to import from pydantic-settings (Pydantic v2)
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     """
     Application settings loaded from environment variables and .env files.
     
-    This class defines all configuration options for the WhisperCode Web2 Backend.
+    This class defines all configuration options for the WhysperCode Web2 Backend.
     Settings are loaded with the following precedence:
     1. Environment variables (highest priority)
     2. .env file values (medium priority)  
@@ -42,8 +42,8 @@ class Settings(BaseSettings):
     """
     
     # ==================== API Configuration ====================
-    api_title: str = "WhisperCode Web2 Backend"
-    api_description: str = "FastAPI backend for WhisperCode Web2 with AI chat, code extraction, and Mermaid rendering"
+    api_title: str = "WhysperCode Web2 Backend"
+    api_description: str = "FastAPI backend for WhysperCode Web2 with AI chat, code extraction, and Mermaid rendering"
     api_version: str = "2.0.0"
     debug: bool = False  # Enable debug mode for development (auto-reload, detailed errors)
     
@@ -88,6 +88,57 @@ class Settings(BaseSettings):
         default="", 
         description="Default AI model to use when none specified"
     )
+    system_prompt: str = Field(
+        default="You are a helpful AI assistant specialized in code analysis and development.",
+        description="Default system prompt for AI interactions"
+    )
+    max_tokens: int = Field(
+        default=4000,
+        description="Default maximum tokens for AI responses"
+    )
+    temperature: float = Field(
+        default=0.7,
+        description="Default temperature for AI responses (0.0-1.0)"
+    )
+    
+    # ==================== Additional UI Settings ====================
+    # Frontend interface and behavior configuration
+    language: str = Field(
+        default="en",
+        description="Interface language"
+    )
+    base_url: str = Field(
+        default="",
+        description="Custom API base URL (optional)"
+    )
+    auto_save_conversations: bool = Field(
+        default=True,
+        description="Auto-save conversations"
+    )
+    show_line_numbers: bool = Field(
+        default=True,
+        description="Show line numbers in code blocks"
+    )
+    enable_streaming: bool = Field(
+        default=True,
+        description="Enable streaming responses"
+    )
+    request_timeout: int = Field(
+        default=30,
+        description="Request timeout in seconds"
+    )
+    retry_attempts: int = Field(
+        default=3,
+        description="Number of retry attempts for failed requests"
+    )
+    debug_logging: bool = Field(
+        default=False,
+        description="Enable debug logging"
+    )
+    show_token_usage: bool = Field(
+        default=True,
+        description="Show token usage information"
+    )
     
     @property
     def models(self) -> List[str]:
@@ -101,8 +152,8 @@ class Settings(BaseSettings):
         Returns:
             List[str]: List of available AI model identifiers
         """
-        _, _, models, _ = load_env_defaults()
-        return models
+        config = load_env_defaults()
+        return config["models"]
     
     # ==================== Code Extraction Configuration ====================
     # Limits and settings for code block extraction from AI responses
@@ -145,33 +196,22 @@ class Settings(BaseSettings):
     }
 
 
-def load_env_defaults() -> tuple[str, str, List[str], str]:
+def load_env_defaults() -> Dict[str, Any]:
     """
     Load environment defaults from configuration files.
     
-    This function interfaces with the common env_manager to load AI provider
-    configuration from environment files. It provides fallback defaults if
-    no configuration is found.
+    This function interfaces with the common env_manager to load all configuration
+    from environment files. It provides fallback defaults if no configuration is found.
     
     Returns:
-        tuple: A 4-tuple containing:
-            - api_key (str): The API key for AI providers
-            - provider (str): The default AI provider name
-            - models (List[str]): List of available AI models
-            - default_model (str): The default model to use
+        Dict[str, any]: Dictionary containing all configuration values
     
     Example:
-        api_key, provider, models, default_model = load_env_defaults()
-        print(f"Using {provider} with {len(models)} available models")
+        config = load_env_defaults()
+        print(f"Using {config['provider']} with {len(config['models'])} available models")
     """
     # Load environment data using the common env_manager
     env_data = env_manager.load_env_file()
-    
-    # Extract API key (empty string if not found)
-    api_key = env_data.get("API_KEY", "")
-    
-    # Extract provider with fallback to OpenRouter
-    provider = env_data.get("PROVIDER", "openrouter")
     
     # Parse models from comma-separated string in environment
     models_str = env_data.get("MODELS", "")
@@ -202,7 +242,28 @@ def load_env_defaults() -> tuple[str, str, List[str], str]:
         # If no default specified, use the first model in the list
         default_model = models[0]
     
-    return api_key, provider, models, default_model
+    # Return comprehensive configuration dictionary
+    return {
+        # Core AI configuration
+        "api_key": env_data.get("API_KEY", ""),
+        "provider": env_data.get("PROVIDER", "openrouter"),
+        "models": models,
+        "default_model": default_model,
+        "system_prompt": env_data.get("SYSTEM_PROMPT", "You are a helpful AI assistant specialized in code analysis and development."),
+        "max_tokens": int(env_data.get("MAX_TOKENS", "4000")),
+        "temperature": float(env_data.get("TEMPERATURE", "0.7")),
+        
+        # Additional UI settings
+        "language": env_data.get("LANGUAGE", "en"),
+        "base_url": env_data.get("BASE_URL", ""),
+        "auto_save_conversations": env_data.get("AUTO_SAVE_CONVERSATIONS", "true").lower() == "true",
+        "show_line_numbers": env_data.get("SHOW_LINE_NUMBERS", "true").lower() == "true",
+        "enable_streaming": env_data.get("ENABLE_STREAMING", "true").lower() == "true",
+        "request_timeout": int(env_data.get("REQUEST_TIMEOUT", "30")),
+        "retry_attempts": int(env_data.get("RETRY_ATTEMPTS", "3")),
+        "debug_logging": env_data.get("DEBUG_LOGGING", "false").lower() == "true",
+        "show_token_usage": env_data.get("SHOW_TOKEN_USAGE", "true").lower() == "true",
+    }
 
 
 # ==================== Global Settings Instance ====================

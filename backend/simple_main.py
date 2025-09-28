@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simplified WhisperCode Web2 Application for demonstration.
+Simplified WhysperCode Web2 Application for demonstration.
 
 This version serves the frontend and provides basic API endpoints
 without the complex AI integration for testing purposes.
@@ -15,7 +15,7 @@ import uvicorn
 
 # Create FastAPI application
 app = FastAPI(
-    title="WhisperCode Web2",
+    title="WhysperCode Web2",
     description="AI-Powered Code Analysis & Development Assistant",
     version="2.0.0"
 )
@@ -59,7 +59,7 @@ if os.path.exists(static_dir):
 def api_health():
     """API health check."""
     return {
-        "message": "Welcome to WhisperCode Web2 Backend",
+        "message": "Welcome to WhysperCode Web2 Backend",
         "version": "2.0.0",
         "status": "running"
     }
@@ -84,7 +84,7 @@ def chat():
             "message": {
                 "id": "msg-demo-123",
                 "role": "assistant",
-                "content": "🎉 **WhisperCode Web2 is working!**\n\nThis is a demonstration response from the integrated FastAPI backend. The frontend and backend are successfully communicating!\n\n### Features Available:\n- ✅ Frontend serving via FastAPI\n- ✅ API endpoints\n- ✅ Static file serving\n- ✅ SPA routing support\n\n### Next Steps:\n1. Configure your AI provider API keys\n2. Enable full AI integration\n3. Add file system integration\n\nThe application is ready for development and deployment! 🚀",
+                "content": "🎉 **WhysperCode Web2 is working!**\n\nThis is a demonstration response from the integrated FastAPI backend. The frontend and backend are successfully communicating!\n\n### Features Available:\n- ✅ Frontend serving via FastAPI\n- ✅ API endpoints\n- ✅ Static file serving\n- ✅ SPA routing support\n\n### Next Steps:\n1. Configure your AI provider API keys\n2. Enable full AI integration\n3. Add file system integration\n\nThe application is ready for development and deployment! 🚀",
                 "timestamp": "2024-01-01T00:00:00Z",
                 "metadata": {
                     "tokens": 50,
@@ -109,7 +109,7 @@ def get_settings():
     }
 
 if __name__ == "__main__":
-    print("Starting WhisperCode Web2 (Demo Mode)...")
+    print("Starting WhysperCode Web2 (Demo Mode)...")
     print("Frontend: http://localhost:8001")
     print("API: http://localhost:8001/api/v1")
     print("Docs: http://localhost:8001/docs")

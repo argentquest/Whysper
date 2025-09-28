@@ -1,1 +1,1 @@
-# Tests for WhisperCode Web2 Backend
+# Tests for WhysperCode Web2 Backend

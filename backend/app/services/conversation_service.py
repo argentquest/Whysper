@@ -1,6 +1,6 @@
 """Conversation management service for the web backend.
 
-This module adapts the Tkinter conversation orchestration from minicli.py
+This module adapts the Tkinter conversation orchestration from the legacy Whysper CLI
 for use in a REST environment.  It keeps the business logic (AI processing,
 code aggregation, persistent file context, system prompt execution) while
 removing UI dependencies so the same functionality can serve the web client.

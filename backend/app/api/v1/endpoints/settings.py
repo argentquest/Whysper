@@ -33,6 +33,15 @@ def get_settings():
     return settings_service.get_settings()
 
 
+@router.get("/agent-prompts/{filename}")
+def get_agent_prompt(filename: str):
+    """Get the content of a specific agent prompt."""
+    content = settings_service.get_agent_prompt_content(filename)
+    if not content:
+        raise HTTPException(status_code=404, detail="Agent prompt not found")
+    return {"filename": filename, "content": content}
+
+
 @router.put("/env")
 def update_env(request: SettingsUpdateRequest):
     """Update environment variables and settings."""

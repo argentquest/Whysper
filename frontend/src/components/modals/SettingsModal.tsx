@@ -23,13 +23,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableProviders, setAvailableProviders] = useState<Array<{label: string, value: string}>>([]);
   const { theme, setTheme } = useTheme();
 
   const loadSettings = React.useCallback(async () => {
     try {
       const response = await ApiService.getSettings();
       if (response.success && response.data) {
-        form.setFieldsValue(response.data);
+        const settings = response.data;
+        
+        // Map backend settings to form structure
+        const formValues = {
+          theme: theme,
+          language: settings.values?.LANGUAGE || 'en',
+          autoSaveConversations: settings.values?.AUTO_SAVE_CONVERSATIONS === 'true',
+          showLineNumbers: settings.values?.SHOW_LINE_NUMBERS === 'true',
+          provider: settings.values?.PROVIDER || 'openrouter',
+          model: settings.values?.DEFAULT_MODEL || '',
+          apiKey: settings.masked?.API_KEY || '',
+          baseUrl: settings.values?.BASE_URL || '',
+          maxTokens: parseInt(settings.values?.MAX_TOKENS) || 4000,
+          temperature: parseFloat(settings.values?.TEMPERATURE) || 0.7,
+          systemPrompt: settings.values?.SYSTEM_PROMPT || '',
+          enableStreaming: settings.values?.ENABLE_STREAMING === 'true',
+          requestTimeout: parseInt(settings.values?.REQUEST_TIMEOUT) || 30,
+          retryAttempts: parseInt(settings.values?.RETRY_ATTEMPTS) || 3,
+          debugLogging: settings.values?.DEBUG_LOGGING === 'true',
+          showTokenUsage: settings.values?.SHOW_TOKEN_USAGE === 'true',
+        };
+        
+        form.setFieldsValue(formValues);
+        
+        // Extract models from backend settings
+        if (settings.values && settings.values.MODELS) {
+          const models = settings.values.MODELS.split(',').map((m: string) => m.trim());
+          setAvailableModels(models);
+        }
+        
+        // Set available providers based on backend config
+        const providers = [
+          { label: 'OpenRouter', value: 'openrouter' },
+          { label: 'OpenAI', value: 'openai' },
+          { label: 'Anthropic', value: 'anthropic' },
+          { label: 'Google', value: 'google' },
+          { label: 'Local', value: 'local' },
+        ];
+        setAvailableProviders(providers);
       } else {
         message.error(response.error || 'Failed to load settings');
       }
@@ -37,7 +77,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       message.error('Error loading settings');
       console.error('Error loading settings:', error);
     }
-  }, [form]);
+  }, [form, theme]);
 
   useEffect(() => {
     if (open) {
@@ -50,9 +90,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setSaving(true);
       const values = await form.validateFields();
       
-      const response = await ApiService.updateSettings(values);
-      if (response.success && response.data) {
-        onSave(response.data);
+      // Map form values back to backend environment format
+      const backendSettings = {
+        LANGUAGE: values.language,
+        AUTO_SAVE_CONVERSATIONS: values.autoSaveConversations ? 'true' : 'false',
+        SHOW_LINE_NUMBERS: values.showLineNumbers ? 'true' : 'false',
+        PROVIDER: values.provider,
+        DEFAULT_MODEL: values.model,
+        API_KEY: values.apiKey,
+        BASE_URL: values.baseUrl,
+        MAX_TOKENS: values.maxTokens.toString(),
+        TEMPERATURE: values.temperature.toString(),
+        SYSTEM_PROMPT: values.systemPrompt,
+        ENABLE_STREAMING: values.enableStreaming ? 'true' : 'false',
+        REQUEST_TIMEOUT: values.requestTimeout.toString(),
+        RETRY_ATTEMPTS: values.retryAttempts.toString(),
+        DEBUG_LOGGING: values.debugLogging ? 'true' : 'false',
+        SHOW_TOKEN_USAGE: values.showTokenUsage ? 'true' : 'false',
+      };
+      
+      const response = await ApiService.updateEnvSettings(backendSettings);
+      if (response.success) {
+        onSave(values);
         message.success('Settings saved successfully');
         onCancel();
       } else {
@@ -75,22 +134,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     form.setFieldValue('theme', newTheme);
   };
 
-  const providerOptions = [
-    { label: 'OpenRouter', value: 'openrouter' },
-    { label: 'OpenAI', value: 'openai' },
-    { label: 'Anthropic', value: 'anthropic' },
-    { label: 'Google', value: 'google' },
-    { label: 'Local', value: 'local' },
-  ];
-
-  const modelOptions = [
-    'x-ai/grok-code-fast-1',
-    'anthropic/claude-3-sonnet',
-    'openai/gpt-4-turbo',
-    'google/gemini-pro',
-    'meta/llama-2-70b',
-    'mistral/mistral-large',
-  ];
 
   return (
     <Modal
@@ -131,9 +174,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Language"
+                name="language"
                 tooltip="Interface language"
               >
-                <Select defaultValue="en">
+                <Select>
                   <Option value="en">English</Option>
                   <Option value="es">Spanish</Option>
                   <Option value="fr">French</Option>
@@ -143,16 +187,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Auto-save conversations"
+                name="autoSaveConversations"
                 tooltip="Automatically save conversations"
+                valuePropName="checked"
               >
-                <Switch defaultChecked />
+                <Switch />
               </Form.Item>
 
               <Form.Item
                 label="Show line numbers in code"
+                name="showLineNumbers"
                 tooltip="Display line numbers in code blocks"
+                valuePropName="checked"
               >
-                <Switch defaultChecked />
+                <Switch />
               </Form.Item>
             </div>
           </TabPane>
@@ -166,7 +214,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 tooltip="AI service provider"
               >
                 <Select>
-                  {providerOptions.map(provider => (
+                  {availableProviders.map(provider => (
                     <Option key={provider.value} value={provider.value}>
                       {provider.label}
                     </Option>
@@ -181,7 +229,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 tooltip="AI model to use for responses"
               >
                 <Select>
-                  {modelOptions.map(model => (
+                  {availableModels.map(model => (
                     <Option key={model} value={model}>{model}</Option>
                   ))}
                 </Select>
@@ -189,6 +237,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="API Key"
+                name="apiKey"
                 tooltip="Your API key for the selected provider"
               >
                 <Input.Password placeholder="Enter your API key" />
@@ -196,6 +245,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Base URL"
+                name="baseUrl"
                 tooltip="Custom API base URL (optional)"
               >
                 <Input placeholder="https://api.example.com" />
@@ -253,9 +303,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Enable streaming"
+                name="enableStreaming"
                 tooltip="Stream responses as they're generated"
+                valuePropName="checked"
               >
-                <Switch defaultChecked />
+                <Switch />
               </Form.Item>
             </div>
           </TabPane>
@@ -266,13 +318,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               
               <Form.Item
                 label="Request timeout (seconds)"
+                name="requestTimeout"
                 tooltip="How long to wait for AI responses"
               >
                 <Slider
                   min={5}
                   max={120}
                   step={5}
-                  defaultValue={30}
                   marks={{
                     5: '5s',
                     30: '30s',
@@ -284,13 +336,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Retry attempts"
+                name="retryAttempts"
                 tooltip="Number of retry attempts for failed requests"
               >
-                <Select defaultValue="3">
-                  <Option value="1">1</Option>
-                  <Option value="2">2</Option>
-                  <Option value="3">3</Option>
-                  <Option value="5">5</Option>
+                <Select>
+                  <Option value={1}>1</Option>
+                  <Option value={2}>2</Option>
+                  <Option value={3}>3</Option>
+                  <Option value={5}>5</Option>
                 </Select>
               </Form.Item>
 
@@ -298,16 +351,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <Form.Item
                 label="Enable debug logging"
+                name="debugLogging"
                 tooltip="Log detailed information for troubleshooting"
+                valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
 
               <Form.Item
                 label="Show token usage"
+                name="showTokenUsage"
                 tooltip="Display token consumption information"
+                valuePropName="checked"
               >
-                <Switch defaultChecked />
+                <Switch />
               </Form.Item>
             </div>
           </TabPane>

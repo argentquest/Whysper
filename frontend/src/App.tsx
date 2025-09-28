@@ -1,7 +1,7 @@
 /**
- * WhisperCode Web2 - Main Application Component
+ * WhysperCode Web2 - Main Application Component
  * 
- * This is the root component of the WhisperCode Web2 React application.
+ * This is the root component of the WhysperCode Web2 React application.
  * It provides a modern AI chat interface with multi-tab support, real-time
  * AI integration, and comprehensive conversation management.
  * 
@@ -58,6 +58,7 @@ import type {
   AppSettings,  // Application configuration
   FileItem,     // File attachment structure
   CodeBlock,    // Extracted code block structure
+  AgentPrompt,  // Agent prompt structure
 } from './types';
 
 // Extract Layout.Content for cleaner JSX
@@ -88,9 +89,9 @@ function App() {
   // Application settings: AI provider, model, system prompt, etc.
   const [settings, setSettings] = useState<AppSettings>({
     theme: theme,                    // Current theme (light/dark)
-    provider: 'openrouter',          // AI provider (openrouter, anthropic, openai)
-    model: 'x-ai/grok-code-fast-1', // Default AI model
-    systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
+    provider: '',                    // AI provider - will be loaded from backend
+    model: '',                       // AI model - will be loaded from backend
+    systemPrompt: '',                // System prompt - will be loaded from backend
     contextFiles: [],               // Files to include in AI context
     maxTokens: 4000,                // Maximum tokens for AI responses
     temperature: 0.7,               // AI creativity/randomness (0.0-1.0)
@@ -112,6 +113,9 @@ function App() {
   
   // Code blocks extracted from AI responses for download/management
   const [extractedCodeBlocks, setExtractedCodeBlocks] = useState<CodeBlock[]>([]);
+  
+  // Agent prompts loaded from backend
+  const [agentPrompts, setAgentPrompts] = useState<AgentPrompt[]>([]);
 
   // ==================== Application Initialization ====================
   
@@ -158,10 +162,35 @@ function App() {
     try {
       const response = await ApiService.getSettings();
       if (response.success && response.data) {
-        setSettings(response.data);
+        const backendSettings = response.data;
+        
+        // Map backend settings to frontend settings structure
+        const mappedSettings: AppSettings = {
+          theme: theme,
+          provider: backendSettings.values?.PROVIDER || 'openrouter',
+          model: backendSettings.values?.DEFAULT_MODEL || backendSettings.values?.MODELS?.split(',')[0]?.trim() || '',
+          systemPrompt: backendSettings.values?.SYSTEM_PROMPT || 'You are a helpful AI assistant specialized in code analysis and development.',
+          contextFiles: [],
+          maxTokens: parseInt(backendSettings.values?.MAX_TOKENS) || 4000,
+          temperature: parseFloat(backendSettings.values?.TEMPERATURE) || 0.7,
+        };
+        
+        setSettings(mappedSettings);
+        
+        // Load agent prompts and subagent commands
+        if (backendSettings.agentPrompts) {
+          setAgentPrompts(backendSettings.agentPrompts);
+        }
       }
     } catch (error) {
       console.warn('Could not load settings:', error);
+      // Set fallback defaults if backend is not available
+      setSettings(prev => ({
+        ...prev,
+        provider: 'openrouter',
+        model: 'x-ai/grok-code-fast-1',
+        systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
+      }));
     }
   };
 
@@ -273,13 +302,35 @@ function App() {
     message.info('Input cleared');
   };
 
-  const handleSystemChange = (systemType: string) => {
-    // Update system configuration
-    setSettings(prev => ({
-      ...prev,
-      systemPrompt: getSystemPromptByType(systemType),
-    }));
-    message.success(`System changed to: ${systemType}`);
+  const handleSystemChange = async (systemType: string) => {
+    // Find the agent prompt for this system type
+    const agentPrompt = agentPrompts.find(prompt => prompt.name === systemType);
+    
+    if (agentPrompt) {
+      try {
+        // Load the actual prompt content from the backend
+        const response = await ApiService.getAgentPrompt(agentPrompt.filename);
+        if (response.success && response.data) {
+          setSettings(prev => ({
+            ...prev,
+            systemPrompt: response.data?.content || '',
+          }));
+          message.success(`System changed to: ${agentPrompt.title}`);
+        } else {
+          message.error('Failed to load agent prompt');
+        }
+      } catch (error) {
+        console.error('Error loading agent prompt:', error);
+        message.error('Error loading agent prompt');
+      }
+    } else {
+      // Fallback to hardcoded prompts
+      setSettings(prev => ({
+        ...prev,
+        systemPrompt: getSystemPromptByType(systemType),
+      }));
+      message.success(`System changed to: ${systemType}`);
+    }
   };
 
   const getSystemPromptByType = (systemType: string): string => {
@@ -486,6 +537,7 @@ function App() {
         onModelChange={(model) => setSettings(prev => ({ ...prev, model }))}
         currentSystem="default"
         onSystemChange={handleSystemChange}
+        agentPrompts={agentPrompts}
       />
 
       {/* Tab Manager */}

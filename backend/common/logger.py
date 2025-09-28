@@ -126,7 +126,7 @@ class ConsoleFormatter(logging.Formatter):
 class CodeChatLogger:
     """Main logger class for the Code Chat application."""
     
-    def __init__(self, name: str = "minicli", log_dir: str = "logs"):
+    def __init__(self, name: str = "whysper", log_dir: str = "logs"):
         self.name = name
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)

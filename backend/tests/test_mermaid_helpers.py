@@ -209,7 +209,7 @@ class TestSimpleFlowchartSVG:
         assert 'Start' in svg_content
         assert 'Process' in svg_content
         assert 'End' in svg_content
-        assert 'WhisperCode' in svg_content
+        assert 'WhysperCode' in svg_content
     
     def test_create_simple_flowchart_svg_empty(self):
         """Test SVG flowchart creation with empty input."""

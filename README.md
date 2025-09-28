@@ -1,4 +1,4 @@
-# WhisperCode Web2 - Full Stack AI Chat Application
+# WhysperCode Web2 - Full Stack AI Chat Application
 
 A modern, full-stack web application that provides AI-powered chat functionality with code analysis, file management, and multi-provider AI integration.
 
@@ -104,6 +104,29 @@ The application is designed for easy development and deployment:
 2. **Hot Reload**: Backend supports auto-reload during development
 3. **Static Serving**: Frontend is built and served as static files
 4. **API Documentation**: Automatic OpenAPI docs at `/docs`
+
+### VS Code Integration
+
+The project includes comprehensive VS Code configuration for one-click development:
+
+**Launch Configurations:**
+- 🚀 **Integrated: Backend + Frontend Server** - Automatically builds and deploys frontend, then starts integrated server
+- 🔧 **Development: Backend + Frontend Separate** - Runs backend and frontend on separate ports for development
+- **Frontend: Build and Deploy** - Builds and deploys frontend to backend
+- **Deploy: PowerShell Build & Deploy** - Runs deployment script via PowerShell
+
+**Available Tasks (Ctrl+Shift+P → "Tasks: Run Task"):**
+- **Deploy Frontend** - Build and deploy frontend to backend
+- **Frontend: Build** - Build frontend only
+- **Backend: Run Tests** - Run backend test suite
+- **Kill Processes on Ports 8000-8010** - Clean up development ports
+
+**Quick Deployment:**
+1. Press `F5` and select "🚀 Integrated: Backend + Frontend Server"
+2. VS Code will automatically build the frontend and start the integrated server
+3. Visit http://localhost:8001 to access the application
+
+See `DEPLOYMENT.md` for detailed deployment instructions.
 
 ## 📚 API Endpoints
 

@@ -10,14 +10,14 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Initialize theme from localStorage or default to light
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const savedTheme = localStorage.getItem('whispercode-theme');
+    const savedTheme = localStorage.getItem('whyspercode-theme');
     return (savedTheme as ThemeMode) || 'light';
   });
 
   // Update document data-theme attribute and localStorage when theme changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('whispercode-theme', theme);
+    localStorage.setItem('whyspercode-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

@@ -1,5 +1,5 @@
 """
-API v1 router aggregation for WhisperCode Web2 Backend.
+API v1 router aggregation for WhysperCode Web2 Backend.
 
 This module serves as the central router aggregator for API version 1. It combines
 all individual endpoint routers into a single cohesive API router that can be

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "================================"
-echo "WhisperCode Web2 Setup Script"
+echo "WhysperCode Web2 Setup Script"
 echo "================================"
 echo
 

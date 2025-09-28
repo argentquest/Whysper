@@ -1,7 +1,7 @@
 /**
- * API Service for WhisperCode Web2 Frontend
+ * API Service for WhysperCode Web2 Frontend
  * 
- * This service handles all HTTP communication with the WhisperCode Web2 Backend.
+ * This service handles all HTTP communication with the WhysperCode Web2 Backend.
  * It provides a clean interface for frontend components to interact with the
  * FastAPI backend without directly dealing with HTTP requests.
  * 
@@ -34,8 +34,8 @@ import type {
   CodeBlock      // Code block structure
 } from '../types';
 
-// Backend API base URL - matches the FastAPI server port
-const API_BASE_URL = 'http://localhost:8001/api/v1';
+// Backend API base URL - since frontend and backend are on same port, use relative URLs
+const API_BASE_URL = '/api/v1';
 
 /**
  * Axios HTTP client configuration
@@ -213,6 +213,18 @@ export class ApiService {
     }
   }
 
+  static async updateEnvSettings(envUpdates: {[key: string]: string}): Promise<ApiResponse<any>> {
+    try {
+      const response = await api.put('/settings/env', { updates: envUpdates });
+      return response.data;
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update environment settings',
+      };
+    }
+  }
+
   // System endpoints
   static async getSystemInfo(): Promise<ApiResponse<Record<string, unknown>>> {
     try {
@@ -260,6 +272,19 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to render mermaid diagram',
+      };
+    }
+  }
+
+  // Agent prompts endpoints
+  static async getAgentPrompt(filename: string): Promise<ApiResponse<{filename: string, content: string}>> {
+    try {
+      const response = await api.get(`/settings/agent-prompts/${filename}`);
+      return response.data;
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get agent prompt',
       };
     }
   }

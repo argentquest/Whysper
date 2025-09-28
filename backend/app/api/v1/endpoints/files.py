@@ -172,12 +172,16 @@ def get_top_folders():
 
 
 @router.get("/")
-def get_files(directory: str = None):
+def get_files(directory: str = None, recursive: bool = True):
     """
     Get files from a directory for frontend compatibility.
     
     This endpoint provides a simple GET interface for the frontend
-    to retrieve files from a directory.
+    to retrieve files from a directory, with optional recursive scanning.
+    
+    Args:
+        directory: Directory path to scan (defaults to CODE_PATH)
+        recursive: Whether to recursively scan subdirectories (default: True)
     """
     try:
         import os
@@ -201,27 +205,93 @@ def get_files(directory: str = None):
                 detail=f"Path is not a directory: {directory}"
             )
         
-        # Get files from the directory
-        files = []
-        for item in os.listdir(directory):
-            item_path = os.path.join(directory, item)
-            if os.path.isfile(item_path):
-                stat = os.stat(item_path)
-                files.append({
-                    "path": item_path,
-                    "name": item,
-                    "size": stat.st_size,
-                    "isSelected": False,
-                    "type": "file"
-                })
-            elif os.path.isdir(item_path):
-                files.append({
-                    "path": item_path,
-                    "name": item,
-                    "size": 0,
-                    "isSelected": False,
-                    "type": "directory"
-                })
+        def scan_directory_recursive(dir_path: str, base_path: str = None) -> List[dict]:
+            """Recursively scan directory and return all files and subdirectories."""
+            if base_path is None:
+                base_path = dir_path
+                
+            files = []
+            
+            try:
+                for item in os.listdir(dir_path):
+                    # Skip hidden files and common ignore patterns
+                    if item.startswith('.') or item in ['__pycache__', 'node_modules', '.git', '.venv', 'venv']:
+                        continue
+                        
+                    item_path = os.path.join(dir_path, item)
+                    
+                    # Create relative path for display
+                    if dir_path == base_path:
+                        relative_path = item
+                    else:
+                        relative_path = os.path.relpath(item_path, base_path).replace('\\', '/')
+                    
+                    if os.path.isfile(item_path):
+                        try:
+                            stat = os.stat(item_path)
+                            files.append({
+                                "path": relative_path,
+                                "name": item,
+                                "size": stat.st_size,
+                                "isSelected": False,
+                                "type": "file"
+                            })
+                        except (OSError, PermissionError):
+                            # Skip files we can't access
+                            continue
+                            
+                    elif os.path.isdir(item_path) and recursive:
+                        # Add directory entry
+                        files.append({
+                            "path": relative_path,
+                            "name": item,
+                            "size": 0,
+                            "isSelected": False,
+                            "type": "directory"
+                        })
+                        
+                        # Recursively scan subdirectory
+                        try:
+                            sub_files = scan_directory_recursive(item_path, base_path)
+                            files.extend(sub_files)
+                        except (OSError, PermissionError):
+                            # Skip directories we can't access
+                            continue
+                            
+            except (OSError, PermissionError):
+                # Skip if we can't read the directory
+                pass
+                
+            return files
+        
+        # Get files from the directory (recursively or not)
+        if recursive:
+            files = scan_directory_recursive(directory)
+        else:
+            # Non-recursive scan (original behavior)
+            files = []
+            for item in os.listdir(directory):
+                item_path = os.path.join(directory, item)
+                if os.path.isfile(item_path):
+                    stat = os.stat(item_path)
+                    files.append({
+                        "path": item,
+                        "name": item,
+                        "size": stat.st_size,
+                        "isSelected": False,
+                        "type": "file"
+                    })
+                elif os.path.isdir(item_path):
+                    files.append({
+                        "path": item,
+                        "name": item,
+                        "size": 0,
+                        "isSelected": False,
+                        "type": "directory"
+                    })
+        
+        # Sort files: directories first, then files, both alphabetically
+        files.sort(key=lambda x: (x["type"] != "directory", x["name"].lower()))
         
         return {
             "success": True,

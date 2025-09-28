@@ -1,4 +1,6 @@
 import React from 'react';
+import ApiService from '../../services/api';
+import type { AgentPrompt } from '../../types';
 import { Layout, Button, Select, Space, Typography, Tooltip } from 'antd';
 import {
   MoonOutlined,
@@ -34,6 +36,7 @@ interface HeaderProps {
   onModelChange: (model: string) => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
+  agentPrompts?: AgentPrompt[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -51,24 +54,42 @@ export const Header: React.FC<HeaderProps> = ({
   onModelChange,
   currentSystem = 'default',
   onSystemChange,
+  agentPrompts = [],
 }) => {
   const { theme } = useTheme();
+  const [availableModels, setAvailableModels] = React.useState<string[]>([]);
 
-  const modelOptions = [
-    'x-ai/grok-code-fast-1',
-    'anthropic/claude-3-sonnet',
-    'openai/gpt-4-turbo',
-    'google/gemini-pro',
-    'meta/llama-2-70b',
-  ];
+  // Load available models from backend
+  React.useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const response = await ApiService.getSettings();
+        if (response.success && response.data) {
+          const settings = response.data;
+          if (settings.values && settings.values.MODELS) {
+            const models = settings.values.MODELS.split(',').map((m: string) => m.trim());
+            setAvailableModels(models);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load models from backend:', error);
+        // Fallback to default models
+        setAvailableModels([
+          'x-ai/grok-code-fast-1',
+          'anthropic/claude-3-sonnet',
+          'openai/gpt-4-turbo',
+          'google/gemini-pro',
+          'meta/llama-2-70b',
+        ]);
+      }
+    };
+    loadModels();
+  }, []);
 
-  const systemOptions = [
-    'default',
-    'coding',
-    'documentation',
-    'refactoring',
-    'debugging',
-  ];
+  // Use agent prompts instead of hardcoded system options
+  const systemOptions = agentPrompts.length > 0 
+    ? agentPrompts.map(prompt => prompt.name)
+    : ['default', 'coding', 'documentation', 'refactoring', 'debugging'];
 
   const documentationOptions = [
     { label: 'API Reference', value: 'api' },
@@ -82,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left Section - Branding */}
       <div className="flex items-center">
         <Title level={3} className="!mb-0 !text-gray-800 dark:!text-white">
-          🧠 WhisperCode
+          🧠 WhysperCode
         </Title>
       </div>
 
@@ -97,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="min-w-[200px]"
             size="small"
           >
-            {modelOptions.map(model => (
+            {availableModels.map(model => (
               <Option key={model} value={model}>{model}</Option>
             ))}
           </Select>
@@ -112,11 +133,15 @@ export const Header: React.FC<HeaderProps> = ({
             className="min-w-[120px]"
             size="small"
           >
-            {systemOptions.map(system => (
-              <Option key={system} value={system}>
-                {system.charAt(0).toUpperCase() + system.slice(1)}
-              </Option>
-            ))}
+            {systemOptions.map(system => {
+              const prompt = agentPrompts.find(p => p.name === system);
+              const displayName = prompt ? prompt.title : system.charAt(0).toUpperCase() + system.slice(1);
+              return (
+                <Option key={system} value={system}>
+                  {displayName}
+                </Option>
+              );
+            })}
           </Select>
         </div>
 

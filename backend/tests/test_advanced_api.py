@@ -1,5 +1,5 @@
 """
-Advanced tests to increase coverage for WhisperCode Web2 Backend.
+Advanced tests to increase coverage for WhysperCode Web2 Backend.
 
 These tests cover edge cases, error conditions, and less common code paths.
 """
@@ -39,25 +39,25 @@ class TestLoadEnvDefaults:
             "API_KEY": "test-api-key-123"
         }
         
-        api_key, provider, models, default_model = load_env_defaults()
+        config = load_env_defaults()
         
-        assert api_key == "test-api-key-123"
-        assert provider == "anthropic"
-        assert models == ["claude-3-sonnet", "claude-3-haiku", "gpt-4"]
-        assert default_model == "claude-3-sonnet"
+        assert config["api_key"] == "test-api-key-123"
+        assert config["provider"] == "anthropic"
+        assert config["models"] == ["claude-3-sonnet", "claude-3-haiku", "gpt-4"]
+        assert config["default_model"] == "claude-3-sonnet"
     
     @patch('app.core.config.env_manager')
     def testload_env_defaults_fallbacks(self, mock_env_manager):
         """Test loading environment defaults with fallback values."""
         mock_env_manager.load_env_file.return_value = {}
         
-        api_key, provider, models, default_model = load_env_defaults()
+        config = load_env_defaults()
         
-        assert api_key == ""
-        assert provider == "openrouter"
-        assert "openai/gpt-3.5-turbo" in models
-        assert "anthropic/claude-3-haiku" in models
-        assert default_model in models
+        assert config["api_key"] == ""
+        assert config["provider"] == "openrouter"
+        assert "openai/gpt-3.5-turbo" in config["models"]
+        assert "anthropic/claude-3-haiku" in config["models"]
+        assert config["default_model"] in config["models"]
 
 
 class TestUtilityFunctions:
@@ -346,7 +346,7 @@ class TestRootEndpoint:
         response = client.get("/")
         assert response.status_code == 200
         data = response.json()
-        assert "WhisperCode Web2" in data["message"]
+        assert "WhysperCode Web2" in data["message"]
     
     def test_docs_endpoints(self):
         """Test documentation endpoints are accessible."""

@@ -1,7 +1,7 @@
 """
-Chat and conversation management endpoints for WhisperCode Web2 Backend.
+Chat and conversation management endpoints for WhysperCode Web2 Backend.
 
-This module provides the core chat functionality of the WhisperCode application,
+This module provides the core chat functionality of the WhysperCode application,
 handling real AI integration, conversation management, and session persistence.
 
 Key Features:
@@ -75,11 +75,11 @@ def send_message_root(request: dict):
     settings = request.get("settings") or {}
     context_files = request.get("contextFiles") or []
 
-    env_api_key, env_provider, models, env_default_model = load_env_defaults()
+    config = load_env_defaults()
 
-    api_key = settings.get("apiKey") or env_api_key
-    provider = settings.get("provider") or env_provider
-    model = settings.get("model") or env_default_model or (models[0] if models else None)
+    api_key = settings.get("apiKey") or config["api_key"]
+    provider = settings.get("provider") or config["provider"]
+    model = settings.get("model") or config["default_model"] or (config["models"][0] if config["models"] else None)
 
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
