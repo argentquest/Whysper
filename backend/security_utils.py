@@ -1,8 +1,10 @@
 """
 Security utilities for handling sensitive information safely.
 """
+import os
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
+from pathlib import Path
 
 
 class SecurityUtils:
@@ -177,3 +179,44 @@ class SecurityUtils:
             Sanitized log message
         """
         return SecurityUtils.mask_sensitive_string(message)
+
+    @staticmethod
+    def safe_path_resolve(base_directory: Union[str, Path], file_path: Union[str, Path]) -> Optional[str]:
+        """
+        Resolves a user-provided file path against a base directory (e.g., codebase root)
+        and ensures the resulting path is contained within the base directory to prevent
+        path traversal attacks (CWE-22).
+
+        Args:
+            base_directory: The trusted root directory path.
+            file_path: The user-provided relative or absolute path.
+
+        Returns:
+            The safe, resolved absolute path as a string, or None if the path
+            attempts to traverse outside the base directory.
+        """
+        try:
+            base_path = Path(base_directory).resolve()
+            
+            # Combine base directory with the file path, then resolve
+            # This handles both relative and absolute paths correctly
+            if Path(file_path).is_absolute():
+                full_path = Path(file_path).resolve()
+            else:
+                # For relative paths, combine with base directory first
+                full_path = (base_path / file_path).resolve()
+
+            # Check if the fully resolved path is a subpath of the base path
+            # Using str().startswith() and os.sep is a robust check for sub-directory containment
+            if str(full_path).startswith(str(base_path) + os.sep):
+                # Also verify the file actually exists
+                if full_path.exists():
+                    return str(full_path)
+            
+            # Allow the base directory itself (e.g., if file_path resolves to base_directory)
+            if full_path == base_path and full_path.is_file():
+                return str(full_path)
+
+            return None
+        except Exception:
+            return None

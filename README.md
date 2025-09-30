@@ -1,4 +1,4 @@
-# WhysperCode Web2 - Full Stack AI Chat Application
+# Whysper Web2 - Full Stack AI Chat Application
 
 A modern, full-stack web application that provides AI-powered chat functionality with code analysis, file management, and multi-provider AI integration.
 

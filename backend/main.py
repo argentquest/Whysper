@@ -1,74 +1,92 @@
-#!/usr/bin/env python3
 """
-Main entry point for WhysperCode Web2 Application.
+Main entry point for Whysper Web2 Backend API Server.
 
-This simplified main.py file makes it easy to run the entire application
-(backend API + frontend) from a single command.
+This is a pure API server that only serves backend endpoints.
+The frontend runs separately on its own port (typically 5173).
 
 Usage:
     python main.py
 
-The application will start on http://localhost:8001 and serve both:
-- API endpoints at /api/v1/* and /api/*
-- Frontend React application at /
+The backend API server will start on http://localhost:8001 and serve:
+- API endpoints at /api/v1/*
+- OpenAPI documentation at /docs
+
+Frontend should be started separately with:
+    cd frontend && npm run dev
 """
 
 import uvicorn
 import os
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from app.main import app
 from app.core.config import settings
+from common.logger import get_logger, configure_logging
 
-def setup_frontend():
-    """Mount frontend static files if available."""
-    frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-    
-    if os.path.exists(frontend_dist):
-        # Mount static assets (JS, CSS, images)
-        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
-        
-        # Serve index.html for root and catch-all routes
-        @app.get("/")
-        def serve_frontend_root():
-            return FileResponse(os.path.join(frontend_dist, "index.html"))
-        
-        @app.get("/{full_path:path}")
-        def serve_frontend_catchall(full_path: str):
-            # Don't interfere with API routes
-            if full_path.startswith("api/") or full_path.startswith("docs"):
-                return {"error": "Endpoint not found"}
-            
-            # Check if it's a static file request
-            file_path = os.path.join(frontend_dist, full_path)
-            if os.path.exists(file_path) and os.path.isfile(file_path):
-                return FileResponse(file_path)
-            
-            # For SPA routing, serve index.html
-            return FileResponse(os.path.join(frontend_dist, "index.html"))
-        
-        print(f"[boot] Frontend mounted from: {frontend_dist}")
-    else:
-        print(f"[boot] Frontend dist not found at: {frontend_dist}")
-        print(f"[boot] Run 'npm run build' in frontend directory to build frontend")
+# Configure logging based on environment variables
+configure_logging()
+
+# Initialize logger for main application boot
+logger = get_logger(__name__)
+
+# Test console output immediately
+print("=" * 60)
+print("BACKEND API SERVER STARTING - Console output working!")
+print("LOG_LEVEL from env:", os.getenv('LOG_LEVEL', 'NOT_SET'))
+print("=" * 60)
+
+# Test debug logging immediately
+logger.debug("DEBUG LOGGING TEST - This should appear in console if LOG_LEVEL=DEBUG")
+logger.info("INFO LOGGING TEST - This should always appear")
+logger.error("ERROR LOGGING TEST - This should always appear")
+
+# No frontend serving - this is a pure API server
 
 if __name__ == "__main__":
-    print("[boot] Starting WhysperCode Web2 Application...")
-    
-    # Setup frontend static file serving
-    setup_frontend()
-    
-    print(f"[boot] Frontend: http://{settings.host}:{settings.port}")
-    print(f"[boot] API: http://{settings.host}:{settings.port}/api/v1")
-    print(f"[boot] Docs: http://{settings.host}:{settings.port}/docs")
-    print("=" * 50)
+    """
+    Main entry point when script is executed directly.
 
+    This block:
+    1. Logs application startup
+    2. Displays API access URLs  
+    3. Starts the uvicorn server
+
+    The backend API server runs on port 8001 by default and serves:
+    - FastAPI backend endpoints at /api/v1 paths
+    - OpenAPI documentation at /docs
+    """
+    logger.info("Starting Whysper Web2 Backend API Server boot process")
+    print("[boot] Starting Whysper Web2 Backend API Server...")
+
+    # Display access information
+    base_url = f"http://{settings.host}:{settings.port}"
+    api_url = f"{base_url}/api/v1"
+    docs_url = f"{base_url}/docs"
+
+    print(f"[boot] API Server: {base_url}")
+    print(f"[boot] API Endpoints: {api_url}")
+    print(f"[boot] API Documentation: {docs_url}")
+    print(f"[boot] Frontend: Run separately with 'cd frontend && npm run dev'")
+    print("=" * 60)
+
+    logger.info(f"Backend API Server configured - Base: {base_url}")
+    logger.info(f"Backend API Server configured - API: {api_url}")
+    logger.info(f"Backend API Server configured - Docs: {docs_url}")
+
+    # Determine reload target based on settings
     reload_target = "app.main:app" if settings.reload else app
+    logger.debug(f"Reload target: {reload_target}")
+    logger.debug(f"Host: {settings.host}, Port: {settings.port}, Reload: {settings.reload}")
 
+    # Start uvicorn server
+    logger.info("Starting uvicorn server...")
+    # Get log level from environment for uvicorn
+    import os
+    uvicorn_log_level = os.getenv('LOG_LEVEL', 'INFO').lower()
+    
     uvicorn.run(
         reload_target,
         host=settings.host,
         port=settings.port,
         reload=settings.reload,
-        log_level="info"
+        log_level=uvicorn_log_level
     )
+# trigger reload

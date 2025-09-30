@@ -6,6 +6,7 @@ This module handles system-level operations including:
 - API status
 - Version information
 """
+from typing import Dict
 from fastapi import APIRouter
 from app.core.config import settings
 from common.logger import get_logger
@@ -18,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/")
-def root():
+def root() -> Dict[str, str]:
     logger.debug("root endpoint started")
     """Root endpoint with API information."""
     return {
@@ -32,8 +33,7 @@ def root():
 
 
 @router.get("/health")
-    logger.debug("health_check endpoint started")
-def health_check():
+def health_check() -> Dict[str, str]:
     logger.debug("health_check endpoint started")
     """
     Health check endpoint for monitoring and load balancers.
@@ -52,7 +52,7 @@ def health_check():
 
 
 @router.get("/version")
-def get_version():
+def get_version() -> Dict[str, str]:
     """Get API version information."""
     return {
         "api_version": settings.api_version,

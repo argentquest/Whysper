@@ -1,10 +1,10 @@
 import { createContext } from 'react';
-import { type ThemeMode } from './antd-themes';
+import { type ThemeKey } from './antd-themes';
 
 export interface ThemeContextType {
-  theme: ThemeMode;
+  theme: ThemeKey;
   toggleTheme: () => void;
-  setTheme: (theme: ThemeMode) => void;
+  setTheme: (theme: ThemeKey) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

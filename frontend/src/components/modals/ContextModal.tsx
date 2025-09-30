@@ -186,17 +186,14 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           </Button>
         </div>
 
-        {/* File Selection Controls */}
+        {/* File Selection Status */}
         <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              indeterminate={selectedFiles.size > 0 && selectedFiles.size < filteredFiles.length}
-              checked={filteredFiles.length > 0 && selectedFiles.size === filteredFiles.length}
-              onChange={(e) => e.target.checked ? handleSelectAll() : handleSelectNone()}
-            >
-              Persist selected files across questions
-            </Checkbox>
-          </div>
+          <Text className="text-sm text-gray-600">
+            {selectedFiles.size > 0 
+              ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''} selected` 
+              : 'No files selected'
+            }
+          </Text>
           
           <Text className="text-sm text-gray-600">
             Directory scanned successfully

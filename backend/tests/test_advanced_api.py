@@ -1,5 +1,5 @@
 """
-Advanced tests to increase coverage for WhysperCode Web2 Backend.
+Advanced tests to increase coverage for Whysper Web2 Backend.
 
 These tests cover edge cases, error conditions, and less common code paths.
 """
@@ -342,11 +342,14 @@ class TestRootEndpoint:
     """Test the root endpoint and other basic endpoints."""
     
     def test_root_endpoint(self):
-        """Test the root endpoint."""
-        response = client.get("/")
+        """Test the API root endpoint."""
+        response = client.get("/api/v1/")
         assert response.status_code == 200
+        # API root returns JSON with API info
         data = response.json()
-        assert "WhysperCode Web2" in data["message"]
+        assert "message" in data
+        assert "version" in data
+        assert "Whysper" in data["message"]
     
     def test_docs_endpoints(self):
         """Test documentation endpoints are accessible."""

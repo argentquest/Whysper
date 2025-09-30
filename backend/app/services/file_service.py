@@ -23,6 +23,18 @@ class FileService:
     # Directory helpers
     # ------------------------------------------------------------------
     def validate_directory(self, directory: str) -> Dict[str, Any]:
+        """
+        Validate if a given directory path is safe and accessible.
+        
+        Uses the internal scanner's logic to check for security vulnerabilities
+        (e.g., path traversal) and accessibility.
+        
+        Args:
+            directory: The path to validate.
+        
+        Returns:
+            Dict[str, Any]: A dict containing {"is_valid": bool, "error": str}
+        """
         is_valid, error_message = self._scanner.validate_directory(directory)
         return {
             "is_valid": is_valid,
@@ -119,8 +131,6 @@ class FileService:
 
     def get_folder_file_counts(self, directory: str) -> List[Dict[str, Any]]:
         """Return recursive subfolders with file counts."""
-        import os
-        from pathlib import Path
 
         root = Path(directory).resolve()
         results = []

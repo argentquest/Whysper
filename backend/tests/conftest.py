@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for WhysperCode Web2 Backend tests.
+Pytest configuration and fixtures for Whysper Web2 Backend tests.
 """
 
 import pytest

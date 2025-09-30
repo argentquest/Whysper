@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhysperCode Web2 - Theme Demo</title>
+    <title>Whysper Web2 - Theme Demo</title>
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.27.4/dist/reset.css">
     <!-- Tailwind CSS -->
@@ -220,7 +220,7 @@
     <div class="layout">
         <!-- Header -->
         <header class="header">
-            <h1 class="header-title">WhysperCode Web2</h1>
+            <h1 class="header-title">Whysper Web2</h1>
             <button class="theme-toggle" onclick="toggleTheme()">
                 <span id="theme-icon">🌙</span>
                 <span id="theme-text">Dark Mode</span>
@@ -230,7 +230,7 @@
         <!-- Content -->
         <main class="content">
             <div class="demo-card">
-                <h1 class="demo-title">Welcome to WhysperCode Web2</h1>
+                <h1 class="demo-title">Welcome to Whysper Web2</h1>
                 <p class="demo-subtitle">
                     Modern AI-powered chat interface built with React, TypeScript, Vite, Tailwind CSS, and Ant Design.
                 </p>
@@ -324,7 +324,7 @@
 
     <script>
         // Theme management
-        let currentTheme = localStorage.getItem('whyspercode-theme') || 'light';
+        let currentTheme = localStorage.getItem('Whysper-theme') || 'light';
         
         function updateThemeDisplay() {
             document.documentElement.setAttribute('data-theme', currentTheme);
@@ -332,7 +332,7 @@
             document.getElementById('theme-icon').textContent = currentTheme === 'light' ? '🌙' : '☀️';
             document.getElementById('theme-text').textContent = currentTheme === 'light' ? 'Dark Mode' : 'Light Mode';
             document.getElementById('switch-text').textContent = currentTheme === 'light' ? 'Dark' : 'Light';
-            localStorage.setItem('whyspercode-theme', currentTheme);
+            localStorage.setItem('Whysper-theme', currentTheme);
         }
         
         function toggleTheme() {
@@ -345,7 +345,7 @@
         
         // Add some interactivity
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('WhysperCode Web2 Theme Demo Loaded');
+            console.log('Whysper Web2 Theme Demo Loaded');
             console.log('Current theme:', currentTheme);
         });
     </script>

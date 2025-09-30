@@ -1,5 +1,5 @@
 """
-Configuration management for WhysperCode Web2 Backend.
+Configuration management for Whysper Web2 Backend.
 
 This module provides centralized configuration management using Pydantic BaseSettings.
 It handles environment variables, .env file loading, and provides type-safe access
@@ -24,11 +24,81 @@ except ImportError:
 from common.env_manager import env_manager
 
 
+def load_env_defaults() -> Dict[str, Any]:
+    """
+    Load environment defaults from configuration files.
+    
+    This function interfaces with the common env_manager to load all configuration
+    from environment files. It provides fallback defaults if no configuration is found.
+    
+    Returns:
+        Dict[str, any]: Dictionary containing all configuration values
+    
+    Example:
+        config = load_env_defaults()
+        print(f"Using {config['provider']} with {len(config['models'])} available models")
+    """
+    # Load environment data using the common env_manager
+    env_data = env_manager.load_env_file()
+    
+    # Parse models from comma-separated string in environment
+    models_str = env_data.get("MODELS", "")
+    if models_str:
+        # Split comma-separated models and strip whitespace
+        models = [model.strip() for model in models_str.split(",")]
+    else:
+        # Fallback to default model list if none configured
+        models = [
+            # OpenAI models via OpenRouter
+            "openai/gpt-3.5-turbo",
+            "openai/gpt-4", 
+            # Anthropic models via OpenRouter
+            "anthropic/claude-3-haiku",
+            "anthropic/claude-3-sonnet",
+            # Open source models via OpenRouter
+            "meta-llama/llama-3.1-8b-instruct:free",
+            "microsoft/wizardlm-2-8x22b",
+            # Google models via OpenRouter
+            "google/gemini-pro-1.5",
+            # xAI models via OpenRouter
+            "x-ai/grok-code-fast-1"
+        ]
+    
+    # Extract default model or use first available model
+    default_model = env_data.get("DEFAULT_MODEL", "")
+    if not default_model and models:
+        # If no default specified, use the first model in the list
+        default_model = models[0]
+    
+    # Return comprehensive configuration dictionary
+    return {
+        # Core AI configuration
+        "api_key": env_data.get("API_KEY", ""),
+        "provider": env_data.get("PROVIDER", "openrouter"),
+        "models": models,
+        "default_model": default_model,
+        "system_prompt": env_data.get("SYSTEM_PROMPT", "You are a helpful AI assistant specialized in code analysis and development."),
+        "max_tokens": int(env_data.get("MAX_TOKENS", "4000")),
+        "temperature": float(env_data.get("TEMPERATURE", "0.7")),
+        
+        # Additional UI settings
+        "language": env_data.get("LANGUAGE", "en"),
+        "base_url": env_data.get("BASE_URL", ""),
+        "auto_save_conversations": env_data.get("AUTO_SAVE_CONVERSATIONS", "true").lower() == "true",
+        "show_line_numbers": env_data.get("SHOW_LINE_NUMBERS", "true").lower() == "true",
+        "enable_streaming": env_data.get("ENABLE_STREAMING", "true").lower() == "true",
+        "request_timeout": int(env_data.get("REQUEST_TIMEOUT", "30")),
+        "retry_attempts": int(env_data.get("RETRY_ATTEMPTS", "3")),
+        "debug_logging": env_data.get("DEBUG_LOGGING", "false").lower() == "true",
+        "show_token_usage": env_data.get("SHOW_TOKEN_USAGE", "true").lower() == "true",
+    }
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables and .env files.
     
-    This class defines all configuration options for the WhysperCode Web2 Backend.
+    This class defines all configuration options for the Whysper Web2 Backend.
     Settings are loaded with the following precedence:
     1. Environment variables (highest priority)
     2. .env file values (medium priority)  
@@ -42,8 +112,8 @@ class Settings(BaseSettings):
     """
     
     # ==================== API Configuration ====================
-    api_title: str = "WhysperCode Web2 Backend"
-    api_description: str = "FastAPI backend for WhysperCode Web2 with AI chat, code extraction, and Mermaid rendering"
+    api_title: str = "Whysper Web2 Backend"
+    api_description: str = "FastAPI backend for Whysper Web2 with AI chat, code extraction, and Mermaid rendering"
     api_version: str = "2.0.0"
     debug: bool = False  # Enable debug mode for development (auto-reload, detailed errors)
     
@@ -196,77 +266,7 @@ class Settings(BaseSettings):
     }
 
 
-def load_env_defaults() -> Dict[str, Any]:
-    """
-    Load environment defaults from configuration files.
-    
-    This function interfaces with the common env_manager to load all configuration
-    from environment files. It provides fallback defaults if no configuration is found.
-    
-    Returns:
-        Dict[str, any]: Dictionary containing all configuration values
-    
-    Example:
-        config = load_env_defaults()
-        print(f"Using {config['provider']} with {len(config['models'])} available models")
-    """
-    # Load environment data using the common env_manager
-    env_data = env_manager.load_env_file()
-    
-    # Parse models from comma-separated string in environment
-    models_str = env_data.get("MODELS", "")
-    if models_str:
-        # Split comma-separated models and strip whitespace
-        models = [model.strip() for model in models_str.split(",")]
-    else:
-        # Fallback to default model list if none configured
-        models = [
-            # OpenAI models via OpenRouter
-            "openai/gpt-3.5-turbo",
-            "openai/gpt-4", 
-            # Anthropic models via OpenRouter
-            "anthropic/claude-3-haiku",
-            "anthropic/claude-3-sonnet",
-            # Open source models via OpenRouter
-            "meta-llama/llama-3.1-8b-instruct:free",
-            "microsoft/wizardlm-2-8x22b",
-            # Google models via OpenRouter
-            "google/gemini-pro-1.5",
-            # xAI models via OpenRouter
-            "x-ai/grok-code-fast-1"
-        ]
-    
-    # Extract default model or use first available model
-    default_model = env_data.get("DEFAULT_MODEL", "")
-    if not default_model and models:
-        # If no default specified, use the first model in the list
-        default_model = models[0]
-    
-    # Return comprehensive configuration dictionary
-    return {
-        # Core AI configuration
-        "api_key": env_data.get("API_KEY", ""),
-        "provider": env_data.get("PROVIDER", "openrouter"),
-        "models": models,
-        "default_model": default_model,
-        "system_prompt": env_data.get("SYSTEM_PROMPT", "You are a helpful AI assistant specialized in code analysis and development."),
-        "max_tokens": int(env_data.get("MAX_TOKENS", "4000")),
-        "temperature": float(env_data.get("TEMPERATURE", "0.7")),
-        
-        # Additional UI settings
-        "language": env_data.get("LANGUAGE", "en"),
-        "base_url": env_data.get("BASE_URL", ""),
-        "auto_save_conversations": env_data.get("AUTO_SAVE_CONVERSATIONS", "true").lower() == "true",
-        "show_line_numbers": env_data.get("SHOW_LINE_NUMBERS", "true").lower() == "true",
-        "enable_streaming": env_data.get("ENABLE_STREAMING", "true").lower() == "true",
-        "request_timeout": int(env_data.get("REQUEST_TIMEOUT", "30")),
-        "retry_attempts": int(env_data.get("RETRY_ATTEMPTS", "3")),
-        "debug_logging": env_data.get("DEBUG_LOGGING", "false").lower() == "true",
-        "show_token_usage": env_data.get("SHOW_TOKEN_USAGE", "true").lower() == "true",
-    }
-
-
-# ==================== Global Settings Instance ====================
+    # ==================== Global Settings Instance ====================
 # Create a global settings instance that can be imported throughout the application
 # This ensures consistent configuration access across all modules
 settings = Settings()

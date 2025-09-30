@@ -14,4 +14,3 @@ This file provides guidance to agents when working with code in this repository.
 - System message inserted only at start of conversation history (not sent to API)
 - Persistent files used for subsequent messages; codebase loaded lazily when >50 files
 - Conversation history excludes system message when sending to AI API
-- API supports dual paths: `/api/v1/` (primary) and `/api/` (legacy compatibility)

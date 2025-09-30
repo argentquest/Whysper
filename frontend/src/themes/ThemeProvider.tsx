@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ConfigProvider } from 'antd';
-import { getThemeConfig, type ThemeMode } from './antd-themes';
+import { getThemeConfig, type ThemeKey, themes } from './antd-themes';
 import { ThemeContext, type ThemeContextType } from './ThemeContext';
 
 interface ThemeProviderProps {
@@ -9,22 +9,26 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Initialize theme from localStorage or default to light
-  const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const savedTheme = localStorage.getItem('whyspercode-theme');
-    return (savedTheme as ThemeMode) || 'light';
+  const [theme, setThemeState] = useState<ThemeKey>(() => {
+    const savedTheme = localStorage.getItem('Whysper-theme');
+    // Validate saved theme exists in our themes object
+    if (savedTheme && savedTheme in themes) {
+      return savedTheme as ThemeKey;
+    }
+    return 'proBlue';
   });
 
   // Update document data-theme attribute and localStorage when theme changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('whyspercode-theme', theme);
+    localStorage.setItem('Whysper-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
     setThemeState(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const setTheme = (newTheme: ThemeMode) => {
+  const setTheme = (newTheme: ThemeKey) => {
     setThemeState(newTheme);
   };
 

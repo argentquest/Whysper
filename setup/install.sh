@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "================================"
-echo "WhysperCode Web2 Setup Script"
+echo "Whysper Web2 Setup Script"
 echo "================================"
 echo
 

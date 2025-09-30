@@ -21,6 +21,9 @@ and as part of the larger application's configuration system.
 import os
 from typing import Dict, List, Tuple, Optional
 import re
+from common.logger import get_logger
+
+logger = get_logger(__name__)
 from env_validator import env_validator
 
 
@@ -107,7 +110,7 @@ class EnvManager:
                     self.env_vars[key] = value
 
         except Exception as e:
-            print(f"Error loading .env file: {e}")
+            logger.error(f"Error loading .env file: {e}")
 
         return self.env_vars
 
@@ -152,7 +155,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             with open(self.env_path, "w", encoding="utf-8") as f:
                 f.write(default_content)
         except Exception as e:
-            print(f"Error creating default .env file: {e}")
+            logger.error(f"Error creating default .env file: {e}")
 
     def save_env_file(self, env_vars: Dict[str, str]) -> bool:
         """Save environment variables back to the .env file, always using double quotes for values."""
@@ -194,15 +197,15 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
                     f.write("\n")
             return True
         except Exception as e:
-            print(f"Error saving .env file: {e}")
+            logger.error(f"Error saving .env file: {e}")
             return False
 
     def get_env_descriptions(self) -> Dict[str, str]:
         """Get descriptions for common environment variables."""
         return {
             "API_KEY": "Your OpenRouter API key (get from https://openrouter.ai/)",
-            "DEFAULT_MODEL": "Default AI model to use for conversations",
-            "MODELS": "Available models (comma-separated list)",
+            "DEFAULT_MODEL": "Default OpenRouter coding model (e.g., x-ai/grok-code-fast-1)",
+            "MODELS": "Available OpenRouter coding models optimized for programming tasks",
             "IGNORE_FOLDERS": "Folders to ignore when scanning codebase (comma-separated)",
             "UI_THEME": "Application theme (light or dark)",
             "MAX_TOKENS": "Maximum tokens for AI responses (1-4000)",
@@ -273,7 +276,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             # Save back to file
             return self.save_env_file(current_vars)
         except Exception as e:
-            print(f"Error updating environment variable {key}: {e}")
+            logger.error(f"Error updating environment variable {key}: {e}")
             return False
 
 

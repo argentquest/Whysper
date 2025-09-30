@@ -1,7 +1,7 @@
 /**
- * WhysperCode Web2 - Main Application Component
+ * Whysper Web2 - Main Application Component
  * 
- * This is the root component of the WhysperCode Web2 React application.
+ * This is the root component of the Whysper Web2 React application.
  * It provides a modern AI chat interface with multi-tab support, real-time
  * AI integration, and comprehensive conversation management.
  * 
@@ -43,6 +43,7 @@ import {
   SystemMessageModal,// System prompt customization
   CodeFragmentsModal,// Extracted code blocks management
 } from './components/modals';
+import ThemePickerModal from './components/modals/ThemePickerModal';
 
 // Theme management
 import { useTheme } from './themes';
@@ -105,6 +106,7 @@ function App() {
   const [aboutModalOpen, setAboutModalOpen] = useState(false);              // About/version information modal
   const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
+  const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
   
   // ==================== Data State Management ====================
   
@@ -117,14 +119,74 @@ function App() {
   // Agent prompts loaded from backend
   const [agentPrompts, setAgentPrompts] = useState<AgentPrompt[]>([]);
 
+  // Subagent commands loaded from backend
+  const [subagentCommands, setSubagentCommands] = useState<any[]>([]);
+
   // ==================== Application Initialization ====================
-  
-  /**
-   * Initialize the application with default state
-   * 
-   * Creates the first tab and conversation, then loads user settings from backend.
-   * This ensures the app always has a usable conversation interface ready.
-   */
+
+  const loadSettings = useCallback(async () => {
+    console.log('🔧 Loading application settings...');
+    try {
+      const response = await ApiService.getSettings();
+      console.log('📡 Settings API response:', response);
+      if (response.success && response.data) {
+        const backendSettings = response.data;
+
+        // Map backend settings to frontend settings structure
+        const mappedSettings: AppSettings = {
+          theme: theme,
+          provider: backendSettings.values?.PROVIDER || 'openrouter',
+          model: backendSettings.values?.DEFAULT_MODEL || backendSettings.values?.MODELS?.split(',')[0]?.trim() || '',
+          systemPrompt: backendSettings.values?.SYSTEM_PROMPT || 'You are a helpful AI assistant specialized in code analysis and development.',
+          contextFiles: [],
+          maxTokens: parseInt(backendSettings.values?.MAX_TOKENS || '4000', 10),
+          temperature: parseFloat(backendSettings.values?.TEMPERATURE || '0.7'),
+        };
+
+        console.log('⚙️ Mapped settings:', mappedSettings);
+        setSettings(mappedSettings);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load settings:', error);
+      // Set fallback defaults if backend is not available
+      setSettings(prev => ({
+        ...prev,
+        provider: 'openrouter',
+        model: 'x-ai/grok-code-fast-1',
+        systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
+      }));
+    }
+  }, []);
+
+  const loadAgentPrompts = useCallback(async () => {
+    try {
+      const response = await ApiService.getAgents();
+      if (response.success && response.data) {
+        setAgentPrompts(response.data);
+      } else {
+        console.warn('Could not load agent prompts:', response.error);
+      }
+    } catch (error) {
+      console.warn('Could not load agent prompts:', error);
+    }
+  }, []);
+
+  const loadSubagentCommands = useCallback(async () => {
+    try {
+      const response = await ApiService.getSubagents();
+      if (response.success && response.data) {
+        setSubagentCommands(response.data);
+      } else {
+        console.warn('Could not load subagent commands:', response.error);
+      }
+    } catch (error) {
+      console.warn('Could not load subagent commands:', error);
+    }
+  }, []);
+
+  // Initialize the application with default state
+  // Creates the first tab and conversation, then loads user settings from backend.
+  // This ensures the app always has a usable conversation interface ready.
   const initializeApp = useCallback(async () => {
     // Create the initial tab for the first conversation
     const initialTab: Tab = {
@@ -134,7 +196,7 @@ function App() {
       isActive: true,                 // This tab is currently active
       isDirty: false,                 // No unsaved changes yet
     };
-    
+
     // Create the initial empty conversation
     const initialConversation: Conversation = {
       id: 'conv-1',                          // Unique conversation identifier
@@ -151,56 +213,39 @@ function App() {
 
     // Load user settings from backend (API keys, preferences, etc.)
     await loadSettings();
-  }, []);
+    // Load agent prompts from separate endpoint
+    await loadAgentPrompts();
+    // Load subagent commands from separate endpoint
+    await loadSubagentCommands();
+  }, [loadSettings, loadAgentPrompts, loadSubagentCommands]);
 
   // Initialize the application when component mounts
   useEffect(() => {
     initializeApp();
   }, [initializeApp]);
 
-  const loadSettings = async () => {
-    try {
-      const response = await ApiService.getSettings();
-      if (response.success && response.data) {
-        const backendSettings = response.data;
-        
-        // Map backend settings to frontend settings structure
-        const mappedSettings: AppSettings = {
-          theme: theme,
-          provider: backendSettings.values?.PROVIDER || 'openrouter',
-          model: backendSettings.values?.DEFAULT_MODEL || backendSettings.values?.MODELS?.split(',')[0]?.trim() || '',
-          systemPrompt: backendSettings.values?.SYSTEM_PROMPT || 'You are a helpful AI assistant specialized in code analysis and development.',
-          contextFiles: [],
-          maxTokens: parseInt(backendSettings.values?.MAX_TOKENS) || 4000,
-          temperature: parseFloat(backendSettings.values?.TEMPERATURE) || 0.7,
-        };
-        
-        setSettings(mappedSettings);
-        
-        // Load agent prompts and subagent commands
-        if (backendSettings.agentPrompts) {
-          setAgentPrompts(backendSettings.agentPrompts);
-        }
-      }
-    } catch (error) {
-      console.warn('Could not load settings:', error);
-      // Set fallback defaults if backend is not available
-      setSettings(prev => ({
-        ...prev,
-        provider: 'openrouter',
-        model: 'x-ai/grok-code-fast-1',
-        systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
-      }));
-    }
-  };
-
   // Chat functions
   const handleSendMessage = async (messageText: string, command?: string) => {
+    console.group('💬 Sending chat message');
+    console.log('Message text:', messageText);
+    console.log('Command:', command);
+    console.log('Active tab ID:', activeTabId);
+    
     const activeTab = tabs.find(tab => tab.id === activeTabId);
-    if (!activeTab) return;
+    if (!activeTab) {
+      console.error('❌ No active tab found');
+      console.groupEnd();
+      return;
+    }
 
     const conversation = conversations[activeTab.conversationId];
-    if (!conversation) return;
+    if (!conversation) {
+      console.error('❌ No conversation found for tab');
+      console.groupEnd();
+      return;
+    }
+    
+    console.log('Active conversation:', conversation.id);
 
     // Create user message
     const userMessage: Message = {
@@ -230,13 +275,20 @@ function App() {
     setLoading(true);
 
     try {
-      // Send to API
-      const response = await ApiService.sendMessage({
+      // Send to API with ALL selected files (no limit)
+      const apiRequest = {
         message: messageText,
         conversationId: conversation.id,
         contextFiles: selectedFiles.map(f => f.path),
         settings,
-      });
+      };
+      
+      console.log('📡 Sending API request:', apiRequest);
+      console.log('🗂️ Selected files count:', selectedFiles.length);
+      console.log('🗂️ Selected files:', selectedFiles.map(f => f.path));
+      
+      const response = await ApiService.sendMessage(apiRequest);
+      console.log('📡 Chat API response:', response);
 
       if (response.success && response.data) {
         const assistantMessage = response.data.message;
@@ -255,14 +307,17 @@ function App() {
 
         // Extract code blocks if any
         await extractCodeFromMessage(assistantMessage);
+        console.log('✅ Chat message sent successfully');
       } else {
+        console.error('❌ API response failed:', response.error);
         message.error(response.error || 'Failed to send message');
       }
     } catch (error) {
+      console.error('❌ Send message error:', error);
       message.error('Error sending message');
-      console.error('Send message error:', error);
     } finally {
       setLoading(false);
+      console.groupEnd();
     }
   };
 
@@ -305,7 +360,7 @@ function App() {
   const handleSystemChange = async (systemType: string) => {
     // Find the agent prompt for this system type
     const agentPrompt = agentPrompts.find(prompt => prompt.name === systemType);
-    
+
     if (agentPrompt) {
       try {
         // Load the actual prompt content from the backend
@@ -330,6 +385,35 @@ function App() {
         systemPrompt: getSystemPromptByType(systemType),
       }));
       message.success(`System changed to: ${systemType}`);
+    }
+  };
+
+
+  const handleRunSystemPrompt = async (systemName: string) => {
+    // Find the agent prompt for this system
+    const agentPrompt = agentPrompts.find(prompt => prompt.name === systemName);
+
+    if (agentPrompt) {
+      try {
+        // Load the actual prompt content from the backend
+        const response = await ApiService.getAgentPrompt(agentPrompt.filename);
+        if (response.success && response.data) {
+          const promptContent = response.data.content;
+          // Send the system prompt as a regular message
+          await handleSendMessage(`Execute this system prompt: ${promptContent}`);
+          message.success(`Running system prompt: ${agentPrompt.title}`);
+        } else {
+          message.error('Failed to load agent prompt');
+        }
+      } catch (error) {
+        console.error('Error loading agent prompt for execution:', error);
+        message.error('Error loading agent prompt');
+      }
+    } else {
+      // Fallback to hardcoded prompts
+      const promptContent = getSystemPromptByType(systemName);
+      await handleSendMessage(`Execute this system prompt: ${promptContent}`);
+      message.success(`Running system prompt: ${systemName}`);
     }
   };
 
@@ -520,23 +604,22 @@ function App() {
   const currentMessages = currentConversation?.messages || [];
 
   return (
-    <Layout className="h-screen flex flex-col">
+    <Layout className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <Header
         onSetContext={() => setContextModalOpen(true)}
-        onExecuteSystemPrompt={() => setSystemMessageModalOpen(true)}
         onNewConversation={handleNewTab}
         onSaveHistory={() => handleTabSave(activeTabId)}
         onLoadHistory={handleLoadHistory}
         onOpenSettings={() => setSettingsModalOpen(true)}
         onToggleTheme={toggleTheme}
+        onOpenThemePicker={() => setThemePickerModalOpen(true)}
         onSystemMessage={() => setSystemMessageModalOpen(true)}
         onAbout={() => setAboutModalOpen(true)}
         onCodeFragments={() => setCodeFragmentsModalOpen(true)}
-        currentModel={settings.model}
-        onModelChange={(model) => setSettings(prev => ({ ...prev, model }))}
-        currentSystem="default"
+        currentSystem={agentPrompts.find(prompt => prompt.title === settings.systemPrompt)?.name || 'default'}
         onSystemChange={handleSystemChange}
+        onRunSystemPrompt={handleRunSystemPrompt}
         agentPrompts={agentPrompts}
       />
 
@@ -552,7 +635,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <Content className="flex-1 flex flex-col overflow-hidden">
+      <Content className="flex-1 flex flex-col overflow-hidden" style={{ margin: '0', background: 'transparent' }}>
         <ChatView
           messages={currentMessages}
           loading={loading}
@@ -563,11 +646,19 @@ function App() {
           onRenderMermaid={handleRenderMermaid}
         />
         
-        <InputPanel
-          onSendMessage={handleSendMessage}
-          onClear={handleClearInput}
-          loading={loading}
-        />
+        <div style={{ 
+          background: 'white', 
+          borderTop: '1px solid #f0f0f0',
+          boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)',
+          padding: '16px 24px'
+        }}>
+          <InputPanel
+            onSendMessage={handleSendMessage}
+            onClear={handleClearInput}
+            loading={loading}
+            subagentCommands={subagentCommands}
+          />
+        </div>
       </Content>
 
       {/* Status Bar */}
@@ -612,9 +703,10 @@ function App() {
         onCancel={() => setSystemMessageModalOpen(false)}
         onSave={(systemMessage) => {
           setSettings(prev => ({ ...prev, systemPrompt: systemMessage }));
-          message.success('System message updated');
+          message.success('Agent prompt updated');
         }}
         currentSystemMessage={settings.systemPrompt}
+        currentAgent={agentPrompts.find(prompt => prompt.title === settings.systemPrompt)?.name || ''}
       />
 
       <CodeFragmentsModal
@@ -624,6 +716,11 @@ function App() {
         onDeleteBlock={(blockId) => {
           setExtractedCodeBlocks(prev => prev.filter(block => block.id !== blockId));
         }}
+      />
+
+      <ThemePickerModal
+        open={themePickerModalOpen}
+        onCancel={() => setThemePickerModalOpen(false)}
       />
     </Layout>
   );

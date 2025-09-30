@@ -5,6 +5,7 @@ This module handles code block extraction from AI responses,
 supporting both direct content extraction and conversation history lookup.
 """
 from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List, Optional
 from app.utils.code_extraction import (
     extract_code_blocks_from_content,
     find_message_content
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/extract")
-def extract_code_blocks(request: dict):
+def extract_code_blocks(request: dict) -> Dict[str, Any]:
     logger.debug("extract_code_blocks endpoint started")
     """
     Extract code blocks from a message with real parsing.

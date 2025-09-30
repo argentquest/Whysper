@@ -41,6 +41,8 @@ Usage:
         model="gpt-4"
     )
 """
+import os
+import importlib
 from typing import List, Dict, Any, Callable, Optional
 from .base_ai import BaseAIProvider
 from providers.openrouter_provider import OpenRouterProvider
@@ -61,7 +63,7 @@ class AIProviderFactory:
     @classmethod
     def _get_dynamic_providers(cls) -> Dict[str, type]:
         """Get providers dynamically from environment configuration."""
-        import os
+        
 
         # Get providers list from environment
         providers_env = os.getenv("PROVIDERS", "")
@@ -85,7 +87,7 @@ class AIProviderFactory:
                     module_name = f"providers.{provider_name}_provider"
                     class_name = f"{provider_name.title()}Provider"
 
-                    import importlib
+                    
                     module = importlib.import_module(module_name)
                     provider_class = getattr(module, class_name)
 
@@ -157,7 +159,7 @@ class AIProviderFactory:
 
         # Ensure dynamically configured providers pick up the new entry
         try:
-            import os
+            
 
             providers_env = os.getenv('PROVIDERS')
             if providers_env:

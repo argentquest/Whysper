@@ -136,8 +136,14 @@ export const TabManager: React.FC<TabManagerProps> = ({
   });
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <div className="flex items-center justify-between px-4 py-2">
+    <div 
+      className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+      style={{
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
+        borderBottom: '1px solid #f0f0f0'
+      }}
+    >
+      <div className="flex items-center justify-between px-6 py-3">
         <Tabs
           type="editable-card"
           activeKey={activeTabId}

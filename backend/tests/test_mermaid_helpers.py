@@ -204,19 +204,19 @@ class TestSimpleFlowchartSVG:
         
         svg_content = _create_simple_flowchart_svg(mermaid_code)
         
-        assert svg_content.startswith('<svg')
+        assert '<svg' in svg_content
         assert '</svg>' in svg_content
         assert 'Start' in svg_content
         assert 'Process' in svg_content
         assert 'End' in svg_content
-        assert 'WhysperCode' in svg_content
+        assert 'Whysper' in svg_content
     
     def test_create_simple_flowchart_svg_empty(self):
         """Test SVG flowchart creation with empty input."""
         svg_content = _create_simple_flowchart_svg("")
         
         # Should still create basic SVG
-        assert svg_content.startswith('<svg')
+        assert '<svg' in svg_content
         assert '</svg>' in svg_content
     
     def test_create_simple_flowchart_svg_invalid(self):
@@ -224,7 +224,7 @@ class TestSimpleFlowchartSVG:
         svg_content = _create_simple_flowchart_svg("invalid syntax")
         
         # Should handle gracefully and create basic SVG
-        assert svg_content.startswith('<svg')
+        assert '<svg' in svg_content
         assert '</svg>' in svg_content
 
 

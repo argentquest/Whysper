@@ -17,11 +17,14 @@ class ThemeManager:
     web use without GUI dependencies.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the theme manager with available themes.
 
         Loads the user's saved theme preference from UI_THEME environment variable.
+
+        Returns:
+            None
         """
         # Available themes
         self.themes = ['light', 'dark']
@@ -32,7 +35,7 @@ class ThemeManager:
         # Load user's saved theme preference
         self._load_theme_preference()
 
-    def _load_theme_preference(self):
+    def _load_theme_preference(self) -> None:
         """
         Load user's theme preference from UI_THEME environment variable.
         Falls back to 'light' if invalid or not set.

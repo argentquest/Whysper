@@ -474,20 +474,56 @@ Imports conversation data.
 
 ### Settings & Theme
 
-#### GET /settings
-Retrieves current settings.
+#### GET /settings/
+Retrieves current application settings and configuration.
 
 **Response:**
 ```json
 {
+  "values": {
+    "API_KEY": "sk-your-key",
+    "UI_THEME": "light",
+    "MODEL": "openai/gpt-4"
+  },
+  "masked": {
+    "API_KEY": "sk-***key",
+    "UI_THEME": "light",
+    "MODEL": "openai/gpt-4"
+  },
+  "descriptions": {
+    "API_KEY": "OpenRouter API key for AI model access",
+    "UI_THEME": "UI theme setting (light/dark/auto)",
+    "MODEL": "Default AI model to use"
+  },
   "theme": "light",
-  "provider": "openrouter",
-  "model": "openai/gpt-4"
+  "availableThemes": ["light", "dark", "auto"]
+}
+```
+
+#### PUT /settings/env
+Updates environment variables and application configuration.
+
+**Request Body:**
+```json
+{
+  "updates": {
+    "UI_THEME": "dark",
+    "MODEL": "anthropic/claude-3-sonnet"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "API_KEY": true,
+  "UI_THEME": true,
+  "MODEL": false
 }
 ```
 
 #### PUT /settings/theme
-Updates theme setting.
+Sets the application theme to a specific value.
 
 **Request Body:**
 ```json
@@ -511,87 +547,66 @@ Toggles between light and dark theme.
 ```json
 {
   "theme": "dark",
-  "message": "Theme toggled to dark"
+  "message": "Theme updated"
 }
 ```
 
-### System Messages
+#### GET /settings/agents
+Lists all available agent prompts.
 
-#### GET /system-messages
-Lists available system messages.
+**Response:**
+```json
+[
+  {
+    "name": "api-design-contract-review",
+    "title": "API Design Contract Review",
+    "description": "Reviews API design contracts and specifications",
+    "category": ["api", "review"],
+    "filename": "api-design-contract-review.md"
+  },
+  {
+    "name": "documentation",
+    "title": "Documentation Assistant",
+    "description": "Helps create comprehensive documentation",
+    "category": ["docs", "writing"],
+    "filename": "documentation.md"
+  }
+]
+```
+
+#### GET /settings/subagents
+Lists all available subagent commands.
+
+**Response:**
+```json
+[
+  {
+    "command": "lint",
+    "description": "Run linting tools on code",
+    "example": "lint --fix src/"
+  },
+  {
+    "command": "test",
+    "description": "Execute test suites",
+    "example": "test --coverage"
+  }
+]
+```
+
+#### GET /settings/agent-prompts/{filename}
+Retrieves the content of a specific agent prompt file.
+
+**Parameters:**
+- `filename` (required): Name of the agent prompt file (e.g., 'documentation.md')
 
 **Response:**
 ```json
 {
-  "current": "systemmessage_default.txt",
-  "messages": [
-    {
-      "filename": "systemmessage_default.txt",
-      "display_name": "Default",
-      "preview": "General purpose instructions for Code Chat conversations.",
-      "length": 150,
-      "is_current": true
-    }
-  ]
+  "filename": "documentation.md",
+  "content": "---\ntitle: Documentation Assistant\ndescription: Helps create comprehensive documentation\ncategory: [docs, writing]\n---\n\n# Documentation Assistant\n\nThis agent specializes in creating..."
 }
 ```
 
-#### GET /system-messages/{filename}
-Retrieves content of a specific system message.
-
-**Response:**
-```json
-{
-  "filename": "systemmessage_default.txt",
-  "content": "You are an expert software engineer..."
-}
-```
-
-#### PUT /system-messages/current
-Sets the current system message.
-
-**Request Body:**
-```json
-{
-  "filename": "systemmessage_security.txt"
-}
-```
-
-**Response:**
-```json
-{
-  "current": "systemmessage_security.txt"
-}
-```
-
-#### POST /system-messages
-Creates a new system message.
-
-**Request Body:**
-```json
-{
-  "filename": "systemmessage_custom.txt",
-  "content": "Custom system message content..."
-}
-```
-
-**Response:**
-```json
-{
-  "filename": "systemmessage_custom.txt"
-}
-```
-
-#### DELETE /system-messages/{filename}
-Deletes a system message.
-
-**Response:**
-```json
-{
-  "filename": "systemmessage_custom.txt",
-  "deleted": true
-}
-```
 
 ## Error Handling
 

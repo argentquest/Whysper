@@ -1,7 +1,7 @@
 /**
- * API Service for WhysperCode Web2 Frontend
+ * API Service for Whysper Web2 Frontend
  * 
- * This service handles all HTTP communication with the WhysperCode Web2 Backend.
+ * This service handles all HTTP communication with the Whysper Web2 Backend.
  * It provides a clean interface for frontend components to interact with the
  * FastAPI backend without directly dealing with HTTP requests.
  * 
@@ -34,8 +34,8 @@ import type {
   CodeBlock      // Code block structure
 } from '../types';
 
-// Backend API base URL - since frontend and backend are on same port, use relative URLs
-const API_BASE_URL = '/api/v1';
+// Backend API base URL - development mode uses separate ports
+const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:8001/api/v1' : '/api/v1';
 
 /**
  * Axios HTTP client configuration
@@ -57,13 +57,23 @@ const api = axios.create({
 // Logs all outgoing API requests for debugging and monitoring
 api.interceptors.request.use(
   (config) => {
-    // Log request details in development mode
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    // Enhanced debug logging in development mode
+    console.group(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    console.log('Base URL:', config.baseURL);
+    console.log('Full URL:', `${config.baseURL}${config.url}`);
+    console.log('Headers:', config.headers);
+    if (config.data) {
+      console.log('Request Data:', config.data);
+    }
+    if (config.params) {
+      console.log('Query Params:', config.params);
+    }
+    console.groupEnd();
     return config;
   },
   (error) => {
     // Log request setup errors
-    console.error('API Request Error:', error);
+    console.error('❌ API Request Setup Error:', error);
     return Promise.reject(error);
   }
 );
@@ -72,21 +82,41 @@ api.interceptors.request.use(
 // Handles errors and provides consistent error logging
 api.interceptors.response.use(
   (response) => {
-    // Successful responses pass through unchanged
+    // Enhanced success logging
+    console.group(`✅ API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    console.log('Response Data:', response.data);
+    console.log('Response Headers:', response.headers);
+    console.groupEnd();
     return response;
   },
   (error) => {
-    // Log all API errors for debugging
-    console.error('API Response Error:', error);
+    // Enhanced error logging for debugging
+    console.group(`❌ API Response Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+    console.error('Error Details:', error);
+    console.log('Error Code:', error.code);
+    console.log('Error Message:', error.message);
     
-    // Handle specific HTTP status codes
-    if (error.response?.status === 401) {
-      // Authentication/authorization errors
-      console.warn('Authentication required');
-    } else if (error.response?.status >= 500) {
-      // Server-side errors (backend issues)
-      console.error('Server error:', error.response.status);
+    if (error.response) {
+      // Server responded with error status
+      console.log('Response Status:', error.response.status);
+      console.log('Response Data:', error.response.data);
+      console.log('Response Headers:', error.response.headers);
+      
+      // Handle specific HTTP status codes
+      if (error.response.status === 401) {
+        console.warn('🔒 Authentication required');
+      } else if (error.response.status >= 500) {
+        console.error('🚨 Server error:', error.response.status);
+      }
+    } else if (error.request) {
+      // Network error - no response received
+      console.error('🌐 Network Error - No response received');
+      console.log('Request Details:', error.request);
+    } else {
+      // Something else happened
+      console.error('⚠️ Request Setup Error:', error.message);
     }
+    console.groupEnd();
     
     return Promise.reject(error);
   }
@@ -104,7 +134,10 @@ export class ApiService {
   static async sendMessage(request: ChatRequest): Promise<ApiResponse<ChatResponse>> {
     try {
       const response = await api.post('/chat', request);
-      return response.data;
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error: unknown) {
       return {
         success: false,
@@ -192,7 +225,10 @@ export class ApiService {
   static async getSettings(): Promise<ApiResponse<AppSettings>> {
     try {
       const response = await api.get('/settings');
-      return response.data;
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error: unknown) {
       return {
         success: false,
@@ -213,7 +249,7 @@ export class ApiService {
     }
   }
 
-  static async updateEnvSettings(envUpdates: {[key: string]: string}): Promise<ApiResponse<any>> {
+  static async updateEnvSettings(envUpdates: {[key: string]: string}): Promise<ApiResponse<Record<string, boolean>>> {
     try {
       const response = await api.put('/settings/env', { updates: envUpdates });
       return response.data;
@@ -277,10 +313,43 @@ export class ApiService {
   }
 
   // Agent prompts endpoints
+  static async getAgents(): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await api.get('/settings/agents');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get agents',
+      };
+    }
+  }
+
+  static async getSubagents(): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await api.get('/settings/subagents');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get subagents',
+      };
+    }
+  }
+
   static async getAgentPrompt(filename: string): Promise<ApiResponse<{filename: string, content: string}>> {
     try {
       const response = await api.get(`/settings/agent-prompts/${filename}`);
-      return response.data;
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error: unknown) {
       return {
         success: false,

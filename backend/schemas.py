@@ -20,7 +20,7 @@ class QuestionStatusModel(BaseModel):
     processing_time: float = Field(default=0.0, alias="processingTime")
     model_used: str = Field(default="", alias="modelUsed")
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
 
 class ConversationSummaryModel(BaseModel):
@@ -194,3 +194,20 @@ class FolderFileCountResponse(BaseModel):
 
 class TopFoldersResponse(BaseModel):
     folders: List[str]
+
+
+class ChatRequest(BaseModel):
+    message: str
+    conversationId: Optional[str] = Field(default=None, alias="conversationId")
+    contextFiles: Optional[List[str]] = Field(default=None, alias="contextFiles")
+    settings: Optional[dict] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ChatResponse(BaseModel):
+    message: dict  # Message object with role, content, timestamp, etc.
+    conversationId: str = Field(alias="conversationId")
+    usage: Optional[dict] = None
+
+    model_config = ConfigDict(populate_by_name=True)

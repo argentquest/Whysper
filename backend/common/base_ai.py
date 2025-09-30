@@ -38,6 +38,7 @@ Security:
 """
 import os
 import time
+import requests
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Callable, Optional, Tuple
 from .system_message_manager import system_message_manager
@@ -181,7 +182,6 @@ class BaseAIProvider(ABC):
         Raises:
             Exception: If API call fails or API key is invalid
         """
-        import requests
         
         try:
             if not self.validate_api_key():
@@ -275,12 +275,20 @@ class BaseAIProvider(ABC):
             # Store token usage for statistics
             self._last_token_usage = total_tokens
             
+            # Store detailed token usage information
+            self._last_detailed_usage = {
+                "total_tokens": total_tokens,
+                "input_tokens": prompt_tokens,
+                "output_tokens": completion_tokens,
+                "cached_tokens": 0  # Default, providers can override if supported
+            }
+            
             # Update UI if callback provided
             if update_callback:
                 if self.config.supports_tokens and total_tokens > 0:
-                    status_msg = f"Ready • {self.config.name.title()} • Input: {prompt_tokens} tokens • Output: {completion_tokens} tokens • Total: {total_tokens} • Time: {execution_time:.2f}s"
+                    status_msg = f"Ready - {self.config.name.title()} - Input: {prompt_tokens} tokens - Output: {completion_tokens} tokens - Total: {total_tokens} - Time: {execution_time:.2f}s"
                 else:
-                    status_msg = f"Ready • {self.config.name.title()} • Time: {execution_time:.2f}s"
+                    status_msg = f"Ready - {self.config.name.title()} - Time: {execution_time:.2f}s"
                 update_callback(ai_response, status_msg)
             
             return ai_response
@@ -304,7 +312,6 @@ class BaseAIProvider(ABC):
             raise Exception(error_msg)
         except Exception as e:
             # Sanitize error message to avoid leaking sensitive information
-            from security_utils import SecurityUtils
             sanitized_msg = SecurityUtils.sanitize_log_message(str(e))
             if update_callback:
                 update_callback(f"Error: {sanitized_msg}", sanitized_msg)

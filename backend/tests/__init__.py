@@ -1,1 +1,1 @@
-# Tests for WhysperCode Web2 Backend
+# Tests for Whysper Web2 Backend

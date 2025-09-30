@@ -158,3 +158,6 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Development utilities
+kill-port-*.bat

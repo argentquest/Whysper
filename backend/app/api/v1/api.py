@@ -1,5 +1,5 @@
 """
-API v1 router aggregation for WhysperCode Web2 Backend.
+API v1 router aggregation for Whysper Web2 Backend.
 
 This module serves as the central router aggregator for API version 1. It combines
 all individual endpoint routers into a single cohesive API router that can be
@@ -20,6 +20,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import chat, code, mermaid, files, settings, system
+from typing import Dict, Any
 
 # Create the main API router for version 1
 # This router will be included in the main app with /api/v1 prefix
@@ -32,7 +33,7 @@ api_router.include_router(
     system.router,
     tags=["system"],  # OpenAPI documentation tag
     responses={404: {"description": "Not found"}},  # Common error response
-)
+)  # Added missing closing parenthesis
 
 # ==================== Chat Endpoints ====================
 # AI conversation management under /api/v1/chat/*

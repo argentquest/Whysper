@@ -61,12 +61,8 @@ def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict
             # Generate filename based on language
             filename = generate_filename(language or "text", i + 1)
             
-            # Create preview (first 3 lines, matching web1)
-            lines = clean_code.split('\n')
-            preview_lines = lines[:3]
-            preview = '\n'.join(preview_lines)
-            if len(lines) > 3:
-                preview += '\n...'
+            # Create preview using helper function
+            preview = create_code_preview(clean_code)
             
             code_block = {
                 "id": f"code-{message_id}-{i + 1}",
@@ -75,7 +71,7 @@ def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict
                 "filename": filename,
                 "preview": preview,
                 "extractedAt": datetime.now().isoformat(),
-                "lineCount": len(lines),
+                "lineCount": len(clean_code.splitlines()),
                 "source": "markdown"
             }
             code_blocks.append(code_block)
@@ -95,12 +91,8 @@ def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict
                 
                 filename = generate_filename(language or "text", i + 1)
                 
-                # Create preview
-                lines = clean_code.split('\n')
-                preview_lines = lines[:3]
-                preview = '\n'.join(preview_lines)
-                if len(lines) > 3:
-                    preview += '\n...'
+                # Create preview using helper function
+                preview = create_code_preview(clean_code)
                 
                 code_block = {
                     "id": f"html-code-{message_id}-{i + 1}",
@@ -109,7 +101,7 @@ def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict
                     "filename": filename,
                     "preview": preview,
                     "extractedAt": datetime.now().isoformat(),
-                    "lineCount": len(lines),
+                    "lineCount": len(clean_code.splitlines()),
                     "source": "html"
                 }
                 code_blocks.append(code_block)

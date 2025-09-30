@@ -1,10 +1,10 @@
 @echo off
-REM WhysperCode Frontend Build & Deploy Script
+REM Whysper Frontend Build & Deploy Script
 REM
 REM This script builds the frontend and deploys it to the backend static directory.
 REM Run this from the project root directory.
 
-echo 🧠 WhysperCode Frontend Build ^& Deploy
+echo 🧠 Whysper Frontend Build ^& Deploy
 echo ==================================================
 echo.
 

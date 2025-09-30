@@ -70,7 +70,7 @@ export const Modal: React.FC<ModalProps> = ({
       destroyOnHidden={destroyOnClose}
       maskClosable={maskClosable}
       centered={centered}
-      className={`whyspercode-modal ${className}`}
+      className={`Whysper-modal ${className}`}
       closable={false} // We handle close button in custom title
     >
       <div className="py-4">

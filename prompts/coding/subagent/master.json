@@ -5,134 +5,84 @@
     "subcommand": "Explain this code thoroughly, including its purpose, logic, structure, and how each part contributes to the overall functionality."
   },
   {
-    "category": "Documentation",
-    "title": "Add Docstrings",
-    "subcommand": "Add clear and complete documentation, including function-level docstrings and module descriptions to improve code readability and maintainability."
+    "category": "Code Analysis",
+    "title": "Check Complexity",
+    "subcommand": "Analyze code complexity and suggest simplifications to reduce cognitive load and improve maintainability."
   },
   {
-    "category": "Refactoring",
+    "category": "Code Analysis",
+    "title": "Analyze Dependencies",
+    "subcommand": "Analyze code dependencies, imports, and external library usage to identify potential issues or improvements."
+  },
+  {
+    "category": "Code Analysis",
+    "title": "Review Data Flow",
+    "subcommand": "Trace and explain how data flows through this code, identifying transformations and potential bottlenecks."
+  },
+  {
+    "category": "Code Analysis",
+    "title": "Identify Patterns",
+    "subcommand": "Identify recurring patterns, code duplication, and opportunities for abstraction in this codebase."
+  },
+  {
+    "category": "Code Analysis",
+    "title": "Check Coupling",
+    "subcommand": "Analyze coupling between modules and suggest ways to reduce tight dependencies and improve modularity."
+  },
+  {
+    "category": "Code Quality",
     "title": "Refactor Code",
     "subcommand": "Refactor this code to improve readability, modularity, performance, and long-term maintainability without changing its behavior."
   },
   {
-    "category": "Debugging",
-    "title": "Fix Bugs",
-    "subcommand": "Identify and fix any bugs, runtime errors, or logical issues in this code to ensure it functions correctly."
-  },
-  {
-    "category": "Testing",
-    "title": "Write Tests",
-    "subcommand": "Generate comprehensive unit tests that cover all major code paths, edge cases, and expected behaviors for this code."
-  },
-  {
-    "category": "Style Guide",
+    "category": "Code Quality",
     "title": "Check Style",
-    "subcommand": "Check this code for compliance with PEP 8 or relevant style guides and suggest improvements for consistency and clarity."
+    "subcommand": "Check this code for compliance with style guides and suggest improvements for consistency and clarity."
   },
   {
-    "category": "Performance",
-    "title": "Optimize Speed",
-    "subcommand": "Analyze this code for performance bottlenecks and suggest optimizations to improve execution speed and resource efficiency."
-  },
-  {
-    "category": "Security",
-    "title": "Review Security",
-    "subcommand": "Review this code for security vulnerabilities, unsafe practices, and potential exploits, and suggest secure alternatives."
-  },
-  {
-    "category": "Debugging",
-    "title": "Help Debug",
-    "subcommand": "Help identify the root cause of issues in this code and provide step-by-step debugging guidance."
-  },
-  {
-    "category": "Conversion",
-    "title": "Translate Code",
-    "subcommand": "Convert this code to another programming language while preserving its logic, structure, and intended behavior."
-  },
-  {
-    "category": "Code Cleanup",
-    "title": "Remove Dead Code",
-    "subcommand": "Identify and remove unused, unreachable, or redundant code to improve clarity and reduce maintenance overhead."
-  },
-  {
-    "category": "Memory",
-    "title": "Optimize Memory",
-    "subcommand": "Analyze memory usage and suggest improvements to reduce allocations, avoid leaks, and improve memory efficiency."
-  },
-  {
-    "category": "Typing",
-    "title": "Add Types",
-    "subcommand": "Add type annotations to functions, variables, and classes to improve code clarity and enable better tooling support."
-  },
-  {
-    "category": "Concurrency",
-    "title": "Check Threads",
-    "subcommand": "Check this code for race conditions, deadlocks, and thread safety issues in concurrent or asynchronous execution."
-  },
-  {
-    "category": "Naming",
+    "category": "Code Quality",
     "title": "Improve Names",
     "subcommand": "Suggest clearer, more descriptive names for variables, functions, and classes to improve readability and maintainability."
   },
   {
-    "category": "Validation",
-    "title": "Validate Input",
-    "subcommand": "Ensure all inputs are properly validated and sanitized to prevent crashes, unexpected behavior, or security vulnerabilities."
+    "category": "Code Quality",
+    "title": "Remove Dead Code",
+    "subcommand": "Identify and remove unused, unreachable, or redundant code to improve clarity and reduce maintenance overhead."
   },
   {
-    "category": "Error Handling",
-    "title": "Improve Exceptions",
-    "subcommand": "Review and improve error handling to ensure exceptions are caught, logged, and handled gracefully."
+    "category": "Code Quality",
+    "title": "Fix Formatting",
+    "subcommand": "Fix inconsistent indentation, spacing, and formatting to improve visual clarity and maintainability."
   },
   {
-    "category": "Logging",
-    "title": "Add Logging",
-    "subcommand": "Add meaningful logging statements to track execution flow, errors, and key events for easier debugging and monitoring."
+    "category": "Code Quality",
+    "title": "Simplify Logic",
+    "subcommand": "Simplify complex conditional logic, nested statements, and boolean expressions for better readability."
   },
   {
-    "category": "Functional",
-    "title": "Check FP",
-    "subcommand": "Review this code for adherence to functional programming principles such as immutability, pure functions, and declarative style."
+    "category": "Code Quality",
+    "title": "Extract Functions",
+    "subcommand": "Identify opportunities to extract reusable functions from large blocks of code to improve modularity."
   },
   {
-    "category": "OOP",
-    "title": "Check OOP",
-    "subcommand": "Check this code for proper use of object-oriented principles including encapsulation, inheritance, and polymorphism."
+    "category": "Code Quality",
+    "title": "Reduce Duplication",
+    "subcommand": "Find and eliminate code duplication through abstraction, inheritance, or shared utilities."
   },
   {
-    "category": "Architecture",
-    "title": "Suggest Patterns",
-    "subcommand": "Suggest appropriate design patterns that could improve structure, flexibility, and scalability of this code."
+    "category": "Testing",
+    "title": "Write Unit Tests",
+    "subcommand": "Generate comprehensive unit tests that cover all major code paths, edge cases, and expected behaviors for this code."
   },
   {
-    "category": "Scalability",
-    "title": "Assess Growth",
-    "subcommand": "Analyze this code for scalability and recommend changes to support increased load, data volume, or user traffic."
+    "category": "Testing",
+    "title": "Write Integration Tests",
+    "subcommand": "Generate integration tests that verify interactions between components and external systems."
   },
   {
-    "category": "Modularity",
-    "title": "Check Structure",
-    "subcommand": "Review this code for modularity and separation of concerns to improve reuse and reduce coupling."
-  },
-  {
-    "category": "Architecture",
-    "title": "Inject Dependencies",
-    "subcommand": "Suggest where dependency injection could improve testability, flexibility, and decoupling in this code."
-  },
-  {
-    "category": "SOLID",
-    "title": "Check SOLID",
-    "subcommand": "Evaluate this code against SOLID principles and suggest improvements for maintainable object-oriented design."
-  },
-  {
-    "category": "Comments",
-    "title": "Add Comments",
-    "subcommand": "Add comments to clarify complex logic, assumptions, and non-obvious decisions in this code."
-  },
-  {
-    "category": "Compatibility",
-    "title": "Check Python",
-    "subcommand": "Check this code for compatibility with Python 3.x and suggest updates for deprecated features."
+    "category": "Testing",
+    "title": "Add Edge Case Tests",
+    "subcommand": "Add tests that cover edge cases, boundary conditions, and unusual inputs to improve robustness."
   },
   {
     "category": "Testing",
@@ -141,92 +91,257 @@
   },
   {
     "category": "Testing",
-    "title": "Write Integration",
-    "subcommand": "Generate integration tests that verify interactions between components and external systems."
+    "title": "Mock Dependencies",
+    "subcommand": "Create mocks and stubs for external dependencies to enable isolated unit testing."
   },
   {
     "category": "Testing",
-    "title": "Add Edge Tests",
-    "subcommand": "Add tests that cover edge cases, boundary conditions, and unusual inputs to improve robustness."
+    "title": "Test Coverage Analysis",
+    "subcommand": "Analyze test coverage and identify untested code paths that need additional test cases."
   },
   {
-    "category": "Null Safety",
-    "title": "Check Nulls",
-    "subcommand": "Check this code for potential null or undefined references and add safeguards where needed."
+    "category": "Testing",
+    "title": "Property-Based Tests",
+    "subcommand": "Generate property-based tests that verify invariants and behavior across random inputs."
   },
   {
-    "category": "Resources",
-    "title": "Clean Resources",
-    "subcommand": "Ensure resources like files, sockets, and memory are properly released or closed after use."
+    "category": "Debugging",
+    "title": "Fix Bugs",
+    "subcommand": "Identify and fix any bugs, runtime errors, or logical issues in this code to ensure it functions correctly."
   },
   {
-    "category": "Database",
-    "title": "Optimize Queries",
-    "subcommand": "Analyze database queries for performance and suggest indexing, batching, or caching improvements."
+    "category": "Debugging",
+    "title": "Debug Issues",
+    "subcommand": "Help identify the root cause of issues in this code and provide step-by-step debugging guidance."
   },
   {
-    "category": "API",
-    "title": "Check API",
-    "subcommand": "Review API usage for correctness, error handling, and adherence to expected contracts."
+    "category": "Debugging",
+    "title": "Add Logging",
+    "subcommand": "Add meaningful logging statements to track execution flow, errors, and key events for easier debugging and monitoring."
   },
   {
-    "category": "Async",
-    "title": "Review Async",
-    "subcommand": "Review asynchronous code for proper use of await, concurrency, and event loop safety."
+    "category": "Debugging",
+    "title": "Add Assertions",
+    "subcommand": "Add assertions and runtime checks to catch invalid states and assumptions early in development."
   },
   {
-    "category": "Loops",
+    "category": "Debugging",
+    "title": "Trace Execution",
+    "subcommand": "Add tracing capabilities to track function calls, variable changes, and execution flow for debugging."
+  },
+  {
+    "category": "Debugging",
+    "title": "Handle Edge Cases",
+    "subcommand": "Identify and handle edge cases that could cause unexpected behavior or crashes."
+  },
+  {
+    "category": "Performance",
+    "title": "Optimize Speed",
+    "subcommand": "Analyze this code for performance bottlenecks and suggest optimizations to improve execution speed and resource efficiency."
+  },
+  {
+    "category": "Performance",
+    "title": "Optimize Memory",
+    "subcommand": "Analyze memory usage and suggest improvements to reduce allocations, avoid leaks, and improve memory efficiency."
+  },
+  {
+    "category": "Performance",
     "title": "Optimize Loops",
     "subcommand": "Suggest improvements to loop structure, iteration strategy, and performance."
   },
   {
-    "category": "Complexity",
-    "title": "Reduce Nesting",
-    "subcommand": "Simplify deeply nested logic to improve readability and reduce cognitive load."
+    "category": "Performance",
+    "title": "Optimize Database",
+    "subcommand": "Analyze database queries for performance and suggest indexing, batching, or caching improvements."
   },
   {
-    "category": "Readability",
+    "category": "Performance",
+    "title": "Add Caching",
+    "subcommand": "Identify opportunities to add caching strategies to improve performance and reduce redundant computations."
+  },
+  {
+    "category": "Performance",
+    "title": "Lazy Loading",
+    "subcommand": "Implement lazy loading patterns to defer expensive operations until they are actually needed."
+  },
+  {
+    "category": "Performance",
+    "title": "Parallel Processing",
+    "subcommand": "Identify opportunities for parallel processing and concurrent execution to improve performance."
+  },
+  {
+    "category": "Security",
+    "title": "Review Security",
+    "subcommand": "Review this code for security vulnerabilities, unsafe practices, and potential exploits, and suggest secure alternatives."
+  },
+  {
+    "category": "Security",
+    "title": "Validate Input",
+    "subcommand": "Ensure all inputs are properly validated and sanitized to prevent crashes, unexpected behavior, or security vulnerabilities."
+  },
+  {
+    "category": "Security",
+    "title": "Check Null Safety",
+    "subcommand": "Check this code for potential null or undefined references and add safeguards where needed."
+  },
+  {
+    "category": "Security",
+    "title": "Secure Authentication",
+    "subcommand": "Review authentication and authorization mechanisms for security best practices and potential vulnerabilities."
+  },
+  {
+    "category": "Security",
+    "title": "Encrypt Sensitive Data",
+    "subcommand": "Identify sensitive data that should be encrypted and suggest appropriate encryption strategies."
+  },
+  {
+    "category": "Security",
+    "title": "Prevent Injection",
+    "subcommand": "Check for and prevent SQL injection, code injection, and other injection vulnerabilities."
+  },
+  {
+    "category": "Architecture",
+    "title": "Suggest Design Patterns",
+    "subcommand": "Suggest appropriate design patterns that could improve structure, flexibility, and scalability of this code."
+  },
+  {
+    "category": "Architecture",
+    "title": "Check SOLID Principles",
+    "subcommand": "Evaluate this code against SOLID principles and suggest improvements for maintainable object-oriented design."
+  },
+  {
+    "category": "Architecture",
+    "title": "Improve Modularity",
+    "subcommand": "Review this code for modularity and separation of concerns to improve reuse and reduce coupling."
+  },
+  {
+    "category": "Architecture",
+    "title": "Check Scalability",
+    "subcommand": "Analyze this code for scalability and recommend changes to support increased load, data volume, or user traffic."
+  },
+  {
+    "category": "Architecture",
+    "title": "Dependency Injection",
+    "subcommand": "Suggest where dependency injection could improve testability, flexibility, and decoupling in this code."
+  },
+  {
+    "category": "Architecture",
+    "title": "Event-Driven Design",
+    "subcommand": "Suggest opportunities to implement event-driven architecture patterns for better decoupling and scalability."
+  },
+  {
+    "category": "Architecture",
+    "title": "Microservices Review",
+    "subcommand": "Analyze code for microservices architecture patterns and suggest improvements for service boundaries and communication."
+  },
+  {
+    "category": "Architecture",
+    "title": "Layer Separation",
+    "subcommand": "Review and improve separation between presentation, business logic, and data access layers."
+  },
+  {
+    "category": "Documentation",
+    "title": "Add Docstrings",
+    "subcommand": "Add clear and complete documentation, including function-level docstrings and module descriptions to improve code readability and maintainability."
+  },
+  {
+    "category": "Documentation",
+    "title": "Add Comments",
+    "subcommand": "Add comments to clarify complex logic, assumptions, and non-obvious decisions in this code."
+  },
+  {
+    "category": "Documentation",
     "title": "Improve Clarity",
     "subcommand": "Improve code clarity by simplifying expressions, reducing noise, and enhancing structure."
   },
   {
-    "category": "Formatting",
-    "title": "Fix Indentation",
-    "subcommand": "Fix inconsistent indentation, spacing, and formatting to improve visual clarity and maintainability."
+    "category": "Documentation",
+    "title": "API Documentation",
+    "subcommand": "Generate comprehensive API documentation including parameters, return values, and usage examples."
   },
   {
-    "category": "Config",
-    "title": "Review Config",
-    "subcommand": "Review configuration handling for flexibility, safety, and environment-specific overrides."
+    "category": "Documentation",
+    "title": "Usage Examples",
+    "subcommand": "Create practical usage examples and code samples to demonstrate how to use this code effectively."
   },
   {
-    "category": "Portability",
-    "title": "Check Platforms",
-    "subcommand": "Check this code for portability across operating systems, environments, and deployment targets."
+    "category": "Documentation",
+    "title": "Architecture Diagrams",
+    "subcommand": "Create or suggest architecture diagrams and visual documentation to explain system structure and data flow."
   },
   {
-    "category": "Constants",
-    "title": "Remove Magic",
+    "category": "Best Practices",
+    "title": "Add Type Annotations",
+    "subcommand": "Add type annotations to functions, variables, and classes to improve code clarity and enable better tooling support."
+  },
+  {
+    "category": "Best Practices",
+    "title": "Improve Error Handling",
+    "subcommand": "Review and improve error handling to ensure exceptions are caught, logged, and handled gracefully."
+  },
+  {
+    "category": "Best Practices",
+    "title": "Check Concurrency",
+    "subcommand": "Check this code for race conditions, deadlocks, and thread safety issues in concurrent or asynchronous execution."
+  },
+  {
+    "category": "Best Practices",
+    "title": "Review Async Code",
+    "subcommand": "Review asynchronous code for proper use of await, concurrency, and event loop safety."
+  },
+  {
+    "category": "Best Practices",
+    "title": "Clean Resources",
+    "subcommand": "Ensure resources like files, sockets, and memory are properly released or closed after use."
+  },
+  {
+    "category": "Best Practices",
+    "title": "Remove Magic Numbers",
     "subcommand": "Replace hardcoded values with named constants or configuration variables for clarity and reuse."
   },
   {
-    "category": "Constants",
-    "title": "Use Enums",
-    "subcommand": "Use enums or symbolic constants to improve readability and reduce errors from string literals."
+    "category": "Best Practices",
+    "title": "Check API Usage",
+    "subcommand": "Review API usage for correctness, error handling, and adherence to expected contracts."
   },
   {
-    "category": "Version Control",
-    "title": "Check Git",
-    "subcommand": "Review version control practices including commit hygiene, branching strategy, and file organization."
+    "category": "Best Practices",
+    "title": "Environment Configuration",
+    "subcommand": "Review configuration management and environment-specific settings for security and flexibility."
   },
   {
-    "category": "CI/CD",
-    "title": "Improve Pipeline",
-    "subcommand": "Suggest improvements to CI/CD pipeline including test automation, build caching, and deployment safety."
+    "category": "Best Practices",
+    "title": "Code Organization",
+    "subcommand": "Improve file and package organization for better maintainability and developer experience."
   },
   {
-    "category": "Accessibility",
-    "title": "Check A11y",
-    "subcommand": "Review code for accessibility best practices to ensure usability for all users."
+    "category": "Conversion",
+    "title": "Translate Language",
+    "subcommand": "Convert this code to another programming language while preserving its logic, structure, and intended behavior."
+  },
+  {
+    "category": "Conversion",
+    "title": "Check Compatibility",
+    "subcommand": "Check this code for compatibility with different versions, platforms, and environments."
+  },
+  {
+    "category": "Conversion",
+    "title": "Check OOP Principles",
+    "subcommand": "Check this code for proper use of object-oriented principles including encapsulation, inheritance, and polymorphism."
+  },
+  {
+    "category": "Conversion",
+    "title": "Check Functional Style",
+    "subcommand": "Review this code for adherence to functional programming principles such as immutability, pure functions, and declarative style."
+  },
+  {
+    "category": "Conversion",
+    "title": "Modernize Syntax",
+    "subcommand": "Update code to use modern language features, syntax, and idioms while maintaining backward compatibility where needed."
+  },
+  {
+    "category": "Conversion",
+    "title": "Framework Migration",
+    "subcommand": "Help migrate code from one framework or library to another while preserving functionality and improving structure."
   }
 ]

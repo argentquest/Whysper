@@ -15,6 +15,8 @@ import hashlib
 from .file_filters import _normalize_patterns, _matches_any
 from common.logger import get_logger, log_performance
 
+logger = get_logger(__name__)
+
 
 @dataclass
 class FileInfo:
@@ -61,8 +63,8 @@ class LazyCodebaseScanner:
             cache_size: Maximum number of files to cache in memory
             max_file_size: Maximum file size to cache (bytes)
         """
-        self.logger = get_logger("lazy_scanner")
-        self.logger.info(
+        
+        logger.info(
             "Initializing LazyCodebaseScanner",
             cache_size=cache_size,
             max_file_size=max_file_size,
@@ -145,7 +147,7 @@ class LazyCodebaseScanner:
                             if folder_name:
                                 self.ignore_folders.add(folder_name)
             except Exception as e:
-                self.logger.warning(
+                logger.warning(
                     "Failed to parse .gitignore for ignore_folders",
                     path=gitignore_path,
                     error=str(e),
@@ -153,7 +155,7 @@ class LazyCodebaseScanner:
         
         self.hardcoded_excludes = ["jink"]
 
-        self.logger.debug("Ignore folders set", folders=list(self.ignore_folders))
+        logger.debug("Ignore folders set", folders=list(self.ignore_folders))
 
 
         # Statistics
@@ -165,7 +167,7 @@ class LazyCodebaseScanner:
             "total_scan_time": 0.0,
             "total_read_time": 0.0,
         }
-        self.logger.debug("LazyCodebaseScanner initialized with stats tracking")
+        logger.debug("LazyCodebaseScanner initialized with stats tracking")
 
     @log_performance()
     def scan_directory_lazy(
@@ -181,11 +183,11 @@ class LazyCodebaseScanner:
         Yields:
             Batches of FileInfo objects
         """
-        self.logger.info("Starting lazy directory scan", directory=directory)
+        logger.info("Starting lazy directory scan", directory=directory)
         start_time = time.time()
 
         if not self._is_directory_valid(directory):
-            self.logger.warning("Invalid directory for scanning", directory=directory)
+            logger.warning("Invalid directory for scanning", directory=directory)
             return
 
         # Load gitignore patterns for file exclusion
@@ -193,7 +195,7 @@ class LazyCodebaseScanner:
         gitignore_path = os.path.join(directory, ".gitignore")
         if os.path.exists(gitignore_path):
             try:
-                self.logger.debug("Loading .gitignore patterns", path=gitignore_path)
+                logger.debug("Loading .gitignore patterns", path=gitignore_path)
                 with open(gitignore_path, "r", encoding="utf-8") as f:
                     raw_patterns = [
                         line.strip()
@@ -201,11 +203,11 @@ class LazyCodebaseScanner:
                         if line.strip() and not line.startswith("#")
                     ]
                     gitignore_patterns = _normalize_patterns(raw_patterns)
-                    self.logger.debug(
+                    logger.debug(
                         f"Loaded {len(gitignore_patterns)} gitignore patterns"
                     )
             except Exception as e:
-                self.logger.warning(
+                logger.warning(
                     "Failed to load .gitignore", path=gitignore_path, error=str(e)
                 )
                 pass
@@ -214,7 +216,7 @@ class LazyCodebaseScanner:
         # Check if we have cached results that are still valid
         cached_info = self._get_cached_directory_info(directory)
         if cached_info:
-            self.logger.info(
+            logger.info(
                 "Using cached directory info",
                 directory=directory,
                 cached_files=len(cached_info),
@@ -225,25 +227,25 @@ class LazyCodebaseScanner:
                 batch = cached_info[i : i + batch_size]
                 if progress_callback:
                     progress_callback(i + len(batch), len(cached_info))
-                self.logger.debug("Yielding cached batch", batch_size=len(batch))
+                logger.debug("Yielding cached batch", batch_size=len(batch))
                 yield batch
-            self.logger.info("Completed cached scan yield", directory=directory)
+            logger.info("Completed cached scan yield", directory=directory)
             return
 
         # Perform fresh scan
-        self.logger.info("Performing fresh directory scan", directory=directory)
+        logger.info("Performing fresh directory scan", directory=directory)
         file_infos = []
         processed_files = 0
 
         try:
 
             # Second pass: collect file info
-            self.logger.debug("Starting collection of file info", directory=directory)
+            logger.debug("Starting collection of file info", directory=directory)
 
             for root, dirs, filenames in os.walk(directory):
                 # Skip ignored directories
                 if self._should_skip_directory(root):
-                    self.logger.debug("Skipping directory during scan", dir=root)
+                    logger.debug("Skipping directory during scan", dir=root)
                     dirs.clear()  # Don't recurse into this directory
                     continue
 
@@ -286,14 +288,14 @@ class LazyCodebaseScanner:
 
             # Cache the results
             self._cache_directory_info(directory, file_infos)
-            self.logger.info(
+            logger.info(
                 "Cached directory info",
                 directory=directory,
                 total_files=len(file_infos),
             )
 
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 "Error during directory scan", directory=directory, error=str(e)
             )
             raise Exception(f"Error scanning directory: {str(e)}")
@@ -301,7 +303,7 @@ class LazyCodebaseScanner:
             scan_time = time.time() - start_time
             self.stats["total_scan_time"] += scan_time
             self.stats["files_scanned"] += len(file_infos)
-            self.logger.info(
+            logger.info(
                 "Completed directory scan",
                 directory=directory,
                 files_scanned=len(file_infos),
@@ -320,7 +322,7 @@ class LazyCodebaseScanner:
         Returns:
             File content
         """
-        self.logger.debug(
+        logger.debug(
             "Getting file content",
             file=os.path.basename(file_path),
             force_reload=force_reload,
@@ -338,19 +340,19 @@ class LazyCodebaseScanner:
                     # Move to end of OrderedDict (most recently used)
                     self._content_cache.move_to_end(file_path)
                     self.stats["cache_hits"] += 1
-                    self.logger.debug(
+                    logger.debug(
                         "Cache hit for file", file=os.path.basename(file_path)
                     )
                     return cached_content.content
             except OSError:
                 # File doesn't exist anymore, remove from cache
-                self.logger.warning(
+                logger.warning(
                     "Cached file no longer exists, removing from cache", file=file_path
                 )
                 self._remove_from_cache(file_path)
 
         # Load file content
-        self.logger.debug("Cache miss, reading file", file=file_path)
+        logger.debug("Cache miss, reading file", file=file_path)
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as file:
                 content = file.read()
@@ -361,14 +363,14 @@ class LazyCodebaseScanner:
             # Cache if file is not too large
             file_size = len(content.encode("utf-8"))
             if file_size <= self.max_file_size:
-                self.logger.debug(
+                logger.debug(
                     "Caching file content",
                     file=os.path.basename(file_path),
                     size=file_size,
                 )
                 self._cache_file_content(file_path, content, content_hash, file_size)
             else:
-                self.logger.debug(
+                logger.debug(
                     "File too large to cache",
                     file=os.path.basename(file_path),
                     size=file_size,
@@ -376,11 +378,11 @@ class LazyCodebaseScanner:
                 )
 
             self.stats["cache_misses"] += 1
-            self.logger.debug("File read completed", file=os.path.basename(file_path))
+            logger.debug("File read completed", file=os.path.basename(file_path))
             return content
 
         except Exception as e:
-            self.logger.error("Error reading file", file=file_path, error=str(e))
+            logger.error("Error reading file", file=file_path, error=str(e))
             return f"Error reading file {os.path.basename(file_path)}: {str(e)}"
         finally:
             read_time = time.time() - start_time
@@ -400,7 +402,7 @@ class LazyCodebaseScanner:
         Returns:
             Combined file content with separators
         """
-        self.logger.info(
+        logger.info(
             "Getting codebase content from files",
             num_files=len(file_paths),
             max_size=max_total_size,
@@ -427,7 +429,7 @@ class LazyCodebaseScanner:
             try:
                 file_size = os.path.getsize(file_path)
                 if total_size + file_size > max_total_size and files_included > 0:
-                    self.logger.debug(
+                    logger.debug(
                         "Skipping file due to size limit",
                         file=os.path.basename(file_path),
                         current_size=total_size,
@@ -436,7 +438,7 @@ class LazyCodebaseScanner:
                     files_skipped += 1
                     continue
             except OSError:
-                self.logger.warning("Could not get file size, skipping", file=file_path)
+                logger.warning("Could not get file size, skipping", file=file_path)
                 files_skipped += 1
                 continue
 
@@ -448,7 +450,7 @@ class LazyCodebaseScanner:
 
             total_size += len(file_content.encode("utf-8"))
             files_included += 1
-            self.logger.debug(
+            logger.debug(
                 "Included file in codebase content",
                 file=filename,
                 size=len(file_content.encode("utf-8")),

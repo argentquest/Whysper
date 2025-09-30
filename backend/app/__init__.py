@@ -1,1 +1,3 @@
-"""WhysperCode Web2 Backend Application."""
+"""
+Whysper Web2 Backend Application.
+"""

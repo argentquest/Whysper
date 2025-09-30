@@ -69,7 +69,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   };
 
   return (
-    <div className="h-8 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between text-xs">
+    <div 
+      className="h-10 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between text-xs"
+      style={{
+        boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.04)',
+        borderTop: '1px solid #f0f0f0'
+      }}
+    >
       {/* Left Section - Status */}
       <Space size="large">
         <div className="flex items-center gap-2">

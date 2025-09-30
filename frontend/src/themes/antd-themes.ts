@@ -1,28 +1,12 @@
 import { theme } from 'antd';
 
-// Light theme configuration
-export const lightTheme = {
-  algorithm: theme.defaultAlgorithm,
+// Base theme configuration
+const baseTheme = {
   token: {
-    colorPrimary: '#1890ff',
-    colorSuccess: '#52c41a',
-    colorWarning: '#faad14',
-    colorError: '#ff4d4f',
-    colorInfo: '#1890ff',
     borderRadius: 6,
     wireframe: false,
   },
   components: {
-    Layout: {
-      bodyBg: '#ffffff',
-      siderBg: '#ffffff',
-      headerBg: '#ffffff',
-    },
-    Menu: {
-      itemBg: 'transparent',
-      itemSelectedBg: '#e6f7ff',
-      itemHoverBg: '#f5f5f5',
-    },
     Button: {
       borderRadius: 6,
     },
@@ -35,43 +19,265 @@ export const lightTheme = {
   },
 };
 
-// Dark theme configuration
-export const darkTheme = {
-  algorithm: theme.darkAlgorithm,
-  token: {
-    colorPrimary: '#1890ff',
-    colorSuccess: '#52c41a',
-    colorWarning: '#faad14',
-    colorError: '#ff4d4f',
-    colorInfo: '#1890ff',
-    borderRadius: 6,
-    wireframe: false,
+// Theme definitions with Pro-inspired designs
+export const themes = {
+  // Default Ant Design themes
+  light: {
+    name: 'Light',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#1890ff',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#1890ff',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#ffffff',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#e6f7ff',
+        itemHoverBg: '#f5f5f5',
+      },
+    },
   },
-  components: {
-    Layout: {
-      bodyBg: '#141414',
-      siderBg: '#1f1f1f',
-      headerBg: '#1f1f1f',
+
+  dark: {
+    name: 'Dark',
+    algorithm: theme.darkAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#1890ff',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#1890ff',
     },
-    Menu: {
-      itemBg: 'transparent',
-      itemSelectedBg: '#111b26',
-      itemHoverBg: '#262626',
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#141414',
+        siderBg: '#1f1f1f',
+        headerBg: '#1f1f1f',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#111b26',
+        itemHoverBg: '#262626',
+      },
     },
-    Button: {
-      borderRadius: 6,
+  },
+
+  // Pro-inspired themes
+  proBlue: {
+    name: 'Pro Blue',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#1677ff',
+      colorSuccess: '#00b96b',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#1677ff',
+      colorBgContainer: '#ffffff',
     },
-    Input: {
-      borderRadius: 6,
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#f5f5f5',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#e6f4ff',
+        itemHoverBg: '#f5f5f5',
+      },
     },
-    Card: {
-      borderRadius: 8,
+  },
+
+  proDark: {
+    name: 'Pro Dark',
+    algorithm: theme.darkAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#1677ff',
+      colorSuccess: '#00b96b',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#1677ff',
+      colorBgContainer: '#1f1f1f',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#000000',
+        siderBg: '#141414',
+        headerBg: '#141414',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#111b26',
+        itemHoverBg: '#262626',
+      },
+    },
+  },
+
+  // Modern color schemes
+  purple: {
+    name: 'Purple',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#722ed1',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#722ed1',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#f9f0ff',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#f9f0ff',
+        itemHoverBg: '#f5f5f5',
+      },
+    },
+  },
+
+  green: {
+    name: 'Green',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#52c41a',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#52c41a',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#f6ffed',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#f6ffed',
+        itemHoverBg: '#f5f5f5',
+      },
+    },
+  },
+
+  orange: {
+    name: 'Orange',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#fa8c16',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#fa8c16',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#fff7e6',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#fff7e6',
+        itemHoverBg: '#f5f5f5',
+      },
+    },
+  },
+
+  red: {
+    name: 'Red',
+    algorithm: theme.defaultAlgorithm,
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#f5222d',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#f5222d',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#fff2f0',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#fff2f0',
+        itemHoverBg: '#f5f5f5',
+      },
+    },
+  },
+
+  // Compact theme
+  compact: {
+    name: 'Compact',
+    algorithm: [theme.defaultAlgorithm, theme.compactAlgorithm],
+    token: {
+      ...baseTheme.token,
+      colorPrimary: '#1890ff',
+      colorSuccess: '#52c41a',
+      colorWarning: '#faad14',
+      colorError: '#ff4d4f',
+      colorInfo: '#1890ff',
+    },
+    components: {
+      ...baseTheme.components,
+      Layout: {
+        bodyBg: '#ffffff',
+        siderBg: '#ffffff',
+        headerBg: '#ffffff',
+      },
+      Menu: {
+        itemBg: 'transparent',
+        itemSelectedBg: '#e6f7ff',
+        itemHoverBg: '#f5f5f5',
+      },
     },
   },
 };
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeKey = keyof typeof themes;
+export type ThemeMode = ThemeKey; // Updated to support all theme keys
 
-export const getThemeConfig = (mode: ThemeMode) => {
-  return mode === 'dark' ? darkTheme : lightTheme;
+export const getThemeConfig = (themeKey: ThemeKey) => {
+  const selectedTheme = themes[themeKey];
+  return {
+    algorithm: selectedTheme.algorithm,
+    token: selectedTheme.token,
+    components: selectedTheme.components,
+  };
+};
+
+export const getThemeList = () => {
+  return Object.entries(themes).map(([key, theme]) => ({
+    key: key as ThemeKey,
+    name: theme.name,
+    primary: theme.token.colorPrimary,
+  }));
 };

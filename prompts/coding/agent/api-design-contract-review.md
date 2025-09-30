@@ -1,13 +1,4 @@
----
-title: "API Design & Contract Review Prompt"
-description: "Assess API structure, security, and documentation for scalable integrations."
-category: ["API Design", "Integration", "Code Review"]
-author: "Eric M"
-created: "2025-09-27"
-tags: ["API", "REST", "GraphQL", "authentication", "rate limiting", "OpenAPI"]
-version: "1.0"
-status: "draft"
----
+**
 
 # 🧾 API Design & Contract Review Prompt
 
@@ -23,7 +14,25 @@ You are an API architect and integration specialist focused on designing clean, 
 6. **Documentation**: Review OpenAPI specs, examples, and onboarding clarity  
 
 Focus on API clarity, reliability, and developer experience.
-
+---
+title: "API Design & Contract Review Prompt"
+description: "Assess API structure, security, and documentation for scalable integrations."
+category: ["API Design", "Integration", "Code Review"]
+author: "Eric M"
+created: "2025-09-27"
+tags: ["API", "REST", "GraphQL", "authentication", "rate limiting", "OpenAPI"]
+version: "1.0"
+status: "draft"
+------
+title: "API Design & Contract Review Prompt"
+description: "Assess API structure, security, and documentation for scalable integrations."
+category: ["API Design", "Integration", "Code Review"]
+author: "Eric M"
+created: "2025-09-27"
+tags: ["API", "REST", "GraphQL", "authentication", "rate limiting", "OpenAPI"]
+version: "1.0"
+status: "draft"
+---
 The user has provided the following API specification or implementation:
 
 {codebase_content}

@@ -1,4 +1,6 @@
 // Core application types
+import type { ThemeKey } from '../themes/antd-themes';
+
 export interface Conversation {
   id: string;
   title: string;
@@ -16,6 +18,10 @@ export interface Message {
     model?: string;
     provider?: string;
     tokens?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+    cachedTokens?: number;
+    elapsedTime?: number; // in seconds
     codeBlocks?: CodeBlock[];
     mermaidDiagrams?: MermaidDiagram[];
   };
@@ -43,14 +49,14 @@ export interface Tab {
 }
 
 export interface AppSettings {
-  theme: 'light' | 'dark';
+  theme: ThemeKey;
   provider: string;
   model: string;
   systemPrompt: string;
   contextFiles: string[];
   maxTokens: number;
   temperature: number;
-  values?: {[key: string]: any};
+  values?: {[key: string]: string};
   masked?: {[key: string]: boolean};
   agentPrompts?: AgentPrompt[];
   subagentCommands?: SubagentCommand[];
@@ -92,6 +98,8 @@ export interface AgentPrompt {
   name: string;
   title: string;
   filename: string;
+  description?: string;
+  category?: string[];
 }
 
 export interface SubagentCommand {

@@ -1,10 +1,10 @@
-# WhysperCode Frontend Deployment Guide
+# Whysper Frontend Deployment Guide
 
 This document explains how to build and deploy the frontend to the integrated backend server.
 
 ## Overview
 
-WhysperCode uses an integrated deployment model where the React frontend is served by the FastAPI backend server on a single port (8001). When you make changes to the frontend, you need to rebuild and deploy it to the backend's static directory.
+Whysper uses an integrated deployment model where the React frontend is served by the FastAPI backend server on a single port (8001). When you make changes to the frontend, you need to rebuild and deploy it to the backend's static directory.
 
 ## Quick Start
 
@@ -73,7 +73,7 @@ cd ..
 ## File Structure
 
 ```
-WhysperCode/
+Whysper/
 ├── frontend/
 │   ├── dist/              # Built frontend files (generated)
 │   ├── deploy.js          # Node.js deployment script

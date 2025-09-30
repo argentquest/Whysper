@@ -1,4 +1,4 @@
-# WhysperCode Frontend Build & Deploy Script
+# Whysper Frontend Build & Deploy Script
 # This script builds the frontend and deploys it to the backend static directory.
 
 param(
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "WhysperCode Frontend Build & Deploy" -ForegroundColor Magenta
+Write-Host "Whysper Frontend Build & Deploy" -ForegroundColor Magenta
 Write-Host "====================================" -ForegroundColor Gray
 Write-Host ""
 

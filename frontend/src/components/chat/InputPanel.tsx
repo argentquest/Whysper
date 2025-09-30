@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Select, Tooltip, Dropdown } from 'antd';
+import { Button, Input, Select, Tooltip } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
   PlusOutlined,
-  HistoryOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 
 const { TextArea } = Input;
 const { Option } = Select;
+
+interface SubagentCommand {
+  category: string;
+  title: string;
+  subcommand: string;
+}
 
 interface InputPanelProps {
   onSendMessage: (message: string, command?: string) => void;
@@ -18,6 +22,7 @@ interface InputPanelProps {
   loading?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  subagentCommands?: SubagentCommand[];
 }
 
 export const InputPanel: React.FC<InputPanelProps> = ({
@@ -26,8 +31,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   loading = false,
   placeholder = "Type your next question. Press Enter to send, Shift+Enter for a new line.",
   disabled = false,
+  subagentCommands = [],
 }) => {
   const [message, setMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
   const textAreaRef = useRef<TextAreaRef>(null);
 
@@ -40,21 +47,27 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     }
   }, [message]);
 
-  const quickCommands = [
-    { label: 'EXPLAIN', value: 'explain', description: 'Explain this code in detail' },
-    { label: 'REFACTOR', value: 'refactor', description: 'Refactor and improve this code' },
-    { label: 'DEBUG', value: 'debug', description: 'Find and fix bugs in this code' },
-    { label: 'DOCUMENT', value: 'document', description: 'Generate documentation' },
-    { label: 'OPTIMIZE', value: 'optimize', description: 'Optimize performance' },
-    { label: 'TEST', value: 'test', description: 'Generate unit tests' },
-    { label: 'REVIEW', value: 'review', description: 'Code review and suggestions' },
-    { label: 'CONVERT', value: 'convert', description: 'Convert to another language/format' },
-  ];
+  // Get unique categories from subagent commands
+  const categories = React.useMemo(() => {
+    console.log('📊 Total subagent commands loaded:', subagentCommands.length, subagentCommands);
+    const uniqueCategories = [...new Set(subagentCommands.map(cmd => cmd.category))];
+    console.log('📊 Categories found:', uniqueCategories);
+    return uniqueCategories.sort();
+  }, [subagentCommands]);
+
+  // Get subagents for selected category
+  const subagentsForCategory = React.useMemo(() => {
+    if (!selectedCategory) return [];
+    const filtered = subagentCommands.filter(cmd => cmd.category === selectedCategory);
+    console.log('🔍 Subagents for category:', selectedCategory, '→', filtered.length, 'items:', filtered);
+    return filtered;
+  }, [subagentCommands, selectedCategory]);
 
   const handleSend = () => {
     if (message.trim() && !loading) {
       onSendMessage(message.trim(), selectedCommand);
       setMessage('');
+      setSelectedCategory('');
       setSelectedCommand('');
     }
   };
@@ -68,15 +81,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   const handleClear = () => {
     setMessage('');
+    setSelectedCategory('');
     setSelectedCommand('');
     onClear();
   };
 
-  const insertCommand = (command: string) => {
-    const commandText = quickCommands.find(cmd => cmd.value === command)?.label || command;
-    const newMessage = message ? `${message}\n\n${commandText}: ` : `${commandText}: `;
+  const injectSubagentCommand = (subcommand: string) => {
+    const newMessage = message ? `${message}\n\n${subcommand}` : subcommand;
     setMessage(newMessage);
-    setSelectedCommand(command);
     
     // Focus textarea after inserting command
     setTimeout(() => {
@@ -89,78 +101,79 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     }, 0);
   };
 
-  const commandMenuItems: MenuProps['items'] = quickCommands.map(cmd => ({
-    key: cmd.value,
-    label: (
-      <div>
-        <div className="font-semibold">{cmd.label}</div>
-        <div className="text-xs text-gray-500">{cmd.description}</div>
-      </div>
-    ),
-    onClick: () => insertCommand(cmd.value),
-  }));
-
-  const recentPrompts = [
-    "Explain this function step by step",
-    "How can I optimize this code?",
-    "Generate unit tests for this component",
-    "What are the potential bugs here?",
-    "Convert this to TypeScript",
-  ];
-
-  const recentMenuItems: MenuProps['items'] = recentPrompts.map((prompt, index) => ({
-    key: index.toString(),
-    label: prompt,
-    onClick: () => setMessage(prompt),
-  }));
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Quick Commands Row */}
-        <div className="flex items-center gap-2 mb-3">
+    <div className="max-w-4xl mx-auto">
+        {/* Subagent Commands Row */}
+        <div className="flex items-center gap-3 mb-3">
           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            Quick Commands:
+            Inject Command:
           </span>
           
+          {/* Category Selection */}
           <Select
-            placeholder="EXPLAIN"
-            value={selectedCommand}
-            onChange={setSelectedCommand}
-            className="min-w-[120px]"
+            placeholder="Select category"
+            value={selectedCategory}
+            onChange={(value) => {
+              setSelectedCategory(value);
+              setSelectedCommand(''); // Reset command when category changes
+            }}
+            className="min-w-[140px]"
             size="small"
             allowClear
           >
-            {quickCommands.map(cmd => (
-              <Option key={cmd.value} value={cmd.value}>
-                {cmd.label}
+            {categories.map(category => (
+              <Option key={category} value={category}>
+                {category}
               </Option>
             ))}
           </Select>
 
-          <Dropdown menu={{ items: commandMenuItems }} placement="topLeft">
-            <Button size="small" icon={<PlusOutlined />}>
-              Insert Command
-            </Button>
-          </Dropdown>
+          {/* Command Selection */}
+          <Select
+            placeholder="Select command"
+            value={selectedCommand}
+            onChange={setSelectedCommand}
+            className="min-w-[180px]"
+            size="small"
+            allowClear
+            disabled={!selectedCategory}
+          >
+            {subagentsForCategory.map((subagent, index) => (
+              <Option key={`${subagent.category}-${subagent.title}-${index}`} value={subagent.title}>
+                {subagent.title}
+              </Option>
+            ))}
+          </Select>
 
-          <Dropdown menu={{ items: recentMenuItems }} placement="topLeft">
-            <Button size="small" icon={<HistoryOutlined />}>
-              Recent
-            </Button>
-          </Dropdown>
+          {/* Inject Button */}
+          <Button 
+            size="small" 
+            icon={<PlusOutlined />}
+            disabled={!selectedCommand}
+            onClick={() => {
+              const command = subagentsForCategory.find(cmd => cmd.title === selectedCommand);
+              if (command) {
+                injectSubagentCommand(command.subcommand);
+              }
+            }}
+          >
+            Inject
+          </Button>
 
           <div className="flex-1" />
 
-          <Tooltip title="Explain this code in detail, including its purpose and how it works">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Explain this code in detail, including its purpose and how it works:
-            </span>
-          </Tooltip>
+          {selectedCommand && (
+            <Tooltip title={subagentsForCategory.find(cmd => cmd.title === selectedCommand)?.subcommand}>
+              <span className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                {subagentsForCategory.find(cmd => cmd.title === selectedCommand)?.subcommand}
+              </span>
+            </Tooltip>
+          )}
         </div>
 
         {/* Input Area */}
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <div className="flex-1">
             <TextArea
               ref={textAreaRef}
@@ -169,12 +182,18 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled || loading}
-              autoSize={{ minRows: 2, maxRows: 8 }}
+              autoSize={{ minRows: 3, maxRows: 8 }}
               className="resize-none"
+              style={{
+                borderRadius: '8px',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                padding: '12px 16px'
+              }}
             />
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <Tooltip title="Submit Question">
               <Button
                 type="primary"
@@ -183,6 +202,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 loading={loading}
                 disabled={!message.trim() || disabled}
                 className="!bg-purple-600 !border-purple-600 hover:!bg-purple-700"
+                style={{
+                  borderRadius: '8px',
+                  height: '50px',
+                  fontWeight: 600
+                }}
               >
                 Submit Question
               </Button>
@@ -204,7 +228,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
           Press Enter to send • Shift+Enter for new line • Use quick commands for better results
         </div>
-      </div>
     </div>
   );
 };

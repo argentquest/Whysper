@@ -26,24 +26,12 @@ from schemas import (
     ConversationSummaryModel,
 )
 from common.logger import get_logger
+from app.utils.session_utils import session_summary_model
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
-def _session_summary_model(session) -> ConversationSummaryModel:
-    """Convert session summary to response model."""
-    summary = session.get_summary()
-    return ConversationSummaryModel(
-        conversation_id=summary.conversation_id,
-        provider=summary.provider,
-        selected_model=summary.selected_model,
-        selected_directory=summary.selected_directory,
-        selected_files=summary.selected_files,
-        persistent_files=summary.persistent_files,
-        question_history=summary.question_history,
-        conversation_history=summary.conversation_history,
-    )
 
 
 @router.post("/conversations/{conversation_id}/directory", response_model=SetDirectoryResponse)
@@ -60,15 +48,15 @@ def set_directory(conversation_id: str, request: SetDirectoryRequest):
         raise HTTPException(status_code=400, detail=message)
 
     metadata = file_service.scan_directory(request.path)
-    summary_model = _session_summary_model(session)
+    summary_model = session_summary_model(session)
     return SetDirectoryResponse(
         directory=request.path,
         files=metadata,
         message=message,
         summary=summary_model,
     )
-
-
+    logger.info(f"Set directory to {request.path} completed for conversation: {conversation_id}")
+    
 @router.post("/conversations/{conversation_id}/files", response_model=ConversationSummaryModel)
 def update_files(conversation_id: str, request: UpdateFilesRequest):
     logger.debug(f"update_files endpoint started for conversation_id: {conversation_id}")
@@ -82,11 +70,10 @@ def update_files(conversation_id: str, request: UpdateFilesRequest):
         request.selected_files,
         make_persistent=request.persistent,
     )
-    return _session_summary_model(session)
+    return session_summary_model(session)
 
 
 @router.post("/scan", response_model=DirectoryScanResponse)
-    logger.debug("scan_directory endpoint started")
 def scan_directory(request: DirectoryScanRequest):
     """
     Scan a directory for files and build a file tree.
@@ -111,8 +98,8 @@ def scan_directory(request: DirectoryScanRequest):
 
 
 @router.post("/content", response_model=FileContentResponse)
-    logger.debug("get_file_content endpoint started")
 def get_file_content(request: FileContentRequest):
+    logger.debug("get_file_content endpoint started")
     """
     Read and combine content from multiple files.
     
@@ -122,7 +109,10 @@ def get_file_content(request: FileContentRequest):
     try:
         combined = file_service.read_files(request.files)
     except Exception as exc:
+        logger.error(f"Error reading files: {exc}", files=request.files)
         raise HTTPException(status_code=400, detail=str(exc))
+    
+    logger.info(f"Successfully read and combined {len(request.files)} files.")
     return FileContentResponse(combinedContent=combined)
 
 
@@ -196,6 +186,9 @@ def get_files(directory: str = None, recursive: bool = True):
             env_vars = env_manager.load_env_file()
             directory = env_vars.get("CODE_PATH", ".")
         
+        # Normalize the path for Windows compatibility
+        directory = os.path.normpath(os.path.abspath(directory))
+        
         # Validate directory exists
         if not os.path.exists(directory):
             raise HTTPException(
@@ -228,7 +221,11 @@ def get_files(directory: str = None, recursive: bool = True):
                     if dir_path == base_path:
                         relative_path = item
                     else:
-                        relative_path = os.path.relpath(item_path, base_path).replace('\\', '/')
+                        try:
+                            relative_path = os.path.relpath(item_path, base_path).replace('\\', '/')
+                        except ValueError:
+                            # Fallback if relpath fails on Windows
+                            relative_path = item_path.replace(base_path, '').lstrip('\\').lstrip('/').replace('\\', '/')
                     
                     if os.path.isfile(item_path):
                         try:

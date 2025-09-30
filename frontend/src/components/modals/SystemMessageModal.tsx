@@ -2,17 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, Button, Space, Typography, message, Tabs } from 'antd';
 import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
+import ApiService from '../../services/api';
 
 const { TextArea } = Input;
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
+interface Agent {
+  name: string;
+  title: string;
+  description: string;
+  category: string[];
+  filename: string;
+}
+
 interface SystemMessageModalProps {
   open: boolean;
   onCancel: () => void;
   onSave: (systemMessage: string) => void;
   currentSystemMessage?: string;
+  currentAgent?: string;
 }
 
 export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
@@ -20,69 +30,56 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   onCancel,
   onSave,
   currentSystemMessage = '',
+  currentAgent = '',
 }) => {
   const [form] = Form.useForm();
-  const [activeTemplate, setActiveTemplate] = useState<string>('');
+  const [activeTemplate, setActiveTemplate] = useState<string>(currentAgent);
   const [customMessage, setCustomMessage] = useState(currentSystemMessage);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  // Load agents from backend
   useEffect(() => {
+    const loadAgents = async () => {
+      try {
+        setLoading(true);
+        const response = await ApiService.getAgents();
+        if (response.success && response.data) {
+          setAgents(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load agents:', error);
+        message.error('Failed to load agent prompts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (open) {
+      loadAgents();
       setCustomMessage(currentSystemMessage);
+      setActiveTemplate(currentAgent);
       form.setFieldValue('systemMessage', currentSystemMessage);
     }
-  }, [open, currentSystemMessage, form]);
+  }, [open, currentSystemMessage, currentAgent, form]);
 
-  const systemTemplates = [
-    {
-      name: 'Default Assistant',
-      value: 'default',
-      description: 'General-purpose AI assistant',
-      message: 'You are a helpful AI assistant. Provide clear, accurate, and helpful responses to user questions.',
-    },
-    {
-      name: 'Code Expert',
-      value: 'coding',
-      description: 'Specialized in programming and software development',
-      message: 'You are an expert software developer and code reviewer. Analyze code thoroughly, suggest improvements, identify bugs, and provide best practices. Always explain your reasoning and include code examples when helpful.',
-    },
-    {
-      name: 'Documentation Writer',
-      value: 'documentation',
-      description: 'Focused on creating clear documentation',
-      message: 'You are a technical documentation specialist. Create clear, comprehensive documentation that is easy to understand. Include examples, use cases, and step-by-step instructions. Structure information logically and use appropriate formatting.',
-    },
-    {
-      name: 'Code Reviewer',
-      value: 'reviewer',
-      description: 'Thorough code review and quality analysis',
-      message: 'You are a senior code reviewer. Analyze code for:\n\n1. **Functionality** - Does it work correctly?\n2. **Security** - Are there vulnerabilities?\n3. **Performance** - Can it be optimized?\n4. **Maintainability** - Is it clean and readable?\n5. **Best Practices** - Follow coding standards?\n\nProvide specific, actionable feedback with examples.',
-    },
-    {
-      name: 'Debugging Assistant',
-      value: 'debugging',
-      description: 'Help identify and fix bugs',
-      message: 'You are a debugging expert. Help identify bugs by:\n\n1. Analyzing error messages and stack traces\n2. Examining code logic and flow\n3. Suggesting debugging techniques\n4. Providing step-by-step troubleshooting\n5. Offering preventive measures\n\nAlways ask clarifying questions when needed.',
-    },
-    {
-      name: 'Architecture Advisor',
-      value: 'architecture',
-      description: 'Software architecture and design guidance',
-      message: 'You are a software architecture expert. Provide guidance on:\n\n1. **System Design** - Scalable and maintainable architectures\n2. **Design Patterns** - Appropriate pattern selection\n3. **Technology Choices** - Framework and tool recommendations\n4. **Performance** - Optimization strategies\n5. **Security** - Secure design principles\n\nConsider trade-offs and provide multiple options when applicable.',
-    },
-    {
-      name: 'Refactoring Specialist',
-      value: 'refactoring',
-      description: 'Code improvement and modernization',
-      message: 'You are a refactoring specialist. Help improve code by:\n\n1. **Code Quality** - Remove code smells and technical debt\n2. **Readability** - Make code more understandable\n3. **Performance** - Optimize bottlenecks\n4. **Modularity** - Improve code organization\n5. **Modern Practices** - Update to current standards\n\nShow before and after examples with explanations.',
-    },
-  ];
-
-  const handleTemplateChange = (templateValue: string) => {
-    const template = systemTemplates.find(t => t.value === templateValue);
-    if (template) {
-      setActiveTemplate(templateValue);
-      setCustomMessage(template.message);
-      form.setFieldValue('systemMessage', template.message);
+  const handleTemplateChange = async (agentName: string) => {
+    const agent = agents.find(a => a.name === agentName);
+    if (agent) {
+      setActiveTemplate(agentName);
+      setLoading(true);
+      try {
+        const response = await ApiService.getAgentPrompt(agent.filename);
+        if (response.success && response.data) {
+          setCustomMessage(response.data.content);
+          form.setFieldValue('systemMessage', response.data.content);
+        }
+      } catch (error) {
+        console.error('Failed to load agent content:', error);
+        message.error('Failed to load agent content');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -106,38 +103,43 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   };
 
   const handleReset = () => {
-    const defaultTemplate = systemTemplates[0];
-    setActiveTemplate(defaultTemplate.value);
-    setCustomMessage(defaultTemplate.message);
-    form.setFieldValue('systemMessage', defaultTemplate.message);
+    if (agents.length > 0) {
+      const defaultAgent = agents[0];
+      handleTemplateChange(defaultAgent.name);
+    }
   };
 
   return (
     <Modal
-      title="System Message Configuration"
+      title="Agent Prompt Configuration"
       open={open}
       onCancel={onCancel}
       onOk={handleSave}
       width={800}
-      okText="Save System Message"
+      okText="Save Agent Prompt"
       cancelText="Cancel"
+      confirmLoading={loading}
     >
-      <Tabs defaultActiveKey="templates">
-        <TabPane tab="Templates" key="templates">
+      <Tabs defaultActiveKey="agents">
+        <TabPane tab="Agent Prompts" key="agents">
           <div className="space-y-4">
             <div>
-              <Text className="block mb-2 font-medium">Choose a Template:</Text>
+              <Text className="block mb-2 font-medium">Choose an Agent:</Text>
               <Select
                 value={activeTemplate}
                 onChange={handleTemplateChange}
-                placeholder="Select a system message template"
+                placeholder="Select an agent prompt"
                 className="w-full"
+                loading={loading}
               >
-                {systemTemplates.map(template => (
-                  <Option key={template.value} value={template.value}>
+                {agents.map(agent => (
+                  <Option key={agent.name} value={agent.name}>
                     <div>
-                      <div className="font-medium">{template.name}</div>
-                      <div className="text-xs text-gray-500">{template.description}</div>
+                      <div className="font-medium">{agent.title}</div>
+                      <div className="text-xs text-gray-500">{agent.description}</div>
+                      <div className="text-xs text-blue-500">
+                        {agent.category.length > 0 && `Categories: ${agent.category.join(', ')}`}
+                      </div>
                     </div>
                   </Option>
                 ))}
@@ -205,24 +207,27 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
           </Form>
         </TabPane>
 
-        <TabPane tab="Examples" key="examples">
+        <TabPane tab="Available Agents" key="examples">
           <div className="space-y-4">
-            <Title level={5}>System Message Examples</Title>
+            <Title level={5}>Available Agent Prompts</Title>
             
-            {systemTemplates.slice(1).map((template) => (
-              <div key={template.value} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            {agents.map((agent) => (
+              <div key={agent.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <Text strong>{template.name}</Text>
-                    <Text type="secondary" className="block text-sm">{template.description}</Text>
+                    <Text strong>{agent.title}</Text>
+                    <Text type="secondary" className="block text-sm">{agent.description}</Text>
+                    {agent.category.length > 0 && (
+                      <Text type="secondary" className="block text-xs">
+                        Categories: {agent.category.join(', ')}
+                      </Text>
+                    )}
                   </div>
                   <Space>
                     <Button
                       size="small"
-                      onClick={() => {
-                        setCustomMessage(template.message);
-                        form.setFieldValue('systemMessage', template.message);
-                      }}
+                      onClick={() => handleTemplateChange(agent.name)}
+                      loading={loading}
                     >
                       Use This
                     </Button>
@@ -230,12 +235,21 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                       type="link"
                       size="small"
                       icon={<CopyOutlined />}
-                      onClick={() => handleCopy(template.message)}
+                      onClick={async () => {
+                        try {
+                          const response = await ApiService.getAgentPrompt(agent.filename);
+                          if (response.success && response.data) {
+                            await handleCopy(response.data.content);
+                          }
+                        } catch (error) {
+                          message.error('Failed to copy agent content');
+                        }
+                      }}
                     />
                   </Space>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">
-                  {template.message}
+                <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                  <Text type="secondary">File: {agent.filename}</Text>
                 </div>
               </div>
             ))}
