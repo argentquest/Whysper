@@ -30,6 +30,7 @@ from fastapi import APIRouter, HTTPException
 # Common library imports for conversation management
 from app.core.config import load_env_defaults              # Environment configuration
 from app.services.conversation_service import conversation_manager
+from app.services.history_service import history_service   # History logging service
 
 # Pydantic schema imports for request/response validation
 from schemas import (
@@ -197,13 +198,22 @@ def send_chat_message(request: dict):
         
         # Convert result to frontend-compatible format
         import time
+        
+        # Clean response content by removing system reminders
+        response_content = result.get("response", "")
+        if "<system-reminder>" in response_content:
+            # Remove system reminder blocks
+            import re
+            response_content = re.sub(r'<system-reminder>.*?</system-reminder>', '', response_content, flags=re.DOTALL)
+            logger.debug("Removed system-reminder content from AI response")
+        
         # Extract detailed token usage information
         token_usage = result.get("token_usage", {})
         
         response_message = {
             "id": f"msg_{int(time.time())}_{uuid.uuid4().hex[:8]}",
             "role": "assistant",
-            "content": result.get("response", ""),
+            "content": response_content,
             "timestamp": result.get("timestamp", time.strftime("%Y-%m-%d %H:%M:%S")),
             "metadata": {
                 "model": result.get("modelUsed", model),
@@ -221,6 +231,52 @@ def send_chat_message(request: dict):
             "conversationId": conversation_id,
             "debug": "FROM_MAIN_CHAT_ENDPOINT"  # Temporary debug marker
         }
+        
+        # Log conversation history to file
+        try:
+            # Create user message structure
+            user_message = {
+                "id": f"msg_{int(time.time())}_{uuid.uuid4().hex[:8]}_user",
+                "role": "user", 
+                "content": message,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "metadata": {
+                    "context_files": context_files,
+                    "settings": settings
+                }
+            }
+            
+            # Load existing conversation history to accumulate messages
+            existing_history = history_service.load_conversation_history(conversation_id)
+            if existing_history and "messages" in existing_history:
+                # Append new messages to existing ones
+                all_messages = existing_history["messages"] + [user_message, response_message]
+            else:
+                # First messages in conversation
+                all_messages = [user_message, response_message]
+            
+            # Save complete conversation history with metadata
+            history_metadata = {
+                "provider": provider,
+                "model": model,
+                "session_id": conversation_id,
+                "context_files_count": len(context_files),
+                "has_agent_prompt": bool(agent_prompt)
+            }
+            
+            success = history_service.save_conversation_history(
+                conversation_id=conversation_id,
+                messages=all_messages,
+                metadata=history_metadata
+            )
+            
+            if success:
+                logger.debug(f"✅ Conversation history saved for {conversation_id} ({len(all_messages)} total messages)")
+            else:
+                logger.warning(f"⚠️ Failed to save conversation history for {conversation_id}")
+                
+        except Exception as hist_error:
+            logger.error(f"❌ Error saving conversation history: {hist_error}")
         
         logger.info(f"AI response generated successfully for conversation {conversation_id}")
         return response
@@ -345,3 +401,61 @@ def import_conversation(request: ImportConversationRequest):
     
     logger.info(f"Imported conversation: {session.session_id}")
     return _conversation_state_response(session)
+
+
+@router.get("/conversations/history")
+def list_conversation_histories():
+    """List all conversation history files."""
+    logger.debug("list_conversation_histories endpoint called")
+    try:
+        histories = history_service.list_conversation_histories()
+        return {
+            "success": True,
+            "data": histories,
+            "count": len(histories)
+        }
+    except Exception as e:
+        logger.error(f"Failed to list conversation histories: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list histories: {str(e)}")
+
+
+@router.get("/conversations/{conversation_id}/history")
+def get_conversation_history(conversation_id: str):
+    """Get conversation history for a specific conversation."""
+    logger.debug(f"get_conversation_history endpoint called for: {conversation_id}")
+    try:
+        history = history_service.load_conversation_history(conversation_id)
+        if history:
+            return {
+                "success": True,
+                "data": history
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Conversation history not found"
+            }
+    except Exception as e:
+        logger.error(f"Failed to get conversation history for {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get history: {str(e)}")
+
+
+@router.delete("/conversations/{conversation_id}/history")
+def delete_conversation_history(conversation_id: str):
+    """Delete conversation history for a specific conversation."""
+    logger.debug(f"delete_conversation_history endpoint called for: {conversation_id}")
+    try:
+        success = history_service.delete_conversation_history(conversation_id)
+        if success:
+            return {
+                "success": True,
+                "message": "Conversation history deleted successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Conversation history not found"
+            }
+    except Exception as e:
+        logger.error(f"Failed to delete conversation history for {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete history: {str(e)}")

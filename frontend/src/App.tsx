@@ -292,6 +292,7 @@ function App() {
 
       if (response.success && response.data) {
         const assistantMessage = response.data.message;
+        console.log('📨 Received assistant message:', assistantMessage);
         
         // Update conversation with assistant response
         const finalConversation = {
@@ -300,6 +301,7 @@ function App() {
           updatedAt: new Date().toISOString(),
         };
 
+        console.log('💬 Final conversation state:', finalConversation);
         setConversations(prev => ({
           ...prev,
           [conversation.id]: finalConversation,

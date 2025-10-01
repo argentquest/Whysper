@@ -103,8 +103,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
 
   return (
-    <div className="max-w-4xl mx-auto">
-        {/* Subagent Commands Row */}
+    <div className="w-full px-6">
+        {/* First Row: Subagent Commands + Submit/Clear Buttons */}
         <div className="flex items-center gap-3 mb-3">
           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
             Inject Command:
@@ -163,13 +163,31 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
           <div className="flex-1" />
 
-          {selectedCommand && (
-            <Tooltip title={subagentsForCategory.find(cmd => cmd.title === selectedCommand)?.subcommand}>
-              <span className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                {subagentsForCategory.find(cmd => cmd.title === selectedCommand)?.subcommand}
-              </span>
+          {/* Submit and Clear Buttons */}
+          <div className="flex gap-2">
+            <Tooltip title="Submit Question">
+              <Button
+                icon={<SendOutlined />}
+                onClick={handleSend}
+                loading={loading}
+                disabled={!message.trim() || disabled}
+                size="small"
+              >
+                Submit
+              </Button>
             </Tooltip>
-          )}
+
+            <Tooltip title="Clear">
+              <Button
+                icon={<ClearOutlined />}
+                onClick={handleClear}
+                disabled={loading}
+                size="small"
+              >
+                Clear
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
         {/* Input Area */}
@@ -192,41 +210,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               }}
             />
           </div>
-
-          <div className="flex flex-col gap-3">
-            <Tooltip title="Submit Question">
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleSend}
-                loading={loading}
-                disabled={!message.trim() || disabled}
-                className="!bg-purple-600 !border-purple-600 hover:!bg-purple-700"
-                style={{
-                  borderRadius: '8px',
-                  height: '50px',
-                  fontWeight: 600
-                }}
-              >
-                Submit Question
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="Clear">
-              <Button
-                icon={<ClearOutlined />}
-                onClick={handleClear}
-                disabled={loading}
-              >
-                Clear
-              </Button>
-            </Tooltip>
-          </div>
-        </div>
-
-        {/* Helper Text */}
-        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-          Press Enter to send • Shift+Enter for new line • Use quick commands for better results
         </div>
     </div>
   );

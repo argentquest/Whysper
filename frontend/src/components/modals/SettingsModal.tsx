@@ -90,26 +90,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setSaving(true);
       const values = await form.validateFields();
       
-      // Map form values back to backend environment format
+      console.log('💾 Raw form values:', values);
+      
+      // Map form values back to backend environment format with proper null checks
       const backendSettings = {
-        LANGUAGE: values.language,
+        LANGUAGE: values.language || 'en',
         AUTO_SAVE_CONVERSATIONS: values.autoSaveConversations ? 'true' : 'false',
         SHOW_LINE_NUMBERS: values.showLineNumbers ? 'true' : 'false',
-        PROVIDER: values.provider,
-        DEFAULT_MODEL: values.model,
-        API_KEY: values.apiKey,
-        BASE_URL: values.baseUrl,
-        MAX_TOKENS: values.maxTokens.toString(),
-        TEMPERATURE: values.temperature.toString(),
-        SYSTEM_PROMPT: values.systemPrompt,
+        PROVIDER: values.provider || 'openrouter',
+        DEFAULT_MODEL: values.model || '',
+        API_KEY: values.apiKey || '',
+        BASE_URL: values.baseUrl || '',
+        MAX_TOKENS: (values.maxTokens ?? 4000).toString(),
+        TEMPERATURE: (values.temperature ?? 0.7).toString(),
+        SYSTEM_PROMPT: values.systemPrompt || '',
         ENABLE_STREAMING: values.enableStreaming ? 'true' : 'false',
-        REQUEST_TIMEOUT: values.requestTimeout.toString(),
-        RETRY_ATTEMPTS: values.retryAttempts.toString(),
+        REQUEST_TIMEOUT: (values.requestTimeout ?? 30).toString(),
+        RETRY_ATTEMPTS: (values.retryAttempts ?? 3).toString(),
         DEBUG_LOGGING: values.debugLogging ? 'true' : 'false',
         SHOW_TOKEN_USAGE: values.showTokenUsage ? 'true' : 'false',
       };
       
+      console.log('📤 Backend settings to send:', backendSettings);
+      
       const response = await ApiService.updateEnvSettings(backendSettings);
+      console.log('📥 Backend response:', response);
+      
       if (response.success) {
         onSave(values);
         message.success('Settings saved successfully');
@@ -118,6 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         message.error(response.error || 'Failed to save settings');
       }
     } catch (error: unknown) {
+      console.error('💥 Error saving settings:', error);
       if (error && typeof error === 'object' && 'errorFields' in error) {
         message.error('Please correct the validation errors');
       } else {

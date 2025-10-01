@@ -284,7 +284,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 backgroundColor: '#fafbfc',
                 maxHeight: '500px',
                 overflowY: 'auto',
-                lineHeight: '1.7',
+                lineHeight: '1.2',
                 fontSize: '15px'
               }}
             />
@@ -374,7 +374,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full px-0">
         {messages.map((message) => (
           <MessageItem
             key={message.id}
