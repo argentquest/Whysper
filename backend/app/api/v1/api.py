@@ -8,7 +8,7 @@ included in the main FastAPI application.
 Architecture:
 - Each functional area has its own endpoint module (chat, code, mermaid, etc.)
 - This module aggregates them with proper URL prefixes and OpenAPI tags
-- Provides consistent error responses and documentation structure
+- Provides consistent error responses and documentation structures
 
 Router Organization:
 - /system: Health checks, version info, root endpoint

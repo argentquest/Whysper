@@ -24,6 +24,11 @@ from schemas import (
     TopFoldersResponse,
     UpdateFilesRequest,
     ConversationSummaryModel,
+    FileSaveRequest,
+    FileSaveResponse,
+    FileReadResponse,
+    FileCreateRequest,
+    FileCreateResponse,
 )
 from common.logger import get_logger
 from app.utils.session_utils import session_summary_model
@@ -161,6 +166,232 @@ def get_top_folders():
                 status_code=404,
                 detail=f"CODE_PATH directory not found: {code_path}",
             )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/read/{file_path:path}", response_model=FileReadResponse)
+def read_single_file(file_path: str):
+    """
+    Read content from a single file for editing.
+    
+    This endpoint reads the content of a specific file and returns it
+    for the file editor interface.
+    
+    Args:
+        file_path: Relative path to the file to read
+    """
+    try:
+        import os
+        from common.env_manager import env_manager
+        
+        # Get the base directory from CODE_PATH
+        env_vars = env_manager.load_env_file()
+        base_directory = env_vars.get("CODE_PATH", ".")
+        
+        # Construct full file path
+        full_path = os.path.normpath(os.path.join(base_directory, file_path))
+        
+        # Security check: ensure file is within the base directory
+        if not full_path.startswith(os.path.normpath(base_directory)):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: File path outside allowed directory"
+            )
+        
+        # Check if file exists
+        if not os.path.exists(full_path):
+            raise HTTPException(
+                status_code=404,
+                detail=f"File not found: {file_path}"
+            )
+        
+        if not os.path.isfile(full_path):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Path is not a file: {file_path}"
+            )
+        
+        # Read file content
+        try:
+            with open(full_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            # Try with different encoding for binary files
+            try:
+                with open(full_path, 'r', encoding='latin-1') as f:
+                    content = f.read()
+            except Exception:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Unable to read file: unsupported encoding or binary file"
+                )
+        except PermissionError:
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied: cannot read file"
+            )
+        
+        return FileReadResponse(
+            success=True,
+            data={
+                "path": file_path,
+                "content": content,
+                "size": len(content)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/save", response_model=FileSaveResponse)
+def save_file(request: FileSaveRequest):
+    """
+    Save content to a file.
+    
+    This endpoint saves the provided content to the specified file path,
+    creating directories if necessary.
+    
+    Expected request body:
+    {
+        "path": "relative/file/path.py",
+        "content": "file content here"
+    }
+    """
+    try:
+        import os
+        from common.env_manager import env_manager
+        
+        file_path = request.path
+        content = request.content
+        
+        # Get the base directory from CODE_PATH
+        env_vars = env_manager.load_env_file()
+        base_directory = env_vars.get("CODE_PATH", ".")
+        
+        # Construct full file path
+        full_path = os.path.normpath(os.path.join(base_directory, file_path))
+        
+        # Security check: ensure file is within the base directory
+        if not full_path.startswith(os.path.normpath(base_directory)):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: File path outside allowed directory"
+            )
+        
+        # Create directory if it doesn't exist
+        directory = os.path.dirname(full_path)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        
+        # Write file content
+        try:
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+        except PermissionError:
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied: cannot write to file"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error writing file: {str(e)}"
+            )
+        
+        logger.info(f"Successfully saved file: {file_path}")
+        return FileSaveResponse(
+            success=True,
+            message=f"File saved successfully: {file_path}",
+            data={
+                "path": file_path,
+                "size": len(content)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/create", response_model=FileCreateResponse)
+def create_new_file(request: FileCreateRequest):
+    """
+    Create a new file with optional initial content.
+    
+    This endpoint creates a new file at the specified path with optional
+    initial content. It will create directories if they don't exist.
+    
+    Expected request body:
+    {
+        "path": "relative/file/path.py",
+        "content": "optional initial content"
+    }
+    """
+    try:
+        import os
+        from common.env_manager import env_manager
+        
+        file_path = request.path
+        content = request.content
+        
+        # Get the base directory from CODE_PATH
+        env_vars = env_manager.load_env_file()
+        base_directory = env_vars.get("CODE_PATH", ".")
+        
+        # Construct full file path
+        full_path = os.path.normpath(os.path.join(base_directory, file_path))
+        
+        # Security check: ensure file is within the base directory
+        if not full_path.startswith(os.path.normpath(base_directory)):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: File path outside allowed directory"
+            )
+        
+        # Check if file already exists
+        if os.path.exists(full_path):
+            raise HTTPException(
+                status_code=409,
+                detail=f"File already exists: {file_path}"
+            )
+        
+        # Create directory if it doesn't exist
+        directory = os.path.dirname(full_path)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        
+        # Create the new file
+        try:
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+        except PermissionError:
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied: cannot create file"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error creating file: {str(e)}"
+            )
+        
+        logger.info(f"Successfully created file: {file_path}")
+        return FileCreateResponse(
+            success=True,
+            message=f"File created successfully: {file_path}",
+            data={
+                "path": file_path,
+                "size": len(content)
+            }
+        )
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

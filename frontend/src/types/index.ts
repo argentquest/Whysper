@@ -46,6 +46,10 @@ export interface Tab {
   title: string;
   isActive: boolean;
   isDirty: boolean;
+  type: 'chat' | 'file';
+  filePath?: string;
+  fileContent?: string;
+  originalContent?: string;
 }
 
 export interface AppSettings {
@@ -106,4 +110,24 @@ export interface SubagentCommand {
   category: string;
   title: string;
   subcommand: string;
+}
+
+export interface FileContent {
+  path: string;
+  content: string;
+  size: number;
+}
+
+export interface FileSaveRequest {
+  path: string;
+  content: string;
+}
+
+export interface FileSaveResponse {
+  success: boolean;
+  message: string;
+  data: {
+    path: string;
+    size: number;
+  };
 }

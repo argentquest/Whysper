@@ -27,7 +27,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 // Ant Design UI components
 import { Layout, message, Modal, Button } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
 
 // Layout components
 import { Header } from './components/layout/Header';
@@ -43,8 +43,13 @@ import {
   AboutModal,        // Application information and version details
   SystemMessageModal,// System prompt customization
   CodeFragmentsModal,// Extracted code blocks management
+  FileSelectionModal, // File selection for editing
+  NewFileModal,       // New file creation modal
 } from './components/modals';
 import ThemePickerModal from './components/modals/ThemePickerModal';
+
+// File editor components
+import { FileEditorView } from './components/editor/FileEditorView';
 
 // Theme management
 import { useTheme } from './themes';
@@ -109,6 +114,8 @@ function App() {
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
   const [mermaidModalOpen, setMermaidModalOpen] = useState(false);          // Mermaid diagram display modal
+  const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
+  const [newFileModalOpen, setNewFileModalOpen] = useState(false);         // New file creation modal
   const [mermaidImageData, setMermaidImageData] = useState<string>('');     // Rendered mermaid diagram data
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
@@ -200,6 +207,7 @@ function App() {
       title: 'Chat 1',               // Display name in tab bar
       isActive: true,                 // This tab is currently active
       isDirty: false,                 // No unsaved changes yet
+      type: 'chat',                   // This is a chat tab
     };
 
     // Create the initial empty conversation
@@ -460,6 +468,115 @@ function App() {
     return systemPrompts[systemType] || systemPrompts.default;
   };
 
+  // ==================== File Editor Functions ====================
+  
+  // Handle file selection for editing
+  const handleFileSelect = async (file: FileItem) => {
+    const fileTabId = `file-tab-${Date.now()}`;
+    const fileName = file.name;
+    
+    const newFileTab: Tab = {
+      id: fileTabId,
+      conversationId: '', // File tabs don't need conversation IDs
+      title: fileName,
+      isActive: false,
+      isDirty: false,
+      type: 'file',
+      filePath: file.path,
+      fileContent: '', // Will be loaded by FileEditorView
+      originalContent: '', // Will be set when content is loaded
+    };
+
+    setTabs(prev => [...prev, newFileTab]);
+    setActiveTabId(fileTabId);
+    message.success(`Opened ${fileName} for editing`);
+  };
+
+  // Handle file content change in editor
+  const handleFileContentChange = (tabId: string, content: string, isDirty: boolean) => {
+    setTabs(prev => prev.map(tab => 
+      tab.id === tabId 
+        ? { 
+            ...tab, 
+            fileContent: content, 
+            isDirty,
+            // If this is the first load (not dirty), set originalContent to the content
+            originalContent: !isDirty && !tab.originalContent ? content : tab.originalContent
+          } 
+        : tab
+    ));
+  };
+
+  // Handle file save
+  const handleFileSave = async (tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab || tab.type !== 'file' || !tab.filePath || !tab.fileContent) {
+      throw new Error('Invalid file tab or missing content');
+    }
+
+    try {
+      const response = await ApiService.post('/files/save', {
+        path: tab.filePath,
+        content: tab.fileContent,
+      });
+
+      if (response.data?.success) {
+        // Update tab to mark as saved and update original content
+        setTabs(prev => prev.map(t => 
+          t.id === tabId 
+            ? { ...t, isDirty: false, originalContent: tab.fileContent } 
+            : t
+        ));
+      } else {
+        throw new Error(response.data?.message || 'Save failed');
+      }
+    } catch (error: any) {
+      console.error('Error saving file:', error);
+      throw error; // Re-throw to be handled by FileEditorView
+    }
+  };
+
+  // Handle new file creation
+  const handleCreateNewFile = async (filePath: string, initialContent: string = '') => {
+    try {
+      const response = await ApiService.post('/files/create', {
+        path: filePath,
+        content: initialContent,
+      });
+
+      if (response.data?.success) {
+        // Create a new file tab
+        const fileName = filePath.split('/').pop() || filePath;
+        const fileTabId = `file-tab-${Date.now()}`;
+        
+        const newFileTab: Tab = {
+          id: fileTabId,
+          conversationId: '',
+          title: fileName,
+          isActive: false,
+          isDirty: false,
+          type: 'file',
+          filePath: filePath,
+          fileContent: initialContent,
+          originalContent: initialContent,
+        };
+
+        setTabs(prev => [...prev, newFileTab]);
+        setActiveTabId(fileTabId);
+        message.success(`Created new file: ${filePath}`);
+        
+        return true;
+      } else {
+        throw new Error(response.data?.message || 'File creation failed');
+      }
+    } catch (error: any) {
+      console.error('Error creating file:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create file';
+      message.error(`Failed to create file: ${errorMessage}`);
+      throw error;
+    }
+  };
+
   // Tab management
   const handleTabChange = (tabId: string) => {
     setActiveTabId(tabId);
@@ -475,6 +592,7 @@ function App() {
       title: `Chat ${tabs.length + 1}`,
       isActive: false,
       isDirty: false,
+      type: 'chat',
     };
 
     const newConversation: Conversation = {
@@ -493,6 +611,58 @@ function App() {
   const handleTabClose = (tabId: string) => {
     if (tabs.length <= 1) return;
 
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
+
+    // If tab is dirty (has unsaved changes), show confirmation dialog
+    if (tab.isDirty) {
+      const fileName = tab.type === 'file' ? tab.title : tab.title;
+      
+      Modal.confirm({
+        title: 'Unsaved Changes',
+        content: (
+          <div>
+            <p>The file <strong>{fileName}</strong> has unsaved changes.</p>
+            <p>What would you like to do?</p>
+          </div>
+        ),
+        okText: 'Save & Close',
+        okType: 'primary',
+        cancelText: 'Close Without Saving',
+        width: 500,
+        onOk: async () => {
+          try {
+            // Save the tab first, then close it
+            await handleTabSave(tabId);
+            performTabClose(tabId);
+            message.success('File saved and closed');
+          } catch (error) {
+            // If save fails, don't close the tab
+            console.error('Failed to save before closing:', error);
+            message.error('Failed to save file. Tab not closed.');
+          }
+        },
+        onCancel: () => {
+          // Close without saving
+          performTabClose(tabId);
+          message.info('File closed without saving');
+        },
+        okButtonProps: {
+          icon: <SaveOutlined />,
+        },
+        cancelButtonProps: {
+          danger: true,
+          icon: <CloseOutlined />,
+        },
+      });
+    } else {
+      // Tab is not dirty, close immediately
+      performTabClose(tabId);
+    }
+  };
+
+  // Helper function to perform the actual tab close operation
+  const performTabClose = (tabId: string) => {
     const tabIndex = tabs.findIndex(tab => tab.id === tabId);
     const newTabs = tabs.filter(tab => tab.id !== tabId);
     
@@ -509,21 +679,30 @@ function App() {
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
 
-    const conversation = conversations[tab.conversationId];
-    if (!conversation) return;
-
     try {
-      const response = await ApiService.saveConversation(conversation);
-      if (response.success) {
-        setTabs(prev => prev.map(t => 
-          t.id === tabId ? { ...t, isDirty: false } : t
-        ));
-        message.success('Conversation saved');
+      if (tab.type === 'file') {
+        // Handle file tab save
+        await handleFileSave(tabId);
       } else {
-        message.error(response.error || 'Failed to save conversation');
+        // Handle chat tab save
+        const conversation = conversations[tab.conversationId];
+        if (!conversation) return;
+
+        const response = await ApiService.saveConversation(conversation);
+        if (response.success) {
+          setTabs(prev => prev.map(t => 
+            t.id === tabId ? { ...t, isDirty: false } : t
+          ));
+          message.success('Conversation saved');
+        } else {
+          message.error(response.error || 'Failed to save conversation');
+        }
       }
-    } catch (error) {
-      message.error('Error saving conversation');
+    } catch (error: any) {
+      const errorMessage = tab.type === 'file' 
+        ? 'Error saving file' 
+        : 'Error saving conversation';
+      message.error(errorMessage);
       console.error('Save error:', error);
     }
   };
@@ -564,19 +743,102 @@ function App() {
         
       case 'close-others':
         if (tabId) {
-          setTabs(prev => prev.filter(t => t.id === tabId));
-          setActiveTabId(tabId);
-          message.success('Other tabs closed');
+          const otherTabs = tabs.filter(t => t.id !== tabId);
+          const dirtyOtherTabs = otherTabs.filter(t => t.isDirty);
+          
+          if (dirtyOtherTabs.length > 0) {
+            const fileNames = dirtyOtherTabs.map(t => t.title).join(', ');
+            Modal.confirm({
+              title: 'Unsaved Changes in Other Tabs',
+              content: (
+                <div>
+                  <p>The following tabs have unsaved changes:</p>
+                  <p><strong>{fileNames}</strong></p>
+                  <p>What would you like to do?</p>
+                </div>
+              ),
+              okText: 'Save All & Close Others',
+              cancelText: 'Close Others Without Saving',
+              width: 600,
+              onOk: async () => {
+                try {
+                  // Save all dirty tabs first
+                  for (const tab of dirtyOtherTabs) {
+                    await handleTabSave(tab.id);
+                  }
+                  setTabs(prev => prev.filter(t => t.id === tabId));
+                  setActiveTabId(tabId);
+                  message.success('Other tabs saved and closed');
+                } catch (error) {
+                  message.error('Failed to save some tabs. Operation cancelled.');
+                }
+              },
+              onCancel: () => {
+                setTabs(prev => prev.filter(t => t.id === tabId));
+                setActiveTabId(tabId);
+                message.info('Other tabs closed without saving');
+              },
+            });
+          } else {
+            setTabs(prev => prev.filter(t => t.id === tabId));
+            setActiveTabId(tabId);
+            message.success('Other tabs closed');
+          }
         }
         break;
         
       case 'close-all': {
-        // Keep only one tab
-        const firstTab = tabs[0];
-        if (firstTab) {
-          setTabs([firstTab]);
-          setActiveTabId(firstTab.id);
-          message.success('All tabs closed except current');
+        const dirtyTabs = tabs.filter(t => t.isDirty);
+        
+        if (dirtyTabs.length > 0) {
+          const fileNames = dirtyTabs.map(t => t.title).join(', ');
+          Modal.confirm({
+            title: 'Unsaved Changes in Multiple Tabs',
+            content: (
+              <div>
+                <p>The following tabs have unsaved changes:</p>
+                <p><strong>{fileNames}</strong></p>
+                <p>What would you like to do?</p>
+              </div>
+            ),
+            okText: 'Save All & Close All',
+            cancelText: 'Close All Without Saving',
+            width: 600,
+            onOk: async () => {
+              try {
+                // Save all dirty tabs first
+                for (const tab of dirtyTabs) {
+                  await handleTabSave(tab.id);
+                }
+                // Keep only one tab
+                const firstTab = tabs[0];
+                if (firstTab) {
+                  setTabs([{ ...firstTab, isDirty: false }]);
+                  setActiveTabId(firstTab.id);
+                  message.success('All tabs saved, all but current closed');
+                }
+              } catch (error) {
+                message.error('Failed to save some tabs. Operation cancelled.');
+              }
+            },
+            onCancel: () => {
+              // Keep only one tab
+              const firstTab = tabs[0];
+              if (firstTab) {
+                setTabs([firstTab]);
+                setActiveTabId(firstTab.id);
+                message.info('All tabs closed without saving except current');
+              }
+            },
+          });
+        } else {
+          // Keep only one tab
+          const firstTab = tabs[0];
+          if (firstTab) {
+            setTabs([firstTab]);
+            setActiveTabId(firstTab.id);
+            message.success('All tabs closed except current');
+          }
         }
         break;
       }
@@ -606,6 +868,7 @@ function App() {
           title: conv.title || `Chat ${index + 1}`,
           isActive: index === 0,
           isDirty: false,
+          type: 'chat',
         }));
 
         // Update conversations state
@@ -641,6 +904,7 @@ function App() {
       <Header
         onSetContext={() => setContextModalOpen(true)}
         onNewConversation={handleNewTab}
+        onEditFile={() => setFileSelectionModalOpen(true)}
         onSaveHistory={() => handleTabSave(activeTabId)}
         onLoadHistory={handleLoadHistory}
         onOpenSettings={() => setSettingsModalOpen(true)}
@@ -668,30 +932,43 @@ function App() {
 
       {/* Main Content */}
       <Content className="flex-1 flex flex-col overflow-hidden" style={{ margin: '0', background: 'transparent' }}>
-        <ChatView
-          messages={currentMessages}
-          loading={loading}
-          onExtractCode={(messageId: string) => {
-            const message = currentMessages.find(m => m.id === messageId);
-            if (message) extractCodeFromMessage(message);
-          }}
-          onRenderMermaid={handleRenderMermaid}
-          onShowCode={handleShowCode}
-        />
-        
-        <div style={{ 
-          background: 'white', 
-          borderTop: '1px solid #f0f0f0',
-          boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)',
-          padding: '16px 24px'
-        }}>
-          <InputPanel
-            onSendMessage={handleSendMessage}
-            onClear={handleClearInput}
-            loading={loading}
-            subagentCommands={subagentCommands}
+        {activeTab?.type === 'file' ? (
+          // File Editor View
+          <FileEditorView
+            tab={activeTab}
+            onContentChange={handleFileContentChange}
+            onSave={handleFileSave}
+            theme={theme}
           />
-        </div>
+        ) : (
+          // Chat View
+          <>
+            <ChatView
+              messages={currentMessages}
+              loading={loading}
+              onExtractCode={(messageId: string) => {
+                const message = currentMessages.find(m => m.id === messageId);
+                if (message) extractCodeFromMessage(message);
+              }}
+              onRenderMermaid={handleRenderMermaid}
+              onShowCode={handleShowCode}
+            />
+            
+            <div style={{ 
+              background: 'white', 
+              borderTop: '1px solid #f0f0f0',
+              boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)',
+              padding: '16px 24px'
+            }}>
+              <InputPanel
+                onSendMessage={handleSendMessage}
+                onClear={handleClearInput}
+                loading={loading}
+                subagentCommands={subagentCommands}
+              />
+            </div>
+          </>
+        )}
       </Content>
 
       {/* Status Bar */}
@@ -825,6 +1102,21 @@ function App() {
           </pre>
         </div>
       </Modal>
+
+      {/* File Selection Modal */}
+      <FileSelectionModal
+        open={fileSelectionModalOpen}
+        onCancel={() => setFileSelectionModalOpen(false)}
+        onSelectFile={handleFileSelect}
+        onCreateNewFile={() => setNewFileModalOpen(true)}
+      />
+
+      {/* New File Creation Modal */}
+      <NewFileModal
+        open={newFileModalOpen}
+        onCancel={() => setNewFileModalOpen(false)}
+        onCreateFile={handleCreateNewFile}
+      />
     </Layout>
   );
 }

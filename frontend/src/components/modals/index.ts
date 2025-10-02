@@ -4,3 +4,5 @@ export { default as SettingsModal } from './SettingsModal';
 export { default as AboutModal } from './AboutModal';
 export { default as SystemMessageModal } from './SystemMessageModal';
 export { default as CodeFragmentsModal } from './CodeFragmentsModal';
+export { default as FileSelectionModal } from './FileSelectionModal';
+export { default as NewFileModal } from './NewFileModal';

@@ -16,6 +16,7 @@ import {
   BgColorsOutlined,
   MoreOutlined,
   DownOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 
@@ -26,6 +27,7 @@ const { Option } = Select;
 interface HeaderProps {
   onSetContext: () => void;
   onNewConversation: () => void;
+  onEditFile: () => void;
   onSaveHistory: () => void;
   onLoadHistory: () => void;
   onOpenSettings: () => void;
@@ -43,6 +45,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onSetContext,
   onNewConversation,
+  onEditFile,
   onSaveHistory,
   onLoadHistory,
   onOpenSettings,
@@ -253,6 +256,24 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               New Chat
+            </Button>
+          </Tooltip>
+          
+          <Tooltip title="Edit File">
+            <Button
+              icon={<EditOutlined />}
+              onClick={onEditFile}
+              size="large"
+              style={{
+                borderRadius: '12px',
+                fontWeight: 500,
+                height: '44px',
+                padding: '0 20px',
+                borderColor: '#e2e8f0',
+                color: '#64748b',
+              }}
+            >
+              Edit File
             </Button>
           </Tooltip>
         </div>

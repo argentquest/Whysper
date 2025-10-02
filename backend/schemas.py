@@ -211,3 +211,40 @@ class ChatResponse(BaseModel):
     usage: Optional[dict] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class FileSaveRequest(BaseModel):
+    path: str = Field(..., description="Relative path to the file to save")
+    content: str = Field(..., description="File content to save")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class FileSaveResponse(BaseModel):
+    success: bool
+    message: str
+    data: dict  # Contains path and size info
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class FileReadResponse(BaseModel):
+    success: bool
+    data: dict  # Contains path, content, and size info
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class FileCreateRequest(BaseModel):
+    path: str = Field(..., description="Relative path for the new file")
+    content: str = Field(default="", description="Initial file content (optional)")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class FileCreateResponse(BaseModel):
+    success: bool
+    message: str
+    data: dict  # Contains path and size info
+
+    model_config = ConfigDict(populate_by_name=True)

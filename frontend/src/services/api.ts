@@ -357,6 +357,25 @@ export class ApiService {
       };
     }
   }
+
+  // Generic HTTP methods for file operations
+  static async get(url: string): Promise<any> {
+    try {
+      const response = await api.get(url);
+      return response;
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
+
+  static async post(url: string, data: any): Promise<any> {
+    try {
+      const response = await api.post(url, data);
+      return response;
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
 }
 
 export default ApiService;

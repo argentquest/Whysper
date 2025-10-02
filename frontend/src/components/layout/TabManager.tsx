@@ -113,21 +113,6 @@ export const TabManager: React.FC<TabManagerProps> = ({
                 className="!p-0 !w-4 !h-4 !min-w-0 opacity-60 hover:opacity-100"
               />
             </Dropdown>
-            
-            {tabs.length > 1 && (
-              <Tooltip title="Close Tab">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTabClose(tab.id);
-                  }}
-                  className="!p-0 !w-4 !h-4 !min-w-0 opacity-60 hover:opacity-100"
-                />
-              </Tooltip>
-            )}
           </div>
         </div>
       ),
@@ -152,7 +137,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
           items={tabItems}
           className="flex-1 !mb-0"
           size="small"
-          hideAdd
+          hideAdd={true}
           tabBarStyle={{ margin: 0 }}
         />
         
