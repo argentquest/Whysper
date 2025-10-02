@@ -204,7 +204,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
         """Get descriptions for common environment variables."""
         return {
             "API_KEY": "Your OpenRouter API key (get from https://openrouter.ai/)",
-            "DEFAULT_MODEL": "Default OpenRouter coding model (e.g., x-ai/grok-code-fast-1)",
+            "DEFAULT_MODEL": "Default OpenRouter coding model (e.g., google/gemini-2.5-flash-preview-09-2025)",
             "MODELS": "Available OpenRouter coding models optimized for programming tasks",
             "IGNORE_FOLDERS": "Folders to ignore when scanning codebase (comma-separated)",
             "UI_THEME": "Application theme (light or dark)",

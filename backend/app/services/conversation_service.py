@@ -623,9 +623,25 @@ class ConversationSession:
         else:
             # Default system message for backwards compatibility
             system_message = (
-                "You are a helpful AI assistant that helps with code analysis and development. "
-                "Please provide all responses in clean markdown format without HTML tags. "
-                "Use markdown syntax for formatting (headers, lists, code blocks, etc.).\n\n"
+                "🚨 CRITICAL FORMATTING REQUIREMENT: You MUST respond EXCLUSIVELY in pure markdown format. 🚨\n\n"
+                "You are a helpful AI assistant that helps with code analysis and development.\n\n"
+                "ABSOLUTELY REQUIRED:\n"
+                "- Use ONLY markdown syntax for ALL formatting\n"
+                "- For headers: Use # ## ### (NOT <h1> <h2> <h3>)\n"
+                "- For code blocks: Use ```language syntax (NOT <pre><code>)\n"
+                "- For lists: Use - or 1. syntax (NOT <ul><li>)\n"
+                "- For emphasis: Use **bold** and *italic* (NOT <strong><em>)\n"
+                "- For links: Use [text](url) syntax (NOT <a href>)\n\n"
+                "STRICTLY FORBIDDEN:\n"
+                "- NO HTML tags whatsoever: no <p>, <div>, <span>, <pre>, <code>, <h1-6>, <ul>, <li>, <strong>, <em>, <a>, etc.\n"
+                "- NO HTML entities: no &lt; &gt; &nbsp; etc.\n"
+                "- NO HTML attributes or styling\n\n"
+                "If you include mermaid diagrams, use this EXACT format:\n"
+                "```mermaid\n"
+                "graph TD\n"
+                "    A --> B\n"
+                "```\n\n"
+                "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
                 f"The user has provided the following codebase:\n\n{codebase_content}"
             )
         logger.debug(f"Generated system message: {len(system_message)} characters")
@@ -819,9 +835,25 @@ class ConversationSession:
             else:
                 # Default system message for backwards compatibility
                 system_msg = (
-                    "You are a helpful AI assistant that helps with code analysis and development. "
-                    "Please provide all responses in clean markdown format without HTML tags. "
-                    "Use markdown syntax for formatting (headers, lists, code blocks, etc.).\n\n"
+                    "🚨 CRITICAL FORMATTING REQUIREMENT: You MUST respond EXCLUSIVELY in pure markdown format. 🚨\n\n"
+                    "You are a helpful AI assistant that helps with code analysis and development.\n\n"
+                    "ABSOLUTELY REQUIRED:\n"
+                    "- Use ONLY markdown syntax for ALL formatting\n"
+                    "- For headers: Use # ## ### (NOT <h1> <h2> <h3>)\n"
+                    "- For code blocks: Use ```language syntax (NOT <pre><code>)\n"
+                    "- For lists: Use - or 1. syntax (NOT <ul><li>)\n"
+                    "- For emphasis: Use **bold** and *italic* (NOT <strong><em>)\n"
+                    "- For links: Use [text](url) syntax (NOT <a href>)\n\n"
+                    "STRICTLY FORBIDDEN:\n"
+                    "- NO HTML tags whatsoever: no <p>, <div>, <span>, <pre>, <code>, <h1-6>, <ul>, <li>, <strong>, <em>, <a>, etc.\n"
+                    "- NO HTML entities: no &lt; &gt; &nbsp; etc.\n"
+                    "- NO HTML attributes or styling\n\n"
+                    "If you include mermaid diagrams, use this EXACT format:\n"
+                    "```mermaid\n"
+                    "graph TD\n"
+                    "    A --> B\n"
+                    "```\n\n"
+                    "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
                     f"The user has provided the following codebase:\n\n{codebase_content}"
                 )
             self.app_state.conversation_history.insert(
@@ -839,11 +871,26 @@ class ConversationSession:
         Returns:
             Formatted system message
         """
-        # Add markdown format instruction to agent prompt
+        # Add strong markdown-only format instruction to agent prompt
         markdown_instruction = (
-            "IMPORTANT: Always respond in markdown format. "
-            "Use markdown syntax for all formatting (headers, lists, code blocks, emphasis). "
-            "Do not use HTML tags in your responses.\n\n"
+            "🚨 CRITICAL FORMATTING REQUIREMENT: You MUST respond EXCLUSIVELY in pure markdown format. 🚨\n\n"
+            "ABSOLUTELY REQUIRED:\n"
+            "- Use ONLY markdown syntax for ALL formatting\n"
+            "- For headers: Use # ## ### (NOT <h1> <h2> <h3>)\n"
+            "- For code blocks: Use ```language syntax (NOT <pre><code>)\n"
+            "- For lists: Use - or 1. syntax (NOT <ul><li>)\n"
+            "- For emphasis: Use **bold** and *italic* (NOT <strong><em>)\n"
+            "- For links: Use [text](url) syntax (NOT <a href>)\n\n"
+            "STRICTLY FORBIDDEN:\n"
+            "- NO HTML tags whatsoever: no <p>, <div>, <span>, <pre>, <code>, <h1-6>, <ul>, <li>, <strong>, <em>, <a>, etc.\n"
+            "- NO HTML entities: no &lt; &gt; &nbsp; etc.\n"
+            "- NO HTML attributes or styling\n\n"
+            "If you include mermaid diagrams, use this EXACT format:\n"
+            "```mermaid\n"
+            "graph TD\n"
+            "    A --> B\n"
+            "```\n\n"
+            "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
         )
         
         # Check if agent prompt has a placeholder for codebase content

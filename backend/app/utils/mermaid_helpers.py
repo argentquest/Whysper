@@ -33,36 +33,88 @@ def render_mermaid_diagram(
     Returns:
         Tuple[bool, str, bool]: (success, data_url_or_error, is_fallback)
     """
+    # Decode HTML entities that might be present
+    import html
+    decoded_code = html.unescape(mermaid_code)
+    
     # Create temporary files for rendering
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         mermaid_file = temp_path / "diagram.mmd"
         output_file = temp_path / f"diagram.{output_format}"
         
-        # Write mermaid code to file
-        mermaid_file.write_text(mermaid_code, encoding='utf-8')
+        # Write decoded mermaid code to file
+        mermaid_file.write_text(decoded_code, encoding='utf-8')
         
         # Try rendering methods in order of preference
         
-        # Method 1: mermaid-cli (most reliable)
+        # Method 1: mermaid-py (Python package - most reliable for our setup)
+        success, result = render_with_mermaid_py(decoded_code, output_file, output_format)
+        if success:
+            return True, result, False
+        
+        # Method 2: mermaid-cli (if installed)
         success, result = render_with_mermaid_cli(mermaid_file, output_file)
         if success:
             return True, result, False
         
-        # Method 2: Puppeteer (good compatibility)
-        success, result = render_with_puppeteer(mermaid_code, output_file)
-        if success:
-            return True, result, False
-        
-        # Method 3: Python mermaid (limited support)
-        success, result = render_with_python_mermaid(mermaid_code, output_file)
+        # Method 3: Puppeteer (good compatibility)
+        success, result = render_with_puppeteer(decoded_code, output_file)
         if success:
             return True, result, False
         
         # Method 4: Client-side fallback
         logger.info("All server-side rendering methods failed, using client-side fallback")
-        fallback_data = f"data:text/plain;base64,{base64.b64encode(mermaid_code.encode()).decode()}"
+        fallback_data = f"data:text/plain;base64,{base64.b64encode(decoded_code.encode()).decode()}"
         return True, fallback_data, True
+
+
+def render_with_mermaid_py(mermaid_code: str, output_file: Path, output_format: str) -> Tuple[bool, str]:
+    """Try to render using web-based mermaid rendering service."""
+    try:
+        import requests
+        
+        logger.info("Attempting to render with mermaid web service")
+        
+        # Use mermaid.ink web service for rendering
+        # This is a free service that renders mermaid diagrams
+        encoded_code = base64.b64encode(mermaid_code.encode('utf-8')).decode('ascii')
+        
+        if output_format.lower() == 'svg':
+            # For SVG output
+            url = f"https://mermaid.ink/svg/{encoded_code}"
+        else:
+            # For PNG output (default)
+            url = f"https://mermaid.ink/img/{encoded_code}"
+        
+        # Make request to render the diagram
+        response = requests.get(url, timeout=30)
+        
+        if response.status_code == 200:
+            # Get content type
+            content_type = response.headers.get('content-type', '')
+            
+            if output_format.lower() == 'svg' and 'svg' in content_type:
+                # Return SVG as data URL
+                data_url = f"data:image/svg+xml;base64,{base64.b64encode(response.content).decode()}"
+                logger.info("Successfully rendered SVG with mermaid web service")
+                return True, data_url
+            elif 'image' in content_type:
+                # Return image as data URL
+                mime_type = "image/png" if output_format.lower() == 'png' else "image/svg+xml"
+                data_url = f"data:{mime_type};base64,{base64.b64encode(response.content).decode()}"
+                logger.info(f"Successfully rendered {output_format} with mermaid web service")
+                return True, data_url
+        
+        logger.debug(f"Mermaid web service failed with status {response.status_code}")
+        return False, ""
+        
+    except requests.exceptions.RequestException as e:
+        logger.debug(f"Mermaid web service error: {e}")
+        return False, ""
+    except Exception as e:
+        logger.debug(f"Mermaid web service error: {e}")
+        return False, ""
 
 
 def render_with_mermaid_cli(mermaid_file: Path, output_file: Path) -> Tuple[bool, str]:
@@ -268,23 +320,27 @@ def validate_mermaid_code(mermaid_code: str) -> Tuple[bool, str]:
     if not mermaid_code or not mermaid_code.strip():
         return False, "Mermaid code is empty"
     
-    # Basic validation checks
-    code_lower = mermaid_code.lower().strip()
+    # Decode HTML entities that might be present
+    import html
+    decoded_code = html.unescape(mermaid_code)
     
-    # Check for supported diagram types
+    # Basic validation checks
+    code_lower = decoded_code.lower().strip()
+    
+    # Check for supported diagram types (case insensitive)
     supported_types = [
-        'graph', 'flowchart', 'sequencediagram', 'classDiagram',
-        'stateDiagram', 'erDiagram', 'journey', 'gantt', 'pie'
+        'graph', 'flowchart', 'sequencediagram', 'classdiagram',
+        'statediagram', 'erdiagram', 'journey', 'gantt', 'pie'
     ]
     
     if not any(diagram_type in code_lower for diagram_type in supported_types):
-        return False, "Unsupported or unrecognized diagram type"
+        return False, f"Unsupported or unrecognized diagram type. Found: {code_lower[:100]}..."
     
     # Check for basic syntax issues
-    if mermaid_code.count('-->') > 50:
+    if decoded_code.count('-->') > 50:
         return False, "Too many connections (max 50)"
     
-    if len(mermaid_code) > 10000:
+    if len(decoded_code) > 10000:
         return False, "Mermaid code too long (max 10KB)"
     
     return True, ""

@@ -191,25 +191,59 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         </div>
 
         {/* Input Area */}
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <TextArea
-              ref={textAreaRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled || loading}
-              autoSize={{ minRows: 3, maxRows: 8 }}
-              className="resize-none"
+        <div className="relative">
+          <TextArea
+            ref={textAreaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || loading}
+            autoSize={{ minRows: 4, maxRows: 12 }}
+            className="resize-none"
+            style={{
+              borderRadius: '16px',
+              fontSize: '15px',
+              lineHeight: '1.6',
+              padding: '20px 24px',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              border: '2px solid #e2e8f0',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.3s ease',
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#667eea';
+              e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.15)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e2e8f0';
+              e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+            }}
+          />
+          
+          {/* Floating action area */}
+          {message.trim() && (
+            <div 
+              className="absolute bottom-3 right-3 flex items-center gap-2"
               style={{
-                borderRadius: '8px',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                padding: '12px 16px'
+                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
-            />
-          </div>
+            >
+              <span 
+                style={{ 
+                  fontSize: '12px', 
+                  color: '#64748b',
+                  fontWeight: 500
+                }}
+              >
+                Press Enter to send
+              </span>
+            </div>
+          )}
         </div>
     </div>
   );

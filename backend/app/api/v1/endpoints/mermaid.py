@@ -52,6 +52,8 @@ def render_mermaid(request: dict) -> dict:
     output_format = request.get("format", "png").lower()
     title = request.get("title")
     
+    logger.info(f"Received mermaid code: {mermaid_code[:200]}...")  # Log first 200 chars
+    
     # Validate input
     if not mermaid_code:
         raise HTTPException(status_code=400, detail="mermaid code is required")

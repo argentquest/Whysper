@@ -141,8 +141,8 @@ def send_chat_message(request: dict):
         # TEMPORARY: Use hardcoded values for testing
         api_key = "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"
         provider = "openrouter"
-        model = "x-ai/grok-code-fast-1"
-        models_list = ["x-ai/grok-code-fast-1", "anthropic/claude-3-5-sonnet"]
+        model = "google/gemini-2.5-flash-preview-09-2025"
+        models_list = ["google/gemini-2.5-flash-preview-09-2025", "x-ai/grok-code-fast-1", "anthropic/claude-3-5-sonnet"]
         
         # Get or create conversation session
         try:
@@ -298,7 +298,7 @@ def create_conversation(request: ConversationCreateRequest):
     env_api_key = env_config.get('API_KEY', '')
     env_provider = env_config.get('PROVIDER', 'openrouter')
     models = env_config.get('models', [])
-    env_default_model = env_config.get('DEFAULT_MODEL', 'x-ai/grok-code-fast-1')
+    env_default_model = env_config.get('DEFAULT_MODEL', '')
     api_key = request.api_key or env_api_key
     provider = request.provider or env_provider
     default_model = request.model or env_default_model or (models[0] if models else "")
@@ -380,7 +380,7 @@ def import_conversation(request: ImportConversationRequest):
     env_api_key = env_config.get('API_KEY', '')
     env_provider = env_config.get('PROVIDER', 'openrouter')
     models = env_config.get('models', [])
-    env_default_model = env_config.get('DEFAULT_MODEL', 'x-ai/grok-code-fast-1')
+    env_default_model = env_config.get('DEFAULT_MODEL', '')
     api_key = request.api_key or env_api_key
     provider = request.provider or env_provider
     default_model = request.model or env_default_model or (models[0] if models else "")

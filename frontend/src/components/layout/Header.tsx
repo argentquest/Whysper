@@ -1,7 +1,6 @@
 import React from 'react';
-import ApiService from '../../services/api';
 import type { AgentPrompt } from '../../types';
-import { Layout, Button, Select, Space, Typography, Tooltip, Dropdown, Menu } from 'antd';
+import { Layout, Button, Select, Typography, Tooltip, Dropdown } from 'antd';
 import {
   MoonOutlined,
   SunOutlined,
@@ -21,7 +20,7 @@ import {
 import { useTheme } from '../../themes';
 
 const { Header: AntHeader } = Layout;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface HeaderProps {
@@ -67,27 +66,65 @@ export const Header: React.FC<HeaderProps> = ({
 
 
   return (
-    <AntHeader className="!px-6 !h-16 flex items-center justify-between bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <AntHeader 
+      className="!px-8 !h-20 flex items-center justify-between border-b"
+      style={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        borderColor: '#e2e8f0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      }}
+    >
       {/* Left Section - Branding */}
-      <div className="flex items-center">
-        <Title level={3} className="!mb-0 !text-gray-800 dark:!text-white">
-          🧠 Whysper
-        </Title>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div 
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '12px',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '48px',
+              height: '48px',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+            }}
+          >
+            <span style={{ fontSize: '24px' }}>🧠</span>
+          </div>
+          <div>
+            <Title level={3} className="!mb-0" style={{ color: '#1e293b', fontWeight: 700 }}>
+              Whysper
+            </Title>
+            <Text style={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>
+              AI Code Assistant
+            </Text>
+          </div>
+        </div>
       </div>
 
       {/* Center Section - System Selection */}
-      <div className="flex items-center">
+      <div className="flex items-center flex-1 justify-center max-w-2xl mx-8">
         {/* System Selection */}
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">Agent:</span>
+        <div className="flex flex-col w-full">
+          <span 
+            className="text-xs mb-2"
+            style={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.5px' }}
+          >
+            ACTIVE AGENT
+          </span>
           <Select
             value={currentSystem}
             onChange={onSystemChange}
-            className="min-w-[400px]"
-            size="small"
+            className="w-full"
+            size="large"
             placeholder="Select agent prompt"
             dropdownStyle={{ width: '80vw', maxWidth: '1200px' }}
             optionLabelProp="label"
+            style={{
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            }}
             dropdownRender={(menu) => (
               <div>
                 {/* Table Header */}
@@ -105,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
             {systemOptions.map(system => {
               const prompt = agentPrompts.find(p => p.name === system);
               const displayName = prompt ? prompt.title : system.charAt(0).toUpperCase() + system.slice(1);
-              const shortName = displayName.length > 35 ? displayName.substring(0, 35) + '...' : displayName;
+              const shortName = displayName.length > 80 ? displayName.substring(0, 80) + '...' : displayName;
               const description = prompt?.description || '';
               const categories = prompt?.category || [];
               
@@ -178,34 +215,50 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Section - Actions */}
-      <div className="flex items-center">
+      <div className="flex items-center gap-3">
         {/* Primary Actions */}
-        <Space.Compact>
-          <Tooltip title="Set Context">
+        <div className="flex items-center gap-2">
+          <Tooltip title="Set Context Files">
             <Button
               type="primary"
               icon={<FileTextOutlined />}
               onClick={onSetContext}
-              className="!bg-purple-600 !border-purple-600 hover:!bg-purple-700"
+              size="large"
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+                padding: '0 20px',
+                height: '44px',
+              }}
             >
               Set Context
             </Button>
           </Tooltip>
           
-          
           <Tooltip title="New Conversation">
             <Button
               icon={<MessageOutlined />}
               onClick={onNewConversation}
-              className="!ml-2"
+              size="large"
+              style={{
+                borderRadius: '12px',
+                fontWeight: 500,
+                height: '44px',
+                padding: '0 20px',
+                borderColor: '#e2e8f0',
+                color: '#64748b',
+              }}
             >
-              New Conversation
+              New Chat
             </Button>
           </Tooltip>
-        </Space.Compact>
+        </div>
 
         {/* Secondary Actions */}
-        <div className="flex items-center ml-4 gap-2">
+        <div className="flex items-center gap-1">
           {/* File Actions Group */}
           <Dropdown
             menu={{
@@ -231,7 +284,13 @@ export const Header: React.FC<HeaderProps> = ({
               <Button
                 type="text"
                 icon={<SaveOutlined />}
-                size="small"
+                size="large"
+                style={{
+                  borderRadius: '10px',
+                  color: '#64748b',
+                  width: '44px',
+                  height: '44px',
+                }}
               >
                 <DownOutlined style={{ fontSize: '10px' }} />
               </Button>
@@ -263,7 +322,13 @@ export const Header: React.FC<HeaderProps> = ({
               <Button
                 type="text"
                 icon={<BgColorsOutlined />}
-                size="small"
+                size="large"
+                style={{
+                  borderRadius: '10px',
+                  color: '#64748b',
+                  width: '44px',
+                  height: '44px',
+                }}
               >
                 <DownOutlined style={{ fontSize: '10px' }} />
               </Button>
@@ -310,7 +375,13 @@ export const Header: React.FC<HeaderProps> = ({
               <Button
                 type="text"
                 icon={<MoreOutlined />}
-                size="small"
+                size="large"
+                style={{
+                  borderRadius: '10px',
+                  color: '#64748b',
+                  width: '44px',
+                  height: '44px',
+                }}
               >
                 <DownOutlined style={{ fontSize: '10px' }} />
               </Button>

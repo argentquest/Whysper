@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Card, Button, Typography, Tag, Space, Tooltip } from 'antd';
+import { Card, Button, Typography, Tooltip, Avatar, Dropdown } from 'antd';
 import {
   ExpandOutlined,
   CompressOutlined,
@@ -8,26 +8,32 @@ import {
   CodeOutlined,
   FileTextOutlined,
   Html5Outlined,
+  UserOutlined,
+  RobotOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Message } from '../../types';
 
-const { Text } = Typography;
 
 interface MessageItemProps {
   message: Message;
   onExtractCode?: (messageId: string) => void;
   onRenderMermaid?: (code: string) => void;
+  onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({ 
   message, 
   onExtractCode, 
-  onRenderMermaid 
+  onRenderMermaid,
+  onShowCode
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showFullContent, setShowFullContent] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Detect HTML content to determine initial view mode
   const detectHtmlContent = (content: string): boolean => {
@@ -70,30 +76,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
     return new Date(timestamp).toLocaleTimeString();
   };
 
-  const getMessageStyle = () => {
-    switch (message.role) {
-      case 'system':
-        return {
-          backgroundColor: '#fff7e6',
-          borderColor: '#ffd666',
-          borderLeft: '4px solid #faad14',
-        };
-      case 'user':
-        return {
-          backgroundColor: '#e6f7ff',
-          borderColor: '#91d5ff',
-          borderLeft: '4px solid #1890ff',
-        };
-      case 'assistant':
-        return {
-          backgroundColor: '#ffffff',
-          borderColor: '#d9d9d9',
-          borderLeft: '4px solid #52c41a',
-        };
-      default:
-        return {};
-    }
-  };
 
   const handleCopyContent = async () => {
     try {
@@ -105,12 +87,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const detectCodeBlocks = (content: string) => {
-    // Use exact same pattern as web1: /```(\w+)?\n([\s\S]*?)\n```/g
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)\n```/g;
     const matches = [];
-    let match;
     
-    while ((match = codeBlockRegex.exec(content)) !== null) {
+    // 1. Detect markdown-style code blocks: ```language
+    const markdownRegex = /```(\w+)?\n([\s\S]*?)\n```/g;
+    let match;
+    while ((match = markdownRegex.exec(content)) !== null) {
       matches.push({
         language: match[1] || 'text',
         code: match[2],
@@ -118,222 +100,962 @@ const MessageItem: React.FC<MessageItemProps> = ({
       });
     }
     
-    return matches;
-  };
-  
-  const hasCodeFragments = (content: string): boolean => {
-    // Use exact same detection as web1: /```[\s\S]*?```/.test(text)
-    return /```[\s\S]*?```/.test(content);
-  };
-
-  const detectMermaidDiagrams = (content: string) => {
-    const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
-    const matches = [];
-    let match;
-    
-    while ((match = mermaidRegex.exec(content)) !== null) {
-      matches.push(match[1]);
+    // 2. Detect substantial HTML code blocks if no markdown blocks found
+    // Only look for <pre><code> blocks, ignore inline <code> tags
+    if (matches.length === 0) {
+      const htmlCodeRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+      while ((match = htmlCodeRegex.exec(content)) !== null) {
+        let codeContent = match[1].trim();
+        
+        // Decode HTML entities
+        codeContent = codeContent
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        
+        // Only include substantial code blocks (multi-line or reasonable length)
+        if (codeContent.includes('\n') || codeContent.length > 30) {
+          // Try to detect language from the content (basic heuristics)
+          let language = 'text';
+          if (/class\s+\w+|def\s+\w+|import\s+\w+/.test(codeContent)) {
+            language = 'python';
+          } else if (/function\s+\w+|const\s+\w+|let\s+\w+/.test(codeContent)) {
+            language = 'javascript';
+          } else if (/classDiagram|sequenceDiagram|graph\s+(TD|LR)/.test(codeContent)) {
+            language = 'mermaid';
+          }
+          
+          matches.push({
+            language: language,
+            code: codeContent,
+            fullMatch: match[0],
+          });
+        }
+      }
     }
     
     return matches;
   };
+  
+  const hasCodeFragments = (content: string): boolean => {
+    // Check for markdown-style code blocks: ```code```
+    if (/```[\s\S]*?```/.test(content)) {
+      return true;
+    }
+    
+    // Only check for substantial HTML code blocks (multi-line content in <pre><code>)
+    // Ignore small inline <code> tags like <code>ai.py</code>
+    const htmlBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+    const matches = content.match(htmlBlockRegex);
+    
+    if (matches) {
+      // Only consider it a code fragment if it has multiple lines or reasonable content
+      return matches.some(match => {
+        const innerContent = match.replace(/<\/?[^>]+(>|$)/g, '').trim();
+        return innerContent.includes('\n') || innerContent.length > 30;
+      });
+    }
+    
+    return false;
+  };
+
+  const detectMermaidDiagrams = (content: string) => {
+    const matches = [];
+    
+    // 1. Detect markdown-style mermaid blocks: ```mermaid
+    const markdownRegex = /```mermaid\n([\s\S]*?)```/g;
+    let match;
+    while ((match = markdownRegex.exec(content)) !== null) {
+      matches.push(match[1].trim());
+    }
+    
+    // 2. Only check HTML patterns if no markdown patterns were found
+    // This prevents detecting the same diagram twice
+    if (matches.length === 0) {
+      // Detect HTML-style code blocks containing mermaid diagrams
+      // Look for <pre><code> or <code> blocks that contain mermaid keywords
+      const htmlCodeRegex = /<(?:pre><code[^>]*>|code[^>]*>)([\s\S]*?)<\/(?:code><\/pre>|code)>/gi;
+      while ((match = htmlCodeRegex.exec(content)) !== null) {
+        let codeContent = match[1].trim();
+        
+        // Decode HTML entities that might be present in the code
+        codeContent = codeContent
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        
+        // Check if the content contains mermaid diagram keywords
+        if (isMermaidContent(codeContent)) {
+          matches.push(codeContent);
+        }
+      }
+    }
+    
+    // Remove duplicates by comparing normalized content
+    const uniqueMatches = [];
+    const seen = new Set();
+    
+    for (const diagram of matches) {
+      // Normalize the diagram content for comparison
+      const normalized = diagram.replace(/\s+/g, ' ').trim().toLowerCase();
+      if (!seen.has(normalized)) {
+        seen.add(normalized);
+        uniqueMatches.push(diagram);
+      }
+    }
+    
+    return uniqueMatches;
+  };
+
+  const isMermaidContent = (content: string): boolean => {
+    // Check for common mermaid diagram types and syntax
+    const mermaidKeywords = [
+      /^graph\s+(TD|LR|TB|RL|BT)/i,           // Flowcharts
+      /^classDiagram/i,                       // Class diagrams  
+      /^sequenceDiagram/i,                    // Sequence diagrams
+      /^stateDiagram/i,                       // State diagrams
+      /^journey/i,                            // User journey
+      /^gitgraph/i,                           // Git graphs
+      /^pie\s+title/i,                        // Pie charts
+      /^gantt/i,                              // Gantt charts
+      /^erDiagram/i,                          // Entity relationship
+      /^flowchart\s+(TD|LR|TB|RL|BT)/i,      // Flowcharts (alternative syntax)
+      /direction\s+(TD|LR|TB|RL|BT)/i,       // Direction declarations
+    ];
+    
+    return mermaidKeywords.some(regex => regex.test(content.trim()));
+  };
+
+  const getMermaidDiagramType = (content: string): string => {
+    const trimmed = content.trim();
+    if (/^classDiagram/i.test(trimmed)) return 'Class Diagram';
+    if (/^sequenceDiagram/i.test(trimmed)) return 'Sequence Diagram';
+    if (/^stateDiagram/i.test(trimmed)) return 'State Diagram';
+    if (/^journey/i.test(trimmed)) return 'User Journey';
+    if (/^gitgraph/i.test(trimmed)) return 'Git Graph';
+    if (/^pie\s+title/i.test(trimmed)) return 'Pie Chart';
+    if (/^gantt/i.test(trimmed)) return 'Gantt Chart';
+    if (/^erDiagram/i.test(trimmed)) return 'ER Diagram';
+    if (/^(graph|flowchart)\s+(TD|LR|TB|RL|BT)/i.test(trimmed)) return 'Flowchart';
+    return 'Diagram';
+  };
+
+  const createMermaidMenuItems = () => {
+    if (mermaidDiagrams.length === 0) return [];
+    
+    return mermaidDiagrams.map((diagram, index) => ({
+      key: `mermaid-${index}`,
+      label: `${getMermaidDiagramType(diagram)} ${mermaidDiagrams.length > 1 ? `#${index + 1}` : ''}`,
+      onClick: () => onRenderMermaid?.(diagram),
+    }));
+  };
+
+  const createCodeMenuItems = () => {
+    if (codeBlocks.length === 0) return [];
+    
+    return codeBlocks.map((block, index) => ({
+      key: `code-${index}`,
+      label: `${block.language.toUpperCase()} Code ${codeBlocks.length > 1 ? `#${index + 1}` : ''}`,
+      onClick: () => onShowCode?.(block.code, block.language, `${block.language.toUpperCase()} Code Block`),
+    }));
+  };
 
   const codeBlocks = detectCodeBlocks(message.content);
   const mermaidDiagrams = detectMermaidDiagrams(message.content);
+  
+  // Debug logging for mermaid detection
+  if (message.role === 'assistant') {
+    console.log('Mermaid Debug:', {
+      messageId: message.id,
+      contentLength: message.content.length,
+      hasHtmlContent,
+      mermaidCount: mermaidDiagrams.length,
+      mermaidDiagrams: mermaidDiagrams,
+      contentPreview: message.content.substring(0, 500)
+    });
+  }
+
+  // Fullscreen overlay component
+  if (isFullscreen) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '20px',
+        }}
+      >
+        {/* Fullscreen Header */}
+        <div
+          style={{
+            background: message.role === 'user' 
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+              : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            padding: '12px 14px 10px 14px',
+            borderRadius: '20px 20px 0 0',
+            marginBottom: '0',
+          }}
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <Avatar 
+                size={32}
+                icon={message.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                }}
+              />
+              <div className="flex flex-col">
+                <span 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  {message.role === 'user' ? 'You' : 'Whysper AI'}
+                </span>
+                <span 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '11px',
+                    marginTop: '2px'
+                  }}
+                >
+                  {formatTimestamp(message.timestamp)}
+                </span>
+              </div>
+            </div>
+
+            {/* Center - Token and Model Information */}
+            {message.metadata && (
+              <div className="flex items-center gap-3 text-white font-medium opacity-90" style={{ fontSize: '16px' }}>
+                {message.metadata.model && (
+                  <span style={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }}>
+                    {message.metadata.model}
+                  </span>
+                )}
+                {message.metadata.inputTokens && (
+                  <span>📥 {message.metadata.inputTokens}</span>
+                )}
+                {message.metadata.outputTokens && (
+                  <span>📤 {message.metadata.outputTokens}</span>
+                )}
+                {message.metadata.elapsedTime && (
+                  <span>⏱️ {message.metadata.elapsedTime.toFixed(2)}s</span>
+                )}
+              </div>
+            )}
+            
+            {/* Header Actions */}
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle Buttons - Only show for assistant messages with HTML content */}
+              {message.role === 'assistant' && hasHtmlContent && (
+                <>
+                  <Tooltip title="Markdown View">
+                    <Button
+                      type="text"
+                      icon={<FileTextOutlined />}
+                      onClick={() => setViewMode('markdown')}
+                      size="small"
+                      style={{ 
+                        color: viewMode === 'markdown' ? 'white' : 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                      }}
+                    />
+                  </Tooltip>
+                  
+                  <Tooltip title="HTML View">
+                    <Button
+                      type="text"
+                      icon={<Html5Outlined />}
+                      onClick={() => setViewMode('html')}
+                      size="small"
+                      style={{ 
+                        color: viewMode === 'html' ? 'white' : 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                      }}
+                    />
+                  </Tooltip>
+                </>
+              )}
+
+              {/* Render Mermaid Button/Dropdown */}
+              {mermaidDiagrams.length > 0 && onRenderMermaid && (
+                mermaidDiagrams.length === 1 ? (
+                  <Tooltip title="Render Mermaid Diagram">
+                    <Button
+                      type="text"
+                      icon={<DownloadOutlined />}
+                      onClick={() => onRenderMermaid?.(mermaidDiagrams[0])}
+                      size="small"
+                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Dropdown
+                    menu={{
+                      items: createMermaidMenuItems()
+                    }}
+                    trigger={['click']}
+                    placement="bottomRight"
+                  >
+                    <Tooltip title={`Choose from ${mermaidDiagrams.length} diagrams`}>
+                      <Button
+                        type="text"
+                        icon={<DownloadOutlined />}
+                        size="small"
+                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                      />
+                    </Tooltip>
+                  </Dropdown>
+                )
+              )}
+
+              {/* Show Code Button/Dropdown */}
+              {codeBlocks.length > 0 && onShowCode && (
+                codeBlocks.length === 1 ? (
+                  <Tooltip title="Show Code Block">
+                    <Button
+                      type="text"
+                      icon={<CodeOutlined />}
+                      onClick={() => onShowCode?.(codeBlocks[0].code, codeBlocks[0].language, `${codeBlocks[0].language.toUpperCase()} Code Block`)}
+                      size="small"
+                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Dropdown
+                    menu={{
+                      items: createCodeMenuItems()
+                    }}
+                    trigger={['click']}
+                    placement="bottomRight"
+                  >
+                    <Tooltip title={`Show code from ${codeBlocks.length} blocks`}>
+                      <Button
+                        type="text"
+                        icon={<CodeOutlined />}
+                        size="small"
+                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                      />
+                    </Tooltip>
+                  </Dropdown>
+                )
+              )}
+
+              {/* Extract Code Button */}
+              {hasCodeFragments(message.content) && onExtractCode && (
+                <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
+                  <Button
+                    type="text"
+                    icon={<CodeOutlined />}
+                    onClick={() => onExtractCode(message.id)}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
+              )}
+
+              <Tooltip title="Exit Fullscreen">
+                <Button
+                  type="text"
+                  icon={<FullscreenExitOutlined />}
+                  onClick={() => setIsFullscreen(false)}
+                  size="small"
+                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                />
+              </Tooltip>
+
+              <Tooltip title="Copy Message">
+                <Button
+                  type="text"
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyContent}
+                  size="small"
+                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                />
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+
+        {/* Fullscreen Content */}
+        <div
+          style={{
+            background: 'white',
+            padding: '14px',
+            borderRadius: '0 0 20px 20px',
+            flex: 1,
+            overflow: 'auto',
+          }}
+        >
+          <div className="message-content">
+            {viewMode === 'html' && hasHtmlContent ? (
+              // HTML View - Render HTML content directly
+              <div 
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: displayContent }}
+                style={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  backgroundColor: '#f8fafc',
+                  lineHeight: '1.6',
+                  fontSize: '15px',
+                  color: '#1e293b'
+                }}
+              />
+            ) : (
+              // Markdown View - Use ReactMarkdown (default)
+              <div 
+                className="prose prose-slate max-w-none" 
+                style={{ 
+                  lineHeight: '1.6', 
+                  fontSize: '15px',
+                  color: '#1e293b'
+                }}
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code(props: React.ComponentProps<'code'> & { inline?: boolean }) {
+                      const { inline, className, children, ...rest } = props;
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (
+                        <pre
+                          className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
+                          style={{ 
+                            fontSize: '14px', 
+                            lineHeight: '1.6',
+                            color: '#1e293b',
+                            backgroundColor: '#f8fafc'
+                          }}
+                        >
+                          <code className={className} style={{ color: '#1e293b' }} {...rest}>
+                            {children}
+                          </code>
+                        </pre>
+                      ) : (
+                        <code 
+                          className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`} 
+                          style={{ 
+                            fontSize: '14px',
+                            color: '#dc2626',
+                            backgroundColor: '#f1f5f9',
+                            border: '1px solid #e2e8f0'
+                          }} 
+                          {...rest}
+                        >
+                          {children}
+                        </code>
+                      );
+                    },
+                    // Style other markdown elements for dark text
+                    h1: (props) => <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />,
+                    h2: (props) => <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    h3: (props) => <h3 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    p: (props) => <p style={{ color: '#374151', lineHeight: '1.7' }} {...props} />,
+                    strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    em: (props) => <em style={{ color: '#374151' }} {...props} />,
+                    blockquote: (props) => (
+                      <blockquote 
+                        style={{ 
+                          color: '#6b7280',
+                          borderLeft: '4px solid #667eea',
+                          paddingLeft: '16px',
+                          fontStyle: 'italic'
+                        }} 
+                        {...props} 
+                      />
+                    ),
+                    ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
+                    ol: (props) => <ol style={{ color: '#374151' }} {...props} />,
+                    li: (props) => <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />,
+                  }}
+                >
+                  {displayContent}
+                </ReactMarkdown>
+              </div>
+            )}
+            
+            {/* Show More/Less for long content */}
+            {isLongContent && (
+              <div className="mt-4 text-center">
+                <Button
+                  type="link"
+                  onClick={() => setShowFullContent(!showFullContent)}
+                  size="small"
+                  style={{ color: '#667eea' }}
+                >
+                  {showFullContent ? 'Show Less' : 'Show More'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Card
-      className="mb-6 message-card"
-      style={{
-        ...getMessageStyle(),
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-        borderRadius: '12px',
+    <div 
+      className="mb-6 w-full"
+      style={{ 
+        paddingLeft: '0',
+        paddingRight: '0',
       }}
-      size="default"
-      bodyStyle={{ padding: '20px' }}
     >
-      {/* Message Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Tag 
-            color={
-              message.role === 'system' ? 'orange' :
-              message.role === 'user' ? 'blue' : 'green'
-            }
-            style={{ 
-              fontWeight: 600,
-              fontSize: '11px',
-              padding: '2px 8px',
-              borderRadius: '6px'
-            }}
-          >
-            {message.role.toUpperCase()}
-          </Tag>
-          <Text type="secondary" className="text-sm font-medium">
-            {formatTimestamp(message.timestamp)}
-          </Text>
-          {message.metadata?.model && (
-            <Text type="secondary" className="text-sm font-medium">
-              ({message.metadata.model})
-            </Text>
-          )}
-          {/* Token Information */}
-          {message.metadata && (
-            <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
-              {message.metadata.inputTokens && (
-                <span>📥 {message.metadata.inputTokens}</span>
-              )}
-              {message.metadata.cachedTokens && (
-                <span>💾 {message.metadata.cachedTokens}</span>
-              )}
-              {message.metadata.outputTokens && (
-                <span>📤 {message.metadata.outputTokens}</span>
-              )}
-              {message.metadata.tokens && !message.metadata.inputTokens && !message.metadata.outputTokens && (
-                <span>🔢 {message.metadata.tokens}</span>
-              )}
-              {message.metadata.elapsedTime && (
-                <span>⏱️ {message.metadata.elapsedTime.toFixed(2)}s</span>
-              )}
+      <Card
+        className="message-card"
+        style={{
+          border: 'none',
+          borderRadius: message.role === 'user' 
+            ? '20px 20px 4px 20px' 
+            : '20px 20px 20px 4px',
+          boxShadow: message.role === 'user'
+            ? '0 8px 24px rgba(102, 126, 234, 0.25)'
+            : '0 8px 24px rgba(240, 147, 251, 0.25)',
+          overflow: 'hidden',
+          width: '100%',
+          background: 'transparent',
+        }}
+        size="default"
+        bodyStyle={{ 
+          padding: '0',
+          background: 'transparent',
+          borderRadius: message.role === 'user' 
+            ? '20px 20px 4px 20px' 
+            : '20px 20px 20px 4px',
+        }}
+      >
+        {/* Gradient Header */}
+        <div 
+          style={{
+            background: message.role === 'user' 
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+              : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            padding: '12px 14px 10px 14px',
+            borderRadius: message.role === 'user' 
+              ? '20px 20px 0 0' 
+              : '20px 20px 0 0',
+          }}
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <Avatar 
+                size={32}
+                icon={message.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                }}
+              />
+              <div className="flex flex-col">
+                <span 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  {message.role === 'user' ? 'You' : 'Whysper AI'}
+                </span>
+                <span 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '11px',
+                    marginTop: '2px'
+                  }}
+                >
+                  {formatTimestamp(message.timestamp)}
+                </span>
+              </div>
             </div>
-          )}
-        </div>
-        
-        <Space>
-          {/* View Mode Toggle Buttons - Only show for assistant messages with HTML content */}
-          {message.role === 'assistant' && hasHtmlContent && (
-            <>
-              <Tooltip title="Markdown View">
+
+            {/* Center - Token and Model Information */}
+            {message.metadata && (
+              <div className="flex items-center gap-3 text-white font-medium opacity-90" style={{ fontSize: '16px' }}>
+                {message.metadata.model && (
+                  <span style={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }}>
+                    {message.metadata.model}
+                  </span>
+                )}
+                {message.metadata.inputTokens && (
+                  <span>📥 {message.metadata.inputTokens}</span>
+                )}
+                {message.metadata.outputTokens && (
+                  <span>📤 {message.metadata.outputTokens}</span>
+                )}
+                {message.metadata.elapsedTime && (
+                  <span>⏱️ {message.metadata.elapsedTime.toFixed(2)}s</span>
+                )}
+              </div>
+            )}
+            
+            {/* Header Actions */}
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle Buttons - Only show for assistant messages with HTML content */}
+              {message.role === 'assistant' && hasHtmlContent && (
+                <>
+                  <Tooltip title="Markdown View">
+                    <Button
+                      type="text"
+                      icon={<FileTextOutlined />}
+                      onClick={() => setViewMode('markdown')}
+                      size="small"
+                      style={{ 
+                        color: viewMode === 'markdown' ? 'white' : 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                      }}
+                    />
+                  </Tooltip>
+                  
+                  <Tooltip title="HTML View">
+                    <Button
+                      type="text"
+                      icon={<Html5Outlined />}
+                      onClick={() => setViewMode('html')}
+                      size="small"
+                      style={{ 
+                        color: viewMode === 'html' ? 'white' : 'rgba(255, 255, 255, 0.6)',
+                        backgroundColor: viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                      }}
+                    />
+                  </Tooltip>
+                </>
+              )}
+
+              {/* Render Mermaid Button/Dropdown */}
+              {mermaidDiagrams.length > 0 && onRenderMermaid && (
+                mermaidDiagrams.length === 1 ? (
+                  <Tooltip title="Render Mermaid Diagram">
+                    <Button
+                      type="text"
+                      icon={<DownloadOutlined />}
+                      onClick={() => onRenderMermaid?.(mermaidDiagrams[0])}
+                      size="small"
+                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Dropdown
+                    menu={{
+                      items: createMermaidMenuItems()
+                    }}
+                    trigger={['click']}
+                    placement="bottomRight"
+                  >
+                    <Tooltip title={`Choose from ${mermaidDiagrams.length} diagrams`}>
+                      <Button
+                        type="text"
+                        icon={<DownloadOutlined />}
+                        size="small"
+                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                      />
+                    </Tooltip>
+                  </Dropdown>
+                )
+              )}
+
+              {/* Show Code Button/Dropdown */}
+              {codeBlocks.length > 0 && onShowCode && (
+                codeBlocks.length === 1 ? (
+                  <Tooltip title="Show Code Block">
+                    <Button
+                      type="text"
+                      icon={<CodeOutlined />}
+                      onClick={() => onShowCode?.(codeBlocks[0].code, codeBlocks[0].language, `${codeBlocks[0].language.toUpperCase()} Code Block`)}
+                      size="small"
+                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Dropdown
+                    menu={{
+                      items: createCodeMenuItems()
+                    }}
+                    trigger={['click']}
+                    placement="bottomRight"
+                  >
+                    <Tooltip title={`Show code from ${codeBlocks.length} blocks`}>
+                      <Button
+                        type="text"
+                        icon={<CodeOutlined />}
+                        size="small"
+                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                      />
+                    </Tooltip>
+                  </Dropdown>
+                )
+              )}
+
+              {/* Extract Code Button */}
+              {hasCodeFragments(message.content) && onExtractCode && (
+                <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
+                  <Button
+                    type="text"
+                    icon={<CodeOutlined />}
+                    onClick={() => onExtractCode(message.id)}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
+              )}
+
+              <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Maximize"}>
                 <Button
-                  type={viewMode === 'markdown' ? 'primary' : 'text'}
+                  type="text"
+                  icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
                   size="small"
-                  icon={<FileTextOutlined />}
-                  onClick={() => setViewMode('markdown')}
+                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                />
+              </Tooltip>
+
+              <Tooltip title="Copy Message">
+                <Button
+                  type="text"
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyContent}
+                  size="small"
+                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
                 />
               </Tooltip>
               
-              <Tooltip title="HTML View">
+              <Tooltip title={isExpanded ? "Collapse" : "Expand"}>
                 <Button
-                  type={viewMode === 'html' ? 'primary' : 'text'}
+                  type="text"
+                  icon={isExpanded ? <CompressOutlined /> : <ExpandOutlined />}
+                  onClick={() => setIsExpanded(!isExpanded)}
                   size="small"
-                  icon={<Html5Outlined />}
-                  onClick={() => setViewMode('html')}
+                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
                 />
               </Tooltip>
-            </>
-          )}
-          
-          {/* Extract Code Button */}
-          {hasCodeFragments(message.content) && onExtractCode && (
-            <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
-              <Button
-                type="text"
-                size="small"
-                icon={<CodeOutlined />}
-                onClick={() => onExtractCode(message.id)}
-              />
-            </Tooltip>
-          )}
-          
-          {/* Render Mermaid Button */}
-          {mermaidDiagrams.length > 0 && onRenderMermaid && (
-            <Tooltip title={`Render ${mermaidDiagrams.length} diagram(s)`}>
-              <Button
-                type="text"
-                size="small"
-                icon={<DownloadOutlined />}
-                onClick={() => mermaidDiagrams.forEach(diagram => onRenderMermaid?.(diagram))}
-              />
-            </Tooltip>
-          )}
-          
-          {/* Copy Button */}
-          <Tooltip title="Copy content">
-            <Button
-              type="text"
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={handleCopyContent}
-            />
-          </Tooltip>
-          
-          {/* Expand/Collapse Button */}
-          <Tooltip title={isExpanded ? "Collapse" : "Expand"}>
-            <Button
-              type="text"
-              size="small"
-              icon={isExpanded ? <CompressOutlined /> : <ExpandOutlined />}
-              onClick={() => setIsExpanded(!isExpanded)}
-            />
-          </Tooltip>
-        </Space>
-      </div>
-
-      {/* Message Content */}
-      {isExpanded && (
-        <div className="message-content">
-          {viewMode === 'html' && hasHtmlContent ? (
-            // HTML View - Render HTML content directly
-            <div 
-              className="prose dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: displayContent }}
-              style={{
-                border: '1px solid #e1e5e9',
-                borderRadius: '8px',
-                padding: '20px',
-                backgroundColor: '#fafbfc',
-                maxHeight: '500px',
-                overflowY: 'auto',
-                lineHeight: '1.2',
-                fontSize: '15px'
-              }}
-            />
-          ) : (
-            // Markdown View - Use ReactMarkdown (default)
-            <div className="prose dark:prose-invert max-w-none" style={{ lineHeight: '1.7', fontSize: '15px' }}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code(props: React.ComponentProps<'code'> & { inline?: boolean }) {
-                    const { inline, className, children, ...rest } = props;
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <pre
-                        className={`${className || ''} bg-gray-50 dark:bg-gray-800 p-5 rounded-lg overflow-x-auto`}
-                        style={{ fontSize: '14px', lineHeight: '1.6' }}
-                      >
-                        <code className={className} {...rest}>
-                          {children}
-                        </code>
-                      </pre>
-                    ) : (
-                      <code className={`${className || ''} bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded`} style={{ fontSize: '14px' }} {...rest}>
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {displayContent}
-              </ReactMarkdown>
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* White Content Area */}
+        <div
+          style={{
+            background: 'white',
+            padding: '14px',
+            borderRadius: message.role === 'user' 
+              ? '0 0 4px 20px' 
+              : '0 0 20px 4px',
+          }}
+        >
           
-          {/* Show More/Less for long content */}
-          {isLongContent && (
-            <div className="mt-4 text-center">
-              <Button
-                type="link"
-                onClick={() => setShowFullContent(!showFullContent)}
-                size="small"
-              >
-                {showFullContent ? 'Show Less' : 'Show More'}
-              </Button>
+          {/* Message Content */}
+          {isExpanded && (
+            <div className="message-content">
+              {/* Additional Action Buttons - Extract Code and Mermaid */}
+              {(hasCodeFragments(message.content) || mermaidDiagrams.length > 0) && (
+                <div className="flex items-center gap-2 mb-4">
+                  {/* Extract Code Button */}
+                  {hasCodeFragments(message.content) && onExtractCode && (
+                    <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<CodeOutlined />}
+                        onClick={() => onExtractCode(message.id)}
+                      />
+                    </Tooltip>
+                  )}
+                  
+                  {/* Render Mermaid Button/Dropdown */}
+                  {mermaidDiagrams.length > 0 && onRenderMermaid && (
+                    mermaidDiagrams.length === 1 ? (
+                      <Tooltip title="Render Mermaid Diagram">
+                        <Button
+                          type="default"
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          onClick={() => onRenderMermaid?.(mermaidDiagrams[0])}
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Dropdown
+                        menu={{
+                          items: createMermaidMenuItems()
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <Tooltip title={`Choose from ${mermaidDiagrams.length} diagrams`}>
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<DownloadOutlined />}
+                          />
+                        </Tooltip>
+                      </Dropdown>
+                    )
+                  )}
+                  
+                  {/* Show Code Button/Dropdown */}
+                  {codeBlocks.length > 0 && onShowCode && (
+                    codeBlocks.length === 1 ? (
+                      <Tooltip title="Show Code Block">
+                        <Button
+                          type="default"
+                          size="small"
+                          icon={<CodeOutlined />}
+                          onClick={() => onShowCode?.(codeBlocks[0].code, codeBlocks[0].language, `${codeBlocks[0].language.toUpperCase()} Code Block`)}
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Dropdown
+                        menu={{
+                          items: createCodeMenuItems()
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <Tooltip title={`Show code from ${codeBlocks.length} blocks`}>
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<CodeOutlined />}
+                          />
+                        </Tooltip>
+                      </Dropdown>
+                    )
+                  )}
+                </div>
+              )}
+              {viewMode === 'html' && hasHtmlContent ? (
+                // HTML View - Render HTML content directly
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: displayContent }}
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '12px',
+                    backgroundColor: '#f8fafc',
+                    maxHeight: '500px',
+                    overflowY: 'auto',
+                    lineHeight: '1.6',
+                    fontSize: '14px',
+                    color: '#1e293b'
+                  }}
+                />
+              ) : (
+                // Markdown View - Use ReactMarkdown (default)
+                <div 
+                  className="prose prose-slate max-w-none" 
+                  style={{ 
+                    lineHeight: '1.6', 
+                    fontSize: '14px',
+                    color: '#1e293b'
+                  }}
+                >
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code(props: React.ComponentProps<'code'> & { inline?: boolean }) {
+                        const { inline, className, children, ...rest } = props;
+                        const match = /language-(\w+)/.exec(className || '');
+                        return !inline && match ? (
+                          <pre
+                            className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
+                            style={{ 
+                              fontSize: '14px', 
+                              lineHeight: '1.6',
+                              color: '#1e293b',
+                              backgroundColor: '#f8fafc'
+                            }}
+                          >
+                            <code className={className} style={{ color: '#1e293b' }} {...rest}>
+                              {children}
+                            </code>
+                          </pre>
+                        ) : (
+                          <code 
+                            className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`} 
+                            style={{ 
+                              fontSize: '14px',
+                              color: '#dc2626',
+                              backgroundColor: '#f1f5f9',
+                              border: '1px solid #e2e8f0'
+                            }} 
+                            {...rest}
+                          >
+                            {children}
+                          </code>
+                        );
+                      },
+                      // Style other markdown elements for dark text
+                      h1: (props) => <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />,
+                      h2: (props) => <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      h3: (props) => <h3 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      p: (props) => <p style={{ color: '#374151', lineHeight: '1.7' }} {...props} />,
+                      strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      em: (props) => <em style={{ color: '#374151' }} {...props} />,
+                      blockquote: (props) => (
+                        <blockquote 
+                          style={{ 
+                            color: '#6b7280',
+                            borderLeft: '4px solid #667eea',
+                            paddingLeft: '16px',
+                            fontStyle: 'italic'
+                          }} 
+                          {...props} 
+                        />
+                      ),
+                      ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
+                      ol: (props) => <ol style={{ color: '#374151' }} {...props} />,
+                      li: (props) => <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />,
+                    }}
+                  >
+                    {displayContent}
+                  </ReactMarkdown>
+                </div>
+              )}
+              
+              {/* Show More/Less for long content */}
+              {isLongContent && (
+                <div className="mt-4 text-center">
+                  <Button
+                    type="link"
+                    onClick={() => setShowFullContent(!showFullContent)}
+                    size="small"
+                    style={{ color: '#667eea' }}
+                  >
+                    {showFullContent ? 'Show Less' : 'Show More'}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
-    </Card>
+      </Card>
+    </div>
   );
 };
 
@@ -342,6 +1064,7 @@ interface ChatViewProps {
   loading?: boolean;
   onExtractCode?: (messageId: string) => void;
   onRenderMermaid?: (code: string) => void;
+  onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
@@ -349,6 +1072,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   loading = false,
   onExtractCode,
   onRenderMermaid,
+  onShowCode,
 }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -381,41 +1105,71 @@ export const ChatView: React.FC<ChatViewProps> = ({
             message={message}
             onExtractCode={onExtractCode}
             onRenderMermaid={onRenderMermaid}
+            onShowCode={onShowCode}
           />
         ))}
         
         {loading && (
-          <Card 
-            className="mb-6" 
-            style={{
-              backgroundColor: '#ffffff',
-              borderColor: '#d9d9d9',
-              borderLeft: '4px solid #52c41a',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-              borderRadius: '12px',
-            }}
-            bodyStyle={{ padding: '20px' }}
+          <div 
+            className="mb-6 w-full"
+            style={{ paddingRight: '0' }}
           >
+            <Card 
+              className="message-card"
+              style={{
+                border: 'none',
+                borderRadius: '20px 20px 20px 4px',
+                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.15)',
+                overflow: 'hidden',
+                width: '100%',
+                background: 'transparent',
+              }}
+              bodyStyle={{ 
+                padding: '14px',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                borderRadius: '20px 20px 20px 4px',
+              }}
+            >
             <div className="flex items-center gap-3">
-              <Tag 
-                color="green"
-                style={{ 
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  borderRadius: '6px'
+              <Avatar 
+                size={32}
+                icon={<RobotOutlined />}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
                 }}
-              >
-                ASSISTANT
-              </Tag>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
+              />
+              <div className="flex flex-col">
+                <span 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  Whysper AI
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70"></div>
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70" style={{animationDelay: '0.15s'}}></div>
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70" style={{animationDelay: '0.3s'}}></div>
+                  <span 
+                    style={{ 
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '11px',
+                      marginLeft: '8px'
+                    }}
+                  >
+                    Thinking...
+                  </span>
+                </div>
               </div>
-              <Text type="secondary" className="text-sm font-medium">Thinking...</Text>
             </div>
           </Card>
+          </div>
         )}
         
         <div ref={chatEndRef} />

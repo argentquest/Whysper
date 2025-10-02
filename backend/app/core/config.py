@@ -60,6 +60,7 @@ def load_env_defaults() -> Dict[str, Any]:
             "microsoft/wizardlm-2-8x22b",
             # Google models via OpenRouter
             "google/gemini-pro-1.5",
+            "google/gemini-2.5-flash-preview-09-2025",
             # xAI models via OpenRouter
             "x-ai/grok-code-fast-1"
         ]

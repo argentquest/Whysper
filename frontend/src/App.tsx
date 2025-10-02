@@ -26,7 +26,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // Ant Design UI components
-import { Layout, message } from 'antd';
+import { Layout, message, Modal, Button } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
 
 // Layout components
 import { Header } from './components/layout/Header';
@@ -107,6 +108,10 @@ function App() {
   const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
+  const [mermaidModalOpen, setMermaidModalOpen] = useState(false);          // Mermaid diagram display modal
+  const [mermaidImageData, setMermaidImageData] = useState<string>('');     // Rendered mermaid diagram data
+  const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
+  const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   
   // ==================== Data State Management ====================
   
@@ -338,18 +343,43 @@ function App() {
     try {
       const response = await ApiService.renderMermaid(code);
       if (response.success && response.data) {
-        // response.data should be a URL to the generated PNG
-        const link = document.createElement('a');
-        link.href = response.data;
-        link.download = 'mermaid-diagram.png';
-        link.click();
-        message.success('Mermaid diagram downloaded');
+        // Store the diagram data and show modal
+        setMermaidImageData(response.data);
+        setMermaidModalOpen(true);
+        message.success('Mermaid diagram rendered successfully');
       } else {
         message.error(response.error || 'Failed to render mermaid diagram');
       }
     } catch (error) {
       message.error('Error rendering mermaid diagram');
       console.error('Mermaid render error:', error);
+    }
+  };
+
+  const handleDownloadMermaid = () => {
+    if (mermaidImageData) {
+      const link = document.createElement('a');
+      link.href = mermaidImageData;
+      link.download = 'mermaid-diagram.png';
+      link.click();
+      message.success('Mermaid diagram downloaded');
+    }
+  };
+
+  const handleShowCode = (code: string, language: string, title?: string) => {
+    setCodeModalData({ code, language, title });
+    setCodeModalOpen(true);
+  };
+
+  const handleCopyCode = async () => {
+    if (codeModalData.code) {
+      try {
+        await navigator.clipboard.writeText(codeModalData.code);
+        message.success('Code copied to clipboard');
+      } catch (error) {
+        console.error('Failed to copy code:', error);
+        message.error('Failed to copy code');
+      }
     }
   };
 
@@ -646,6 +676,7 @@ function App() {
             if (message) extractCodeFromMessage(message);
           }}
           onRenderMermaid={handleRenderMermaid}
+          onShowCode={handleShowCode}
         />
         
         <div style={{ 
@@ -724,6 +755,76 @@ function App() {
         open={themePickerModalOpen}
         onCancel={() => setThemePickerModalOpen(false)}
       />
+
+      {/* Mermaid Diagram Display Modal */}
+      <Modal
+        title="Mermaid Diagram"
+        open={mermaidModalOpen}
+        onCancel={() => setMermaidModalOpen(false)}
+        width={800}
+        centered
+        footer={[
+          <Button key="download" type="primary" onClick={handleDownloadMermaid}>
+            Download PNG
+          </Button>,
+          <Button key="close" onClick={() => setMermaidModalOpen(false)}>
+            Close
+          </Button>
+        ]}
+      >
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          {mermaidImageData && (
+            <img 
+              src={mermaidImageData} 
+              alt="Mermaid Diagram" 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '70vh', 
+                border: '1px solid #f0f0f0',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+              }} 
+            />
+          )}
+        </div>
+      </Modal>
+
+      {/* Code Fragment Display Modal */}
+      <Modal
+        title={codeModalData.title || `Code Fragment${codeModalData.language ? ` (${codeModalData.language})` : ''}`}
+        open={codeModalOpen}
+        onCancel={() => setCodeModalOpen(false)}
+        width={900}
+        centered
+        footer={[
+          <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyCode}>
+            Copy Code
+          </Button>,
+          <Button key="close" onClick={() => setCodeModalOpen(false)}>
+            Close
+          </Button>
+        ]}
+      >
+        <div style={{ maxHeight: '70vh', overflow: 'auto' }}>
+          <pre
+            style={{
+              background: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              padding: '16px',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              margin: 0,
+              fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+              color: '#212529',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}
+          >
+            <code>{codeModalData.code}</code>
+          </pre>
+        </div>
+      </Modal>
     </Layout>
   );
 }
