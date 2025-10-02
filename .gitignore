@@ -161,3 +161,5 @@ logs/
 
 # Development utilities
 kill-port-*.bat
+
+history/
