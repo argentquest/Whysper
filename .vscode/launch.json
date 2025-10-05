@@ -1,0 +1,274 @@
+{
+  "//": "================================================================================",
+  "//": "WhysperCode Web2 - VS Code Launch Configuration",
+  "//": "================================================================================",
+  "//": "",
+  "//": "🏗️  SETUP INSTRUCTIONS:",
+  "//": "1. First Time Setup:",
+  "//": "   - Run '🔨 Frontend: Install Dependencies' to install npm packages",
+  "//": "   - Run '📦 Frontend: Build Production' to build frontend assets",
+  "//": "",
+  "//": "🚀 DEVELOPMENT WORKFLOW:",
+  "//": "1. Start Development:",
+  "//": "   - Use '🔧 Development: Two-Port Architecture' to start both servers",
+  "//": "   - Automatically kills existing processes on ports 5173 & 8001",
+  "//": "   - Backend: http://localhost:8001/api/v1 (API endpoints)",
+  "//": "   - Frontend: http://localhost:5173 (React dev server)",
+  "//": "",
+  "//": "🐛 DEBUGGING:",
+  "//": "1. Backend Debugging:",
+  "//": "   - Use '🐛 DEBUG: Development with Backend Debugging'",
+  "//": "   - Set breakpoints in Python files",
+  "//": "   - Debug logs at LOG_LEVEL=DEBUG",
+  "//": "",
+  "//": "2. Frontend Issues:",
+  "//": "   - Check browser console for errors",
+  "//": "   - Use '🧹 Frontend: Clean Build Cache' if build issues",
+  "//": "   - Use '🔄 Frontend: Full Rebuild' for complete refresh",
+  "//": "   - Use '🛑 Kill All Development Ports' to manually stop servers",
+  "//": "",
+  "//": "🧪 TESTING:",
+  "//": "   - Use '🧪 Testing: Run All Tests + Quality Checks'",
+  "//": "   - Individual tests: 'Backend: Run Specific Test File'",
+  "//": "",
+  "//": "================================================================================",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Backend: API Server (Port 8001)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/main.py",
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "group": "1-backend",
+        "order": 1
+      },
+      "preLaunchTask": "Kill Backend Port (8001)"
+    },
+    {
+      "name": "🐛 DEBUG: Backend API Server (Port 8001)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/main.py",
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "DEBUG": "true",
+        "LOG_LEVEL": "DEBUG"
+      },
+      "justMyCode": false,
+      "stopOnEntry": false,
+      "presentation": {
+        "group": "1-backend",
+        "order": 2
+      },
+      "preLaunchTask": "Kill Backend Port (8001)"
+    },
+    {
+      "name": "🎨 Frontend: Dev Server (Port 5173)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/frontend",
+      "presentation": {
+        "group": "2-frontend",
+        "order": 1
+      },
+      "preLaunchTask": "Kill Frontend Port (5173)"
+    },
+    {
+      "name": "🔨 Frontend: Install Dependencies",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm install",
+      "cwd": "${workspaceFolder}/frontend",
+      "presentation": {
+        "group": "2-frontend",
+        "order": 2
+      }
+    },
+    {
+      "name": "📦 Frontend: Build Production",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build",
+      "cwd": "${workspaceFolder}/frontend",
+      "presentation": {
+        "group": "2-frontend",
+        "order": 3
+      }
+    },
+    {
+      "name": "🧹 Frontend: Clean Build Cache",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "rm -rf node_modules/.vite && npm run build",
+      "cwd": "${workspaceFolder}/frontend",
+      "presentation": {
+        "group": "2-frontend",
+        "order": 4
+      }
+    },
+    {
+      "name": "🧪 Backend: Run Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v", "--tb=short"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "TESTING": "true"
+      },
+      "console": "integratedTerminal",
+      "presentation": {
+        "group": "3-testing",
+        "order": 1
+      }
+    },
+    {
+      "name": "🐛 DEBUG: Run Tests with Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v", "--tb=long", "-s"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "TESTING": "true",
+        "DEBUG": "true"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "presentation": {
+        "group": "3-testing",
+        "order": 2
+      }
+    },
+    {
+      "name": "🎯 Backend: Run Specific Test File",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${input:testFile}", "-v", "--tb=short"],
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/backend",
+        "TESTING": "true"
+      },
+      "console": "integratedTerminal",
+      "presentation": {
+        "group": "3-testing",
+        "order": 3
+      }
+    },
+    {
+      "name": "📊 Backend: Code Quality (Lint + Format)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "python -m flake8 . && python -m black . --check",
+      "cwd": "${workspaceFolder}/backend",
+      "presentation": {
+        "group": "4-quality",
+        "order": 1
+      }
+    },
+    {
+      "name": "🎨 Backend: Format Code",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "python -m black .",
+      "cwd": "${workspaceFolder}/backend",
+      "presentation": {
+        "group": "4-quality",
+        "order": 2
+      }
+    },
+    {
+      "name": "🔍 Backend: Type Check (MyPy)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "python -m mypy . --ignore-missing-imports",
+      "cwd": "${workspaceFolder}/backend",
+      "presentation": {
+        "group": "4-quality",
+        "order": 3
+      }
+    },
+    {
+      "name": "🛑 Kill All Development Ports",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo",
+      "args": ["Port cleanup task will run automatically"],
+      "presentation": {
+        "group": "5-utilities",
+        "order": 1
+      },
+      "preLaunchTask": "Kill All Development Ports"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🔧 Development: Two-Port Architecture",
+      "configurations": [
+        "🚀 Backend: API Server (Port 8001)",
+        "🎨 Frontend: Dev Server (Port 5173)"
+      ],
+      "stopAll": true,
+      "preLaunchTask": "Kill All Development Ports"
+    },
+    {
+      "name": "🐛 DEBUG: Development with Backend Debugging",
+      "configurations": [
+        "🐛 DEBUG: Backend API Server (Port 8001)",
+        "🎨 Frontend: Dev Server (Port 5173)"
+      ],
+      "stopAll": true,
+      "preLaunchTask": "Kill All Development Ports"
+    },
+    {
+      "name": "🧪 Testing: Run All Tests + Quality Checks",
+      "configurations": [
+        "🧪 Backend: Run Tests",
+        "📊 Backend: Code Quality (Lint + Format)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "📦 Production: Build Frontend Only",
+      "configurations": [
+        "📦 Frontend: Build Production"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "🔄 Frontend: Full Rebuild",
+      "configurations": [
+        "🔨 Frontend: Install Dependencies",
+        "🧹 Frontend: Clean Build Cache"
+      ],
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testFile",
+      "description": "Test file to run (e.g., tests/test_api.py)",
+      "default": "tests/",
+      "type": "promptString"
+    }
+  ]
+}
+
