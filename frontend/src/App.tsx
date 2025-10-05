@@ -51,6 +51,9 @@ import ThemePickerModal from './components/modals/ThemePickerModal';
 // File editor components
 import { FileEditorView } from './components/editor/FileEditorView';
 
+// Terminal components  
+import { ShellView } from './components/terminal/ShellView';
+
 // Theme management
 import { useTheme } from './themes';
 
@@ -577,6 +580,54 @@ function App() {
     }
   };
 
+  // ==================== Shell Functions ====================
+  
+  // Handle shell session creation and opening
+  const handleNewShell = (shellType: string = 'auto') => {
+    const shellTabId = `shell-tab-${Date.now()}`;
+    const shellCount = tabs.filter(t => t.type === 'shell').length + 1;
+    
+    // Create descriptive title based on shell type
+    let title = '';
+    switch (shellType) {
+      case 'cmd':
+        title = `CMD ${shellCount}`;
+        break;
+      case 'powershell':
+        title = `PowerShell ${shellCount}`;
+        break;
+      case 'bash':
+        title = `Bash ${shellCount}`;
+        break;
+      default:
+        title = `Shell ${shellCount}`;
+    }
+    
+    const newShellTab: Tab = {
+      id: shellTabId,
+      conversationId: '', // Shell tabs don't need conversation IDs
+      title: title,
+      isActive: false,
+      isDirty: false,
+      type: 'shell',
+      shellSessionId: undefined, // Will be set by ShellView
+      shellType: shellType, // Store the shell type for the tab
+    };
+
+    setTabs(prev => [...prev, newShellTab]);
+    setActiveTabId(shellTabId);
+    message.success(`New ${title} session created`);
+  };
+
+  // Handle shell session ID assignment
+  const handleShellSessionChange = (tabId: string, sessionId: string) => {
+    setTabs(prev => prev.map(tab => 
+      tab.id === tabId 
+        ? { ...tab, shellSessionId: sessionId } 
+        : tab
+    ));
+  };
+
   // Tab management
   const handleTabChange = (tabId: string) => {
     setActiveTabId(tabId);
@@ -905,6 +956,7 @@ function App() {
         onSetContext={() => setContextModalOpen(true)}
         onNewConversation={handleNewTab}
         onEditFile={() => setFileSelectionModalOpen(true)}
+        onNewShell={handleNewShell}
         onSaveHistory={() => handleTabSave(activeTabId)}
         onLoadHistory={handleLoadHistory}
         onOpenSettings={() => setSettingsModalOpen(true)}
@@ -938,6 +990,13 @@ function App() {
             tab={activeTab}
             onContentChange={handleFileContentChange}
             onSave={handleFileSave}
+            theme={theme}
+          />
+        ) : activeTab?.type === 'shell' ? (
+          // Shell View
+          <ShellView
+            tab={activeTab}
+            onSessionChange={handleShellSessionChange}
             theme={theme}
           />
         ) : (

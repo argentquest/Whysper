@@ -19,7 +19,7 @@ Router Organization:
 - /settings: User preferences and configuration
 """
 from fastapi import APIRouter
-from .endpoints import chat, code, mermaid, files, settings, system
+from .endpoints import chat, code, mermaid, files, settings, system, shell
 from typing import Dict, Any
 
 # Create the main API router for version 1
@@ -81,5 +81,15 @@ api_router.include_router(
     settings.router,
     prefix="/settings",  # URL prefix for settings operations
     tags=["settings"],   # OpenAPI documentation tag
+    responses={404: {"description": "Not found"}},
+)
+
+# ==================== Shell Endpoints ====================
+# Real-time shell access and command execution via WebSocket
+# Available at: /api/v1/shell/* (sessions, ws, security)
+api_router.include_router(
+    shell.router,
+    prefix="/shell",     # URL prefix for shell operations
+    tags=["shell"],      # OpenAPI documentation tag
     responses={404: {"description": "Not found"}},
 )

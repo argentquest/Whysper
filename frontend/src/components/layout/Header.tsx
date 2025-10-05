@@ -17,6 +17,7 @@ import {
   MoreOutlined,
   DownOutlined,
   EditOutlined,
+  ConsoleSqlOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 
@@ -28,6 +29,7 @@ interface HeaderProps {
   onSetContext: () => void;
   onNewConversation: () => void;
   onEditFile: () => void;
+  onNewShell: (shellType?: string) => void;
   onSaveHistory: () => void;
   onLoadHistory: () => void;
   onOpenSettings: () => void;
@@ -46,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSetContext,
   onNewConversation,
   onEditFile,
+  onNewShell,
   onSaveHistory,
   onLoadHistory,
   onOpenSettings,
@@ -276,6 +279,57 @@ export const Header: React.FC<HeaderProps> = ({
               Edit File
             </Button>
           </Tooltip>
+          
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'auto',
+                  label: 'Auto Shell',
+                  icon: <ConsoleSqlOutlined />,
+                  onClick: () => onNewShell('auto'),
+                },
+                {
+                  key: 'cmd',
+                  label: 'Command Prompt',
+                  icon: <ConsoleSqlOutlined />,
+                  onClick: () => onNewShell('cmd'),
+                },
+                {
+                  key: 'powershell',
+                  label: 'PowerShell',
+                  icon: <ConsoleSqlOutlined />,
+                  onClick: () => onNewShell('powershell'),
+                },
+                {
+                  key: 'bash',
+                  label: 'Bash',
+                  icon: <ConsoleSqlOutlined />,
+                  onClick: () => onNewShell('bash'),
+                },
+              ],
+            }}
+            trigger={['click']}
+            placement="bottomLeft"
+          >
+            <Tooltip title="New Shell (Click for options)">
+              <Button
+                icon={<ConsoleSqlOutlined />}
+                onClick={() => onNewShell('auto')}
+                size="large"
+                style={{
+                  borderRadius: '12px',
+                  fontWeight: 500,
+                  height: '44px',
+                  padding: '0 20px',
+                  borderColor: '#e2e8f0',
+                  color: '#64748b',
+                }}
+              >
+                Shell <DownOutlined style={{ fontSize: '10px', marginLeft: '4px' }} />
+              </Button>
+            </Tooltip>
+          </Dropdown>
         </div>
 
         {/* Secondary Actions */}

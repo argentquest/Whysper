@@ -118,7 +118,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               setSelectedCategory(value);
               setSelectedCommand(''); // Reset command when category changes
             }}
-            className="min-w-[140px]"
+            className="min-w-[280px]"
             size="small"
             allowClear
           >
@@ -134,7 +134,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             placeholder="Select command"
             value={selectedCommand}
             onChange={setSelectedCommand}
-            className="min-w-[180px]"
+            className="min-w-[360px]"
             size="small"
             allowClear
             disabled={!selectedCategory}
