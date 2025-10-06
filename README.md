@@ -27,20 +27,38 @@ venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
 
-# 3. Install dependencies
+# 3. Install backend dependencies
 cd backend
 pip install -r requirements.txt
 
-# 4. Run the application
+# 4. Configure environment variables
+# Copy the template and add your API key
+copy ..\.envTemplate .env    # Windows
+# cp ../.envTemplate .env    # Linux/macOS
+# Edit .env and add your OpenRouter API key to the API_KEY field
+
+# 5. Install frontend dependencies (for development)
+cd ../frontend
+npm install
+
+# 6. Run the application
+cd ../backend
 python main.py
 ```
 
 ## 📱 Access the Application
 
 Once started, the application will be available at:
-- **Frontend**: http://localhost:8001
+- **Frontend**: http://localhost:8001 (integrated React app)
 - **API**: http://localhost:8001/api/v1
-- **Documentation**: http://localhost:8001/docs
+- **API Documentation**: http://localhost:8001/docs (Swagger UI)
+
+**Note:** For development, you can run frontend separately on port 5173:
+```bash
+cd frontend
+npm run dev
+```
+Then configure frontend to use `http://localhost:8001/api/v1` for the backend API.
 
 ## 🏗️ Architecture
 
@@ -89,12 +107,96 @@ MyApp/
 
 ## 🔧 Configuration
 
-The application uses environment variables for configuration. Key settings:
+The application uses a `.env` file located in the **`backend/`** directory for configuration.
 
-- `API_KEY`: Your AI provider API key
-- `DEFAULT_MODEL`: Default AI model to use
-- `MAX_TOKENS`: Maximum tokens per response
-- `TEMPERATURE`: AI creativity setting (0.0-1.0)
+### Required Configuration Steps
+
+1. **Copy the environment template:**
+   ```bash
+   # From project root
+   copy .envTemplate backend\.env    # Windows
+   # cp .envTemplate backend/.env    # Linux/macOS
+   ```
+
+2. **Edit `backend/.env` and configure:**
+   - `API_KEY`: Your OpenRouter API key (get from https://openrouter.ai/keys)
+   - `DEFAULT_MODEL`: Default AI model to use (e.g., `google/gemini-2.5-flash-preview-09-2025`)
+   - `PROVIDER`: AI provider name (default: `openrouter`)
+   - `MAX_TOKENS`: Maximum tokens per response (default: `4000`)
+   - `TEMPERATURE`: AI creativity setting 0.0-1.0 (default: `0.7`)
+
+3. **Important:** The `.env` file **MUST** be in the `backend/` directory, not the project root
+
+### AI Provider Configuration
+
+Whysper supports multiple AI providers through a modular provider system. Each provider may require different configuration settings in your `.env` file.
+
+#### Available Providers
+
+The application includes the following built-in providers (located in `backend/providers/`):
+
+1. **OpenRouter Provider** (`openrouter`) - **Default & Recommended**
+   - Unified API for multiple AI models (OpenAI, Anthropic, Google, etc.)
+   - Single API key for all models
+   - Automatic model routing and fallback
+   - Get API key: https://openrouter.ai/keys
+
+2. **Custom Provider** (`custom`)
+   - Configurable for any OpenAI-compatible API
+   - Flexible configuration via environment variables
+
+#### Switching Between Providers
+
+To use a different provider, update these fields in `backend/.env`:
+
+```bash
+# Set the provider name (openrouter or custom)
+PROVIDER="openrouter"
+
+# Provider-specific API key
+API_KEY="your-provider-api-key-here"
+```
+
+#### Provider-Specific Configuration
+
+**For OpenRouter (Default):**
+```bash
+PROVIDER="openrouter"
+API_KEY="sk-or-v1-YOUR_OPENROUTER_KEY"
+DEFAULT_MODEL="google/gemini-2.5-flash-preview-09-2025"
+# OpenRouter handles all model routing automatically
+```
+
+**For Custom Provider:**
+```bash
+PROVIDER="custom"
+API_KEY="your-custom-api-key"
+API_URL="https://your-api.com/v1/chat/completions"
+DEFAULT_MODEL="your-model-name"
+
+# Optional custom provider settings
+# AUTH_HEADER="Authorization"          # Header name for auth
+# AUTH_FORMAT="Bearer {api_key}"       # Auth format string
+# REQUEST_TIMEOUT="30"                 # Request timeout in seconds
+```
+
+#### Adding a New Provider
+
+To add support for a new AI provider:
+
+1. Create a new provider file in `backend/providers/` (e.g., `my_provider.py`)
+2. Extend the `BaseAIProvider` class from `common/base_ai.py`
+3. Implement the required methods:
+   - `_get_provider_config()` - Provider-specific configuration
+   - `_prepare_headers()` - Authentication headers
+   - `_prepare_request_data()` - Request payload formatting
+   - `_extract_response_content()` - Parse AI response
+   - `_extract_token_usage()` - Extract token usage info
+   - `_handle_api_error()` - Custom error handling
+4. Register your provider in `backend/providers/__init__.py`
+5. Add provider-specific configuration to `.envTemplate`
+
+See `backend/providers/openrouter_provider.py` for a complete example implementation.
 
 ## 🚀 Development
 

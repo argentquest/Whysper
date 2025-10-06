@@ -36,6 +36,12 @@ import { ChatView } from './components/chat/ChatView';
 import { InputPanel } from './components/chat/InputPanel';
 import { StatusBar } from './components/layout/StatusBar';
 
+// Helper function to convert theme key to editor theme mode
+const getEditorTheme = (themeKey: string): 'light' | 'dark' => {
+  const darkThemes = ['dark', 'proDark'];
+  return darkThemes.includes(themeKey) ? 'dark' : 'light';
+};
+
 // Modal components for secondary interfaces
 import {
   ContextModal,      // File selection and context management
@@ -990,14 +996,14 @@ function App() {
             tab={activeTab}
             onContentChange={handleFileContentChange}
             onSave={handleFileSave}
-            theme={theme}
+            theme={getEditorTheme(theme)}
           />
         ) : activeTab?.type === 'shell' ? (
           // Shell View
           <ShellView
             tab={activeTab}
             onSessionChange={handleShellSessionChange}
-            theme={theme}
+            theme={getEditorTheme(theme)}
           />
         ) : (
           // Chat View

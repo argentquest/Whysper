@@ -153,9 +153,6 @@ export const FileSelectionModal: React.FC<FileSelectionModalProps> = ({
       onCancel={onCancel}
       footer={null}
       width={800}
-      styles={{
-        body: { padding: '20px' }
-      }}
     >
       <div className="space-y-4">
         {/* Search and Controls */}

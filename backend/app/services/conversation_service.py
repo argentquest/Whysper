@@ -37,7 +37,7 @@ class ConversationSummary:
     Attributes:
         conversation_id: Unique identifier for the conversation session
         selected_model: Currently selected AI model name
-        provider: AI provider (openrouter, tachyon, custom)
+        provider: AI provider (openrouter, custom)
         selected_directory: Current working directory path
         selected_files: List of currently selected file paths
         persistent_files: Files that remain loaded across all questions
@@ -67,7 +67,7 @@ class ConversationSession:
     Attributes:
         session_id: Unique identifier for this conversation session
         ai_processor: AI provider instance for handling requests
-        provider: AI service provider name (openrouter, tachyon, custom)
+        provider: AI service provider name (openrouter, custom)
         available_models: List of models available for this provider
         default_model: Default model to use for this session
         app_state: Application state containing configuration and data
@@ -195,7 +195,7 @@ class ConversationSession:
         Only updates if the provider is different from the current one.
 
         Args:
-            provider: Name of the AI provider (e.g., 'openrouter', 'tachyon')
+            provider: Name of the AI provider (e.g., 'openrouter', 'custom')
 
         Returns:
             None

@@ -137,12 +137,16 @@ def send_chat_message(request: dict):
         
         if not message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
-        
-        # TEMPORARY: Use hardcoded values for testing
-        api_key = "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"
-        provider = "openrouter"
-        model = "google/gemini-2.5-flash-preview-09-2025"
-        models_list = ["google/gemini-2.5-flash-preview-09-2025", "x-ai/grok-code-fast-1", "anthropic/claude-3-5-sonnet"]
+
+        # Load configuration from .env file
+        env_config = load_env_defaults()
+        api_key = env_config.get('api_key', '')
+        provider = env_config.get('provider', 'openrouter')
+        model = settings.get('model') or env_config.get('default_model', 'google/gemini-2.5-flash-preview-09-2025')
+        models_list = env_config.get('models', [])
+
+        if not api_key:
+            raise HTTPException(status_code=400, detail="API key not configured in .env file")
         
         # Get or create conversation session
         try:

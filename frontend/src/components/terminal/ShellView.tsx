@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Alert, Button, message, Space, Select } from 'antd';
-import { 
-  ConsoleSqlOutlined, 
-  ReloadOutlined, 
+import { Spin, Alert, Button, message, Space, Select } from 'antd';
+import {
+  ConsoleSqlOutlined,
+  ReloadOutlined,
   ClearOutlined,
-  SettingOutlined,
-  InfoCircleOutlined 
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import TerminalComponent from './TerminalComponent';
 import ApiService from '../../services/api';
@@ -91,7 +90,7 @@ export const ShellView: React.FC<ShellViewProps> = ({
     setIsConnected(connected);
   };
 
-  const handleCommand = (command: string) => {
+  const handleCommand = () => {
     setCommandCount(prev => prev + 1);
   };
 

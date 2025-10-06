@@ -66,8 +66,8 @@ class EnvValidator:
                      "api")
         
         self.add_rule('PROVIDER',
-                      lambda v: self._validate_enum(v, {'openrouter', 'tachyon', 'custom'}),
-                      "AI provider (openrouter, tachyon, custom)",
+                      lambda v: self._validate_enum(v, {'openrouter', 'custom'}),
+                      "AI provider (openrouter, custom)",
                       "api")
 
         self.add_rule('PROVIDERS',
@@ -607,7 +607,7 @@ class EnvValidator:
             return False, "No valid providers found in list"
 
         # Check for valid provider names (should match class names in providers/)
-        valid_providers = {'openrouter', 'tachyon', 'custom'}
+        valid_providers = {'openrouter', 'custom'}
         invalid_providers = []
 
         for provider in providers:

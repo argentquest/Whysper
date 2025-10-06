@@ -376,6 +376,15 @@ export class ApiService {
       throw error;
     }
   }
+
+  static async delete(url: string): Promise<any> {
+    try {
+      const response = await api.delete(url);
+      return response;
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
 }
 
 export default ApiService;

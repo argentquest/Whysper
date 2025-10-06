@@ -53,7 +53,6 @@ export const TerminalComponent: React.FC<TerminalComponentProps> = ({
         background: theme === 'dark' ? '#1e1e1e' : '#ffffff',
         foreground: theme === 'dark' ? '#ffffff' : '#000000',
         cursor: theme === 'dark' ? '#ffffff' : '#000000',
-        selection: theme === 'dark' ? '#3e3e3e' : '#c8c8c8',
       },
       fontSize: 14,
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
@@ -141,7 +140,6 @@ export const TerminalComponent: React.FC<TerminalComponentProps> = ({
         background: theme === 'dark' ? '#1e1e1e' : '#ffffff',
         foreground: theme === 'dark' ? '#ffffff' : '#000000',
         cursor: theme === 'dark' ? '#ffffff' : '#000000',
-        selection: theme === 'dark' ? '#3e3e3e' : '#c8c8c8',
       };
     }
   }, [theme]);
@@ -394,7 +392,7 @@ export const TerminalComponent: React.FC<TerminalComponentProps> = ({
         </button>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .terminal-container {
           display: flex;
           flex-direction: column;

@@ -33,7 +33,6 @@ graph TB
 
      subgraph "AI Providers"
          OR[OpenRouter Provider<br/>providers/openrouter_provider.py]
-         TA[Tachyon Provider<br/>providers/tachyon_provider.py]
          CP[Custom Provider<br/>providers/custom_provider.py]
      end
 
@@ -57,7 +56,6 @@ graph TB
      SS --> EL
 
      AI --> OR
-     AI --> TA
      AI --> CP
 
      AI --> PM
@@ -80,7 +78,7 @@ graph TB
 
 **Key Components**:
 - **Abstract Base Class**: `BaseAIProvider` defines the contract for all AI providers
-- **Provider Implementations**: Concrete classes like `OpenRouterProvider`, `TachyonProvider`
+- **Provider Implementations**: Concrete classes like `OpenRouterProvider`, `CustomProvider`
 - **Factory Pattern**: `AIProviderFactory` creates provider instances dynamically
 - **Configuration**: `AIProviderConfig` handles provider-specific settings
 

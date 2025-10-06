@@ -31,6 +31,7 @@ This document records the current project status and architectural decisions.
 
 ```
 backend/
+├── .env                # ⚠️ REQUIRED: Environment configuration (copy from .envTemplate)
 ├── app/
 │   ├── api/v1/          # All API endpoints under /api/v1
 │   ├── services/        # Business logic services
@@ -46,7 +47,11 @@ frontend/
 │   ├── components/     # React components
 │   ├── services/       # API service layer
 │   └── types/         # TypeScript definitions
+
+.envTemplate           # Template for creating backend/.env
 ```
+
+**Important:** The `.env` file MUST be located at `backend/.env`, not in the project root.
 
 ---
 
@@ -60,13 +65,29 @@ frontend/
 
 ## 🔧 Development Workflow
 
+### **Initial Setup**
+```bash
+# 1. Copy environment template to backend directory
+copy .envTemplate backend\.env    # Windows
+# cp .envTemplate backend/.env    # Linux/macOS
+
+# 2. Edit backend/.env and add your OpenRouter API key
+# API_KEY="sk-or-v1-YOUR_KEY_HERE"
+
+# 3. Install dependencies
+cd backend
+pip install -r requirements.txt
+cd ../frontend
+npm install
+```
+
 ### **Starting the Application**
 ```bash
 # Backend API Server (Port 8001)
 cd backend
 python main.py
 
-# Frontend Development Server (Port 5173)  
+# Frontend Development Server (Port 5173)
 cd frontend
 npm run dev
 ```
@@ -75,3 +96,4 @@ npm run dev
 - **Frontend:** http://localhost:5173 (React dev server)
 - **Backend API:** http://localhost:8001/api/v1 (Pure API)
 - **API Documentation:** http://localhost:8001/docs (OpenAPI/Swagger)
+- **Integrated (production):** http://localhost:8001 (backend serves frontend)

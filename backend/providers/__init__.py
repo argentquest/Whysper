@@ -7,12 +7,10 @@ calls for different AI services.
 
 Available providers:
 - OpenRouterProvider: For OpenRouter API
-- TachyonProvider: For Tachyon API
 - CustomProvider: Configurable provider for custom AI APIs
 """
 
 from .openrouter_provider import OpenRouterProvider
-from .tachyon_provider import TachyonProvider
 from .custom_provider import CustomProvider
 
-__all__ = ['OpenRouterProvider', 'TachyonProvider', 'CustomProvider']
+__all__ = ['OpenRouterProvider', 'CustomProvider']

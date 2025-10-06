@@ -9,7 +9,7 @@ Architecture Overview:
 - AIProviderFactory: Factory class for creating provider instances
 - AIProcessor: Main processor class that maintains backward compatibility
 - BaseAIProvider: Abstract base class that all providers must extend
-- Provider implementations: OpenRouterProvider, TachyonProvider, etc.
+- Provider implementations: OpenRouterProvider, CustomProvider, etc.
 
 The provider pattern allows:
 - Easy addition of new AI providers without modifying core logic
@@ -31,7 +31,7 @@ Usage:
     processor = create_ai_processor(api_key="your_key")
 
     # Create processor with specific provider
-    processor = create_ai_processor(api_key="your_key", provider="tachyon")
+    processor = create_ai_processor(api_key="your_key", provider="openrouter")
 
     # Process a question
     response = processor.process_question(
@@ -46,7 +46,6 @@ import importlib
 from typing import List, Dict, Any, Callable, Optional
 from .base_ai import BaseAIProvider
 from providers.openrouter_provider import OpenRouterProvider
-from providers.tachyon_provider import TachyonProvider
 from providers.custom_provider import CustomProvider
 
 
@@ -56,7 +55,6 @@ class AIProviderFactory:
     # Static mapping of provider names to classes (for fallback)
     _STATIC_PROVIDERS = {
         "openrouter": OpenRouterProvider,
-        "tachyon": TachyonProvider,
         "custom": CustomProvider
     }
 
@@ -120,7 +118,7 @@ class AIProviderFactory:
         Create an AI provider instance.
 
         Args:
-            provider_name: Name of the provider ('openrouter', 'tachyon', 'custom')
+            provider_name: Name of the provider ('openrouter', 'custom')
             api_key: API key for the provider
 
         Returns:

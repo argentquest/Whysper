@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, Tooltip, Space, message } from 'antd';
 import { SaveOutlined, UndoOutlined, RedoOutlined, ExpandOutlined, CompressOutlined } from '@ant-design/icons';
@@ -31,7 +31,7 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
   showToolbar = true,
   className = '',
 }) => {
-  const editorRef = useRef<editor.IStandaloneCodeEditor>();
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Handle editor mount
@@ -59,7 +59,6 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
         indentation: true,
       },
       suggest: {
-        enableIntelliSense: true,
         insertMode: 'replace',
         showInlineDetails: true,
       },

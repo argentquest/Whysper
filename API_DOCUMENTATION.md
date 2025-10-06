@@ -36,7 +36,7 @@ Returns available AI providers.
 **Response:**
 ```json
 {
-  "providers": ["openrouter", "tachyon"],
+  "providers": ["openrouter", "custom"],
   "default": "openrouter"
 }
 ```

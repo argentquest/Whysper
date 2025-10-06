@@ -8,22 +8,53 @@
 # =============================================================================
 
 # Primary API Key - REQUIRED for all AI operations
+# Get your OpenRouter key from: https://openrouter.ai/keys
 API_KEY=""
 
-# AI Provider Selection
+# =============================================================================
+# 🌐 AI PROVIDER SELECTION
+# =============================================================================
+# Choose your AI provider: openrouter or custom
+# Default: openrouter (recommended for most users)
+
 PROVIDER="openrouter"
 
 # Available AI Providers - comma-separated list of provider names
 # These must match the provider class names in the providers/ directory
 PROVIDERS="openrouter,custom"
 
-# API URLs
+# =============================================================================
+# 🔧 PROVIDER-SPECIFIC CONFIGURATION
+# =============================================================================
+
+# --- OPENROUTER PROVIDER (Default & Recommended) ---
+# Provides access to multiple AI models (OpenAI, Anthropic, Google, etc.)
+# through a single API key. Get your key from: https://openrouter.ai/keys
+#
+# Example configuration:
+# PROVIDER="openrouter"
+# API_KEY="sk-or-v1-YOUR_KEY_HERE"
+# No additional settings needed for OpenRouter
+
+# --- CUSTOM PROVIDER ---
+# Uncomment and configure if using a custom OpenAI-compatible API
+#
+# PROVIDER="custom"
+# API_KEY="your-custom-api-key"
+# API_URL="https://your-api.com/v1/chat/completions"
+# DEFAULT_MODEL="your-model-name"
+#
+# Optional custom provider settings:
+# AUTH_HEADER="Authorization"
+# AUTH_FORMAT="Bearer {api_key}"
+
+# API URLs (modify if using custom provider)
 API_URL="https://api.openrouter.ai/v1/chat/completions"
 TOKEN_URL="https://api.openrouter.ai/v1/token"
 
-# Token authentication
-TOKEN_USE_ID="DD"
-TOKEN_PASSWORD="dd1234"
+# Token authentication (if required by your provider)
+TOKEN_USE_ID=""
+TOKEN_PASSWORD=""
 
 # =============================================================================
 # 🤖 MODEL CONFIGURATION (REQUIRED)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Alert, Button, message } from 'antd';
+import { Spin, Alert, Button, message } from 'antd';
 import { FileOutlined, SaveOutlined, ReloadOutlined } from '@ant-design/icons';
 import MonacoEditor from './MonacoEditor';
 import ApiService from '../../services/api';

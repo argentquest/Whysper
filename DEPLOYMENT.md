@@ -1,10 +1,77 @@
-# Whysper Frontend Deployment Guide
+# Whysper Deployment Guide
 
-This document explains how to build and deploy the frontend to the integrated backend server.
+This document explains how to configure, build, and deploy the Whysper Web2 application.
 
 ## Overview
 
-Whysper uses an integrated deployment model where the React frontend is served by the FastAPI backend server on a single port (8001). When you make changes to the frontend, you need to rebuild and deploy it to the backend's static directory.
+Whysper uses an integrated deployment model where:
+- **Backend**: FastAPI server runs on port 8001
+- **Frontend**: React app served as static files from the backend
+- **Configuration**: `.env` file located in `backend/` directory
+- **Single Port**: Both frontend and API accessible on port 8001
+
+## Prerequisites
+
+Before deployment, ensure you have:
+- Python 3.8+ installed
+- Node.js 16+ and npm installed
+- An OpenRouter API key (get from https://openrouter.ai/keys)
+
+## Configuration Setup
+
+### Step 1: Create Environment File
+
+The `.env` file **MUST** be located in the `backend/` directory:
+
+```bash
+# From project root
+copy .envTemplate backend\.env    # Windows
+# OR
+cp .envTemplate backend/.env      # Linux/macOS
+```
+
+### Step 2: Configure API Key
+
+Edit `backend/.env` and set your OpenRouter API key:
+
+```bash
+# REQUIRED: Add your OpenRouter API key
+API_KEY="sk-or-v1-YOUR_API_KEY_HERE"
+
+# Optional: Configure other settings
+PROVIDER="openrouter"
+DEFAULT_MODEL="google/gemini-2.5-flash-preview-09-2025"
+MAX_TOKENS="4000"
+TEMPERATURE="0.7"
+```
+
+**Important:**
+- The `.env` file location is **`backend/.env`**, not in the project root
+- Without a valid API key, the chat functionality will not work
+- Get your API key from: https://openrouter.ai/keys
+
+### Step 3: Provider Selection (Optional)
+
+Whysper supports multiple AI providers. By default, it uses OpenRouter (recommended).
+
+**Available Providers:**
+- `openrouter` (default) - Access to multiple AI models through single API
+- `custom` - Any OpenAI-compatible API
+
+**To switch to custom provider**, edit `backend/.env`:
+
+```bash
+# For Custom Provider
+PROVIDER="custom"
+API_KEY="your-custom-key"
+API_URL="https://your-api.com/v1/chat/completions"
+```
+
+See the [Provider Configuration section in README.md](README.md#ai-provider-configuration) for detailed provider setup instructions.
+
+## Frontend Deployment
+
+When you make changes to the frontend, you need to rebuild and deploy it to the backend's static directory.
 
 ## Quick Start
 
@@ -115,23 +182,49 @@ Whysper/
 - The Node.js script (`deploy.js`) doesn't clear old files
 - Use the PowerShell script for automatic cleanup
 
+**"OpenRouter API key is invalid or expired" error**
+- Verify `.env` file is in `backend/` directory (NOT project root)
+- Check `API_KEY` value in `backend/.env` is correctly set
+- Ensure API key starts with `sk-or-v1-`
+- Verify API key is valid at https://openrouter.ai/keys
+- Restart the backend server after changing `.env`
+
+**"API key not configured" error**
+- The `.env` file is missing or in wrong location
+- Copy `.envTemplate` to `backend/.env`
+- Add your OpenRouter API key to the `API_KEY` field
+
 ### Verification
 
-After deployment, verify the integration works:
+After deployment, verify everything works correctly:
 
-1. Start the backend server:
+1. **Check .env file exists:**
+   ```bash
+   # Verify the file is in the correct location
+   dir backend\.env      # Windows
+   # ls -la backend/.env # Linux/macOS
+   ```
+
+2. **Start the backend server:**
    ```bash
    cd backend
    python main.py
    ```
 
-2. Visit http://localhost:8001
-   - Should serve the React application
-   - API endpoints available at http://localhost:8001/api/v1/*
+3. **Verify the application:**
+   - Visit http://localhost:8001 (React frontend should load)
+   - Check http://localhost:8001/docs (API documentation)
+   - Test chat functionality with a simple message
 
-3. Check browser dev tools:
+4. **Check browser dev tools:**
    - No 404 errors for CSS/JS assets
    - Assets loading from `/assets/` path
+   - API calls going to `/api/v1/*`
+
+5. **Check backend logs:**
+   - Should show "Starting Whysper Web2 Backend"
+   - No API key errors
+   - Successful OpenRouter connections
 
 ## Development Workflow
 
