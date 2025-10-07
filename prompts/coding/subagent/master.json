@@ -343,5 +343,105 @@
     "category": "Conversion",
     "title": "Framework Migration",
     "subcommand": "Help migrate code from one framework or library to another while preserving functionality and improving structure."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Class Diagram",
+    "subcommand": "Generate a Mermaid class diagram showing classes, their properties, methods, and relationships (inheritance, composition, dependencies) in this code."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Sequence Diagram",
+    "subcommand": "Create a Mermaid sequence diagram illustrating the flow of method calls and interactions between components, objects, or services in this code."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Flowchart",
+    "subcommand": "Generate a Mermaid flowchart mapping out the control flow, decision points, loops, and execution paths through this code."
+  },
+  {
+    "category": "Mermaid",
+    "title": "State Diagram",
+    "subcommand": "Create a Mermaid state diagram showing the different states, transitions, and events that drive state changes in this code."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Entity-Relationship Diagram",
+    "subcommand": "Generate a Mermaid ER diagram showing database entities, their attributes, and relationships (one-to-many, many-to-many) in this data model."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Component Architecture",
+    "subcommand": "Create a Mermaid component diagram illustrating the system architecture, major components, and their dependencies and interfaces."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Git Flow Diagram",
+    "subcommand": "Generate a Mermaid gitGraph diagram showing the branching strategy, commit history, merges, and release flow for this project."
+  },
+  {
+    "category": "Mermaid",
+    "title": "User Journey Map",
+    "subcommand": "Create a Mermaid user journey diagram mapping out user interactions, workflows, and experience touchpoints through the application."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Data Flow Diagram",
+    "subcommand": "Generate a Mermaid flowchart showing how data moves through the system, including inputs, transformations, storage, and outputs."
+  },
+  {
+    "category": "Mermaid",
+    "title": "API Call Graph",
+    "subcommand": "Create a Mermaid graph showing API endpoints, their request/response flows, dependencies between services, and authentication flows."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Timeline Diagram",
+    "subcommand": "Generate a Mermaid timeline diagram showing the chronological progression of features, releases, or events in the project lifecycle."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Gantt Chart",
+    "subcommand": "Create a Mermaid Gantt chart visualizing project tasks, milestones, dependencies, and timelines for development planning."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Pie Chart",
+    "subcommand": "Generate a Mermaid pie chart showing code distribution metrics like language percentages, module sizes, or test coverage statistics."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Mindmap",
+    "subcommand": "Create a Mermaid mindmap diagram organizing code concepts, features, modules, or architectural decisions in a hierarchical visual structure."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Requirement Diagram",
+    "subcommand": "Generate a Mermaid requirement diagram showing system requirements, their relationships, test cases, and verification methods."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Package Dependency Graph",
+    "subcommand": "Create a Mermaid graph showing package/module dependencies, import relationships, and circular dependency detection in the codebase."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Database Schema",
+    "subcommand": "Generate a Mermaid diagram showing database tables, columns, data types, indexes, and foreign key constraints."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Network Diagram",
+    "subcommand": "Create a Mermaid diagram illustrating network architecture, services, ports, protocols, and communication paths between systems."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Error Flow Diagram",
+    "subcommand": "Generate a Mermaid flowchart showing error handling paths, exception propagation, and recovery strategies throughout the code."
+  },
+  {
+    "category": "Mermaid",
+    "title": "Quadrant Chart",
+    "subcommand": "Create a Mermaid quadrant chart for prioritization analysis like technical debt vs business value, or effort vs impact matrices."
   }
 ]

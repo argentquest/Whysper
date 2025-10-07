@@ -119,8 +119,8 @@ class Settings(BaseSettings):
     debug: bool = False  # Enable debug mode for development (auto-reload, detailed errors)
     
     # ==================== Server Configuration ====================
-    host: str = "0.0.0.0"  # Server host (0.0.0.0 allows external connections)
-    port: int = 8001       # Server port (8001 to avoid conflicts with other services)
+    host: str = Field(default="0.0.0.0", env="API_HOST")  # Server host (0.0.0.0 allows external connections)
+    port: int = Field(default=8003, env="API_PORT")       # Server port (8003 to avoid conflicts with other services)
     reload: bool = True    # Auto-reload on code changes (development only)
     
     # ==================== CORS Configuration ====================

@@ -111,7 +111,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<GithubOutlined />}
-            href="https://github.com/your-org/Whysper"
+            href="https://github.com/argentquest/Whysper"
             target="_blank"
           >
             Source Code
@@ -119,7 +119,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<BookOutlined />}
-            href="https://docs.Whysper.dev"
+            href="https://github.com/argentquest/Whysper#readme"
             target="_blank"
           >
             Documentation
@@ -127,7 +127,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <Button
             type="link"
             icon={<BugOutlined />}
-            href="https://github.com/your-org/Whysper/issues"
+            href="https://github.com/argentquest/Whysper/issues"
             target="_blank"
           >
             Report Bug

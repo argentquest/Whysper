@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Button, Checkbox, Input, Space, Typography, Spin, message } from 'antd';
+import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented } from 'antd';
 import {
   ReloadOutlined,
   FolderOutlined,
   FileOutlined,
+  UnorderedListOutlined,
+  ApartmentOutlined,
 } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
 import type { FileItem } from '../../types';
 import ApiService from '../../services/api';
+import FileTreeModal from './FileTreeModal';
 
 const { Option } = Select;
 const { Search } = Input;
@@ -26,6 +29,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   onApply,
   initialFiles = [],
 }) => {
+  const [viewMode, setViewMode] = useState<'list' | 'tree'>('tree');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -146,6 +150,19 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     'prompts/coding/agent/',
   ];
 
+  // If tree view mode is selected, render the FileTreeModal
+  if (viewMode === 'tree') {
+    return (
+      <FileTreeModal
+        open={open}
+        onCancel={onCancel}
+        onApply={onApply}
+        initialFiles={initialFiles}
+      />
+    );
+  }
+
+  // Otherwise render the list view
   return (
     <Modal
       title="Conversation Context"
@@ -157,6 +174,26 @@ export const ContextModal: React.FC<ContextModalProps> = ({
       cancelText="Cancel"
     >
       <div className="space-y-4">
+        {/* View Mode Toggle */}
+        <div className="flex items-center justify-between">
+          <Segmented
+            value={viewMode}
+            onChange={(value) => setViewMode(value as 'list' | 'tree')}
+            options={[
+              {
+                label: 'List View',
+                value: 'list',
+                icon: <UnorderedListOutlined />,
+              },
+              {
+                label: 'Tree View',
+                value: 'tree',
+                icon: <ApartmentOutlined />,
+              },
+            ]}
+          />
+        </div>
+
         {/* Directory Selection */}
         <div className="flex items-center gap-4">
           <div className="flex-1">
@@ -251,7 +288,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
               filteredFiles.map((file) => (
                 <div
                   key={file.path}
-                  className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className="grid grid-cols-12 gap-4 px-4 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   <div className="col-span-7 flex items-center gap-2">
                     <Checkbox

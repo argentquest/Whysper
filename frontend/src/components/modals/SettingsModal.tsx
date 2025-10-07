@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, Slider, Switch, Tabs, Typography, message } from 'antd';
+import { Form, Input, Select, Slider, Switch, Tabs, Typography, message, InputNumber, Button } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
 import type { AppSettings } from '../../types';
 import { useTheme } from '../../themes';
@@ -7,8 +8,7 @@ import ApiService from '../../services/api';
 
 const { Option } = Select;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface SettingsModalProps {
   open: boolean;
@@ -23,8 +23,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [availableProviders, setAvailableProviders] = useState<Array<{label: string, value: string}>>([]);
+  const [availableProviders, setAvailableProviders] = useState<string[]>([]);
   const { theme, setTheme } = useTheme();
 
   const loadSettings = React.useCallback(async () => {
@@ -32,44 +33,88 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await ApiService.getSettings();
       if (response.success && response.data) {
         const settings = response.data;
-        
+
+        // Get sensitive values for form
+        const apiKeyValue = settings.values?.API_KEY || '';
+        const tokenPasswordValue = settings.values?.TOKEN_PASSWORD || '';
+
         // Map backend settings to form structure
         const formValues = {
-          theme: theme,
-          language: settings.values?.LANGUAGE || 'en',
-          autoSaveConversations: settings.values?.AUTO_SAVE_CONVERSATIONS === 'true',
-          showLineNumbers: settings.values?.SHOW_LINE_NUMBERS === 'true',
+          // API Configuration
+          apiKey: apiKeyValue || '',
           provider: settings.values?.PROVIDER || 'openrouter',
-          model: settings.values?.DEFAULT_MODEL || '',
-          apiKey: settings.masked?.API_KEY || '',
-          baseUrl: settings.values?.BASE_URL || '',
+          apiUrl: settings.values?.API_URL || '',
+          tokenUrl: settings.values?.TOKEN_URL || '',
+          tokenUseId: settings.values?.TOKEN_USE_ID || '',
+          tokenPassword: tokenPasswordValue || '',
+          validateSsl: settings.values?.VALIDATE_SSL === 'true',
+
+          // Model Configuration
+          defaultModel: settings.values?.DEFAULT_MODEL || '',
           maxTokens: parseInt(settings.values?.MAX_TOKENS || '4000'),
           temperature: parseFloat(settings.values?.TEMPERATURE || '0.7'),
+          topP: parseFloat(settings.values?.TOP_P || '1.0'),
+          frequencyPenalty: parseFloat(settings.values?.FREQUENCY_PENALTY || '0.0'),
+
+          // UI Configuration
+          theme: theme,
+          uiTheme: settings.values?.UI_THEME || 'light',
+          language: settings.values?.LANGUAGE || 'en',
+          windowSize: settings.values?.WINDOW_SIZE || '1200x800',
+
+          // File System Configuration
+          codePath: settings.values?.CODE_PATH || '',
+          ignoreFolders: settings.values?.IGNORE_FOLDERS || '',
+          supportedExtensions: settings.values?.SUPPORTED_EXTENSIONS || '',
+          maxFileSize: parseInt(settings.values?.MAX_FILE_SIZE || '10485760'),
+
+          // System Prompt
+          currentSystemPrompt: settings.values?.CURRENT_SYSTEM_PROMPT || '',
           systemPrompt: settings.values?.SYSTEM_PROMPT || '',
+
+          // Additional UI Settings
+          baseUrl: settings.values?.BASE_URL || '',
+          autoSaveConversations: settings.values?.AUTO_SAVE_CONVERSATIONS === 'true',
+          showLineNumbers: settings.values?.SHOW_LINE_NUMBERS === 'true',
           enableStreaming: settings.values?.ENABLE_STREAMING === 'true',
-          requestTimeout: parseInt(settings.values?.REQUEST_TIMEOUT || '30'),
           retryAttempts: parseInt(settings.values?.RETRY_ATTEMPTS || '3'),
           debugLogging: settings.values?.DEBUG_LOGGING === 'true',
           showTokenUsage: settings.values?.SHOW_TOKEN_USAGE === 'true',
+
+          // Logging Configuration
+          logLevel: settings.values?.LOG_LEVEL || 'INFO',
+          logDir: settings.values?.LOG_DIR || 'logs',
+
+          // Advanced Configuration
+          cacheSize: parseInt(settings.values?.CACHE_SIZE || '100'),
+          requestTimeout: parseInt(settings.values?.REQUEST_TIMEOUT || '60'),
+
+          // Server Configuration
+          apiPort: parseInt(settings.values?.API_PORT || '8000'),
+          apiHost: settings.values?.API_HOST || '0.0.0.0',
+          fastapiUrl: settings.values?.FASTAPI_URL || 'http://localhost:8000',
+          webPort: parseInt(settings.values?.WEB_PORT || '8080'),
+
+          // CLI Memory
+          lastUsedFolder: settings.values?.LAST_USED_FOLDER || '',
+          lastUsedQuestion: settings.values?.LAST_USED_QUESTION || '',
+          lastExcludePatterns: settings.values?.LAST_EXCLUDE_PATTERNS || '',
+          lastOutputFormat: settings.values?.LAST_OUTPUT_FORMAT || 'markdown',
+          dirSave: settings.values?.DIR_SAVE || 'results',
         };
-        
+
         form.setFieldsValue(formValues);
-        
-        // Extract models from backend settings
-        if (settings.values && settings.values.MODELS) {
+
+        // Extract models and providers from backend settings
+        if (settings.values?.MODELS) {
           const models = settings.values.MODELS.split(',').map((m: string) => m.trim());
           setAvailableModels(models);
         }
-        
-        // Set available providers based on backend config
-        const providers = [
-          { label: 'OpenRouter', value: 'openrouter' },
-          { label: 'OpenAI', value: 'openai' },
-          { label: 'Anthropic', value: 'anthropic' },
-          { label: 'Google', value: 'google' },
-          { label: 'Local', value: 'local' },
-        ];
-        setAvailableProviders(providers);
+
+        if (settings.values?.PROVIDERS) {
+          const providers = settings.values.PROVIDERS.split(',').map((p: string) => p.trim());
+          setAvailableProviders(providers);
+        }
       } else {
         message.error(response.error || 'Failed to load settings');
       }
@@ -89,33 +134,73 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       setSaving(true);
       const values = await form.validateFields();
-      
-      console.log('💾 Raw form values:', values);
-      
-      // Map form values back to backend environment format with proper null checks
+
+      // Map form values back to backend environment format
       const backendSettings = {
-        LANGUAGE: values.language || 'en',
-        AUTO_SAVE_CONVERSATIONS: values.autoSaveConversations ? 'true' : 'false',
-        SHOW_LINE_NUMBERS: values.showLineNumbers ? 'true' : 'false',
-        PROVIDER: values.provider || 'openrouter',
-        DEFAULT_MODEL: values.model || '',
+        // API Configuration
         API_KEY: values.apiKey || '',
-        BASE_URL: values.baseUrl || '',
+        PROVIDER: values.provider || 'openrouter',
+        API_URL: values.apiUrl || '',
+        TOKEN_URL: values.tokenUrl || '',
+        TOKEN_USE_ID: values.tokenUseId || '',
+        TOKEN_PASSWORD: values.tokenPassword || '',
+        VALIDATE_SSL: values.validateSsl ? 'true' : 'false',
+
+        // Model Configuration
+        DEFAULT_MODEL: values.defaultModel || '',
         MAX_TOKENS: (values.maxTokens ?? 4000).toString(),
         TEMPERATURE: (values.temperature ?? 0.7).toString(),
+        TOP_P: (values.topP ?? 1.0).toString(),
+        FREQUENCY_PENALTY: (values.frequencyPenalty ?? 0.0).toString(),
+
+        // UI Configuration
+        UI_THEME: values.uiTheme || 'light',
+        LANGUAGE: values.language || 'en',
+        WINDOW_SIZE: values.windowSize || '1200x800',
+
+        // File System Configuration
+        CODE_PATH: values.codePath || '',
+        IGNORE_FOLDERS: values.ignoreFolders || '',
+        SUPPORTED_EXTENSIONS: values.supportedExtensions || '',
+        MAX_FILE_SIZE: (values.maxFileSize ?? 10485760).toString(),
+
+        // System Prompt
+        CURRENT_SYSTEM_PROMPT: values.currentSystemPrompt || '',
         SYSTEM_PROMPT: values.systemPrompt || '',
+
+        // Additional UI Settings
+        BASE_URL: values.baseUrl || '',
+        AUTO_SAVE_CONVERSATIONS: values.autoSaveConversations ? 'true' : 'false',
+        SHOW_LINE_NUMBERS: values.showLineNumbers ? 'true' : 'false',
         ENABLE_STREAMING: values.enableStreaming ? 'true' : 'false',
-        REQUEST_TIMEOUT: (values.requestTimeout ?? 30).toString(),
         RETRY_ATTEMPTS: (values.retryAttempts ?? 3).toString(),
         DEBUG_LOGGING: values.debugLogging ? 'true' : 'false',
         SHOW_TOKEN_USAGE: values.showTokenUsage ? 'true' : 'false',
+
+        // Logging Configuration
+        LOG_LEVEL: values.logLevel || 'INFO',
+        LOG_DIR: values.logDir || 'logs',
+
+        // Advanced Configuration
+        CACHE_SIZE: (values.cacheSize ?? 100).toString(),
+        REQUEST_TIMEOUT: (values.requestTimeout ?? 60).toString(),
+
+        // Server Configuration
+        API_PORT: (values.apiPort ?? 8000).toString(),
+        API_HOST: values.apiHost || '0.0.0.0',
+        FASTAPI_URL: values.fastapiUrl || 'http://localhost:8000',
+        WEB_PORT: (values.webPort ?? 8080).toString(),
+
+        // CLI Memory
+        LAST_USED_FOLDER: values.lastUsedFolder || '',
+        LAST_USED_QUESTION: values.lastUsedQuestion || '',
+        LAST_EXCLUDE_PATTERNS: values.lastExcludePatterns || '',
+        LAST_OUTPUT_FORMAT: values.lastOutputFormat || 'markdown',
+        DIR_SAVE: values.dirSave || 'results',
       };
-      
-      console.log('📤 Backend settings to send:', backendSettings);
-      
+
       const response = await ApiService.updateEnvSettings(backendSettings);
-      console.log('📥 Backend response:', response);
-      
+
       if (response.success) {
         onSave(values);
         message.success('Settings saved successfully');
@@ -124,12 +209,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         message.error(response.error || 'Failed to save settings');
       }
     } catch (error: unknown) {
-      console.error('💥 Error saving settings:', error);
+      console.error('Error saving settings:', error);
       if (error && typeof error === 'object' && 'errorFields' in error) {
         message.error('Please correct the validation errors');
       } else {
         message.error('Error saving settings');
-        console.error('Error saving settings:', error);
       }
     } finally {
       setSaving(false);
@@ -139,19 +223,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
     form.setFieldValue('theme', newTheme);
+    form.setFieldValue('uiTheme', newTheme);
   };
 
+  const handleRestartServer = async () => {
+    try {
+      setRestarting(true);
+      const response = await ApiService.restartServer();
+
+      if (response.success) {
+        message.success('Server is restarting... The page will reload in 3 seconds.');
+
+        // Wait for server to restart, then reload the page
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      } else {
+        message.error(response.error || 'Failed to restart server');
+        setRestarting(false);
+      }
+    } catch (error) {
+      console.error('Error restarting server:', error);
+      message.error('Error restarting server');
+      setRestarting(false);
+    }
+  };
 
   return (
     <Modal
-      title="Settings"
+      title="Application Settings"
       open={open}
       onCancel={onCancel}
       onOk={handleSave}
-      width={720}
+      width={900}
       confirmLoading={saving}
       okText="Save Settings"
       cancelText="Cancel"
+      footer={[
+        <Button
+          key="restart"
+          icon={<ReloadOutlined />}
+          onClick={handleRestartServer}
+          loading={restarting}
+          danger
+        >
+          Restart Server
+        </Button>,
+        <Button key="cancel" onClick={onCancel}>
+          Cancel
+        </Button>,
+        <Button
+          key="save"
+          type="primary"
+          onClick={handleSave}
+          loading={saving}
+        >
+          Save Settings
+        </Button>,
+      ]}
     >
       <Form
         form={form}
@@ -159,15 +288,196 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         initialValues={{
           theme: theme,
           provider: 'openrouter',
-          model: 'x-ai/grok-code-fast-1',
           maxTokens: 4000,
           temperature: 0.7,
-          systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
+          topP: 1.0,
+          frequencyPenalty: 0.0,
+          validateSsl: true,
+          autoSaveConversations: true,
+          showLineNumbers: true,
+          enableStreaming: true,
+          retryAttempts: 3,
+          debugLogging: false,
+          showTokenUsage: true,
+          logLevel: 'INFO',
+          cacheSize: 100,
+          requestTimeout: 60,
+          apiPort: 8000,
+          apiHost: '0.0.0.0',
+          webPort: 8080,
+          lastOutputFormat: 'markdown',
         }}
       >
-        <Tabs defaultActiveKey="general">
-          <TabPane tab="General" key="general">
+        <Tabs defaultActiveKey="api">
+          {/* API Configuration */}
+          <Tabs.TabPane tab="🔑 API" key="api">
             <div className="space-y-4">
+              <Title level={5}>Provider Configuration</Title>
+
+              <Form.Item
+                label="API Provider"
+                name="provider"
+                rules={[{ required: true, message: 'Please select a provider' }]}
+                tooltip="AI service provider (openrouter, custom, etc.)"
+              >
+                <Select>
+                  {availableProviders.map(provider => (
+                    <Option key={provider} value={provider}>{provider}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="API Key"
+                name="apiKey"
+                rules={[{ required: true, message: 'Please enter your API key' }]}
+                tooltip="Your API key for the selected provider"
+              >
+                <Input.Password placeholder="sk-or-v1-..." />
+              </Form.Item>
+
+              <Form.Item
+                label="API URL"
+                name="apiUrl"
+                tooltip="API endpoint URL for chat completions"
+              >
+                <Input placeholder="https://api.openrouter.ai/v1/chat/completions" />
+              </Form.Item>
+
+              <Form.Item
+                label="Token URL"
+                name="tokenUrl"
+                tooltip="URL for token authentication (if required)"
+              >
+                <Input placeholder="https://api.openrouter.ai/v1/token" />
+              </Form.Item>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="Token User ID"
+                  name="tokenUseId"
+                  tooltip="User ID for token authentication"
+                >
+                  <Input placeholder="Optional" />
+                </Form.Item>
+
+                <Form.Item
+                  label="Token Password"
+                  name="tokenPassword"
+                  tooltip="Password for token authentication"
+                >
+                  <Input.Password placeholder="Optional" />
+                </Form.Item>
+              </div>
+
+              <Form.Item
+                label="Validate SSL"
+                name="validateSsl"
+                tooltip="Enable SSL certificate validation"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
+
+          {/* Model Configuration */}
+          <Tabs.TabPane tab="🤖 Model" key="model">
+            <div className="space-y-4">
+              <Title level={5}>Model Selection</Title>
+
+              <Form.Item
+                label="Default Model"
+                name="defaultModel"
+                rules={[{ required: true, message: 'Please select a model' }]}
+                tooltip="AI model to use for responses"
+              >
+                <Select showSearch placeholder="Select a model">
+                  {availableModels.map(model => (
+                    <Option key={model} value={model}>{model}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Title level={5}>Model Parameters</Title>
+
+              <Form.Item
+                label={`Max Tokens: ${form.getFieldValue('maxTokens') || 4000}`}
+                name="maxTokens"
+                tooltip="Maximum number of tokens in the response (1-16000)"
+              >
+                <Slider
+                  min={100}
+                  max={16000}
+                  step={100}
+                  marks={{
+                    100: '100',
+                    4000: '4K',
+                    8000: '8K',
+                    16000: '16K',
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={`Temperature: ${form.getFieldValue('temperature')?.toFixed(1) || '0.7'}`}
+                name="temperature"
+                tooltip="Controls creativity/randomness (0.0 = deterministic, 2.0 = very creative)"
+              >
+                <Slider
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  marks={{
+                    0: '0',
+                    0.7: '0.7',
+                    1: '1',
+                    2: '2',
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={`Top P: ${form.getFieldValue('topP')?.toFixed(1) || '1.0'}`}
+                name="topP"
+                tooltip="Nucleus sampling parameter (0.0-1.0)"
+              >
+                <Slider
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  marks={{
+                    0: '0',
+                    0.5: '0.5',
+                    1: '1',
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={`Frequency Penalty: ${form.getFieldValue('frequencyPenalty')?.toFixed(1) || '0.0'}`}
+                name="frequencyPenalty"
+                tooltip="Penalize repeated tokens (-2.0 to 2.0)"
+              >
+                <Slider
+                  min={-2}
+                  max={2}
+                  step={0.1}
+                  marks={{
+                    '-2': '-2',
+                    0: '0',
+                    2: '2',
+                  }}
+                />
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
+
+          {/* UI Configuration */}
+          <Tabs.TabPane tab="🎨 Interface" key="interface">
+            <div className="space-y-4">
+              <Title level={5}>Theme & Display</Title>
+
               <Form.Item
                 label="Theme"
                 name="theme"
@@ -193,6 +503,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </Form.Item>
 
               <Form.Item
+                label="Window Size"
+                name="windowSize"
+                tooltip="Default window size (WIDTHxHEIGHT)"
+              >
+                <Input placeholder="1200x800" />
+              </Form.Item>
+
+              <Title level={5}>Display Options</Title>
+
+              <Form.Item
                 label="Auto-save conversations"
                 name="autoSaveConversations"
                 tooltip="Automatically save conversations"
@@ -209,157 +529,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 <Switch />
               </Form.Item>
-            </div>
-          </TabPane>
-
-          <TabPane tab="AI Provider" key="provider">
-            <div className="space-y-4">
-              <Form.Item
-                label="Provider"
-                name="provider"
-                rules={[{ required: true, message: 'Please select a provider' }]}
-                tooltip="AI service provider"
-              >
-                <Select>
-                  {availableProviders.map(provider => (
-                    <Option key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
 
               <Form.Item
-                label="Model"
-                name="model"
-                rules={[{ required: true, message: 'Please select a model' }]}
-                tooltip="AI model to use for responses"
-              >
-                <Select>
-                  {availableModels.map(model => (
-                    <Option key={model} value={model}>{model}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label="API Key"
-                name="apiKey"
-                tooltip="Your API key for the selected provider"
-              >
-                <Input.Password placeholder="Enter your API key" />
-              </Form.Item>
-
-              <Form.Item
-                label="Base URL"
-                name="baseUrl"
-                tooltip="Custom API base URL (optional)"
-              >
-                <Input placeholder="https://api.example.com" />
-              </Form.Item>
-            </div>
-          </TabPane>
-
-          <TabPane tab="Model Parameters" key="parameters">
-            <div className="space-y-6">
-              <Form.Item
-                label="Max Tokens"
-                name="maxTokens"
-                tooltip="Maximum number of tokens in the response"
-              >
-                <Slider
-                  min={100}
-                  max={8000}
-                  step={100}
-                  marks={{
-                    100: '100',
-                    2000: '2K',
-                    4000: '4K',
-                    8000: '8K',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Temperature"
-                name="temperature"
-                tooltip="Controls randomness in responses (0 = deterministic, 1 = creative)"
-              >
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  marks={{
-                    0: '0',
-                    0.5: '0.5',
-                    1: '1',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="System Prompt"
-                name="systemPrompt"
-                tooltip="Default system message for AI behavior"
-              >
-                <TextArea
-                  rows={4}
-                  placeholder="Enter system prompt..."
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Enable streaming"
+                label="Enable streaming responses"
                 name="enableStreaming"
                 tooltip="Stream responses as they're generated"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </div>
-          </TabPane>
-
-          <TabPane tab="Advanced" key="advanced">
-            <div className="space-y-4">
-              <Title level={5}>Performance</Title>
-              
-              <Form.Item
-                label="Request timeout (seconds)"
-                name="requestTimeout"
-                tooltip="How long to wait for AI responses"
-              >
-                <Slider
-                  min={5}
-                  max={120}
-                  step={5}
-                  marks={{
-                    5: '5s',
-                    30: '30s',
-                    60: '1m',
-                    120: '2m',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Retry attempts"
-                name="retryAttempts"
-                tooltip="Number of retry attempts for failed requests"
-              >
-                <Select>
-                  <Option value={1}>1</Option>
-                  <Option value={2}>2</Option>
-                  <Option value={3}>3</Option>
-                  <Option value={5}>5</Option>
-                </Select>
-              </Form.Item>
-
-              <Title level={5}>Debug</Title>
-
-              <Form.Item
-                label="Enable debug logging"
-                name="debugLogging"
-                tooltip="Log detailed information for troubleshooting"
                 valuePropName="checked"
               >
                 <Switch />
@@ -374,7 +548,274 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Switch />
               </Form.Item>
             </div>
-          </TabPane>
+          </Tabs.TabPane>
+
+          {/* File System */}
+          <Tabs.TabPane tab="📁 Files" key="files">
+            <div className="space-y-4">
+              <Title level={5}>File System Configuration</Title>
+
+              <Form.Item
+                label="Code Path"
+                name="codePath"
+                tooltip="Root directory for your codebase"
+              >
+                <Input placeholder="C:\Code2025\Whysper" />
+              </Form.Item>
+
+              <Form.Item
+                label="Ignore Folders"
+                name="ignoreFolders"
+                tooltip="Comma-separated list of folders to ignore"
+              >
+                <Input placeholder="node_modules,__pycache__,.git" />
+              </Form.Item>
+
+              <Form.Item
+                label="Supported Extensions"
+                name="supportedExtensions"
+                tooltip="Comma-separated list of file extensions to process"
+              >
+                <TextArea
+                  rows={3}
+                  placeholder=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs"
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Max File Size (bytes)"
+                name="maxFileSize"
+                tooltip="Maximum file size to process (default: 10MB)"
+              >
+                <InputNumber
+                  min={1024}
+                  max={104857600}
+                  step={1048576}
+                  className="w-full"
+                  formatter={(value) => {
+                    const mb = (value || 0) / 1048576;
+                    return `${mb.toFixed(1)} MB`;
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Output Directory"
+                name="dirSave"
+                tooltip="Directory for saving results"
+              >
+                <Input placeholder="results" />
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
+
+          {/* System Prompts */}
+          <Tabs.TabPane tab="💬 Prompts" key="prompts">
+            <div className="space-y-4">
+              <Title level={5}>System Message Configuration</Title>
+
+              <Form.Item
+                label="Current System Prompt File"
+                name="currentSystemPrompt"
+                tooltip="System message file to use"
+              >
+                <Input placeholder="systemmessage_documentation.txt" />
+              </Form.Item>
+
+              <Form.Item
+                label="Custom System Prompt"
+                name="systemPrompt"
+                tooltip="Override system prompt with custom text"
+              >
+                <TextArea
+                  rows={6}
+                  placeholder="Enter custom system prompt here..."
+                />
+              </Form.Item>
+
+              <Text type="secondary" className="text-xs">
+                💡 Leave custom prompt empty to use the file specified above
+              </Text>
+            </div>
+          </Tabs.TabPane>
+
+          {/* Server Configuration */}
+          <Tabs.TabPane tab="🌐 Server" key="server">
+            <div className="space-y-4">
+              <Title level={5}>Backend Server</Title>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Form.Item
+                  label="API Host"
+                  name="apiHost"
+                  tooltip="Host address for the API server"
+                >
+                  <Input placeholder="0.0.0.0" />
+                </Form.Item>
+
+                <Form.Item
+                  label="API Port"
+                  name="apiPort"
+                  tooltip="Port for the FastAPI server"
+                >
+                  <InputNumber min={1} max={65535} className="w-full" />
+                </Form.Item>
+              </div>
+
+              <Title level={5}>Frontend Configuration</Title>
+
+              <Form.Item
+                label="FastAPI URL"
+                name="fastapiUrl"
+                tooltip="Backend URL for frontend to connect to"
+              >
+                <Input placeholder="http://localhost:8000" />
+              </Form.Item>
+
+              <Form.Item
+                label="Web Port"
+                name="webPort"
+                tooltip="Port for the web server"
+              >
+                <InputNumber min={1} max={65535} className="w-full" />
+              </Form.Item>
+
+              <Form.Item
+                label="Base URL"
+                name="baseUrl"
+                tooltip="Custom API base URL (optional)"
+              >
+                <Input placeholder="Optional custom base URL" />
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
+
+          {/* Advanced Settings */}
+          <Tabs.TabPane tab="🔧 Advanced" key="advanced">
+            <div className="space-y-4">
+              <Title level={5}>Performance</Title>
+
+              <Form.Item
+                label={`Request Timeout: ${form.getFieldValue('requestTimeout') || 60}s`}
+                name="requestTimeout"
+                tooltip="How long to wait for AI responses (1-300 seconds)"
+              >
+                <Slider
+                  min={1}
+                  max={300}
+                  step={5}
+                  marks={{
+                    1: '1s',
+                    60: '1m',
+                    180: '3m',
+                    300: '5m',
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label="Retry Attempts"
+                name="retryAttempts"
+                tooltip="Number of retry attempts for failed requests"
+              >
+                <Select>
+                  <Option value={1}>1</Option>
+                  <Option value={2}>2</Option>
+                  <Option value={3}>3</Option>
+                  <Option value={5}>5</Option>
+                  <Option value={10}>10</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Cache Size"
+                name="cacheSize"
+                tooltip="Number of files to cache in memory (1-1000)"
+              >
+                <InputNumber min={1} max={1000} className="w-full" />
+              </Form.Item>
+
+              <Title level={5}>Logging</Title>
+
+              <Form.Item
+                label="Log Level"
+                name="logLevel"
+                tooltip="Logging verbosity level"
+              >
+                <Select>
+                  <Option value="DEBUG">Debug</Option>
+                  <Option value="INFO">Info</Option>
+                  <Option value="WARNING">Warning</Option>
+                  <Option value="ERROR">Error</Option>
+                  <Option value="CRITICAL">Critical</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Log Directory"
+                name="logDir"
+                tooltip="Directory for log files"
+              >
+                <Input placeholder="logs" />
+              </Form.Item>
+
+              <Form.Item
+                label="Enable debug logging"
+                name="debugLogging"
+                tooltip="Log detailed information for troubleshooting"
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
+
+          {/* CLI Memory */}
+          <Tabs.TabPane tab="💾 CLI Memory" key="cli">
+            <div className="space-y-4">
+              <Title level={5}>Interactive CLI Settings</Title>
+              <Text type="secondary" className="block mb-4">
+                These settings store the last used values for CLI interactive mode
+              </Text>
+
+              <Form.Item
+                label="Last Used Folder"
+                name="lastUsedFolder"
+                tooltip="Last folder processed in CLI mode"
+              >
+                <Input placeholder="Automatically updated" />
+              </Form.Item>
+
+              <Form.Item
+                label="Last Used Question"
+                name="lastUsedQuestion"
+                tooltip="Last question asked in CLI mode"
+              >
+                <TextArea rows={2} placeholder="Automatically updated" />
+              </Form.Item>
+
+              <Form.Item
+                label="Last Exclude Patterns"
+                name="lastExcludePatterns"
+                tooltip="Last exclude patterns used"
+              >
+                <Input placeholder="Automatically updated" />
+              </Form.Item>
+
+              <Form.Item
+                label="Last Output Format"
+                name="lastOutputFormat"
+                tooltip="Last output format used"
+              >
+                <Select>
+                  <Option value="markdown">Markdown</Option>
+                  <Option value="json">JSON</Option>
+                  <Option value="text">Text</Option>
+                  <Option value="html">HTML</Option>
+                </Select>
+              </Form.Item>
+            </div>
+          </Tabs.TabPane>
         </Tabs>
       </Form>
     </Modal>

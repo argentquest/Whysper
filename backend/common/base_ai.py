@@ -59,9 +59,11 @@ class AIProviderConfig:
 
 class BaseAIProvider(ABC):
     """Abstract base class for AI providers."""
-    
+
     def __init__(self, api_key: str = ""):
         self.api_key = api_key
+        # Read VALIDATE_SSL from environment, default to True
+        self.validate_ssl = os.getenv('VALIDATE_SSL', 'true').lower() == 'true'
         self.config = self._get_provider_config()
         self._last_token_usage = 0  # Store last API call token usage
         
@@ -222,13 +224,12 @@ class BaseAIProvider(ABC):
             
             while retry_count < max_retries:
                 try:
-                    verify_ssl = os.getenv('VALIDATE_SSL', 'true').lower() == 'true'
                     response = requests.post(
                         self.config.api_url,
                         headers=headers,
                         json=data,
                         timeout=timeout,
-                        verify=verify_ssl
+                        verify=self.validate_ssl
                     )
                     
                     if response.status_code != 200:

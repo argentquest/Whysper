@@ -11,8 +11,8 @@
   "//": "🚀 DEVELOPMENT WORKFLOW:",
   "//": "1. Start Development:",
   "//": "   - Use '🔧 Development: Two-Port Architecture' to start both servers",
-  "//": "   - Automatically kills existing processes on ports 5173 & 8001",
-  "//": "   - Backend: http://localhost:8001/api/v1 (API endpoints)",
+  "//": "   - Automatically kills existing processes on ports 5173 & 8003",
+  "//": "   - Backend: http://localhost:8003/api/v1 (API endpoints)",
   "//": "   - Frontend: http://localhost:5173 (React dev server)",
   "//": "",
   "//": "🐛 DEBUGGING:",
@@ -35,7 +35,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "🚀 Backend: API Server (Port 8001)",
+      "name": "🚀 Backend: API Server (Port 8003)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/backend/main.py",
@@ -49,10 +49,10 @@
         "group": "1-backend",
         "order": 1
       },
-      "preLaunchTask": "Kill Backend Port (8001)"
+      "preLaunchTask": "Kill Backend Port (8003)"
     },
     {
-      "name": "🐛 DEBUG: Backend API Server (Port 8001)",
+      "name": "🐛 DEBUG: Backend API Server (Port 8003)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/backend/main.py",
@@ -70,7 +70,7 @@
         "group": "1-backend",
         "order": 2
       },
-      "preLaunchTask": "Kill Backend Port (8001)"
+      "preLaunchTask": "Kill Backend Port (8003)"
     },
     {
       "name": "🎨 Frontend: Dev Server (Port 5173)",
@@ -223,7 +223,7 @@
     {
       "name": "🔧 Development: Two-Port Architecture",
       "configurations": [
-        "🚀 Backend: API Server (Port 8001)",
+        "🚀 Backend: API Server (Port 8003)",
         "🎨 Frontend: Dev Server (Port 5173)"
       ],
       "stopAll": true,
@@ -232,7 +232,7 @@
     {
       "name": "🐛 DEBUG: Development with Backend Debugging",
       "configurations": [
-        "🐛 DEBUG: Backend API Server (Port 8001)",
+        "🐛 DEBUG: Backend API Server (Port 8003)",
         "🎨 Frontend: Dev Server (Port 5173)"
       ],
       "stopAll": true,

@@ -126,9 +126,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Kill Backend Port (8001)",
+      "label": "Kill Backend Port (8003)",
       "type": "shell",
-      "command": "${workspaceFolder}/kill-port-8001.bat",
+      "command": "${workspaceFolder}/kill-port-8003.bat",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -145,7 +145,7 @@
       "dependsOrder": "parallel",
       "dependsOn": [
         "Kill Frontend Port (5173)",
-        "Kill Backend Port (8001)"
+        "Kill Backend Port (8003)"
       ]
     },
     {

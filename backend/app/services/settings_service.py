@@ -147,7 +147,7 @@ class SettingsService:
             logger.error(f"Error loading agent prompt content: {e}")
             return ""
 
-    def update_env(self, changes: Dict[str, str]) -> Dict[str, bool]:
+    def update_env(self, changes: Dict[str, str]) -> Dict[str, Any]:
         """
         Update multiple environment variables and persist changes.
 
@@ -155,13 +155,29 @@ class SettingsService:
             changes: A dictionary of {key: value} pairs to update.
 
         Returns:
-            Dict[str, bool]: A dictionary of {key: success} indicating
-                             which variables were successfully updated.
+            Dict[str, Any]: Response containing:
+                - success: Boolean indicating overall success
+                - updated: List of successfully updated variables
+                - errors: List of failed updates with error details
         """
-        results: Dict[str, bool] = {}
+        updated = []
+        errors = []
+
         for key, value in changes.items():
-            results[key] = env_manager.update_single_var(key, value)
-        return results
+            try:
+                success = env_manager.update_single_var(key, value)
+                if success:
+                    updated.append(key)
+                else:
+                    errors.append({"key": key, "error": "Update failed"})
+            except Exception as e:
+                errors.append({"key": key, "error": str(e)})
+
+        return {
+            "success": len(errors) == 0,
+            "updated": updated,
+            "errors": errors
+        }
 
     def set_theme(self, theme_name: str) -> Tuple[bool, str]:
         success = theme_manager.switch_theme(theme_name)

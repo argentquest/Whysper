@@ -330,11 +330,11 @@ AIProviderConfig = None  # Removed - now internal to providers
 def create_ai_processor(api_key: str = "", provider: str = "openrouter") -> AIProcessor:
     """
     Factory function to create an AI processor.
-    
+
     Args:
         api_key: API key for the provider
         provider: Provider name
-        
+
     Returns:
         AI processor instance
     """

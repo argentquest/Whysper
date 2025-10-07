@@ -1,0 +1,175 @@
+# =============================================================================
+# CODE CHAT AI - ENVIRONMENT CONFIGURATION
+# =============================================================================
+# This file contains your personalized configuration settings
+
+# =============================================================================
+# 🔑 API CONFIGURATION (REQUIRED)
+# =============================================================================
+
+# Primary API Key - REQUIRED for all AI operations
+API_KEY="PUTKEYHERE"
+
+# AI Provider Selection
+PROVIDER="openrouter"
+
+# Available AI Providers - comma-separated list of provider names
+# These must match the provider class names in the providers/ directory
+PROVIDERS="openrouter,custom"
+
+# API URLs
+API_URL="https://api.openrouter.ai/v1/chat/completions"
+TOKEN_URL="https://api.openrouter.ai/v1/token"
+
+# Token authentication
+TOKEN_USE_ID="DD111`1"
+TOKEN_PASSWORD="dd1234"
+
+# =============================================================================
+# 🤖 MODEL CONFIGURATION (REQUIRED)
+# =============================================================================
+
+# Default model for analysis
+DEFAULT_MODEL=""
+
+# Available models list - comma-separated
+MODELS="x-ai/grok-code-fast-1,google/gemini-2.5-flash-preview-09-2025,deepseek/deepseek-coder-v2,moonshotai/kimi-k2-0905"
+
+# =============================================================================
+# ⚙️ AI PARAMETERS (OPTIONAL)
+# =============================================================================
+
+# Maximum tokens for AI responses (1-16000)
+MAX_TOKENS="4000"
+
+# Temperature: Controls creativity/randomness (0.0-2.0)
+TEMPERATURE="0.7"
+
+# Top-p nucleus sampling (0.0-1.0)
+TOP_P="1"
+
+# Frequency penalty (-2.0 to 2.0)
+FREQUENCY_PENALTY="0"
+
+CODE_PATH="C:\Code2025\Whysper"
+
+VALIDATE_SSL="false"
+# =============================================================================
+# 🎨 USER INTERFACE CONFIGURATION
+# =============================================================================
+
+# UI Theme
+UI_THEME="light"
+
+# =============================================================================
+# 📁 FILE SYSTEM CONFIGURATION
+# =============================================================================
+
+# Folders to ignore during codebase scanning
+IGNORE_FOLDERS=""
+
+# Supported file extensions (comma-separated, with dots)
+SUPPORTED_EXTENSIONS=""
+
+# Maximum file size to process (in bytes)
+MAX_FILE_SIZE="10485760"
+
+# =============================================================================
+# 💬 SYSTEM MESSAGE CONFIGURATION
+# =============================================================================
+
+# Current system message file
+CURRENT_SYSTEM_PROMPT=""
+
+# =============================================================================
+# 🎨 ADDITIONAL UI SETTINGS
+# =============================================================================
+
+# Interface language
+LANGUAGE="en"
+
+# Custom API base URL (optional)
+BASE_URL=""
+
+# Auto-save conversations
+AUTO_SAVE_CONVERSATIONS="false"
+
+# Show line numbers in code blocks
+SHOW_LINE_NUMBERS="false"
+
+# Enable streaming responses
+ENABLE_STREAMING="false"
+
+# Number of retry attempts for failed requests
+RETRY_ATTEMPTS="3"
+
+# Enable debug logging
+DEBUG_LOGGING="false"
+
+# Show token usage information
+SHOW_TOKEN_USAGE="false"
+
+# =============================================================================
+# 📊 LOGGING CONFIGURATION
+# =============================================================================
+
+# Logging level
+LOG_LEVEL="INFO"
+
+# Directory for log files
+LOG_DIR="logs"
+
+# =============================================================================
+# 🚀 ADVANCED CONFIGURATION
+# =============================================================================
+
+# Cache size for file content (1-1000)
+CACHE_SIZE="100"
+
+# API request timeout in seconds (1-300)
+REQUEST_TIMEOUT="60"
+
+# =============================================================================
+# 🌐 FASTAPI SERVER CONFIGURATION
+# =============================================================================
+
+# Port for the FastAPI server (default: 8000)
+API_PORT="8003"
+
+# Host for the FastAPI server (default: 0.0.0.0 for all interfaces)
+API_HOST="0.0.0.0"
+
+# =============================================================================
+# 🎨 WEB APPLICATION CONFIGURATION
+# =============================================================================
+
+# Backend URL for frontend (default: http://localhost:8000)
+FASTAPI_URL="http://localhost:8003"
+
+# =============================================================================
+# 💾 INTERACTIVE CLI MEMORY (OPTIONAL)
+# =============================================================================
+# These variables store the last used settings for Rich CLI interactive mode
+
+# Last folder processed
+LAST_USED_FOLDER=""
+
+# Last question asked
+LAST_USED_QUESTION=""
+
+# Last exclude patterns used
+LAST_EXCLUDE_PATTERNS=""
+
+# Last output format used
+LAST_OUTPUT_FORMAT="markdown"
+
+# =============================================================================
+# 📁 OUTPUT DIRECTORY CONFIGURATION
+# =============================================================================
+
+# Directory for saving interactive session results
+# This directory will be created if it doesn't exist
+DIR_SAVE="results"
+
+# =============================================================================
+SYSTEM_PROMPT=""

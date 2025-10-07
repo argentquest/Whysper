@@ -1,0 +1,7 @@
+# Frontend Environment Configuration Template
+# Copy this file to .env and configure for your setup
+
+# Backend API Port
+# Change this to match your backend API_PORT setting in backend/.env
+# Default: 8001
+VITE_BACKEND_PORT=8003

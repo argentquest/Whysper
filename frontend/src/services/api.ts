@@ -35,7 +35,9 @@ import type {
 } from '../types';
 
 // Backend API base URL - development mode uses separate ports
-const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:8001/api/v1' : '/api/v1';
+// You can override the backend port by setting VITE_BACKEND_PORT in frontend/.env
+const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8001';
+const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1';
 
 /**
  * Axios HTTP client configuration
@@ -257,6 +259,21 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update environment settings',
+      };
+    }
+  }
+
+  static async restartServer(): Promise<ApiResponse<{message: string}>> {
+    try {
+      const response = await api.post('/settings/restart');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to restart server',
       };
     }
   }

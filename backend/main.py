@@ -7,7 +7,7 @@ The frontend runs separately on its own port (typically 5173).
 Usage:
     python main.py
 
-The backend API server will start on http://localhost:8001 and serve:
+The backend API server will start on http://localhost:8003 and serve:
 - API endpoints at /api/v1/*
 - OpenAPI documentation at /docs
 
@@ -46,10 +46,10 @@ if __name__ == "__main__":
 
     This block:
     1. Logs application startup
-    2. Displays API access URLs  
+    2. Displays API access URLs
     3. Starts the uvicorn server
 
-    The backend API server runs on port 8001 by default and serves:
+    The backend API server runs on port 8003 by default and serves:
     - FastAPI backend endpoints at /api/v1 paths
     - OpenAPI documentation at /docs
     """
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # Get log level from environment for uvicorn
     import os
     uvicorn_log_level = os.getenv('LOG_LEVEL', 'INFO').lower()
-    
+
     uvicorn.run(
         reload_target,
         host=settings.host,
@@ -89,4 +89,3 @@ if __name__ == "__main__":
         reload=settings.reload,
         log_level=uvicorn_log_level
     )
-# trigger reload

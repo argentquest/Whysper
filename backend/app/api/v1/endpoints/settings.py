@@ -233,5 +233,48 @@ def list_subagents() -> List[Dict[str, Any]]:
     return result
 
 
+@router.post("/restart")
+def restart_server() -> Dict[str, Any]:
+    """
+    Restart the backend server.
+
+    This endpoint triggers a server restart by touching the main.py file,
+    which causes uvicorn to reload in development mode.
+
+    Returns:
+        Dict[str, Any]: Response containing:
+            - success: Boolean indicating if restart was triggered
+            - message: Status message
+    """
+    logger.info("restart_server endpoint called - triggering server reload")
+
+    try:
+        import os
+        import time
+
+        # Touch the main.py file to trigger uvicorn reload
+        main_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "main.py")
+        if os.path.exists(main_file):
+            # Update the modification time to trigger reload
+            os.utime(main_file, None)
+            logger.info(f"Server restart triggered by touching {main_file}")
+            return {
+                "success": True,
+                "message": "Server restart triggered. The server will reload in a few seconds."
+            }
+        else:
+            logger.warning(f"main.py not found at {main_file}")
+            return {
+                "success": False,
+                "message": "Could not locate main.py for restart"
+            }
+    except Exception as e:
+        logger.error(f"Failed to trigger server restart: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Failed to restart server: {str(e)}"
+        }
+
+
 
 
