@@ -561,6 +561,8 @@ class ConversationSession:
             "tokens_used": tokens_used,
             "token_usage": token_usage,  # Detailed token information
             "question_index": question_index,
+            "model_used": self.app_state.selected_model,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         logger.info(f"Question processing completed for session {self.session_id} in {processing_time:.2f}s using {tokens_used} tokens")
@@ -673,6 +675,9 @@ class ConversationSession:
             "rawMarkdown": response_text,
             "processing_time": processing_time,
             "tokens_used": tokens_used,
+            "token_usage": token_usage,
+            "model_used": self.app_state.selected_model,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         logger.info(f"System prompt completed for session {self.session_id} in {processing_time:.2f}s using {tokens_used} tokens")

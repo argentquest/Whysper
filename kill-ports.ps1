@@ -1,34 +1,31 @@
-# Simple PowerShell script to kill processes on ports 8000-8010
+# Define the port range
+$StartPort = 8000
+$EndPort = 8010
 
-Write-Host "Killing processes on ports 8000-8010..." -ForegroundColor Yellow
+Write-Host "Searching for processes using ports $StartPort to $EndPort..."
 
-# Get all processes on ports 8000-8010 and kill them
-$ports = 8000..8010
+# Get all listening TCP ports and associated PIDs within the specified range
+$Processes = Get-NetTCPConnection | Where-Object {
+    $_.State -eq "Listen" -and $_.LocalPort -ge $StartPort -and $_.LocalPort -le $EndPort
+} | Select-Object -Unique LocalPort, OwningProcess
 
-foreach ($port in $ports) {
-    Write-Host "Checking port $port..." -ForegroundColor Cyan
-    
-    # Get PIDs using netstat
-    $pids = netstat -ano | Where-Object { $_ -match ":$port " } | ForEach-Object {
-        ($_ -split '\s+')[-1]
-    } | Where-Object { $_ -match '^\d+$' } | Sort-Object -Unique
-    
-    if ($pids) {
-        foreach ($pid in $pids) {
-            try {
-                $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
-                if ($process) {
-                    Write-Host "Killing $($process.ProcessName) (PID: $pid) on port $port" -ForegroundColor Red
-                    Stop-Process -Id $pid -Force
-                    Write-Host "✓ Killed process $pid" -ForegroundColor Green
-                }
-            } catch {
-                Write-Host "✗ Failed to kill PID $pid" -ForegroundColor Red
-            }
-        }
-    } else {
-        Write-Host "Port $port is free" -ForegroundColor Gray
+if ($Processes.Count -eq 0) {
+    Write-Host "No services found listening on ports $StartPort through $EndPort."
+} else {
+    Write-Host "--- Found Services ---"
+    $Processes | ForEach-Object {
+        $Port = $_.LocalPort
+        $PID = $_.OwningProcess
+        
+        # Get the process name using the PID
+        $ProcessInfo = Get-Process -Id $PID -ErrorAction SilentlyContinue
+        $ProcessName = if ($ProcessInfo) { $ProcessInfo.ProcessName } else { "Unknown Process" }
+        
+        Write-Host "Stopping Process: [$ProcessName] (PID: $PID) on Port: $Port"
+        
+        # Stop the process
+        Stop-Process -Id $PID -Force -ErrorAction SilentlyContinue
     }
+    Write-Host "----------------------"
+    Write-Host "All processes in the range 8000-8010 have been terminated."
 }
-
-Write-Host "`nDone!" -ForegroundColor Green

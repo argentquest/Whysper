@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Logging Test - Mermaid vs D2</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .test-section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .test-section h2 {
+            color: #667eea;
+            margin-top: 0;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+        .instructions {
+            background: #f0f7ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .log-example {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1><span class="emoji">📊</span>Diagram Logging Verification Test</h1>
+    <p class="subtitle">Test Mermaid and D2 diagram detection, rendering, and backend logging</p>
+
+    <div class="test-section">
+        <h2><span class="emoji">🎨</span>Test 1: Mermaid Diagram</h2>
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Copy the Mermaid code below</li>
+                <li>Paste it into your Whysper chat</li>
+                <li>Check the <strong>browser console</strong> for frontend logs with 🎨 emoji</li>
+                <li>Check <code>backend/logs/structured.log</code> for backend logs mentioning "Mermaid"</li>
+            </ol>
+        </div>
+
+        <h3>Mermaid Code to Test:</h3>
+        <div class="code-block">```mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Process 1]
+    B -->|No| D[Process 2]
+    C --> E[End]
+    D --> E
+```</div>
+
+        <h3>Expected Logs:</h3>
+        <div class="log-example">
+<span class="success">Frontend Console (Browser):</span>
+🎨 [DIAGRAM DETECTION] Mermaid diagram detected (language marker)
+🎨 [DIAGRAM RENDER] Rendering Mermaid diagram
+🎨 [MERMAID DIAGRAM] Starting Mermaid diagram render
+🎨 [MERMAID DIAGRAM] Syntax validation passed
+🎨 [MERMAID DIAGRAM] SVG rendered successfully
+🎨 [MERMAID DIAGRAM] SVG inserted into DOM
+
+<span class="success">Backend Log (structured.log):</span>
+{"level": "INFO", "message": "🔍 Diagram detected: MERMAID", "diagram_type": "mermaid"}
+{"level": "INFO", "message": "🎨 Rendering MERMAID diagram...", "diagram_type": "mermaid"}
+{"level": "INFO", "message": "✅ Successfully rendered MERMAID diagram", "diagram_type": "mermaid"}
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🎯</span>Test 2: D2 Diagram</h2>
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Copy the D2 code below</li>
+                <li>Paste it into your Whysper chat</li>
+                <li>Check the <strong>browser console</strong> for frontend logs with 🎯 emoji</li>
+                <li>Check <code>backend/logs/structured.log</code> for backend logs mentioning "D2"</li>
+            </ol>
+        </div>
+
+        <h3>D2 Code to Test:</h3>
+        <div class="code-block">```d2
+client: Client Application
+server: API Server
+database: Database
+
+client -> server: HTTP Request
+server -> database: Query
+database -> server: Result
+server -> client: HTTP Response
+```</div>
+
+        <h3>Expected Logs:</h3>
+        <div class="log-example">
+<span class="success">Frontend Console (Browser):</span>
+🎯 [DIAGRAM DETECTION] D2 diagram detected (language marker)
+🎯 [DIAGRAM RENDER] Rendering D2 diagram
+🎯 [D2 DIAGRAM] Starting D2 diagram render
+🎯 [D2 DIAGRAM] D2 instance created, compiling...
+🎯 [D2 DIAGRAM] Compilation successful, rendering SVG...
+🎯 [D2 DIAGRAM] SVG rendered successfully
+🎯 [D2 DIAGRAM] SVG inserted into DOM
+
+<span class="success">Backend Log (structured.log):</span>
+{"level": "INFO", "message": "🔍 Diagram detected: D2", "diagram_type": "d2"}
+{"level": "INFO", "message": "🎨 Rendering D2 diagram...", "diagram_type": "d2"}
+{"level": "INFO", "message": "✅ Successfully rendered D2 diagram", "diagram_type": "d2"}
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🔍</span>Verification Checklist</h2>
+        <div class="instructions">
+            <h3>What to Verify:</h3>
+            <ul style="list-style: none; padding-left: 0;">
+                <li>✅ <strong>Frontend Logs (Browser Console):</strong> Different emojis for Mermaid (🎨) vs D2 (🎯)</li>
+                <li>✅ <strong>Backend Logs (structured.log):</strong> Clearly labeled "MERMAID" vs "D2"</li>
+                <li>✅ <strong>Visual Rendering:</strong> Mermaid shows flowchart, D2 shows connection diagram</li>
+                <li>✅ <strong>Card Titles:</strong> "Mermaid Diagram" vs "D2 Diagram"</li>
+                <li>✅ <strong>Event Sequence:</strong> Detection → Render Start → Render Success</li>
+            </ul>
+        </div>
+
+        <h3>How to Check Backend Logs:</h3>
+        <div class="log-example">
+# Windows PowerShell:
+Get-Content backend\logs\structured.log -Tail 50 | Select-String "diagram"
+
+# Or view the full log:
+Get-Content backend\logs\structured.log -Tail 100
+        </div>
+
+        <h3>Common Issues:</h3>
+        <div class="log-example">
+<span class="warning">⚠️ No backend logs appearing?</span>
+- Check that the backend server is running
+- Verify the frontend is connecting to the correct port (check frontend/.env)
+- Look for CORS errors in browser console
+
+<span class="warning">⚠️ Diagrams not rendering?</span>
+- Check browser console for errors
+- Verify mermaid and @terrastruct/d2 packages are installed
+- Try refreshing the page
+
+<span class="error">❌ Both showing as Mermaid?</span>
+- This was the original issue - should be fixed now!
+- Verify the code is wrapped in ```d2 or ```mermaid blocks
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">📝</span>Additional Test Cases</h2>
+
+        <h3>Test 3: Mermaid Sequence Diagram</h3>
+        <div class="code-block">```mermaid
+sequenceDiagram
+    Alice->>Bob: Hello Bob!
+    Bob->>Alice: Hello Alice!
+    Alice->>John: Hello John!
+    John->>Alice: Hi Alice!
+```</div>
+
+        <h3>Test 4: D2 Container Diagram</h3>
+        <div class="code-block">```d2
+users: Users {
+  shape: person
+}
+frontend: Frontend Application {
+  shape: rectangle
+}
+backend: Backend API {
+  shape: rectangle
+}
+database: PostgreSQL {
+  shape: cylinder
+}
+
+users -> frontend: Browse
+frontend -> backend: API Call
+backend -> database: Query
+```</div>
+    </div>
+
+    <div class="test-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <h2 style="color: white; border-bottom-color: white;"><span class="emoji">✅</span>Success Criteria</h2>
+        <ul>
+            <li><strong>Frontend:</strong> Console shows distinct log patterns for Mermaid (🎨) and D2 (🎯)</li>
+            <li><strong>Backend:</strong> structured.log clearly identifies "MERMAID" vs "D2" in log entries</li>
+            <li><strong>Rendering:</strong> Both diagram types render correctly with proper visual differences</li>
+            <li><strong>Labels:</strong> Card titles correctly identify diagram type</li>
+        </ul>
+    </div>
+</body>
+</html>

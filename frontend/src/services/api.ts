@@ -15,7 +15,6 @@
  * API Structure:
  * - Chat operations: sending messages, managing conversations
  * - Code extraction: parsing code blocks from AI responses
- * - Mermaid rendering: diagram generation from markdown
  * - Settings management: user preferences and AI configuration
  * - File operations: context file handling
  */
@@ -316,19 +315,6 @@ export class ApiService {
     }
   }
 
-  // NEW: Mermaid diagram rendering endpoint
-  static async renderMermaid(code: string, title?: string): Promise<ApiResponse<string>> {
-    try {
-      const response = await api.post('/mermaid/render', { code, title });
-      return response.data;
-    } catch (error: unknown) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to render mermaid diagram',
-      };
-    }
-  }
-
   // Agent prompts endpoints
   static async getAgents(): Promise<ApiResponse<any[]>> {
     try {
@@ -371,6 +357,32 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get agent prompt',
+      };
+    }
+  }
+
+  // Diagram event logging
+  static async logDiagramEvent(event: {
+    event_type: 'detection' | 'render_start' | 'render_success' | 'render_error';
+    diagram_type: 'mermaid' | 'd2';
+    code_preview?: string;
+    code_length?: number;
+    error_message?: string;
+    detection_method?: string;
+    conversation_id?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await api.post('/diagrams/log-diagram-event', event);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      // Silently fail - logging errors shouldn't break the UI
+      console.warn('Failed to log diagram event to backend:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to log diagram event',
       };
     }
   }

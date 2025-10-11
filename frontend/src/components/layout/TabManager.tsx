@@ -154,17 +154,6 @@ export const TabManager: React.FC<TabManagerProps> = ({
             </Button>
           </Tooltip>
           
-          <Tooltip title="Save Tab">
-            <Button
-              icon={<SaveOutlined />}
-              onClick={() => onTabSave(activeTabId)}
-              size="small"
-              disabled={!tabs.find(tab => tab.id === activeTabId)?.isDirty}
-            >
-              Save Tab
-            </Button>
-          </Tooltip>
-          
           <Tooltip title="Close Tab">
             <Button
               icon={<CloseOutlined />}

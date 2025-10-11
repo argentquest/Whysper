@@ -4,7 +4,6 @@ import {
   ExpandOutlined,
   CompressOutlined,
   CopyOutlined,
-  DownloadOutlined,
   CodeOutlined,
   FileTextOutlined,
   Html5Outlined,
@@ -16,21 +15,493 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Message } from '../../types';
+import { MermaidDiagram } from './MermaidDiagram';
+import { D2Diagram } from './D2Diagram';
+import { C4Diagram } from './C4Diagram';
+import {
+  isMermaidSyntax,
+  prepareMermaidCode,
+  isMermaidCode,
+  isD2Syntax,
+  prepareD2Code,
+  isD2Code,
+  isC4Syntax,
+  prepareC4Code,
+  isC4Code,
+  processMixedHtmlContent
+} from '../../utils/mermaidUtils';
 
 
 interface MessageItemProps {
   message: Message;
   onExtractCode?: (messageId: string) => void;
-  onRenderMermaid?: (code: string) => void;
   onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ 
-  message, 
-  onExtractCode, 
-  onRenderMermaid,
+/**
+ * Custom code component renderer for ReactMarkdown
+ * Handles Mermaid diagrams, D2 diagrams, and regular code blocks
+ */
+const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: boolean }) => {
+  const { inline, className, children, ...rest } = props;
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match ? match[1] : '';
+
+  // Handle C4 diagrams (must check BEFORE Mermaid, as C4 keywords might be in Mermaid)
+  if (isC4Code(language, inline || false) || (language === 'mermaid' && isC4Syntax(String(children)))) {
+    const code = prepareC4Code(String(children));
+    console.log('🏗️ [DIAGRAM RENDER] Rendering C4 diagram (using D2)', {
+      language,
+      codeLength: code.length,
+      codePreview: code.substring(0, 60) + '...'
+    });
+    return <C4Diagram code={code} title="C4 Architecture Diagram" />;
+  }
+
+  // Handle Mermaid diagrams
+  if (isMermaidCode(language, inline || false)) {
+    const code = prepareMermaidCode(String(children));
+    console.log('🎨 [DIAGRAM RENDER] Rendering Mermaid diagram', {
+      language,
+      codeLength: code.length,
+      codePreview: code.substring(0, 60) + '...'
+    });
+    return <MermaidDiagram code={code} title="Mermaid Diagram" />;
+  }
+
+  // Handle D2 diagrams
+  if (isD2Code(language, inline || false)) {
+    const code = prepareD2Code(String(children));
+    console.log('🎯 [DIAGRAM RENDER] Rendering D2 diagram', {
+      language,
+      codeLength: code.length,
+      codePreview: code.substring(0, 60) + '...'
+    });
+    return <D2Diagram code={code} title="D2 Diagram" />;
+  }
+
+  // Regular code blocks
+  return !inline && match ? (
+    <pre
+      className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
+      style={{
+        fontSize: '14px',
+        lineHeight: '1.2',
+        color: '#1e293b',
+        backgroundColor: '#f8fafc'
+      }}
+    >
+      <code className={className} style={{ color: '#1e293b' }} {...rest}>
+        {children}
+      </code>
+    </pre>
+  ) : (
+    <code
+      className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`}
+      style={{
+        fontSize: '14px',
+        color: '#dc2626',
+        backgroundColor: '#f1f5f9',
+        border: '1px solid #e2e8f0'
+      }}
+      {...rest}
+    >
+      {children}
+    </code>
+  );
+};
+
+/**
+ * Process HTML content to detect and replace diagram code blocks with rendered diagrams
+ * This handles cases where LLMs return HTML <pre><code> blocks instead of Markdown
+ *
+ * Supports:
+ * - Mermaid diagrams
+ * - D2 diagrams
+ *
+ * Strategy:
+ * - First diagram block: Show as collapsible code (for copying)
+ * - Second identical block: Render as diagram
+ * - This matches LLM pattern: "Code" then "Rendered Diagram"
+ */
+// Type for tracking diagram occurrences
+type DiagramOccurrence = {
+  count: number;
+  type: 'mermaid' | 'd2';
+};
+
+const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
+  // Use enhanced detection for mixed HTML content
+  const { originalHtml, diagrams } = processMixedHtmlContent(htmlContent);
+  
+  // If no diagrams detected, return original HTML
+  if (diagrams.length === 0) {
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />];
+  }
+
+  // Process HTML with detected diagrams
+  const parts: React.ReactNode[] = [];
+  let diagramCount = 0;
+  const diagramOccurrences = new Map<string, DiagramOccurrence>();
+
+
+  // Process each detected diagram
+  for (const diagram of diagrams) {
+    const { code, type, confidence } = diagram;
+
+    // Track occurrences for duplicate handling
+    const existingEntry = diagramOccurrences.get(code);
+    const occurrenceCount = existingEntry?.count || 0;
+    diagramOccurrences.set(code, { count: occurrenceCount + 1, type });
+
+    // Skip duplicate diagrams (only render the first occurrence)
+    if (occurrenceCount > 0) {
+      continue;
+    }
+
+    diagramCount++;
+
+    // Render diagram directly by default with optional code view below
+    const diagramLabel = type === 'mermaid' ? 'Mermaid' : 'D2';
+    const confidenceIcon = confidence === 'high' ? '✅' : confidence === 'medium' ? '⚠️' : '❓';
+
+    // Create the rendered diagram
+    const diagramComponent = type === 'mermaid' ? (
+      <MermaidDiagram
+        key={`diagram-render-${diagramCount}-${type}`}
+        code={code}
+        title={`${diagramLabel} Diagram ${confidenceIcon}`}
+      />
+    ) : (
+      <D2Diagram
+        key={`diagram-render-${diagramCount}-${type}`}
+        code={code}
+        title={`${diagramLabel} Diagram ${confidenceIcon}`}
+      />
+    );
+
+    // Add the rendered diagram
+    parts.push(diagramComponent);
+
+    // Add optional collapsible code view below the diagram
+    const codeBlock = (
+      <details
+        key={`diagram-code-${diagramCount}`}
+        style={{
+          marginTop: '8px',
+          marginBottom: '16px'
+        }}
+      >
+        <summary
+          style={{
+            cursor: 'pointer',
+            padding: '8px 12px',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 500,
+            color: '#475569',
+            userSelect: 'none'
+          }}
+        >
+          📝 View {diagramLabel} Source Code (click to expand/copy)
+        </summary>
+        <pre
+          style={{
+            backgroundColor: '#1e293b',
+            color: '#e2e8f0',
+            padding: '16px',
+            borderRadius: '0 0 6px 6px',
+            border: '1px solid #cbd5e1',
+            borderTop: 'none',
+            overflowX: 'auto',
+            fontSize: '13px',
+            lineHeight: '1.2',
+            marginTop: '0'
+          }}
+        >
+          <code>{code}</code>
+        </pre>
+      </details>
+    );
+
+    parts.push(codeBlock);
+  }
+
+  // Also process remaining HTML for traditional <pre><code> blocks not caught by enhanced detection
+  const codeBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(originalHtml)) !== null) {
+    // Add HTML before the code block
+    if (match.index > lastIndex) {
+      const beforeHtml = originalHtml.substring(lastIndex, match.index);
+      if (beforeHtml.trim()) {
+        parts.push(
+          <div
+            key={`html-${lastIndex}`}
+            dangerouslySetInnerHTML={{ __html: beforeHtml }}
+          />
+        );
+      }
+    }
+
+    // Extract and decode the code content
+    const rawCode = match[1];
+    const decodedMermaid = prepareMermaidCode(rawCode);
+    const decodedD2 = prepareD2Code(rawCode);
+
+    // Check if this is a diagram not already processed by enhanced detection
+    const isMermaid = isMermaidSyntax(decodedMermaid);
+    const isD2 = isD2Syntax(decodedD2);
+    
+    if (isMermaid || isD2) {
+      const diagramType = isMermaid ? 'mermaid' : 'd2';
+      const decodedCode = isMermaid ? decodedMermaid : decodedD2;
+      
+      // Check if we already processed this diagram
+      const alreadyProcessed = diagrams.some(d => d.code === decodedCode && d.type === diagramType);
+      
+      if (!alreadyProcessed) {
+        // This is a new diagram not caught by enhanced detection
+        const existingEntry = diagramOccurrences.get(decodedCode);
+        const occurrenceCount = existingEntry?.count || 0;
+        diagramOccurrences.set(decodedCode, { count: occurrenceCount + 1, type: diagramType });
+
+        if (occurrenceCount === 0) {
+          // Show as collapsible code block
+          diagramCount++;
+          const diagramLabel = isMermaid ? 'Mermaid' : 'D2';
+          
+          parts.push(
+            <details
+              key={`fallback-diagram-code-${match.index}`}
+              style={{
+                marginTop: '8px',
+                marginBottom: '8px'
+              }}
+            >
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  padding: '8px 12px',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: '#475569',
+                  userSelect: 'none'
+                }}
+              >
+                📝 {diagramLabel} Code (click to view/copy)
+              </summary>
+              <pre
+                style={{
+                  backgroundColor: '#1e293b',
+                  color: '#e2e8f0',
+                  padding: '16px',
+                  borderRadius: '0 0 6px 6px',
+                  border: '1px solid #cbd5e1',
+                  borderTop: 'none',
+                  overflowX: 'auto',
+                  fontSize: '13px',
+                  lineHeight: '1.2',
+                  marginTop: '0'
+                }}
+              >
+                <code>{decodedCode}</code>
+              </pre>
+            </details>
+          );
+        } else {
+          // Render as diagram
+          parts.push(
+            diagramType === 'mermaid' ? (
+              <MermaidDiagram
+                key={`fallback-diagram-render-${match.index}`}
+                code={decodedCode}
+                title="Mermaid Diagram"
+              />
+            ) : (
+              <D2Diagram
+                key={`fallback-diagram-render-${match.index}`}
+                code={decodedCode}
+                title="D2 Diagram"
+              />
+            )
+          );
+        }
+      }
+    } else {
+      // Not a diagram, render as regular code block
+      parts.push(
+        <pre
+          key={`code-${match.index}`}
+          style={{
+            backgroundColor: '#f8fafc',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            overflowX: 'auto',
+            fontSize: '14px',
+            lineHeight: '1.2'
+          }}
+        >
+          <code dangerouslySetInnerHTML={{ __html: rawCode }} />
+        </pre>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining HTML after processing
+  if (lastIndex < originalHtml.length) {
+    const afterHtml = originalHtml.substring(lastIndex);
+    if (afterHtml.trim()) {
+      parts.push(
+        <div
+          key={`html-${lastIndex}`}
+          dangerouslySetInnerHTML={{ __html: afterHtml }}
+        />
+      );
+    }
+  }
+
+  // If no parts were created, return the original HTML with detected diagrams
+  if (parts.length === 0) {
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />];
+  }
+
+  return parts;
+};
+
+const MessageItem: React.FC<MessageItemProps> = ({
+  message,
+  onExtractCode,
   onShowCode
 }) => {
+  const renderMetadataStats = (
+    metadata: Message['metadata'],
+    options: { theme?: 'light' | 'dark' } = {}
+  ) => {
+    if (!metadata) {
+      return null;
+    }
+
+    const {
+      model,
+      provider,
+      tokens,
+      inputTokens,
+      outputTokens,
+      cachedTokens,
+      elapsedTime,
+    } = metadata;
+
+    const theme = options.theme ?? 'light';
+    const isDark = theme === 'dark';
+
+    const containerClass = isDark
+      ? 'flex items-center gap-3 text-xs font-medium'
+      : 'flex items-center gap-2 text-xs font-medium text-slate-500';
+
+    const modelStyle = isDark
+      ? { color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }
+      : { color: '#0f172a', fontWeight: 600 };
+
+    const providerStyle = isDark
+      ? { color: 'rgba(255, 255, 255, 0.8)' }
+      : { color: '#334155' };
+
+    const statTextStyle = isDark
+      ? { color: 'rgba(255, 255, 255, 0.85)' }
+      : { color: '#0f172a' };
+
+    const stats: React.ReactNode[] = [];
+
+    if (model) {
+      stats.push(
+        <span key="model" style={modelStyle}>
+          {model}
+        </span>
+      );
+    }
+
+    if (provider) {
+      stats.push(
+        <Tooltip title="Provider" key="provider-tip">
+          <span key="provider" style={providerStyle}>
+            🛰️ {provider}
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (tokens !== undefined) {
+      stats.push(
+        <Tooltip title="Total tokens" key="tokens-tip">
+          <span key="tokens" style={statTextStyle}>
+            🧮 {tokens}
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (inputTokens !== undefined) {
+      stats.push(
+        <Tooltip title="Input (prompt) tokens" key="input-tip">
+          <span key="input" style={statTextStyle}>
+            📥 {inputTokens}
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (outputTokens !== undefined) {
+      stats.push(
+        <Tooltip title="Output (completion) tokens" key="output-tip">
+          <span key="output" style={statTextStyle}>
+            📤 {outputTokens}
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (cachedTokens !== undefined && cachedTokens > 0) {
+      stats.push(
+        <Tooltip title="Cached tokens" key="cached-tip">
+          <span key="cached" style={statTextStyle}>
+            ♻️ {cachedTokens}
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (elapsedTime !== undefined) {
+      stats.push(
+        <Tooltip title="Elapsed time" key="elapsed-tip">
+          <span key="elapsed" style={statTextStyle}>
+            ⏱️ {elapsedTime.toFixed(2)}s
+          </span>
+        </Tooltip>
+      );
+    }
+
+    if (stats.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className={containerClass} style={{ flexWrap: 'wrap' }}>
+        {stats.map((stat) => stat)}
+      </div>
+    );
+  };
+
   const [isExpanded, setIsExpanded] = useState(true);
   const [showFullContent, setShowFullContent] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -117,16 +588,16 @@ const MessageItem: React.FC<MessageItemProps> = ({
         
         // Only include substantial code blocks (multi-line or reasonable length)
         if (codeContent.includes('\n') || codeContent.length > 30) {
-          // Try to detect language from the content (basic heuristics)
+          // Try to detect language from the content (improved heuristics)
           let language = 'text';
-          if (/class\s+\w+|def\s+\w+|import\s+\w+/.test(codeContent)) {
+          if (isMermaidSyntax(codeContent)) {
+            language = 'mermaid';
+          } else if (/class\s+\w+|def\s+\w+|import\s+\w+/.test(codeContent)) {
             language = 'python';
           } else if (/function\s+\w+|const\s+\w+|let\s+\w+/.test(codeContent)) {
             language = 'javascript';
-          } else if (/classDiagram|sequenceDiagram|graph\s+(TD|LR)/.test(codeContent)) {
-            language = 'mermaid';
           }
-          
+
           matches.push({
             language: language,
             code: codeContent,
@@ -161,102 +632,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
     return false;
   };
 
-  const detectMermaidDiagrams = (content: string) => {
-    const matches = [];
-    
-    // 1. Detect markdown-style mermaid blocks: ```mermaid
-    const markdownRegex = /```mermaid\n([\s\S]*?)```/g;
-    let match;
-    while ((match = markdownRegex.exec(content)) !== null) {
-      matches.push(match[1].trim());
-    }
-    
-    // 2. Only check HTML patterns if no markdown patterns were found
-    // This prevents detecting the same diagram twice
-    if (matches.length === 0) {
-      // Detect HTML-style code blocks containing mermaid diagrams
-      // Look for <pre><code> or <code> blocks that contain mermaid keywords
-      const htmlCodeRegex = /<(?:pre><code[^>]*>|code[^>]*>)([\s\S]*?)<\/(?:code><\/pre>|code)>/gi;
-      while ((match = htmlCodeRegex.exec(content)) !== null) {
-        let codeContent = match[1].trim();
-        
-        // Decode HTML entities that might be present in the code
-        codeContent = codeContent
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        
-        // Check if the content contains mermaid diagram keywords
-        if (isMermaidContent(codeContent)) {
-          matches.push(codeContent);
-        }
-      }
-    }
-    
-    // Remove duplicates by comparing normalized content
-    const uniqueMatches = [];
-    const seen = new Set();
-    
-    for (const diagram of matches) {
-      // Normalize the diagram content for comparison
-      const normalized = diagram.replace(/\s+/g, ' ').trim().toLowerCase();
-      if (!seen.has(normalized)) {
-        seen.add(normalized);
-        uniqueMatches.push(diagram);
-      }
-    }
-    
-    return uniqueMatches;
-  };
-
-  const isMermaidContent = (content: string): boolean => {
-    // Check for common mermaid diagram types and syntax
-    const mermaidKeywords = [
-      /^graph\s+(TD|LR|TB|RL|BT)/i,           // Flowcharts
-      /^classDiagram/i,                       // Class diagrams  
-      /^sequenceDiagram/i,                    // Sequence diagrams
-      /^stateDiagram/i,                       // State diagrams
-      /^journey/i,                            // User journey
-      /^gitgraph/i,                           // Git graphs
-      /^pie\s+title/i,                        // Pie charts
-      /^gantt/i,                              // Gantt charts
-      /^erDiagram/i,                          // Entity relationship
-      /^flowchart\s+(TD|LR|TB|RL|BT)/i,      // Flowcharts (alternative syntax)
-      /direction\s+(TD|LR|TB|RL|BT)/i,       // Direction declarations
-    ];
-    
-    return mermaidKeywords.some(regex => regex.test(content.trim()));
-  };
-
-  const getMermaidDiagramType = (content: string): string => {
-    const trimmed = content.trim();
-    if (/^classDiagram/i.test(trimmed)) return 'Class Diagram';
-    if (/^sequenceDiagram/i.test(trimmed)) return 'Sequence Diagram';
-    if (/^stateDiagram/i.test(trimmed)) return 'State Diagram';
-    if (/^journey/i.test(trimmed)) return 'User Journey';
-    if (/^gitgraph/i.test(trimmed)) return 'Git Graph';
-    if (/^pie\s+title/i.test(trimmed)) return 'Pie Chart';
-    if (/^gantt/i.test(trimmed)) return 'Gantt Chart';
-    if (/^erDiagram/i.test(trimmed)) return 'ER Diagram';
-    if (/^(graph|flowchart)\s+(TD|LR|TB|RL|BT)/i.test(trimmed)) return 'Flowchart';
-    return 'Diagram';
-  };
-
-  const createMermaidMenuItems = () => {
-    if (mermaidDiagrams.length === 0) return [];
-    
-    return mermaidDiagrams.map((diagram, index) => ({
-      key: `mermaid-${index}`,
-      label: `${getMermaidDiagramType(diagram)} ${mermaidDiagrams.length > 1 ? `#${index + 1}` : ''}`,
-      onClick: () => onRenderMermaid?.(diagram),
-    }));
-  };
-
   const createCodeMenuItems = () => {
+    const codeBlocks = detectCodeBlocks(message.content);
     if (codeBlocks.length === 0) return [];
-    
+
     return codeBlocks.map((block, index) => ({
       key: `code-${index}`,
       label: `${block.language.toUpperCase()} Code ${codeBlocks.length > 1 ? `#${index + 1}` : ''}`,
@@ -265,19 +644,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const codeBlocks = detectCodeBlocks(message.content);
-  const mermaidDiagrams = detectMermaidDiagrams(message.content);
-  
-  // Debug logging for mermaid detection
-  if (message.role === 'assistant') {
-    console.log('Mermaid Debug:', {
-      messageId: message.id,
-      contentLength: message.content.length,
-      hasHtmlContent,
-      mermaidCount: mermaidDiagrams.length,
-      mermaidDiagrams: mermaidDiagrams,
-      contentPreview: message.content.substring(0, 500)
-    });
-  }
 
   // Fullscreen overlay component
   if (isFullscreen) {
@@ -342,24 +708,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             </div>
 
             {/* Center - Token and Model Information */}
-            {message.metadata && (
-              <div className="flex items-center gap-3 text-white font-medium opacity-90" style={{ fontSize: '16px' }}>
-                {message.metadata.model && (
-                  <span style={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }}>
-                    {message.metadata.model}
-                  </span>
-                )}
-                {message.metadata.inputTokens && (
-                  <span>📥 {message.metadata.inputTokens}</span>
-                )}
-                {message.metadata.outputTokens && (
-                  <span>📤 {message.metadata.outputTokens}</span>
-                )}
-                {message.metadata.elapsedTime && (
-                  <span>⏱️ {message.metadata.elapsedTime.toFixed(2)}s</span>
-                )}
-              </div>
-            )}
+            {renderMetadataStats(message.metadata, { theme: 'dark' })}
             
             {/* Header Actions */}
             <div className="flex items-center gap-2">
@@ -392,38 +741,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     />
                   </Tooltip>
                 </>
-              )}
-
-              {/* Render Mermaid Button/Dropdown */}
-              {mermaidDiagrams.length > 0 && onRenderMermaid && (
-                mermaidDiagrams.length === 1 ? (
-                  <Tooltip title="Render Mermaid Diagram">
-                    <Button
-                      type="text"
-                      icon={<DownloadOutlined />}
-                      onClick={() => onRenderMermaid?.(mermaidDiagrams[0])}
-                      size="small"
-                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                    />
-                  </Tooltip>
-                ) : (
-                  <Dropdown
-                    menu={{
-                      items: createMermaidMenuItems()
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                  >
-                    <Tooltip title={`Choose from ${mermaidDiagrams.length} diagrams`}>
-                      <Button
-                        type="text"
-                        icon={<DownloadOutlined />}
-                        size="small"
-                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                      />
-                    </Tooltip>
-                  </Dropdown>
-                )
               )}
 
               {/* Show Code Button/Dropdown */}
@@ -506,26 +823,27 @@ const MessageItem: React.FC<MessageItemProps> = ({
         >
           <div className="message-content">
             {viewMode === 'html' && hasHtmlContent ? (
-              // HTML View - Render HTML content directly
-              <div 
+              // HTML View - Detect and render Mermaid diagrams from HTML
+              <div
                 className="prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: displayContent }}
                 style={{
                   border: '1px solid #e2e8f0',
                   borderRadius: '12px',
                   padding: '20px',
                   backgroundColor: '#f8fafc',
-                  lineHeight: '1.6',
+                  lineHeight: '1.2',
                   fontSize: '15px',
                   color: '#1e293b'
                 }}
-              />
+              >
+                {processDiagramsInHTML(displayContent)}
+              </div>
             ) : (
               // Markdown View - Use ReactMarkdown (default)
               <div 
                 className="prose prose-slate max-w-none" 
                 style={{ 
-                  lineHeight: '1.6', 
+                  lineHeight: '1.2', 
                   fontSize: '15px',
                   color: '#1e293b'
                 }}
@@ -533,38 +851,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    code(props: React.ComponentProps<'code'> & { inline?: boolean }) {
-                      const { inline, className, children, ...rest } = props;
-                      const match = /language-(\w+)/.exec(className || '');
-                      return !inline && match ? (
-                        <pre
-                          className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
-                          style={{ 
-                            fontSize: '14px', 
-                            lineHeight: '1.6',
-                            color: '#1e293b',
-                            backgroundColor: '#f8fafc'
-                          }}
-                        >
-                          <code className={className} style={{ color: '#1e293b' }} {...rest}>
-                            {children}
-                          </code>
-                        </pre>
-                      ) : (
-                        <code 
-                          className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`} 
-                          style={{ 
-                            fontSize: '14px',
-                            color: '#dc2626',
-                            backgroundColor: '#f1f5f9',
-                            border: '1px solid #e2e8f0'
-                          }} 
-                          {...rest}
-                        >
-                          {children}
-                        </code>
-                      );
-                    },
+                    code: CodeComponentRenderer,
                     // Style other markdown elements for dark text
                     h1: (props) => <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />,
                     h2: (props) => <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
@@ -572,7 +859,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                    p: (props) => <p style={{ color: '#374151', lineHeight: '1.7' }} {...props} />,
+                    p: (props) => <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />,
                     strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     em: (props) => <em style={{ color: '#374151' }} {...props} />,
                     blockquote: (props) => (
@@ -693,24 +980,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             </div>
 
             {/* Center - Token and Model Information */}
-            {message.metadata && (
-              <div className="flex items-center gap-3 text-white font-medium opacity-90" style={{ fontSize: '16px' }}>
-                {message.metadata.model && (
-                  <span style={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }}>
-                    {message.metadata.model}
-                  </span>
-                )}
-                {message.metadata.inputTokens && (
-                  <span>📥 {message.metadata.inputTokens}</span>
-                )}
-                {message.metadata.outputTokens && (
-                  <span>📤 {message.metadata.outputTokens}</span>
-                )}
-                {message.metadata.elapsedTime && (
-                  <span>⏱️ {message.metadata.elapsedTime.toFixed(2)}s</span>
-                )}
-              </div>
-            )}
+            {renderMetadataStats(message.metadata, { theme: 'dark' })}
             
             {/* Header Actions */}
             <div className="flex items-center gap-2">
@@ -743,38 +1013,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     />
                   </Tooltip>
                 </>
-              )}
-
-              {/* Render Mermaid Button/Dropdown */}
-              {mermaidDiagrams.length > 0 && onRenderMermaid && (
-                mermaidDiagrams.length === 1 ? (
-                  <Tooltip title="Render Mermaid Diagram">
-                    <Button
-                      type="text"
-                      icon={<DownloadOutlined />}
-                      onClick={() => onRenderMermaid?.(mermaidDiagrams[0])}
-                      size="small"
-                      style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                    />
-                  </Tooltip>
-                ) : (
-                  <Dropdown
-                    menu={{
-                      items: createMermaidMenuItems()
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                  >
-                    <Tooltip title={`Choose from ${mermaidDiagrams.length} diagrams`}>
-                      <Button
-                        type="text"
-                        icon={<DownloadOutlined />}
-                        size="small"
-                        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                      />
-                    </Tooltip>
-                  </Dropdown>
-                )
               )}
 
               {/* Show Code Button/Dropdown */}
@@ -870,10 +1108,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
           {isExpanded && (
             <div className="message-content">
               {viewMode === 'html' && hasHtmlContent ? (
-                // HTML View - Render HTML content directly
-                <div 
+                // HTML View - Detect and render Mermaid diagrams from HTML
+                <div
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: displayContent }}
                   style={{
                     border: '1px solid #e2e8f0',
                     borderRadius: '12px',
@@ -881,17 +1118,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     backgroundColor: '#f8fafc',
                     maxHeight: '500px',
                     overflowY: 'auto',
-                    lineHeight: '1.6',
+                    lineHeight: '1.2',
                     fontSize: '14px',
                     color: '#1e293b'
                   }}
-                />
+                >
+                  {processDiagramsInHTML(displayContent)}
+                </div>
               ) : (
                 // Markdown View - Use ReactMarkdown (default)
                 <div 
                   className="prose prose-slate max-w-none" 
                   style={{ 
-                    lineHeight: '1.6', 
+                    lineHeight: '1.2', 
                     fontSize: '14px',
                     color: '#1e293b'
                   }}
@@ -899,38 +1138,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code(props: React.ComponentProps<'code'> & { inline?: boolean }) {
-                        const { inline, className, children, ...rest } = props;
-                        const match = /language-(\w+)/.exec(className || '');
-                        return !inline && match ? (
-                          <pre
-                            className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
-                            style={{ 
-                              fontSize: '14px', 
-                              lineHeight: '1.6',
-                              color: '#1e293b',
-                              backgroundColor: '#f8fafc'
-                            }}
-                          >
-                            <code className={className} style={{ color: '#1e293b' }} {...rest}>
-                              {children}
-                            </code>
-                          </pre>
-                        ) : (
-                          <code 
-                            className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`} 
-                            style={{ 
-                              fontSize: '14px',
-                              color: '#dc2626',
-                              backgroundColor: '#f1f5f9',
-                              border: '1px solid #e2e8f0'
-                            }} 
-                            {...rest}
-                          >
-                            {children}
-                          </code>
-                        );
-                      },
+                      code: CodeComponentRenderer,
                       // Style other markdown elements for dark text
                       h1: (props) => <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />,
                       h2: (props) => <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
@@ -938,7 +1146,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                       h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                       h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      p: (props) => <p style={{ color: '#374151', lineHeight: '1.7' }} {...props} />,
+                      p: (props) => <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />,
                       strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                       em: (props) => <em style={{ color: '#374151' }} {...props} />,
                       blockquote: (props) => (
@@ -987,7 +1195,6 @@ interface ChatViewProps {
   messages: Message[];
   loading?: boolean;
   onExtractCode?: (messageId: string) => void;
-  onRenderMermaid?: (code: string) => void;
   onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
@@ -995,7 +1202,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,
   onExtractCode,
-  onRenderMermaid,
   onShowCode,
 }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -1028,7 +1234,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
             key={message.id}
             message={message}
             onExtractCode={onExtractCode}
-            onRenderMermaid={onRenderMermaid}
             onShowCode={onShowCode}
           />
         ))}

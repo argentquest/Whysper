@@ -27,6 +27,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [availableProviders, setAvailableProviders] = useState<string[]>([]);
   const { theme, setTheme } = useTheme();
+  const providersListValue = Form.useWatch('providersList', form);
+  const modelsListValue = Form.useWatch('modelsList', form);
+
+  useEffect(() => {
+    if (providersListValue !== undefined) {
+      const providers = providersListValue
+        ? providersListValue.split(',').map((provider: string) => provider.trim()).filter(Boolean)
+        : [];
+      setAvailableProviders(providers);
+    }
+  }, [providersListValue]);
+
+  useEffect(() => {
+    if (modelsListValue !== undefined) {
+      const models = modelsListValue
+        ? modelsListValue.split(',').map((model: string) => model.trim()).filter(Boolean)
+        : [];
+      setAvailableModels(models);
+    }
+  }, [modelsListValue]);
+
+  const providerValue = form.getFieldValue('provider') || 'openrouter';
+  const providerOptions = availableProviders.length > 0
+    ? Array.from(new Set([...availableProviders, providerValue]))
+    : ['openrouter', 'custom'];
+  const defaultModelValue = form.getFieldValue('defaultModel') || '';
+  const modelOptions = availableModels.length > 0
+    ? Array.from(new Set([...availableModels, defaultModelValue].filter(Boolean)))
+    : (defaultModelValue ? [defaultModelValue] : []);
 
   const loadSettings = React.useCallback(async () => {
     try {
@@ -43,6 +72,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           // API Configuration
           apiKey: apiKeyValue || '',
           provider: settings.values?.PROVIDER || 'openrouter',
+          providersList: settings.values?.PROVIDERS || '',
           apiUrl: settings.values?.API_URL || '',
           tokenUrl: settings.values?.TOKEN_URL || '',
           tokenUseId: settings.values?.TOKEN_USE_ID || '',
@@ -55,12 +85,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           temperature: parseFloat(settings.values?.TEMPERATURE || '0.7'),
           topP: parseFloat(settings.values?.TOP_P || '1.0'),
           frequencyPenalty: parseFloat(settings.values?.FREQUENCY_PENALTY || '0.0'),
+          modelsList: settings.values?.MODELS || '',
 
           // UI Configuration
-          theme: theme,
+          theme: settings.values?.UI_THEME || theme,
           uiTheme: settings.values?.UI_THEME || 'light',
           language: settings.values?.LANGUAGE || 'en',
-          windowSize: settings.values?.WINDOW_SIZE || '1200x800',
 
           // File System Configuration
           codePath: settings.values?.CODE_PATH || '',
@@ -88,12 +118,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           // Advanced Configuration
           cacheSize: parseInt(settings.values?.CACHE_SIZE || '100'),
           requestTimeout: parseInt(settings.values?.REQUEST_TIMEOUT || '60'),
+          aiConnectTimeout: parseInt(settings.values?.AI_CONNECT_TIMEOUT || '30'),
+          aiReadTimeout: parseInt(settings.values?.AI_READ_TIMEOUT || '120'),
+          openrouterApiUrl: settings.values?.OPENROUTER_API_URL || '',
+          openrouterHttpReferer: settings.values?.OPENROUTER_HTTP_REFERER || '',
+          openrouterTitle: settings.values?.OPENROUTER_TITLE || '',
+          openrouterTemperature: parseFloat(settings.values?.OPENROUTER_TEMPERATURE || '0.1'),
+          customProviderApiUrl: settings.values?.CUSTOM_PROVIDER_API_URL || '',
+          customProviderRequestTimeout: parseInt(settings.values?.CUSTOM_PROVIDER_REQUEST_TIMEOUT || '30'),
 
           // Server Configuration
           apiPort: parseInt(settings.values?.API_PORT || '8000'),
           apiHost: settings.values?.API_HOST || '0.0.0.0',
           fastapiUrl: settings.values?.FASTAPI_URL || 'http://localhost:8000',
-          webPort: parseInt(settings.values?.WEB_PORT || '8080'),
 
           // CLI Memory
           lastUsedFolder: settings.values?.LAST_USED_FOLDER || '',
@@ -107,13 +144,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         // Extract models and providers from backend settings
         if (settings.values?.MODELS) {
-          const models = settings.values.MODELS.split(',').map((m: string) => m.trim());
+          const models = settings.values.MODELS.split(',').map((m: string) => m.trim()).filter(Boolean);
           setAvailableModels(models);
+        } else {
+          setAvailableModels([]);
         }
 
         if (settings.values?.PROVIDERS) {
-          const providers = settings.values.PROVIDERS.split(',').map((p: string) => p.trim());
+          const providers = settings.values.PROVIDERS.split(',').map((p: string) => p.trim()).filter(Boolean);
           setAvailableProviders(providers);
+        } else {
+          setAvailableProviders([]);
         }
       } else {
         message.error(response.error || 'Failed to load settings');
@@ -135,11 +176,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setSaving(true);
       const values = await form.validateFields();
 
+      const normalizedProviders = (values.providersList || '')
+        .split(',')
+        .map((provider: string) => provider.trim())
+        .filter(Boolean)
+        .join(',');
+
+      const normalizedModels = (values.modelsList || '')
+        .split(',')
+        .map((model: string) => model.trim())
+        .filter(Boolean)
+        .join(',');
+
+      values.providersList = normalizedProviders;
+      values.modelsList = normalizedModels;
+
       // Map form values back to backend environment format
       const backendSettings = {
         // API Configuration
         API_KEY: values.apiKey || '',
         PROVIDER: values.provider || 'openrouter',
+        PROVIDERS: normalizedProviders,
         API_URL: values.apiUrl || '',
         TOKEN_URL: values.tokenUrl || '',
         TOKEN_USE_ID: values.tokenUseId || '',
@@ -148,6 +205,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         // Model Configuration
         DEFAULT_MODEL: values.defaultModel || '',
+        MODELS: normalizedModels,
         MAX_TOKENS: (values.maxTokens ?? 4000).toString(),
         TEMPERATURE: (values.temperature ?? 0.7).toString(),
         TOP_P: (values.topP ?? 1.0).toString(),
@@ -156,7 +214,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         // UI Configuration
         UI_THEME: values.uiTheme || 'light',
         LANGUAGE: values.language || 'en',
-        WINDOW_SIZE: values.windowSize || '1200x800',
 
         // File System Configuration
         CODE_PATH: values.codePath || '',
@@ -184,12 +241,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         // Advanced Configuration
         CACHE_SIZE: (values.cacheSize ?? 100).toString(),
         REQUEST_TIMEOUT: (values.requestTimeout ?? 60).toString(),
+        AI_CONNECT_TIMEOUT: (values.aiConnectTimeout ?? 30).toString(),
+        AI_READ_TIMEOUT: (values.aiReadTimeout ?? 120).toString(),
+        OPENROUTER_API_URL: values.openrouterApiUrl || '',
+        OPENROUTER_HTTP_REFERER: values.openrouterHttpReferer || '',
+        OPENROUTER_TITLE: values.openrouterTitle || '',
+        OPENROUTER_TEMPERATURE: (values.openrouterTemperature ?? 0.1).toString(),
+        CUSTOM_PROVIDER_API_URL: values.customProviderApiUrl || '',
+        CUSTOM_PROVIDER_REQUEST_TIMEOUT: (values.customProviderRequestTimeout ?? 30).toString(),
 
         // Server Configuration
         API_PORT: (values.apiPort ?? 8000).toString(),
         API_HOST: values.apiHost || '0.0.0.0',
         FASTAPI_URL: values.fastapiUrl || 'http://localhost:8000',
-        WEB_PORT: (values.webPort ?? 8080).toString(),
 
         // CLI Memory
         LAST_USED_FOLDER: values.lastUsedFolder || '',
@@ -288,6 +352,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         initialValues={{
           theme: theme,
           provider: 'openrouter',
+          providersList: '',
+          modelsList: '',
           maxTokens: 4000,
           temperature: 0.7,
           topP: 1.0,
@@ -302,9 +368,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           logLevel: 'INFO',
           cacheSize: 100,
           requestTimeout: 60,
+          aiConnectTimeout: 30,
+          aiReadTimeout: 120,
+          openrouterTemperature: 0.1,
+          customProviderRequestTimeout: 30,
           apiPort: 8000,
           apiHost: '0.0.0.0',
-          webPort: 8080,
+          fastapiUrl: 'http://localhost:8000',
           lastOutputFormat: 'markdown',
         }}
       >
@@ -321,10 +391,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 tooltip="AI service provider (openrouter, custom, etc.)"
               >
                 <Select>
-                  {availableProviders.map(provider => (
+                  {providerOptions.map(provider => (
                     <Option key={provider} value={provider}>{provider}</Option>
                   ))}
                 </Select>
+              </Form.Item>
+
+              <Form.Item
+                label="Available Providers"
+                name="providersList"
+                tooltip="Comma-separated list of available providers"
+              >
+                <TextArea rows={2} placeholder="openrouter,custom" />
               </Form.Item>
 
               <Form.Item
@@ -370,14 +448,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </Form.Item>
               </div>
 
-              <Form.Item
-                label="Validate SSL"
-                name="validateSsl"
-                tooltip="Enable SSL certificate validation"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
+            <Title level={5}>OpenRouter Settings</Title>
+
+            <Form.Item
+              label="OpenRouter API URL"
+              name="openrouterApiUrl"
+              tooltip="API endpoint for OpenRouter requests"
+            >
+              <Input placeholder="https://openrouter.ai/api/v1/chat/completions" />
+            </Form.Item>
+
+            <Form.Item
+              label="HTTP Referer"
+              name="openrouterHttpReferer"
+              tooltip="Referer header required by OpenRouter"
+            >
+              <Input placeholder="https://github.com/yourusername/code-chat-ai" />
+            </Form.Item>
+
+            <Form.Item
+              label="Request Title"
+              name="openrouterTitle"
+              tooltip="X-Title header describing your integration"
+            >
+              <Input placeholder="Code Chat with AI" />
+            </Form.Item>
+
+            <Form.Item
+              label={`OpenRouter Temperature: ${form.getFieldValue('openrouterTemperature')?.toFixed(1) ?? '0.1'}`}
+              name="openrouterTemperature"
+              tooltip="Default temperature for OpenRouter requests"
+            >
+              <Slider
+                min={0}
+                max={2}
+                step={0.1}
+                marks={{
+                  0: '0',
+                  0.5: '0.5',
+                  1: '1',
+                  2: '2',
+                }}
+              />
+            </Form.Item>
+
+            <Title level={5}>Custom Provider Settings</Title>
+
+            <Form.Item
+              label="Custom Provider API URL"
+              name="customProviderApiUrl"
+              tooltip="API endpoint for the custom provider"
+            >
+              <Input placeholder="https://your-api.com/v1/chat" />
+            </Form.Item>
+
+            <Form.Item
+              label="Custom Provider Timeout (seconds)"
+              name="customProviderRequestTimeout"
+              tooltip="Request timeout for custom provider calls"
+            >
+              <InputNumber min={1} max={600} className="w-full" />
+            </Form.Item>
+
+            <Form.Item
+              label="Validate SSL"
+              name="validateSsl"
+              tooltip="Enable SSL certificate validation"
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
             </div>
           </Tabs.TabPane>
 
@@ -387,13 +527,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Title level={5}>Model Selection</Title>
 
               <Form.Item
+                label="Available Models"
+                name="modelsList"
+                tooltip="Comma-separated list of available models"
+              >
+                <TextArea rows={3} placeholder="model-a,model-b" />
+              </Form.Item>
+
+              <Form.Item
                 label="Default Model"
                 name="defaultModel"
                 rules={[{ required: true, message: 'Please select a model' }]}
                 tooltip="AI model to use for responses"
               >
                 <Select showSearch placeholder="Select a model">
-                  {availableModels.map(model => (
+                  {modelOptions.length === 0 && (
+                    <Option value="" disabled>No models configured</Option>
+                  )}
+                  {modelOptions.map(model => (
                     <Option key={model} value={model}>{model}</Option>
                   ))}
                 </Select>
@@ -500,14 +651,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Option value="fr">French</Option>
                   <Option value="de">German</Option>
                 </Select>
-              </Form.Item>
-
-              <Form.Item
-                label="Window Size"
-                name="windowSize"
-                tooltip="Default window size (WIDTHxHEIGHT)"
-              >
-                <Input placeholder="1200x800" />
               </Form.Item>
 
               <Title level={5}>Display Options</Title>
@@ -673,14 +816,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </Form.Item>
 
               <Form.Item
-                label="Web Port"
-                name="webPort"
-                tooltip="Port for the web server"
-              >
-                <InputNumber min={1} max={65535} className="w-full" />
-              </Form.Item>
-
-              <Form.Item
                 label="Base URL"
                 name="baseUrl"
                 tooltip="Custom API base URL (optional)"
@@ -711,6 +846,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     300: '5m',
                   }}
                 />
+              </Form.Item>
+
+              <Form.Item
+                label="Connect Timeout (seconds)"
+                name="aiConnectTimeout"
+                tooltip="Timeout for establishing connections to AI providers"
+              >
+                <InputNumber min={1} max={300} className="w-full" />
+              </Form.Item>
+
+              <Form.Item
+                label="Read Timeout (seconds)"
+                name="aiReadTimeout"
+                tooltip="Timeout for reading responses from AI providers"
+              >
+                <InputNumber min={1} max={600} className="w-full" />
               </Form.Item>
 
               <Form.Item

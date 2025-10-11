@@ -58,7 +58,6 @@ import ThemePickerModal from './components/modals/ThemePickerModal';
 import { FileEditorView } from './components/editor/FileEditorView';
 
 // Terminal components  
-import { ShellView } from './components/terminal/ShellView';
 
 // Theme management
 import { useTheme } from './themes';
@@ -131,10 +130,8 @@ function App() {
   const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
-  const [mermaidModalOpen, setMermaidModalOpen] = useState(false);          // Mermaid diagram display modal
   const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
   const [newFileModalOpen, setNewFileModalOpen] = useState(false);         // New file creation modal
-  const [mermaidImageData, setMermaidImageData] = useState<string>('');     // Rendered mermaid diagram data
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   
@@ -148,6 +145,7 @@ function App() {
   
   // Agent prompts loaded from backend
   const [agentPrompts, setAgentPrompts] = useState<AgentPrompt[]>([]);
+  const [activeAgentName, setActiveAgentName] = useState<string>('default');
 
   // Subagent commands loaded from backend
   const [subagentCommands, setSubagentCommands] = useState<any[]>([]);
@@ -175,6 +173,11 @@ function App() {
 
         console.log('⚙️ Mapped settings:', mappedSettings);
         setSettings(mappedSettings);
+
+        const configuredAgentName = backendSettings.values?.CURRENT_SYSTEM_PROMPT;
+        if (configuredAgentName && typeof configuredAgentName === 'string') {
+          setActiveAgentName(configuredAgentName);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to load settings:', error);
@@ -213,6 +216,19 @@ function App() {
       console.warn('Could not load subagent commands:', error);
     }
   }, []);
+
+  useEffect(() => {
+    if (agentPrompts.length === 0) {
+      return;
+    }
+
+    setActiveAgentName(prev => {
+      if (prev && agentPrompts.some(prompt => prompt.name === prev)) {
+        return prev;
+      }
+      return agentPrompts[0].name;
+    });
+  }, [agentPrompts]);
 
   // Initialize the application with default state
   // Creates the first tab and conversation, then loads user settings from backend.
@@ -365,32 +381,6 @@ function App() {
     }
   };
 
-  const handleRenderMermaid = async (code: string) => {
-    try {
-      const response = await ApiService.renderMermaid(code);
-      if (response.success && response.data) {
-        // Store the diagram data and show modal
-        setMermaidImageData(response.data);
-        setMermaidModalOpen(true);
-        message.success('Mermaid diagram rendered successfully');
-      } else {
-        message.error(response.error || 'Failed to render mermaid diagram');
-      }
-    } catch (error) {
-      message.error('Error rendering mermaid diagram');
-      console.error('Mermaid render error:', error);
-    }
-  };
-
-  const handleDownloadMermaid = () => {
-    if (mermaidImageData) {
-      const link = document.createElement('a');
-      link.href = mermaidImageData;
-      link.download = 'mermaid-diagram.png';
-      link.click();
-      message.success('Mermaid diagram downloaded');
-    }
-  };
 
   const handleShowCode = (code: string, language: string, title?: string) => {
     setCodeModalData({ code, language, title });
@@ -416,6 +406,8 @@ function App() {
   };
 
   const handleSystemChange = async (systemType: string) => {
+    setActiveAgentName(systemType);
+
     // Find the agent prompt for this system type
     const agentPrompt = agentPrompts.find(prompt => prompt.name === systemType);
 
@@ -595,54 +587,6 @@ function App() {
     }
   };
 
-  // ==================== Shell Functions ====================
-  
-  // Handle shell session creation and opening
-  const handleNewShell = (shellType: string = 'auto') => {
-    const shellTabId = `shell-tab-${Date.now()}`;
-    const shellCount = tabs.filter(t => t.type === 'shell').length + 1;
-    
-    // Create descriptive title based on shell type
-    let title = '';
-    switch (shellType) {
-      case 'cmd':
-        title = `CMD ${shellCount}`;
-        break;
-      case 'powershell':
-        title = `PowerShell ${shellCount}`;
-        break;
-      case 'bash':
-        title = `Bash ${shellCount}`;
-        break;
-      default:
-        title = `Shell ${shellCount}`;
-    }
-    
-    const newShellTab: Tab = {
-      id: shellTabId,
-      conversationId: '', // Shell tabs don't need conversation IDs
-      title: title,
-      isActive: false,
-      isDirty: false,
-      type: 'shell',
-      shellSessionId: undefined, // Will be set by ShellView
-      shellType: shellType, // Store the shell type for the tab
-    };
-
-    setTabs(prev => [...prev, newShellTab]);
-    setActiveTabId(shellTabId);
-    message.success(`New ${title} session created`);
-  };
-
-  // Handle shell session ID assignment
-  const handleShellSessionChange = (tabId: string, sessionId: string) => {
-    setTabs(prev => prev.map(tab => 
-      tab.id === tabId 
-        ? { ...tab, shellSessionId: sessionId } 
-        : tab
-    ));
-  };
-
   // Tab management
   const handleTabChange = (tabId: string) => {
     setActiveTabId(tabId);
@@ -652,11 +596,19 @@ function App() {
     const newTabId = `tab-${Date.now()}`;
     const newConversationId = `conv-${Date.now()}`;
     
+    // Clear context and extracted data for the new chat session
+    setSelectedFiles([]);
+    setExtractedCodeBlocks([]);
+    setSettings(prev => ({
+      ...prev,
+      contextFiles: [],
+    }));
+
     const newTab: Tab = {
       id: newTabId,
       conversationId: newConversationId,
       title: `Chat ${tabs.length + 1}`,
-      isActive: false,
+      isActive: true,
       isDirty: false,
       type: 'chat',
     };
@@ -669,7 +621,10 @@ function App() {
       updatedAt: new Date().toISOString(),
     };
 
-    setTabs(prev => [...prev, newTab]);
+    setTabs(prev => [
+      ...prev.map(tab => ({ ...tab, isActive: false })),
+      newTab,
+    ]);
     setConversations(prev => ({ ...prev, [newConversationId]: newConversation }));
     setActiveTabId(newTabId);
   };
@@ -914,51 +869,6 @@ function App() {
     }
   };
 
-  const handleLoadHistory = async () => {
-    try {
-      setLoading(true);
-      const response = await ApiService.getConversations();
-      
-      if (response.success && response.data) {
-        const conversations = response.data;
-        
-        if (conversations.length === 0) {
-          message.info('No saved conversations found');
-          return;
-        }
-
-        // Create tabs for loaded conversations
-        const newTabs: Tab[] = conversations.map((conv, index) => ({
-          id: `loaded-tab-${conv.id}`,
-          conversationId: conv.id,
-          title: conv.title || `Chat ${index + 1}`,
-          isActive: index === 0,
-          isDirty: false,
-          type: 'chat',
-        }));
-
-        // Update conversations state
-        const conversationsMap = conversations.reduce((acc, conv) => {
-          acc[conv.id] = conv;
-          return acc;
-        }, {} as { [key: string]: Conversation });
-
-        setTabs(newTabs);
-        setConversations(conversationsMap);
-        setActiveTabId(newTabs[0].id);
-        
-        message.success(`Loaded ${conversations.length} conversation(s)`);
-      } else {
-        message.error(response.error || 'Failed to load conversations');
-      }
-    } catch (error) {
-      message.error('Error loading conversations');
-      console.error('Load history error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Get current conversation
   const activeTab = tabs.find(tab => tab.id === activeTabId);
   const currentConversation = activeTab ? conversations[activeTab.conversationId] : null;
@@ -971,16 +881,13 @@ function App() {
         onSetContext={() => setContextModalOpen(true)}
         onNewConversation={handleNewTab}
         onEditFile={() => setFileSelectionModalOpen(true)}
-        onNewShell={handleNewShell}
-        onSaveHistory={() => handleTabSave(activeTabId)}
-        onLoadHistory={handleLoadHistory}
         onOpenSettings={() => setSettingsModalOpen(true)}
         onToggleTheme={toggleTheme}
         onOpenThemePicker={() => setThemePickerModalOpen(true)}
         onSystemMessage={() => setSystemMessageModalOpen(true)}
         onAbout={() => setAboutModalOpen(true)}
         onCodeFragments={() => setCodeFragmentsModalOpen(true)}
-        currentSystem={agentPrompts.find(prompt => prompt.title === settings.systemPrompt)?.name || 'default'}
+        currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
         agentPrompts={agentPrompts}
@@ -1007,13 +914,6 @@ function App() {
             onSave={handleFileSave}
             theme={getEditorTheme(theme)}
           />
-        ) : activeTab?.type === 'shell' ? (
-          // Shell View
-          <ShellView
-            tab={activeTab}
-            onSessionChange={handleShellSessionChange}
-            theme={getEditorTheme(theme)}
-          />
         ) : (
           // Chat View
           <>
@@ -1024,7 +924,6 @@ function App() {
                 const message = currentMessages.find(m => m.id === messageId);
                 if (message) extractCodeFromMessage(message);
               }}
-              onRenderMermaid={handleRenderMermaid}
               onShowCode={handleShowCode}
             />
             
@@ -1038,6 +937,7 @@ function App() {
                 onSendMessage={handleSendMessage}
                 onClear={handleClearInput}
                 loading={loading}
+                 currentAgent={activeAgentName}
                 subagentCommands={subagentCommands}
               />
             </div>
@@ -1090,7 +990,7 @@ function App() {
           message.success('Agent prompt updated');
         }}
         currentSystemMessage={settings.systemPrompt}
-        currentAgent={agentPrompts.find(prompt => prompt.title === settings.systemPrompt)?.name || ''}
+        currentAgent={activeAgentName}
       />
 
       <CodeFragmentsModal
@@ -1106,39 +1006,6 @@ function App() {
         open={themePickerModalOpen}
         onCancel={() => setThemePickerModalOpen(false)}
       />
-
-      {/* Mermaid Diagram Display Modal */}
-      <Modal
-        title="Mermaid Diagram"
-        open={mermaidModalOpen}
-        onCancel={() => setMermaidModalOpen(false)}
-        width={800}
-        centered
-        footer={[
-          <Button key="download" type="primary" onClick={handleDownloadMermaid}>
-            Download PNG
-          </Button>,
-          <Button key="close" onClick={() => setMermaidModalOpen(false)}>
-            Close
-          </Button>
-        ]}
-      >
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          {mermaidImageData && (
-            <img 
-              src={mermaidImageData} 
-              alt="Mermaid Diagram" 
-              style={{ 
-                maxWidth: '100%', 
-                maxHeight: '70vh', 
-                border: '1px solid #f0f0f0',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-              }} 
-            />
-          )}
-        </div>
-      </Modal>
 
       {/* Code Fragment Display Modal */}
       <Modal

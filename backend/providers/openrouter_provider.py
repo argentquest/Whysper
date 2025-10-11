@@ -40,6 +40,7 @@ handling while maintaining compatibility with the standard AI provider interface
 """
 from typing import Dict, Any, List, Tuple
 from common.base_ai import BaseAIProvider, AIProviderConfig
+from app.core.config import settings
 
 
 class OpenRouterProvider(BaseAIProvider):
@@ -49,16 +50,16 @@ class OpenRouterProvider(BaseAIProvider):
         """Get OpenRouter-specific configuration."""
         config = AIProviderConfig(
             name="openrouter",
-            api_url="https://openrouter.ai/api/v1/chat/completions",
+            api_url=settings.openrouter_api_url,
             supports_tokens=True
         )
-        
+
         # OpenRouter-specific headers
         config.headers.update({
-            "HTTP-Referer": "https://github.com/yourusername/code-chat-ai",
-            "X-Title": "Code Chat with AI"
+            "HTTP-Referer": settings.openrouter_http_referer,
+            "X-Title": settings.openrouter_title
         })
-        
+
         return config
     
     def _prepare_headers(self) -> Dict[str, str]:
@@ -69,8 +70,8 @@ class OpenRouterProvider(BaseAIProvider):
         headers[self.config.auth_header] = self.config.auth_format.format(api_key=self.api_key)
         
         # OpenRouter-specific headers
-        headers["HTTP-Referer"] = headers.get("HTTP-Referer", "https://github.com/yourusername/code-chat-ai")
-        headers["X-Title"] = headers.get("X-Title", "Code Chat with AI")
+        headers["HTTP-Referer"] = headers.get("HTTP-Referer", settings.openrouter_http_referer)
+        headers["X-Title"] = headers.get("X-Title", settings.openrouter_title)
         
         return headers
     
@@ -80,8 +81,8 @@ class OpenRouterProvider(BaseAIProvider):
         data = {
             "model": model,
             "messages": messages,
-            "max_tokens": 10000,
-            "temperature": 0.1,
+            "max_tokens": settings.max_tokens,
+            "temperature": settings.openrouter_temperature,
             "stream": False  # Ensure no streaming for OpenRouter
         }
         

@@ -7,8 +7,6 @@ import {
   SettingOutlined,
   InfoCircleOutlined,
   MessageOutlined,
-  SaveOutlined,
-  FolderOpenOutlined,
   FileTextOutlined,
   BookOutlined,
   PlayCircleOutlined,
@@ -17,7 +15,6 @@ import {
   MoreOutlined,
   DownOutlined,
   EditOutlined,
-  ConsoleSqlOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 
@@ -29,9 +26,6 @@ interface HeaderProps {
   onSetContext: () => void;
   onNewConversation: () => void;
   onEditFile: () => void;
-  onNewShell: (shellType?: string) => void;
-  onSaveHistory: () => void;
-  onLoadHistory: () => void;
   onOpenSettings: () => void;
   onToggleTheme: () => void;
   onOpenThemePicker: () => void;
@@ -48,9 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
   onSetContext,
   onNewConversation,
   onEditFile,
-  onNewShell,
-  onSaveHistory,
-  onLoadHistory,
   onOpenSettings,
   onToggleTheme,
   onOpenThemePicker,
@@ -280,136 +271,10 @@ export const Header: React.FC<HeaderProps> = ({
             </Button>
           </Tooltip>
           
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'auto',
-                  label: 'Auto Shell',
-                  icon: <ConsoleSqlOutlined />,
-                  onClick: () => onNewShell('auto'),
-                },
-                {
-                  key: 'cmd',
-                  label: 'Command Prompt',
-                  icon: <ConsoleSqlOutlined />,
-                  onClick: () => onNewShell('cmd'),
-                },
-                {
-                  key: 'powershell',
-                  label: 'PowerShell',
-                  icon: <ConsoleSqlOutlined />,
-                  onClick: () => onNewShell('powershell'),
-                },
-                {
-                  key: 'bash',
-                  label: 'Bash',
-                  icon: <ConsoleSqlOutlined />,
-                  onClick: () => onNewShell('bash'),
-                },
-              ],
-            }}
-            trigger={['click']}
-            placement="bottomLeft"
-          >
-            <Tooltip title="New Shell (Click for options)">
-              <Button
-                icon={<ConsoleSqlOutlined />}
-                onClick={() => onNewShell('auto')}
-                size="large"
-                style={{
-                  borderRadius: '12px',
-                  fontWeight: 500,
-                  height: '44px',
-                  padding: '0 20px',
-                  borderColor: '#e2e8f0',
-                  color: '#64748b',
-                }}
-              >
-                Shell <DownOutlined style={{ fontSize: '10px', marginLeft: '4px' }} />
-              </Button>
-            </Tooltip>
-          </Dropdown>
         </div>
 
         {/* Secondary Actions */}
         <div className="flex items-center gap-1">
-          {/* File Actions Group */}
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'save-history',
-                  label: 'Save History',
-                  icon: <SaveOutlined />,
-                  onClick: onSaveHistory,
-                },
-                {
-                  key: 'load-history',
-                  label: 'Load History',
-                  icon: <FolderOpenOutlined />,
-                  onClick: onLoadHistory,
-                },
-              ],
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Tooltip title="File Actions">
-              <Button
-                type="text"
-                icon={<SaveOutlined />}
-                size="large"
-                style={{
-                  borderRadius: '10px',
-                  color: '#64748b',
-                  width: '44px',
-                  height: '44px',
-                }}
-              >
-                <DownOutlined style={{ fontSize: '10px' }} />
-              </Button>
-            </Tooltip>
-          </Dropdown>
-          
-          {/* Theme Actions Group */}
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'toggle-theme',
-                  label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} Theme`,
-                  icon: theme === 'light' ? <MoonOutlined /> : <SunOutlined />,
-                  onClick: onToggleTheme,
-                },
-                {
-                  key: 'theme-picker',
-                  label: 'Choose Theme',
-                  icon: <BgColorsOutlined />,
-                  onClick: onOpenThemePicker,
-                },
-              ],
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Tooltip title="Theme Options">
-              <Button
-                type="text"
-                icon={<BgColorsOutlined />}
-                size="large"
-                style={{
-                  borderRadius: '10px',
-                  color: '#64748b',
-                  width: '44px',
-                  height: '44px',
-                }}
-              >
-                <DownOutlined style={{ fontSize: '10px' }} />
-              </Button>
-            </Tooltip>
-          </Dropdown>
-          
           {/* Tools Group */}
           <Dropdown
             menu={{
@@ -422,14 +287,26 @@ export const Header: React.FC<HeaderProps> = ({
                 },
                 {
                   key: 'code-fragments',
-                  label: 'Code Fragments',
-                  icon: <CodeOutlined />,
-                  onClick: onCodeFragments,
-                },
-                {
-                  key: 'settings',
-                  label: 'Settings',
-                  icon: <SettingOutlined />,
+              label: 'Code Fragments',
+              icon: <CodeOutlined />,
+              onClick: onCodeFragments,
+            },
+            {
+              key: 'toggle-theme',
+              label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} Theme`,
+              icon: theme === 'light' ? <MoonOutlined /> : <SunOutlined />,
+              onClick: onToggleTheme,
+            },
+            {
+              key: 'theme-picker',
+              label: 'Choose Theme',
+              icon: <BgColorsOutlined />,
+              onClick: onOpenThemePicker,
+            },
+            {
+              key: 'settings',
+              label: 'Settings',
+              icon: <SettingOutlined />,
                   onClick: onOpenSettings,
                 },
                 {

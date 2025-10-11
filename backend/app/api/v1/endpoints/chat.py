@@ -68,7 +68,6 @@ router = APIRouter()
 
 
 
-
 def _conversation_state_response(session) -> ConversationCreateResponse:
     """
     Create a standardized conversation state response for new sessions.
@@ -212,7 +211,11 @@ def send_chat_message(request: dict):
             logger.debug("Removed system-reminder content from AI response")
         
         # Extract detailed token usage information
-        token_usage = result.get("token_usage", {})
+        token_usage = result.get("token_usage", {}) or {}
+        total_tokens = result.get("tokens_used") or result.get("tokensUsed") or token_usage.get("total_tokens", 0)
+        input_tokens = token_usage.get("input_tokens", 0)
+        output_tokens = token_usage.get("output_tokens", 0)
+        cached_tokens = token_usage.get("cached_tokens", 0)
         
         response_message = {
             "id": f"msg_{int(time.time())}_{uuid.uuid4().hex[:8]}",
@@ -220,12 +223,12 @@ def send_chat_message(request: dict):
             "content": response_content,
             "timestamp": result.get("timestamp", time.strftime("%Y-%m-%d %H:%M:%S")),
             "metadata": {
-                "model": result.get("modelUsed", model),
+                "model": result.get("model_used") or result.get("modelUsed") or model,
                 "provider": provider,
-                "tokens": result.get("tokensUsed", 0),
-                "inputTokens": token_usage.get("input_tokens", 0),
-                "outputTokens": token_usage.get("output_tokens", 0),
-                "cachedTokens": token_usage.get("cached_tokens", 0),
+                "tokens": total_tokens,
+                "inputTokens": input_tokens,
+                "outputTokens": output_tokens,
+                "cachedTokens": cached_tokens,
                 "elapsedTime": result.get("processing_time", 0.0)
             }
         }

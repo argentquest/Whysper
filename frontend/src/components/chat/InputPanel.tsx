@@ -22,6 +22,7 @@ interface InputPanelProps {
   loading?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  currentAgent?: string;
   subagentCommands?: SubagentCommand[];
 }
 
@@ -30,10 +31,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   onClear,
   loading = false,
   placeholder = "Type your next question. Press Enter to send, Shift+Enter for a new line.",
+  currentAgent,
   disabled = false,
   subagentCommands = [],
 }) => {
   const [message, setMessage] = useState('');
+  // Compute dynamic placeholder based on current agent
+  const dynamicPlaceholder = currentAgent ? `Ask the ${currentAgent} agent... Press Enter to send, Shift+Enter for a new line.` : "Type your next question. Press Enter to send, Shift+Enter for a new line.";
+  const finalPlaceholder = placeholder || dynamicPlaceholder;
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
   const textAreaRef = useRef<TextAreaRef>(null);
@@ -197,7 +202,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={finalPlaceholder}
             disabled={disabled || loading}
             autoSize={{ minRows: 4, maxRows: 12 }}
             className="resize-none"

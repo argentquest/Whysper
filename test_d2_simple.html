@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D2 Simple Test</title>
+</head>
+<body>
+    <h1>D2 Simple Test</h1>
+    <div id="diagram"></div>
+
+    <script type="module">
+        import * as d2 from 'https://unpkg.com/@terrastruct/d2@0.1.3/lib/index.js';
+
+        async function testD2() {
+            try {
+                console.log('Testing D2...');
+                const code = 'a -> b';
+                const svg = await d2.compile(code);
+                console.log('D2 result:', svg);
+                document.getElementById('diagram').innerHTML = svg;
+            } catch (error) {
+                console.error('D2 error:', error);
+                document.getElementById('diagram').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+        }
+
+        testD2();
+    </script>
+</body>
+</html>

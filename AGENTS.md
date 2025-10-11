@@ -3,7 +3,7 @@
 This file provides guidance to agents when working with code in this repository.
 
 ## Backend Commands
-- Run backend: `python backend/main.py` (starts uvicorn server on port 8001)
+- Run backend: `python backend/main.py` (starts uvicorn server on port 8003)
 - Test single file: `pytest backend/tests/test_specific_file.py::test_function_name`
 
 ## Critical Patterns

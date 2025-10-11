@@ -6,7 +6,7 @@ all individual endpoint routers into a single cohesive API router that can be
 included in the main FastAPI application.
 
 Architecture:
-- Each functional area has its own endpoint module (chat, code, mermaid, etc.)
+- Each functional area has its own endpoint module (chat, code, files, etc.)
 - This module aggregates them with proper URL prefixes and OpenAPI tags
 - Provides consistent error responses and documentation structures
 
@@ -14,12 +14,11 @@ Router Organization:
 - /system: Health checks, version info, root endpoint
 - /chat & /conversations: AI chat and conversation management
 - /code: Code extraction and language detection
-- /mermaid: Diagram rendering and validation
 - /files: File upload, download, and management
 - /settings: User preferences and configuration
 """
 from fastapi import APIRouter
-from .endpoints import chat, code, mermaid, files, settings, system, shell
+from .endpoints import chat, code, files, settings, system, shell, diagram_events
 from typing import Dict, Any
 
 # Create the main API router for version 1
@@ -54,16 +53,6 @@ api_router.include_router(
     responses={404: {"description": "Not found"}},
 )
 
-# ==================== Mermaid Diagram Endpoints ====================
-# Mermaid diagram rendering and validation services
-# Available at: /api/v1/mermaid/* (render, validate, themes)
-api_router.include_router(
-    mermaid.router,
-    prefix="/mermaid",   # URL prefix for Mermaid operations
-    tags=["mermaid"],    # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
-)
-
 # ==================== File Management Endpoints ====================
 # File upload, download, and conversation attachment services
 # Available at: /api/v1/files/* (upload, download, list, delete)
@@ -91,5 +80,15 @@ api_router.include_router(
     shell.router,
     prefix="/shell",     # URL prefix for shell operations
     tags=["shell"],      # OpenAPI documentation tag
+    responses={404: {"description": "Not found"}},
+)
+
+# ==================== Diagram Events Endpoints ====================
+# Diagram detection and rendering event logging from frontend
+# Available at: /api/v1/diagrams/* (log-diagram-event, health)
+api_router.include_router(
+    diagram_events.router,
+    prefix="/diagrams",  # URL prefix for diagram event operations
+    tags=["diagrams"],   # OpenAPI documentation tag
     responses={404: {"description": "Not found"}},
 )

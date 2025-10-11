@@ -40,16 +40,16 @@ AI services while maintaining compatibility with the BaseAIProvider interface.
 import os
 from typing import Dict, Any, List, Tuple
 from common.base_ai import BaseAIProvider, AIProviderConfig
+from app.core.config import settings
 
 
 class CustomProvider(BaseAIProvider):
     """Customizable AI provider implementation."""
 
     def __init__(self, api_key: str = ""):
-        # Use the same configuration as OpenRouter provider
-        import os
+        # Use configurable settings for defaults
         self.custom_config = {
-            "api_url": os.getenv("API_URL", "https://openrouter.ai/api/v1/chat/completions"),
+            "api_url": settings.custom_provider_api_url,
             "auth_header": "Authorization",
             "auth_format": "Bearer {api_key}",
             "model_param": "model",
@@ -61,10 +61,12 @@ class CustomProvider(BaseAIProvider):
             "response_usage_path": "usage",
             "supports_tokens": True,
             "custom_headers": {
-                "HTTP-Referer": "https://github.com/yourusername/code-chat-ai",
-                "X-Title": "Code Chat with AI"
+                "HTTP-Referer": settings.openrouter_http_referer,
+                "X-Title": settings.openrouter_title
             },
-            "request_timeout": 30
+            "request_timeout": settings.custom_provider_request_timeout,
+            "default_max_tokens": settings.max_tokens,
+            "default_temperature": settings.temperature,
         }
         super().__init__(api_key)
 
@@ -118,8 +120,8 @@ class CustomProvider(BaseAIProvider):
         data = {
             self.custom_config["model_param"]: model,
             self.custom_config["messages_param"]: messages,
-            self.custom_config["max_tokens_param"]: 10000,
-            self.custom_config["temperature_param"]: 0.1,
+            self.custom_config["max_tokens_param"]: self.custom_config.get("default_max_tokens", settings.max_tokens),
+            self.custom_config["temperature_param"]: self.custom_config.get("default_temperature", settings.temperature),
             self.custom_config["stream_param"]: False
         }
 

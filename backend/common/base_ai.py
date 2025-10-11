@@ -43,6 +43,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Callable, Optional, Tuple
 from .system_message_manager import system_message_manager
 from security_utils import SecurityUtils
+from app.core.config import settings
 
 
 class AIProviderConfig:
@@ -218,7 +219,7 @@ class BaseAIProvider(ABC):
             start_time = time.time()
             
             # Make API call with timeout and retry logic
-            timeout = (30, 120)  # (connect timeout, read timeout) in seconds
+            timeout = (settings.ai_connect_timeout, settings.ai_read_timeout)  # (connect timeout, read timeout)
             max_retries = 3
             retry_count = 0
             

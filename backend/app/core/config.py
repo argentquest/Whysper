@@ -92,6 +92,18 @@ def load_env_defaults() -> Dict[str, Any]:
         "retry_attempts": int(env_data.get("RETRY_ATTEMPTS", "3")),
         "debug_logging": env_data.get("DEBUG_LOGGING", "false").lower() == "true",
         "show_token_usage": env_data.get("SHOW_TOKEN_USAGE", "true").lower() == "true",
+        
+        # Provider-specific configuration
+        "openrouter_api_url": env_data.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions"),
+        "openrouter_http_referer": env_data.get("OPENROUTER_HTTP_REFERER", "https://github.com/yourusername/code-chat-ai"),
+        "openrouter_title": env_data.get("OPENROUTER_TITLE", "Code Chat with AI"),
+        "openrouter_temperature": float(env_data.get("OPENROUTER_TEMPERATURE", "0.1")),
+        "custom_provider_api_url": env_data.get("CUSTOM_PROVIDER_API_URL", "https://your-api.com/v1/chat"),
+        "custom_provider_request_timeout": int(env_data.get("CUSTOM_PROVIDER_REQUEST_TIMEOUT", "30")),
+        
+        # Request timeout configuration
+        "ai_connect_timeout": int(env_data.get("AI_CONNECT_TIMEOUT", "30")),
+        "ai_read_timeout": int(env_data.get("AI_READ_TIMEOUT", "120")),
     }
 
 
@@ -198,6 +210,14 @@ class Settings(BaseSettings):
         default=30,
         description="Request timeout in seconds"
     )
+    ai_connect_timeout: int = Field(
+        default=30,
+        description="AI provider connect timeout in seconds"
+    )
+    ai_read_timeout: int = Field(
+        default=120,
+        description="AI provider read timeout in seconds"
+    )
     retry_attempts: int = Field(
         default=3,
         description="Number of retry attempts for failed requests"
@@ -209,6 +229,30 @@ class Settings(BaseSettings):
     show_token_usage: bool = Field(
         default=True,
         description="Show token usage information"
+    )
+    openrouter_api_url: str = Field(
+        default="https://openrouter.ai/api/v1/chat/completions",
+        description="OpenRouter API base URL"
+    )
+    openrouter_http_referer: str = Field(
+        default="https://github.com/yourusername/code-chat-ai",
+        description="HTTP referer header for OpenRouter requests"
+    )
+    openrouter_title: str = Field(
+        default="Code Chat with AI",
+        description="X-Title header for OpenRouter requests"
+    )
+    openrouter_temperature: float = Field(
+        default=0.1,
+        description="Default temperature for OpenRouter requests"
+    )
+    custom_provider_api_url: str = Field(
+        default="https://your-api.com/v1/chat",
+        description="Custom provider API base URL"
+    )
+    custom_provider_request_timeout: int = Field(
+        default=30,
+        description="Custom provider request timeout in seconds"
     )
     
     @property

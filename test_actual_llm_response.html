@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Actual LLM Response</title>
+    <script type="module">
+        // Import the detection function
+        import { processMixedHtmlContent } from '/src/utils/mermaidUtils.ts';
+
+        window.onload = () => {
+            // Exact response from the LLM
+            const llmResponse = `<pre><code>graph TD;
+    A[Start] --&gt; B[Take first number: 1];
+    B --&gt; C[Take second number: 1];
+    C --&gt; D[Add them together];
+    D --&gt; E[Result: 2];
+    E --&gt; F[End];
+</code></pre>
+
+<p>This is a simple flowchart diagram illustrating the process of adding 1 and 1. You can copy-paste this Mermaid code into a Mermaid renderer (like on GitHub or online tools) to visualize it. If you meant something more specific or complex, please provide more details!</p>`;
+
+            // Test the detection
+            const result = processMixedHtmlContent(llmResponse);
+
+            console.log('Detection Result:', result);
+            console.log('Number of diagrams detected:', result.diagrams.length);
+
+            if (result.diagrams.length > 0) {
+                result.diagrams.forEach((diagram, index) => {
+                    console.log(`Diagram ${index + 1}:`, {
+                        type: diagram.type,
+                        confidence: diagram.confidence,
+                        element: diagram.element,
+                        codeLength: diagram.code.length,
+                        codePreview: diagram.code.substring(0, 100)
+                    });
+                });
+            } else {
+                console.error('NO DIAGRAMS DETECTED!');
+            }
+
+            // Display results on page
+            document.getElementById('results').innerHTML = `
+                <h2>Detection Results</h2>
+                <p>Diagrams detected: ${result.diagrams.length}</p>
+                ${result.diagrams.map((d, i) => `
+                    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                        <h3>Diagram ${i + 1}</h3>
+                        <p><strong>Type:</strong> ${d.type}</p>
+                        <p><strong>Confidence:</strong> ${d.confidence}</p>
+                        <p><strong>Element:</strong> ${d.element}</p>
+                        <p><strong>Code:</strong></p>
+                        <pre style="background: #f5f5f5; padding: 10px;">${d.code}</pre>
+                    </div>
+                `).join('')}
+
+                <h2>Original HTML</h2>
+                <div style="border: 1px solid #ccc; padding: 10px;">
+                    ${result.originalHtml}
+                </div>
+            `;
+        };
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Actual LLM Response Detection</h1>
+    <div id="results">Loading...</div>
+</body>
+</html>

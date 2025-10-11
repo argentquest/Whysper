@@ -6,7 +6,7 @@ This document provides comprehensive API documentation for the Code Chat with AI
 
 ## Base URL
 ```
-http://localhost:8000
+http://localhost:8003/api/v1
 ```
 
 ## Authentication
@@ -690,7 +690,7 @@ interface ChatMessage {
 ### JavaScript/TypeScript
 ```javascript
 // Create conversation
-const response = await fetch('/conversations', {
+const response = await fetch('/api/v1/chat/conversations', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -701,13 +701,13 @@ const response = await fetch('/conversations', {
 });
 
 // Ask question
-const questionResponse = await fetch(`/conversations/${conversationId}/question`, {
+const questionResponse = await fetch(`/api/v1/chat/`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    question: 'What does this code do?',
-    selectedFiles: ['main.py'],
-    persistent: false
+    message: 'What does this code do?',
+    conversationId: conversationId,
+    contextFiles: ['main.py']
   })
 });
 ```
@@ -717,22 +717,22 @@ const questionResponse = await fetch(`/conversations/${conversationId}/question`
 import requests
 
 # Create conversation
-response = requests.post('http://localhost:8000/conversations', json={
+response = requests.post('http://localhost:8003/api/v1/chat/conversations', json={
     'provider': 'openrouter',
     'model': 'openai/gpt-4',
     'apiKey': 'sk-your-key'
 })
-conversation_id = response.json()['conversation_id']
+conversation_id = response.json()['conversationId']
 
 # Ask question
 question_response = requests.post(
-    f'http://localhost:8000/conversations/{conversation_id}/question',
+    'http://localhost:8003/api/v1/chat/',
     json={
-        'question': 'What does this code do?',
-        'selectedFiles': ['main.py'],
-        'persistent': False
+        'message': 'What does this code do?',
+        'conversationId': conversation_id,
+        'contextFiles': ['main.py']
     }
 )
 ```
 
-This API documentation covers the complete FastAPI backend interface used by the Code Chat with AI application. For implementation details, refer to the source code in the `web_backend/` directory.
+This API documentation covers the complete FastAPI backend interface used by the Code Chat with AI application. For implementation details, refer to the source code in the `backend/` directory.

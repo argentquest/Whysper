@@ -49,16 +49,11 @@ python main.py
 ## 📱 Access the Application
 
 Once started, the application will be available at:
-- **Frontend**: http://localhost:8001 (integrated React app)
-- **API**: http://localhost:8001/api/v1
-- **API Documentation**: http://localhost:8001/docs (Swagger UI)
+- **Frontend**: http://localhost:5173 (React dev server with hot reload)
+- **Backend API**: http://localhost:8003/api/v1
+- **API Documentation**: http://localhost:8003/docs (Swagger UI)
 
-**Note:** For development, you can run frontend separately on port 5173:
-```bash
-cd frontend
-npm run dev
-```
-Then configure frontend to use `http://localhost:8001/api/v1` for the backend API.
+**Note:** The backend runs on port 8003 by default, and the frontend runs on port 5173 for development. The frontend is configured to communicate with the backend API.
 
 ## 🏗️ Architecture
 
@@ -202,9 +197,9 @@ See `backend/providers/openrouter_provider.py` for a complete example implementa
 
 The application is designed for easy development and deployment:
 
-1. **Single Port**: Both frontend and backend run on port 8001
-2. **Hot Reload**: Backend supports auto-reload during development
-3. **Static Serving**: Frontend is built and served as static files
+1. **Two-Port Architecture**: Backend on port 8003, frontend on port 5173
+2. **Hot Reload**: Both backend and frontend support hot reload during development
+3. **Separate Development**: Frontend and backend run independently for optimal development experience
 4. **API Documentation**: Automatic OpenAPI docs at `/docs`
 
 ### VS Code Integration

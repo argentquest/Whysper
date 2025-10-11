@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C4 Diagram Testing - Rendered with D2</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .test-section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .test-section h2 {
+            color: #9333ea;
+            margin-top: 0;
+            border-bottom: 3px solid #9333ea;
+            padding-bottom: 10px;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+        .instructions {
+            background: #f0f7ff;
+            border-left: 4px solid #9333ea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #6b21a8;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #92400e;
+            font-weight: bold;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 4px;
+        }
+        .tag-c4 { background: #9333ea; color: white; }
+        .tag-d2 { background: #3b82f6; color: white; }
+    </style>
+</head>
+<body>
+    <h1><span class="emoji">🏗️</span>C4 Architecture Diagrams Testing</h1>
+    <p class="subtitle">
+        Test C4 diagram detection and D2 rendering
+        <span class="tag tag-c4">C4 Model</span>
+        <span class="tag tag-d2">Rendered with D2</span>
+    </p>
+
+    <div class="test-section">
+        <h2><span class="emoji">📋</span>What is C4?</h2>
+        <p><strong>C4 Model</strong> stands for <strong>Context, Container, Component, Code</strong> - a hierarchical set of software architecture diagrams:</p>
+        <ul>
+            <li><strong>Level 1 - Context:</strong> System boundaries and external actors</li>
+            <li><strong>Level 2 - Container:</strong> High-level technology choices (apps, databases, etc.)</li>
+            <li><strong>Level 3 - Component:</strong> Component-level architecture within containers</li>
+            <li><strong>Level 4 - Code:</strong> Class diagrams (optional, rarely used)</li>
+        </ul>
+        <p><strong>In Whysper:</strong> C4 diagrams are <span class="highlight">detected automatically</span> and <span class="highlight">rendered using D2</span> for superior visual quality!</p>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🎯</span>Test 1: C4 Context Diagram (Level 1)</h2>
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Copy the code below</li>
+                <li>Paste into Whysper chat</li>
+                <li>Check browser console for 🏗️ <code>[C4 DIAGRAM]</code> logs</li>
+                <li>Verify the diagram is rendered with D2</li>
+                <li>Check backend logs for <code>"diagram_type": "c4"</code></li>
+            </ol>
+        </div>
+
+        <h3>C4 Context Code (Language: c4):</h3>
+        <div class="code-block">```c4
+C4Context
+title Payment Processing System - Context Diagram
+
+Person(customer, "Customer", "Online shopper")
+System(paymentSystem, "Payment Processing System", "Handles online payments")
+System_Ext(bankAPI, "Bank API", "Third-party payment gateway")
+System_Ext(emailService, "Email Service", "Sends notifications")
+
+Rel(customer, paymentSystem, "Makes payment")
+Rel(paymentSystem, bankAPI, "Processes transaction", "HTTPS/JSON")
+Rel(paymentSystem, emailService, "Sends receipt", "SMTP")
+```</div>
+
+        <h3>Alternative: Mermaid-style C4 (will auto-detect):</h3>
+        <div class="code-block">```mermaid
+C4Context
+title Payment Processing System
+
+Person(customer, "Customer")
+System(paymentSystem, "Payment System")
+System_Ext(bankAPI, "Bank API")
+
+Rel(customer, paymentSystem, "Makes payment")
+Rel(paymentSystem, bankAPI, "Processes via API")
+```</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🏢</span>Test 2: C4 Container Diagram (Level 2)</h2>
+        <div class="instructions">
+            <h3>What to verify:</h3>
+            <ul>
+                <li>✅ Tag shows "C4 Container" level</li>
+                <li>✅ Tag shows "Rendered with D2"</li>
+                <li>✅ Shows different container types (Web, Mobile, Database)</li>
+                <li>✅ Technology labels visible on relationships</li>
+            </ul>
+        </div>
+
+        <h3>C4 Container Code:</h3>
+        <div class="code-block">```c4
+C4Container
+title Customer Portal - Container Diagram
+
+Person(customer, "Customer")
+
+Container(webApp, "Web Application", "React, Node.js", "Customer-facing web interface")
+Container(mobileApp, "Mobile App", "React Native", "iOS and Android app")
+Container(api, "API Gateway", "Express.js", "REST API")
+ContainerDb(database, "PostgreSQL Database", "PostgreSQL 14", "Stores customer data")
+ContainerQueue(messageQueue, "Message Queue", "RabbitMQ", "Async processing")
+
+Rel(customer, webApp, "Uses", "HTTPS")
+Rel(customer, mobileApp, "Uses", "HTTPS")
+Rel(webApp, api, "Makes API calls", "JSON/HTTPS")
+Rel(mobileApp, api, "Makes API calls", "JSON/HTTPS")
+Rel(api, database, "Reads/Writes", "SQL/TLS")
+Rel(api, messageQueue, "Publishes messages", "AMQP")
+```</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">⚙️</span>Test 3: C4 Component Diagram (Level 3)</h2>
+        <div class="instructions">
+            <h3>Expected Result:</h3>
+            <p>Shows internal components of the API Gateway with proper flow and dependencies</p>
+        </div>
+
+        <h3>C4 Component Code:</h3>
+        <div class="code-block">```c4
+C4Component
+title API Gateway - Component Diagram
+
+Container(webApp, "Web Application", "External client")
+
+Component(apiController, "API Controller", "Express.js", "Handles HTTP requests")
+Component(authService, "Authentication Service", "JWT", "Validates tokens")
+Component(paymentGateway, "Payment Gateway Adapter", "Stripe SDK", "Payment processing")
+Component(dataAccess, "Data Access Layer", "Sequelize ORM", "Database operations")
+ComponentDb(cache, "Redis Cache", "Redis", "Session storage")
+
+Rel(webApp, apiController, "HTTPS requests")
+Rel(apiController, authService, "Validates auth")
+Rel(apiController, paymentGateway, "Process payment")
+Rel(apiController, dataAccess, "Read/Write data")
+Rel(authService, cache, "Session lookup")
+Rel(dataAccess, cache, "Cache queries")
+```</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🔄</span>Test 4: C4 Dynamic Diagram (Flow)</h2>
+        <div class="instructions">
+            <h3>Dynamic Diagrams:</h3>
+            <p>Show the flow of a specific use case or user journey</p>
+        </div>
+
+        <h3>C4 Dynamic Code:</h3>
+        <div class="code-block">```c4
+C4Dynamic
+title User Login Flow - Dynamic Diagram
+
+Person(user, "User")
+Container(webApp, "Web App")
+Container(authService, "Auth Service")
+ContainerDb(userDB, "User Database")
+Container_Ext(emailService, "Email Service")
+
+Rel(user, webApp, "1. Enters credentials")
+Rel(webApp, authService, "2. Validate login")
+Rel(authService, userDB, "3. Check credentials")
+Rel(userDB, authService, "4. Return user data")
+Rel(authService, webApp, "5. Issue JWT token")
+Rel(webApp, user, "6. Login success")
+Rel(authService, emailService, "7. Send login notification")
+```</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🔍</span>Expected Logs</h2>
+
+        <h3>Frontend Console (Browser F12):</h3>
+        <div class="code-block" style="background: #f8fafc; color: #333;">
+🏗️ [DIAGRAM DETECTION] C4 diagram detected (language marker)
+🏗️ [DIAGRAM DETECTION] C4 syntax detected by keyword
+🏗️ [DIAGRAM RENDER] Rendering C4 diagram (using D2)
+🏗️ [C4 DIAGRAM] Starting C4 diagram render (will use D2)
+🏗️ [C4 DIAGRAM] Converting C4 syntax to D2...
+🏗️ [C4 DIAGRAM] Conversion complete
+🏗️ [C4 DIAGRAM] D2 instance created, compiling...
+🏗️ [C4 DIAGRAM] Compilation successful, rendering SVG...
+🏗️ [C4 DIAGRAM] SVG rendered successfully
+🏗️ [C4 DIAGRAM] SVG inserted into DOM
+        </div>
+
+        <h3>Backend Log (structured.log):</h3>
+        <div class="code-block" style="background: #f8fafc; color: #333;">
+{"level": "INFO", "message": "🔍 Diagram detected: C4", "diagram_type": "c4", "detection_method": "c4_keyword:C4Context"}
+{"level": "INFO", "message": "🎨 Rendering C4 diagram...", "diagram_type": "c4", "code_length": 245}
+{"level": "INFO", "message": "✅ Successfully rendered C4 diagram", "diagram_type": "c4"}
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">✨</span>Special Features</h2>
+        <ul>
+            <li><strong>Auto-detection:</strong> Detects C4 from both <code>```c4</code> and <code>```mermaid</code> with C4 keywords</li>
+            <li><strong>D2 Rendering:</strong> Uses D2's superior layout engine for professional diagrams</li>
+            <li><strong>Level Detection:</strong> Shows C4 level (Context, Container, Component) as a tag</li>
+            <li><strong>Code Preview:</strong> Can show both original C4 and converted D2 code</li>
+            <li><strong>Export:</strong> Download as SVG or PNG</li>
+            <li><strong>Copy Code:</strong> Copy either C4 source or generated D2 code</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="emoji">🎨</span>Visual Elements</h2>
+        <p>When rendered, you'll see:</p>
+        <ul>
+            <li><strong>Card Title:</strong> "C4 Architecture Diagram"</li>
+            <li><strong>Purple Tag:</strong> "C4 Context" (or Container, Component, etc.)</li>
+            <li><strong>Blue Tag:</strong> "Rendered with D2"</li>
+            <li><strong>Buttons:</strong>
+                <ul>
+                    <li>"Copy C4" - Copy original C4 code</li>
+                    <li>"Show D2" - Toggle D2 code preview</li>
+                    <li>"Copy D2" - Copy generated D2 code (when visible)</li>
+                    <li>"SVG" - Download as vector</li>
+                    <li>"PNG" - Download as raster</li>
+                    <li>Expand icon - Open in new tab</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="test-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <h2 style="color: white; border-bottom-color: white;">
+            <span class="emoji">✅</span>Success Criteria
+        </h2>
+        <ul style="font-size: 16px;">
+            <li>✅ C4 diagrams detected from <code>```c4</code> language marker</li>
+            <li>✅ C4 diagrams detected from <code>```mermaid</code> with C4 keywords</li>
+            <li>✅ Console shows 🏗️ emoji for C4 diagrams</li>
+            <li>✅ Backend logs show <code>"diagram_type": "c4"</code></li>
+            <li>✅ Diagrams render with D2 (better quality than Mermaid)</li>
+            <li>✅ Tags show C4 level and D2 renderer</li>
+            <li>✅ Can view converted D2 code</li>
+        </ul>
+    </div>
+</body>
+</html>

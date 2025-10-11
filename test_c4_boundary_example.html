@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C4 Boundary Test - System_Boundary Example</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #92400e;
+            font-weight: bold;
+        }
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        h2 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .architecture {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏗️ C4 System_Boundary Test</h1>
+    <p style="text-align: center; font-size: 18px; opacity: 0.9;">
+        Testing C4 boundaries with nested containers (Load Balancer + 3 App Servers)
+    </p>
+
+    <div class="container">
+        <h2>📋 Your Example: Payment Processing System</h2>
+        <p>This is a <strong>C4 Container Diagram</strong> showing:</p>
+        <ul>
+            <li>External user accessing the system</li>
+            <li><span class="highlight">System_Boundary</span> containing the Payment Processing System</li>
+            <li>Load Balancer (Nginx)</li>
+            <li>3 Application Servers (Java/Spring)</li>
+            <li>Redis Cache and MySQL Database</li>
+        </ul>
+
+        <h3>Architecture Overview:</h3>
+        <div class="architecture">
+┌─────────────────────────────────────────────────────┐
+│  User (External)                                     │
+│    │                                                 │
+│    │ HTTPS                                           │
+│    ↓                                                 │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Payment Processing System (Boundary)         │  │
+│  │                                               │  │
+│  │  Load Balancer (Nginx)                       │  │
+│  │    │         │         │                      │  │
+│  │    ↓         ↓         ↓                      │  │
+│  │  App1     App2     App3                       │  │
+│  │   │\       │\       │\                        │  │
+│  │   │ \      │ \      │ \                       │  │
+│  │   │  \     │  \     │  \                      │  │
+│  │   ↓   \    ↓   \    ↓   \                     │  │
+│  │  Redis     Redis     Redis                     │  │
+│  │   Cache    Cache    Cache                      │  │
+│  │    │        │        │                         │  │
+│  │    ↓        ↓        ↓                         │  │
+│  │  MySQL     MySQL     MySQL                     │  │
+│  │    DB       DB       DB                        │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>💻 C4 Code to Test</h2>
+        <p>Copy the code below and paste it into Whysper:</p>
+
+        <div class="code-block">```c4
+C4Container
+title Payment Processing System - Container Diagram
+
+Person(user, "User", "Online shopper")
+
+System_Boundary(system, "Payment Processing System") {
+    Container(lb, "Load Balancer", "Nginx", "Distributes incoming traffic to application servers")
+    Container(app1, "Application Server 1", "Java/Spring", "Handles payment processing")
+    Container(app2, "Application Server 2", "Java/Spring", "Handles payment processing")
+    Container(app3, "Application Server 3", "Java/Spring", "Handles payment processing")
+    ContainerDb(redis, "Redis Cache", "Redis", "Caches frequently accessed data")
+    ContainerDb(sql, "SQL Database", "MySQL", "Stores transaction data")
+}
+
+Rel(user, lb, "Accesses", "HTTPS")
+Rel(lb, app1, "Distributes traffic")
+Rel(lb, app2, "Distributes traffic")
+Rel(lb, app3, "Distributes traffic")
+Rel(app1, redis, "Reads data")
+Rel(app2, redis, "Reads data")
+Rel(app3, redis, "Reads data")
+Rel(app1, sql, "Writes data")
+Rel(app2, sql, "Writes data")
+Rel(app3, sql, "Writes data")
+```</div>
+
+        <div class="info-box">
+            <strong>⚠️ Key Feature Being Tested:</strong>
+            <p>The <code>System_Boundary(system, "Payment Processing System") { ... }</code> creates a visual grouping in D2. All containers inside the boundary are nested within the system container.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 What to Verify</h2>
+
+        <h3>1. Detection</h3>
+        <p class="success">✓</p> Console shows: <code>🏗️ [C4 DIAGRAM] Converting C4 syntax to D2...</code>
+        <p class="success">✓</p> Backend logs: <code>"diagram_type": "c4"</code>
+        <p class="success">✓</p> Tag shows: <code>[C4 Container]</code>
+
+        <h3>2. Boundary Rendering</h3>
+        <p class="success">✓</p> All containers inside boundary are grouped together
+        <p class="success">✓</p> Boundary has dashed border (stroke-dash)
+        <p class="success">✓</p> Boundary label visible: "Payment Processing System"
+        <p class="success">✓</p> User (Person) is outside the boundary
+
+        <h3>3. Container Relationships</h3>
+        <p class="success">✓</p> Load Balancer connects to all 3 app servers
+        <p class="success">✓</p> All app servers connect to Redis
+        <p class="success">✓</p> All app servers connect to MySQL
+        <p class="success">✓</p> Technology labels visible (Java/Spring, Nginx, Redis, MySQL)
+
+        <h3>4. Visual Quality</h3>
+        <p class="success">✓</p> D2 layout is clean and hierarchical
+        <p class="success">✓</p> Colors: Containers are blue, databases are cylinders
+        <p class="success">✓</p> Labels are readable
+        <p class="success">✓</p> Relationships don't overlap
+    </div>
+
+    <div class="container">
+        <h2>🎯 Expected D2 Output</h2>
+        <p>When you click <strong>"Show D2"</strong> in Whysper, you should see something like:</p>
+
+        <div class="code-block" style="max-height: 500px; overflow-y: auto;">direction: down
+
+# Payment Processing System - Container Diagram
+
+user: {
+  label: "User"
+  shape: person
+  tooltip: "Online shopper"
+}
+
+system: {
+  label: "Payment Processing System"
+  style: {
+    stroke: #666
+    stroke-width: 2
+    stroke-dash: 5
+    fill: transparent
+  }
+
+  lb: {
+    label: "Load Balancer"
+    shape: rectangle
+    tooltip: "Distributes incoming traffic to application servers\n[Nginx]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+
+  app1: {
+    label: "Application Server 1"
+    shape: rectangle
+    tooltip: "Handles payment processing\n[Java/Spring]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+
+  app2: {
+    label: "Application Server 2"
+    shape: rectangle
+    tooltip: "Handles payment processing\n[Java/Spring]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+
+  app3: {
+    label: "Application Server 3"
+    shape: rectangle
+    tooltip: "Handles payment processing\n[Java/Spring]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+
+  redis: {
+    label: "Redis Cache"
+    shape: cylinder
+    tooltip: "Caches frequently accessed data\n[Redis]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+
+  sql: {
+    label: "SQL Database"
+    shape: cylinder
+    tooltip: "Stores transaction data\n[MySQL]"
+    style: {fill: #438dd5; stroke: #3682c3}
+  }
+}
+
+user -> system.lb: "Accesses\n[HTTPS]"
+system.lb -> system.app1: "Distributes traffic"
+system.lb -> system.app2: "Distributes traffic"
+system.lb -> system.app3: "Distributes traffic"
+system.app1 -> system.redis: "Reads data"
+system.app2 -> system.redis: "Reads data"
+system.app3 -> system.redis: "Reads data"
+system.app1 -> system.sql: "Writes data"
+system.app2 -> system.sql: "Writes data"
+system.app3 -> system.sql: "Writes data"
+        </div>
+
+        <div class="info-box">
+            <strong>🔑 Key D2 Features:</strong>
+            <ul>
+                <li><code>system: { ... }</code> creates the boundary container</li>
+                <li><code>system.lb</code>, <code>system.app1</code>, etc. are nested inside</li>
+                <li><code>user -> system.lb</code> shows external connection</li>
+                <li><code>system.lb -> system.app1</code> shows internal connections</li>
+                <li><code>stroke-dash: 5</code> makes boundary dashed</li>
+                <li><code>fill: transparent</code> keeps boundary see-through</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Testing Steps</h2>
+
+        <h3>Step 1: Copy & Paste</h3>
+        <ol>
+            <li>Copy the C4 code from the section above</li>
+            <li>Open Whysper in your browser</li>
+            <li>Paste the code into the chat input</li>
+            <li>Send the message</li>
+        </ol>
+
+        <h3>Step 2: Verify Detection</h3>
+        <p>Open browser console (F12) and look for:</p>
+        <div class="code-block" style="background: #f8fafc; color: #333;">🏗️ [DIAGRAM DETECTION] C4 syntax detected by keyword
+🏗️ [DIAGRAM RENDER] Rendering C4 diagram (using D2)
+🏗️ [C4 DIAGRAM] Starting C4 diagram render (will use D2)
+🏗️ [C4 DIAGRAM] Converting C4 syntax to D2...</div>
+
+        <h3>Step 3: Check Visual Output</h3>
+        <ul>
+            <li>Card title shows: <strong>"C4 Architecture Diagram"</strong></li>
+            <li>Purple tag shows: <strong>"C4 Container"</strong></li>
+            <li>Blue tag shows: <strong>"Rendered with D2"</strong></li>
+            <li>Diagram shows boundary box around internal components</li>
+            <li>User is outside the boundary</li>
+        </ul>
+
+        <h3>Step 4: Inspect D2 Code</h3>
+        <ol>
+            <li>Click the <strong>"Show D2"</strong> button</li>
+            <li>Verify nested structure (<code>system.lb</code>, <code>system.app1</code>, etc.)</li>
+            <li>Check that boundary has <code>stroke-dash</code> style</li>
+            <li>Verify all relationships use proper paths</li>
+        </ol>
+
+        <h3>Step 5: Backend Logs</h3>
+        <div class="code-block" style="background: #f8fafc; color: #333;">Get-Content backend\logs\structured.log -Tail 20 | Select-String "c4"</div>
+        <p>Should show:</p>
+        <div class="code-block" style="background: #f8fafc; color: #333;">{"diagram_type": "c4", "message": "🔍 Diagram detected: C4"}
+{"diagram_type": "c4", "message": "🎨 Rendering C4 diagram..."}
+{"diagram_type": "c4", "message": "✅ Successfully rendered C4 diagram"}</div>
+    </div>
+
+    <div class="container" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <h2 style="color: white; border-bottom-color: white;">✅ Success Criteria</h2>
+        <ul style="font-size: 16px; line-height: 2;">
+            <li>✅ C4 diagram detected from <code>```c4</code> marker</li>
+            <li>✅ System_Boundary creates visual grouping</li>
+            <li>✅ All containers nested inside boundary</li>
+            <li>✅ User (Person) outside boundary</li>
+            <li>✅ Relationships correctly reference nested paths</li>
+            <li>✅ D2 rendering shows professional layout</li>
+            <li>✅ Technology labels visible on all components</li>
+            <li>✅ Dashed boundary border visible</li>
+            <li>✅ Can toggle D2 code preview</li>
+            <li>✅ Backend logs show <code>"diagram_type": "c4"</code></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>🎨 Visual Expectations</h2>
+        <p>Your rendered diagram should look like:</p>
+        <ul>
+            <li><strong>Top:</strong> Person shape (User) with label "User"</li>
+            <li><strong>Arrow down:</strong> User → Load Balancer with "Accesses [HTTPS]" label</li>
+            <li><strong>Boundary Box:</strong> Dashed rectangle containing all internal components</li>
+            <li><strong>Inside Boundary:</strong>
+                <ul>
+                    <li>Load Balancer (rectangle, blue)</li>
+                    <li>3 App Servers (rectangles, blue)</li>
+                    <li>Redis Cache (cylinder, blue)</li>
+                    <li>SQL Database (cylinder, blue)</li>
+                </ul>
+            </li>
+            <li><strong>Connections:</strong>
+                <ul>
+                    <li>LB → App1, App2, App3</li>
+                    <li>App1, App2, App3 → Redis</li>
+                    <li>App1, App2, App3 → SQL</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h2>🐛 Troubleshooting</h2>
+
+        <h3>Issue: Boundary not showing</h3>
+        <p><strong>Solution:</strong> Check D2 code preview - boundary should be <code>system: { ... }</code> with nested components. If not, check for syntax errors in C4 code.</p>
+
+        <h3>Issue: Relationships broken</h3>
+        <p><strong>Solution:</strong> Relationships should use paths like <code>system.lb -> system.app1</code>. If showing as <code>lb -> app1</code>, the translator missed the boundary context.</p>
+
+        <h3>Issue: Components not inside boundary</h3>
+        <p><strong>Solution:</strong> Ensure closing brace <code>}</code> is present after all containers. The translator tracks the current container context.</p>
+
+        <h3>Issue: User inside boundary (wrong!)</h3>
+        <p><strong>Solution:</strong> User should be defined BEFORE the boundary. Order matters in C4 parsing.</p>
+    </div>
+
+    <div class="container">
+        <h2>📚 What Was Enhanced</h2>
+        <p>The C4-to-D2 translator was enhanced to support:</p>
+        <ul>
+            <li><strong>Boundary Parsing:</strong> <code>System_Boundary(id, "label") { ... }</code></li>
+            <li><strong>Nested Containers:</strong> Components inside boundaries are properly indented</li>
+            <li><strong>Path Resolution:</strong> Relationships use <code>boundary.component</code> syntax</li>
+            <li><strong>Closing Braces:</strong> Properly closes containers when <code>}</code> is encountered</li>
+            <li><strong>Boundary Styling:</strong> Dashed border, transparent fill</li>
+        </ul>
+
+        <p><strong>File Updated:</strong> <code>frontend/src/utils/c4ToD2.ts</code></p>
+    </div>
+
+</body>
+</html>

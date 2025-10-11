@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D2 Detection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .failure {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 D2 Detection Test Suite</h1>
+        <p><strong>This tests the D2 syntax detection patterns</strong></p>
+
+        <button onclick="runAllTests()" style="background: #28a745; font-size: 16px; padding: 12px 24px;">
+            ✅ Run All Tests
+        </button>
+
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        // D2 detection patterns (copied from mermaidUtils.ts)
+        const D2_PATTERNS = [
+            /^[a-zA-Z0-9_]+\s*-+>/, // Arrow connections: a -> b
+            /^[a-zA-Z0-9_]+\s*<-+>/, // Bidirectional: a <-> b
+            /^[a-zA-Z0-9_]+\s*<-+/, // Reverse arrow: a <- b
+            /\.shape\s*:/, // Shape definition: x.shape: rectangle
+            /\.style\./,  // Style definition: x.style.fill: blue
+            /\.label\s*:/, // Label definition: x.label: "text"
+            /\.class\s*:/, // Class definition
+            /layers\s*\{/, // Layers block
+            /scenarios\s*\{/, // Scenarios block
+            /direction\s*:/, // Direction specification
+        ];
+
+        function isD2Syntax(code) {
+            if (!code || typeof code !== 'string') {
+                return false;
+            }
+
+            const trimmed = code.trim();
+            if (trimmed.length === 0) {
+                return false;
+            }
+
+            // Check each line for D2 patterns
+            const lines = trimmed.split('\n').filter(line => line.trim().length > 0);
+
+            // At least one line should match a D2 pattern
+            return lines.some(line => {
+                return D2_PATTERNS.some(pattern => pattern.test(line.trim()));
+            });
+        }
+
+        const testCases = [
+            {
+                name: "Simple Arrow Connection",
+                code: "user -> server",
+                expected: true
+            },
+            {
+                name: "Multiple Connections",
+                code: `frontend -> backend
+backend -> database
+database -> cache`,
+                expected: true
+            },
+            {
+                name: "Bidirectional Arrow",
+                code: "client <-> server",
+                expected: true
+            },
+            {
+                name: "Reverse Arrow",
+                code: "data <- processor",
+                expected: true
+            },
+            {
+                name: "Shape Definition",
+                code: `api: API Server {
+  shape: hexagon
+}`,
+                expected: true
+            },
+            {
+                name: "Style Definition",
+                code: "box.style.fill: blue",
+                expected: true
+            },
+            {
+                name: "Label Definition",
+                code: "node.label: 'My Node'",
+                expected: true
+            },
+            {
+                name: "Direction Specification",
+                code: "direction: right",
+                expected: true
+            },
+            {
+                name: "Layers Block",
+                code: `layers {
+  production: {
+    server
+  }
+}`,
+                expected: true
+            },
+            {
+                name: "Scenarios Block",
+                code: `scenarios {
+  failover: {
+    server.style.fill: red
+  }
+}`,
+                expected: true
+            },
+            {
+                name: "Complex D2 Diagram",
+                code: `users: Users { shape: person }
+lb: Load Balancer { shape: diamond }
+
+users -> lb
+
+services: {
+  api1: API 1
+  api2: API 2
+}
+
+lb -> services.api1
+lb -> services.api2`,
+                expected: true
+            },
+            {
+                name: "NOT D2 - Plain Text",
+                code: "This is just plain text",
+                expected: false
+            },
+            {
+                name: "NOT D2 - JavaScript Code",
+                code: "const x = 5;\nfunction test() { return x; }",
+                expected: false
+            },
+            {
+                name: "NOT D2 - Mermaid Diagram",
+                code: `flowchart TD
+    A --> B
+    B --> C`,
+                expected: false
+            },
+            {
+                name: "NOT D2 - Python Code",
+                code: "def hello():\n    print('world')",
+                expected: false
+            }
+        ];
+
+        function runTest(testCase) {
+            const result = isD2Syntax(testCase.code);
+            const passed = result === testCase.expected;
+
+            return {
+                ...testCase,
+                result,
+                passed
+            };
+        }
+
+        function renderResults(results) {
+            const container = document.getElementById('results');
+            const passed = results.filter(r => r.passed).length;
+            const total = results.length;
+
+            let html = `<div style="margin: 30px 0; padding: 20px; background: ${passed === total ? '#d4edda' : '#fff3cd'}; border-radius: 8px;">
+                <h2 style="margin-top: 0;">Results: ${passed}/${total} Tests Passed</h2>
+            </div>`;
+
+            results.forEach((test, index) => {
+                html += `
+                <div class="test-case">
+                    <h3>${index + 1}. ${test.name}</h3>
+                    <pre>${test.code}</pre>
+                    <div class="result ${test.passed ? 'success' : 'failure'}">
+                        ${test.passed ? '✅' : '❌'}
+                        Expected: ${test.expected},
+                        Got: ${test.result}
+                        ${test.passed ? ' - PASS' : ' - FAIL'}
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        window.runAllTests = function() {
+            const results = testCases.map(runTest);
+            renderResults(results);
+        };
+
+        // Auto-run tests on load
+        setTimeout(() => runAllTests(), 100);
+    </script>
+</body>
+</html>

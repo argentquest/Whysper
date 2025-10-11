@@ -2,7 +2,7 @@
 
 ## Overview
 
-Code Chat with AI is a modern full-stack web application built using a modular, extensible architecture that supports multiple AI providers, interface modes, and advanced codebase analysis features. The application consists of a React frontend providing an intuitive web interface and a FastAPI backend delivering powerful AI-powered code analysis capabilities through a comprehensive REST API.
+Whysper is a modern full-stack web application built using a modular, extensible architecture that supports multiple AI providers, interface modes, and advanced codebase analysis features. The application consists of a React frontend providing an intuitive web interface and a FastAPI backend delivering powerful AI-powered code analysis capabilities through a comprehensive REST API.
 
 The architecture emphasizes separation of concerns, with clear boundaries between frontend presentation, backend business logic, and AI provider integrations. This design enables easy maintenance, testing, and extension of functionality while providing a seamless user experience.
 
@@ -11,17 +11,17 @@ The architecture emphasizes separation of concerns, with clear boundaries betwee
 ```mermaid
 graph TB
      subgraph "Frontend Layer"
-         RF[React Frontend<br/>web1/]
+         RF[React Frontend<br/>frontend/]
          RT[React Components<br/>TypeScript + Vite]
-         API[API Client<br/>web1/src/api.ts]
+         API[API Client<br/>frontend/src/services/api.ts]
      end
 
      subgraph "Backend Layer"
-         FA[FastAPI Server<br/>fastapi_server.py]
-         WB[Web Backend<br/>web_backend/]
-         CS[Conversation Service<br/>web_backend/services/]
-         FS[File Service<br/>web_backend/services/]
-         SS[Settings Service<br/>web_backend/services/]
+         FA[FastAPI Server<br/>backend/main.py]
+         WB[Backend<br/>backend/]
+         CS[Conversation Service<br/>backend/app/services/]
+         FS[File Service<br/>backend/app/services/]
+         SS[Settings Service<br/>backend/app/services/]
      end
 
      subgraph "Core Components"
@@ -74,7 +74,7 @@ graph TB
 
 **Purpose**: Enable seamless integration of multiple AI services through a consistent interface.
 
-**Implementation**: [`BaseAIProvider`](base_ai.py:23)
+**Implementation**: [`BaseAIProvider`](backend/common/base_ai.py)
 
 **Key Components**:
 - **Abstract Base Class**: `BaseAIProvider` defines the contract for all AI providers
