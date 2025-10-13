@@ -3,29 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D2 Simple Test</title>
-</head>
-<body>
-    <h1>D2 Simple Test</h1>
-    <div id="diagram"></div>
-
+    <title>D2 Rendering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-case {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        pre {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        #diagram {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            background: #fee;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid red;
+        }
+    </style>
     <script type="module">
-        import * as d2 from 'https://unpkg.com/@terrastruct/d2@0.1.3/lib/index.js';
+        import { D2 } from 'https://esm.sh/@terrastruct/d2@0.6.5';
 
-        async function testD2() {
+        async function testD2Rendering() {
+            const output = document.getElementById('output');
+            const diagram = document.getElementById('diagram');
+
+            // Simple test D2 code
+            const d2Code = `
+direction: right
+
+user: User {
+  shape: person
+}
+
+app: Application {
+  shape: rectangle
+}
+
+db: Database {
+  shape: cylinder
+}
+
+user -> app: Uses
+app -> db: Reads/Writes
+            `.trim();
+
+            output.innerHTML = '<p>🎯 Creating D2 instance...</p>';
+
             try {
-                console.log('Testing D2...');
-                const code = 'a -> b';
-                const svg = await d2.compile(code);
-                console.log('D2 result:', svg);
-                document.getElementById('diagram').innerHTML = svg;
+                // Create D2 instance
+                const d2 = new D2();
+                output.innerHTML += '<p>✅ D2 instance created</p>';
+                output.innerHTML += '<p>🔨 Compiling D2 code...</p>';
+
+                // Compile
+                const result = await d2.compile(d2Code, {
+                    options: {
+                        layout: 'dagre',
+                        sketch: false,
+                    }
+                });
+                output.innerHTML += '<p>✅ D2 compilation successful</p>';
+                output.innerHTML += '<p>🎨 Rendering to SVG...</p>';
+
+                // Render
+                const svg = await d2.render(result.diagram, result.renderOptions);
+                output.innerHTML += '<p>✅ SVG rendered successfully</p>';
+                output.innerHTML += `<p>📏 SVG length: ${svg.length} characters</p>`;
+
+                // Insert SVG
+                diagram.innerHTML = svg;
+                output.innerHTML += '<p style="color: green; font-weight: bold;">🎉 SUCCESS! D2 rendering works!</p>';
+
             } catch (error) {
-                console.error('D2 error:', error);
-                document.getElementById('diagram').innerHTML = '<p>Error: ' + error.message + '</p>';
+                output.innerHTML += `<div class="error">
+                    <h3>❌ ERROR OCCURRED</h3>
+                    <p><strong>Message:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong></p>
+                    <pre>${error.stack}</pre>
+                </div>`;
+                console.error('D2 rendering error:', error);
             }
         }
 
-        testD2();
+        // Run test when page loads
+        window.addEventListener('load', testD2Rendering);
     </script>
+</head>
+<body>
+    <h1>🧪 D2 Rendering Test</h1>
+
+    <div class="test-case">
+        <h2>Test D2 Code:</h2>
+        <pre><code>direction: right
+
+user: User {
+  shape: person
+}
+
+app: Application {
+  shape: rectangle
+}
+
+db: Database {
+  shape: cylinder
+}
+
+user -> app: Uses
+app -> db: Reads/Writes</code></pre>
+    </div>
+
+    <div class="test-case">
+        <h2>Test Output:</h2>
+        <div id="output">
+            <p>⏳ Loading...</p>
+        </div>
+    </div>
+
+    <div class="test-case">
+        <h2>Rendered Diagram:</h2>
+        <div id="diagram">
+            <p style="color: #999;">Diagram will appear here...</p>
+        </div>
+    </div>
+
+    <div class="test-case">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Open this file in a browser</li>
+            <li>Check if the diagram renders successfully</li>
+            <li>If it fails, check the browser console (F12) for detailed errors</li>
+            <li>Compare the error here with the errors you see in Whysper</li>
+        </ol>
+        <p><strong>Expected Result:</strong> A simple diagram showing User → Application → Database should appear above.</p>
+    </div>
 </body>
 </html>

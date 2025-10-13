@@ -16,75 +16,69 @@ API keys are managed through environment variables and are not required in API r
 
 ### Health & Status
 
-#### GET /health
-Returns server health status.
+#### GET /api/v1/
+Root endpoint with service information.
 
 **Response:**
 ```json
 {
   "status": "healthy",
-  "timestamp": "2023-12-01T14:30:22.123456",
-  "version": "1.0.0"
+  "timestamp": "2025-01-13T14:30:22.123456",
+  "version": "2.0.0"
 }
 ```
 
-### AI Models & Providers
-
-#### GET /meta/providers
-Returns available AI providers.
+#### GET /api/v1/health
+Health check with status details.
 
 **Response:**
 ```json
 {
-  "providers": ["openrouter", "custom"],
-  "default": "openrouter"
+  "status": "healthy",
+  "timestamp": "2025-01-13T14:30:22.123456",
+  "version": "2.0.0"
 }
 ```
 
-#### GET /meta/models
-Returns available AI models for a provider.
+### Chat & Conversation Management
 
-**Parameters:**
-- `provider` (optional): Filter models by provider
+#### POST /api/v1/chat/
+Send chat messages to AI providers.
+
+**Request Body:**
+```json
+{
+  "message": "What does this code do?",
+  "conversationId": "conv_123456",
+  "contextFiles": ["main.py", "utils.py"],
+  "settings": {
+    "model": "openai/gpt-4",
+    "provider": "openrouter"
+  }
+}
+```
 
 **Response:**
 ```json
 {
-  "models": ["openai/gpt-4", "openai/gpt-3.5-turbo", "anthropic/claude-3-sonnet"],
-  "default": "openai/gpt-4",
-  "provider": "openrouter"
-}
-```
-
-#### GET /meta/ui-defaults
-Returns UI configuration defaults.
-
-**Response:**
-```json
-{
-  "provider": "openrouter",
-  "models": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
-  "defaultModel": "openai/gpt-4",
-  "toolCommands": [{"key": "TOOL_LINT", "value": "pylint"}],
-  "systemMessages": {
-    "current": "systemmessage_default.txt",
-    "messages": [
-      {
-        "filename": "systemmessage_default.txt",
-        "display_name": "Default",
-        "preview": "General purpose instructions",
-        "length": 150
-      }
-    ]
+  "message": {
+    "id": "msg_1642098622_abc12345",
+    "role": "assistant",
+    "content": "This code implements...",
+    "timestamp": "2025-01-13T14:30:22",
+    "metadata": {
+      "model": "openai/gpt-4",
+      "provider": "openrouter",
+      "tokens": 150,
+      "elapsedTime": 2.34
+    }
   },
-  "apiKey": "sk-..."
+  "conversationId": "conv_123456"
 }
 ```
 
-### Conversation Management
-
-#### POST /conversations
-Creates a new conversation session.
+#### POST /api/v1/chat/conversations
+Create a new conversation session.
 
 **Request Body:**
 ```json
@@ -98,25 +92,22 @@ Creates a new conversation session.
 **Response:**
 ```json
 {
-  "conversation_id": "conv_123456",
+  "conversationId": "conv_123456",
   "provider": "openrouter",
   "model": "openai/gpt-4",
-  "available_models": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
+  "availableModels": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
   "summary": {
     "conversation_id": "conv_123456",
     "provider": "openrouter",
     "selected_model": "openai/gpt-4",
-    "selected_directory": null,
     "selected_files": [],
-    "persistent_files": [],
-    "question_history": [],
-    "conversation_history": []
+    "persistent_files": []
   }
 }
 ```
 
-#### GET /conversations/{conversation_id}
-Retrieves conversation summary.
+#### GET /api/v1/chat/conversations/{conversation_id}/summary
+Retrieve conversation summary.
 
 **Response:**
 ```json
@@ -126,254 +117,32 @@ Retrieves conversation summary.
   "selected_model": "openai/gpt-4",
   "selected_directory": "/path/to/project",
   "selected_files": ["main.py", "utils.py"],
-  "persistent_files": ["main.py"],
-  "question_history": [
-    {
-      "question": "What does this code do?",
-      "status": "completed",
-      "response": "This code implements...",
-      "timestamp": "2023-12-01T14:30:22.123456",
-      "tokens_used": 150,
-      "processing_time": 2.34,
-      "model_used": "openai/gpt-4"
-    }
-  ],
-  "conversation_history": [
-    {"role": "user", "content": "What does this code do?"},
-    {"role": "assistant", "content": "This code implements..."}
-  ]
+  "persistent_files": ["main.py"]
 }
 ```
 
-#### POST /conversations/{conversation_id}/clear
-Clears conversation history.
+#### PUT /api/v1/chat/conversations/{conversation_id}/model
+Update AI model for conversation.
+
+**Request Body:**
+```json
+{
+  "model": "anthropic/claude-3-sonnet"
+}
+```
 
 **Response:**
 ```json
 {
-  "conversation_id": "conv_123456",
+  "conversationId": "conv_123456",
   "provider": "openrouter",
-  "selected_model": "openai/gpt-4",
-  "selected_directory": "/path/to/project",
-  "selected_files": ["main.py"],
-  "persistent_files": [],
-  "question_history": [],
-  "conversation_history": []
+  "model": "anthropic/claude-3-sonnet",
+  "availableModels": ["openai/gpt-4", "anthropic/claude-3-sonnet"]
 }
 ```
 
-#### DELETE /conversations/{conversation_id}
-Deletes a conversation session.
-
-**Response:**
-```json
-{
-  "conversation_id": "conv_123456"
-}
-```
-
-### Question & Answer
-
-#### POST /conversations/{conversation_id}/question
-Asks a question about the codebase.
-
-**Request Body:**
-```json
-{
-  "question": "What does this function do?",
-  "selectedFiles": ["main.py", "utils.py"],
-  "persistent": false
-}
-```
-
-**Response:**
-```json
-{
-  "response": "This function implements a data processing pipeline...",
-  "processing_time": 2.34,
-  "tokens_used": 150,
-  "question_index": 1,
-  "summary": {
-    "conversation_id": "conv_123456",
-    "provider": "openrouter",
-    "selected_model": "openai/gpt-4",
-    "selected_directory": "/path/to/project",
-    "selected_files": ["main.py", "utils.py"],
-    "persistent_files": ["main.py"],
-    "question_history": [
-      {
-        "question": "What does this function do?",
-        "status": "completed",
-        "response": "This function implements...",
-        "timestamp": "2023-12-01T14:30:22.123456",
-        "tokens_used": 150,
-        "processing_time": 2.34,
-        "model_used": "openai/gpt-4"
-      }
-    ],
-    "conversation_history": [
-      {"role": "user", "content": "What does this function do?"},
-      {"role": "assistant", "content": "This function implements..."}
-    ]
-  }
-}
-```
-
-#### POST /conversations/{conversation_id}/system-prompt
-Executes the system prompt for initial analysis.
-
-**Response:**
-```json
-{
-  "response": "I've analyzed your codebase and found...",
-  "processing_time": 3.45,
-  "tokens_used": 200,
-  "summary": {
-    "conversation_id": "conv_123456",
-    // ... conversation summary
-  }
-}
-```
-
-### File Management
-
-#### POST /conversations/{conversation_id}/directory
-Sets the working directory and scans for files.
-
-**Request Body:**
-```json
-{
-  "path": "/path/to/project"
-}
-```
-
-**Response:**
-```json
-{
-  "directory": "/path/to/project",
-  "files": [
-    {
-      "name": "main.py",
-      "path": "/path/to/project/main.py",
-      "size": 1024,
-      "modified": "2023-12-01T14:30:22.123456",
-      "type": "file"
-    }
-  ],
-  "message": "Successfully scanned directory",
-  "summary": {
-    "conversation_id": "conv_123456",
-    // ... updated conversation summary
-  }
-}
-```
-
-#### POST /conversations/{conversation_id}/files
-Updates selected files for analysis.
-
-**Request Body:**
-```json
-{
-  "selected_files": ["main.py", "utils.py"],
-  "persistent": true
-}
-```
-
-**Response:**
-```json
-{
-  "conversation_id": "conv_123456",
-  "provider": "openrouter",
-  "selected_model": "openai/gpt-4",
-  "selected_directory": "/path/to/project",
-  "selected_files": ["main.py", "utils.py"],
-  "persistent_files": ["main.py", "utils.py"],
-  "question_history": [],
-  "conversation_history": []
-}
-```
-
-#### POST /files/scan
-Scans a directory for files (utility endpoint).
-
-**Request Body:**
-```json
-{
-  "path": "/path/to/project"
-}
-```
-
-**Response:**
-```json
-{
-  "directory": "/path/to/project",
-  "files": [
-    {
-      "name": "main.py",
-      "path": "/path/to/project/main.py",
-      "size": 1024,
-      "modified": "2023-12-01T14:30:22.123456",
-      "type": "file"
-    }
-  ],
-  "tree": {
-    "name": "project",
-    "type": "directory",
-    "children": [
-      {
-        "name": "main.py",
-        "type": "file",
-        "size": 1024
-      }
-    ]
-  }
-}
-```
-
-#### POST /files/content
-Retrieves content of specified files.
-
-**Request Body:**
-```json
-{
-  "files": ["/path/to/project/main.py", "/path/to/project/utils.py"]
-}
-```
-
-**Response:**
-```json
-{
-  "combined_content": "# main.py\n\ndef main():\n    print('Hello World')\n\n# utils.py\n\ndef helper():\n    return 'helper function'\n"
-}
-```
-
-### Model & Settings Management
-
-#### PUT /conversations/{conversation_id}/model
-Updates the AI model for a conversation.
-
-**Request Body:**
-```json
-{
-  "model": "openai/gpt-4"
-}
-```
-
-**Response:**
-```json
-{
-  "conversation_id": "conv_123456",
-  "provider": "openrouter",
-  "model": "openai/gpt-4",
-  "available_models": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
-  "summary": {
-    // ... updated conversation summary
-  }
-}
-```
-
-#### PUT /conversations/{conversation_id}/api-key
-Updates the API key for a conversation.
+#### PUT /api/v1/chat/conversations/{conversation_id}/api-key
+Update API key for conversation.
 
 **Request Body:**
 ```json
@@ -385,20 +154,15 @@ Updates the API key for a conversation.
 **Response:**
 ```json
 {
-  "conversation_id": "conv_123456",
+  "conversationId": "conv_123456",
   "provider": "openrouter",
   "model": "openai/gpt-4",
-  "available_models": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
-  "summary": {
-    // ... updated conversation summary
-  }
+  "availableModels": ["openai/gpt-4", "openai/gpt-3.5-turbo"]
 }
 ```
 
-### History Management
-
-#### GET /conversations/{conversation_id}/export
-Exports conversation data.
+#### GET /api/v1/chat/conversations/{conversation_id}/export
+Export conversation data.
 
 **Response:**
 ```json
@@ -407,30 +171,14 @@ Exports conversation data.
     "conversation_id": "conv_123456",
     "provider": "openrouter",
     "selected_model": "openai/gpt-4",
-    "selected_directory": "/path/to/project",
     "selected_files": ["main.py"],
-    "persistent_files": ["main.py"],
-    "question_history": [
-      {
-        "question": "What does this code do?",
-        "status": "completed",
-        "response": "This code implements...",
-        "timestamp": "2023-12-01T14:30:22.123456",
-        "tokens_used": 150,
-        "processing_time": 2.34,
-        "model_used": "openai/gpt-4"
-      }
-    ],
-    "conversation_history": [
-      {"role": "user", "content": "What does this code do?"},
-      {"role": "assistant", "content": "This code implements..."}
-    ]
+    "persistent_files": ["main.py"]
   }
 }
 ```
 
-#### POST /conversations/import
-Imports conversation data.
+#### POST /api/v1/chat/conversations/import
+Import conversation data.
 
 **Request Body:**
 ```json
@@ -441,41 +189,266 @@ Imports conversation data.
   "conversation_history": [
     {"role": "user", "content": "What does this code do?"},
     {"role": "assistant", "content": "This code implements..."}
-  ],
-  "question_history": [
-    {
-      "question": "What does this code do?",
-      "status": "completed",
-      "response": "This code implements...",
-      "timestamp": "2023-12-01T14:30:22.123456",
-      "tokens_used": 150,
-      "processing_time": 2.34,
-      "model_used": "openai/gpt-4"
-    }
-  ],
-  "selected_files": ["main.py"],
-  "persistent_files": ["main.py"],
-  "selected_directory": "/path/to/project"
+  ]
 }
 ```
 
 **Response:**
 ```json
 {
-  "conversation_id": "conv_789012",
+  "conversationId": "conv_789012",
   "provider": "openrouter",
   "model": "openai/gpt-4",
-  "available_models": ["openai/gpt-4", "openai/gpt-3.5-turbo"],
-  "summary": {
-    // ... imported conversation summary
+  "availableModels": ["openai/gpt-4", "openai/gpt-3.5-turbo"]
+}
+```
+
+### Conversation History
+
+#### GET /api/v1/chat/conversations/history
+List all conversation history files.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "conversation_id": "conv_123456",
+      "created_at": "2025-01-13T14:30:22",
+      "last_updated": "2025-01-13T14:45:10",
+      "message_count": 5
+    }
+  ],
+  "count": 1
+}
+```
+
+#### GET /api/v1/chat/conversations/{conversation_id}/history
+Get conversation history for a specific conversation.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "conversation_id": "conv_123456",
+    "created_at": "2025-01-13T14:30:22",
+    "messages": [
+      {
+        "id": "msg_1642098622_abc12345",
+        "role": "user",
+        "content": "What does this code do?",
+        "timestamp": "2025-01-13T14:30:22"
+      },
+      {
+        "id": "msg_1642098625_def67890",
+        "role": "assistant",
+        "content": "This code implements...",
+        "timestamp": "2025-01-13T14:30:25"
+      }
+    ]
   }
 }
 ```
 
-### Settings & Theme
+#### DELETE /api/v1/chat/conversations/{conversation_id}/history
+Delete conversation history for a specific conversation.
 
-#### GET /settings/
-Retrieves current application settings and configuration.
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Conversation history deleted successfully"
+}
+```
+
+### Diagram Events
+
+#### POST /api/v1/diagram-events/log-diagram-event
+Log diagram detection and rendering events from frontend.
+
+**Request Body:**
+```json
+{
+  "event_type": "detection",
+  "diagram_type": "mermaid",
+  "code_length": 245,
+  "detection_method": "language_marker",
+  "conversation_id": "conv_123456"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "logged",
+  "event_type": "detection",
+  "diagram_type": "mermaid"
+}
+```
+
+#### GET /api/v1/diagram-events/health
+Health check endpoint for diagram event logging service.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "service": "diagram_events"
+}
+```
+
+### MCP (Model Context Protocol)
+
+#### GET /api/v1/mcp/tools
+List available MCP tools.
+
+**Response:**
+```json
+{
+  "tools": [
+    {
+      "name": "generate_diagram",
+      "description": "Generate diagram code from a natural language prompt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {"type": "string"},
+          "diagram_type": {"type": "string", "enum": ["mermaid", "d2", "c4"]}
+        }
+      }
+    }
+  ]
+}
+```
+
+#### POST /api/v1/mcp/tools/generate_diagram
+Generate diagram code from a prompt.
+
+**Request Body:**
+```json
+{
+  "prompt": "Simple flowchart showing a login process",
+  "diagram_type": "mermaid"
+}
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"diagram_code\": \"flowchart TD\\n    A[Start] --> B[Login]\", \"diagram_type\": \"mermaid\"}"
+    }
+  ],
+  "isError": false
+}
+```
+
+#### POST /api/v1/mcp/tools/render_diagram
+Render diagram code to SVG or PNG.
+
+**Request Body:**
+```json
+{
+  "code": "flowchart TD\n    A[Start] --> B[End]",
+  "diagram_type": "mermaid",
+  "output_format": "svg"
+}
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"image_data\": \"<svg>...</svg>\", \"output_format\": \"svg\"}"
+    }
+  ],
+  "isError": false
+}
+```
+
+#### POST /api/v1/mcp/tools/generate_and_render
+Generate and render a diagram in one step.
+
+**Request Body:**
+```json
+{
+  "prompt": "User authentication flow",
+  "diagram_type": "mermaid",
+  "output_format": "svg"
+}
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"diagram_code\": \"flowchart TD...\", \"image_data\": \"<svg>...</svg>\"}"
+    }
+  ],
+  "isError": false
+}
+```
+
+#### POST /api/v1/mcp/call_tool
+Generic MCP tool call endpoint.
+
+**Request Body:**
+```json
+{
+  "name": "generate_diagram",
+  "arguments": {
+    "prompt": "Simple flowchart",
+    "diagram_type": "mermaid"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"diagram_code\": \"flowchart TD...\"}"
+    }
+  ],
+  "isError": false
+}
+```
+
+#### WebSocket /api/v1/mcp/ws
+WebSocket endpoint for real-time MCP communication.
+
+**Connection:** Establish WebSocket connection for JSON-RPC 2.0 protocol
+
+**Message Format:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "generate_diagram",
+    "arguments": {
+      "prompt": "Simple flowchart",
+      "diagram_type": "mermaid"
+    }
+  }
+}
+```
+
+### Settings & Configuration
+
+#### GET /api/v1/settings/
+Retrieves current application settings.
 
 **Response:**
 ```json
@@ -490,18 +463,13 @@ Retrieves current application settings and configuration.
     "UI_THEME": "light",
     "MODEL": "openai/gpt-4"
   },
-  "descriptions": {
-    "API_KEY": "OpenRouter API key for AI model access",
-    "UI_THEME": "UI theme setting (light/dark/auto)",
-    "MODEL": "Default AI model to use"
-  },
   "theme": "light",
   "availableThemes": ["light", "dark", "auto"]
 }
 ```
 
-#### PUT /settings/env
-Updates environment variables and application configuration.
+#### PUT /api/v1/settings/env
+Updates environment variables.
 
 **Request Body:**
 ```json
@@ -522,8 +490,8 @@ Updates environment variables and application configuration.
 }
 ```
 
-#### PUT /settings/theme
-Sets the application theme to a specific value.
+#### PUT /api/v1/settings/theme
+Sets the application theme.
 
 **Request Body:**
 ```json
@@ -540,7 +508,7 @@ Sets the application theme to a specific value.
 }
 ```
 
-#### POST /settings/theme/toggle
+#### POST /api/v1/settings/theme/toggle
 Toggles between light and dark theme.
 
 **Response:**
@@ -548,62 +516,6 @@ Toggles between light and dark theme.
 {
   "theme": "dark",
   "message": "Theme updated"
-}
-```
-
-#### GET /settings/agents
-Lists all available agent prompts.
-
-**Response:**
-```json
-[
-  {
-    "name": "api-design-contract-review",
-    "title": "API Design Contract Review",
-    "description": "Reviews API design contracts and specifications",
-    "category": ["api", "review"],
-    "filename": "api-design-contract-review.md"
-  },
-  {
-    "name": "documentation",
-    "title": "Documentation Assistant",
-    "description": "Helps create comprehensive documentation",
-    "category": ["docs", "writing"],
-    "filename": "documentation.md"
-  }
-]
-```
-
-#### GET /settings/subagents
-Lists all available subagent commands.
-
-**Response:**
-```json
-[
-  {
-    "command": "lint",
-    "description": "Run linting tools on code",
-    "example": "lint --fix src/"
-  },
-  {
-    "command": "test",
-    "description": "Execute test suites",
-    "example": "test --coverage"
-  }
-]
-```
-
-#### GET /settings/agent-prompts/{filename}
-Retrieves the content of a specific agent prompt file.
-
-**Parameters:**
-- `filename` (required): Name of the agent prompt file (e.g., 'documentation.md')
-
-**Response:**
-```json
-{
-  "filename": "documentation.md",
-  "content": "---\ntitle: Documentation Assistant\ndescription: Helps create comprehensive documentation\ncategory: [docs, writing]\n---\n\n# Documentation Assistant\n\nThis agent specializes in creating..."
 }
 ```
 
@@ -617,7 +529,7 @@ All API endpoints return appropriate HTTP status codes and error messages:
 #### 400 Bad Request
 ```json
 {
-  "detail": "Invalid directory: Directory does not exist"
+  "detail": "Message cannot be empty"
 }
 ```
 
@@ -631,14 +543,7 @@ All API endpoints return appropriate HTTP status codes and error messages:
 #### 500 Internal Server Error
 ```json
 {
-  "detail": "AI processing failed: API key invalid"
-}
-```
-
-#### 503 Service Unavailable
-```json
-{
-  "detail": "AI processor not initialized"
+  "detail": "Internal server error: AI processing failed"
 }
 ```
 
@@ -659,29 +564,33 @@ interface ConversationSummary {
   selected_directory?: string;
   selected_files: string[];
   persistent_files: string[];
-  question_history: QuestionStatus[];
-  conversation_history: ChatMessage[];
-}
-```
-
-### QuestionStatus
-```typescript
-interface QuestionStatus {
-  question: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  response?: string;
-  timestamp: string;
-  tokens_used?: number;
-  processing_time?: number;
-  model_used?: string;
 }
 ```
 
 ### ChatMessage
 ```typescript
 interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
+  id: string;
+  role: 'user' | 'assistant';
   content: string;
+  timestamp: string;
+  metadata?: {
+    model: string;
+    provider: string;
+    tokens: number;
+    elapsedTime: number;
+  };
+}
+```
+
+### MCPToolResponse
+```typescript
+interface MCPToolResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+  isError: boolean;
 }
 ```
 
@@ -700,14 +609,24 @@ const response = await fetch('/api/v1/chat/conversations', {
   })
 });
 
-// Ask question
-const questionResponse = await fetch(`/api/v1/chat/`, {
+// Send chat message
+const chatResponse = await fetch('/api/v1/chat/', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     message: 'What does this code do?',
     conversationId: conversationId,
     contextFiles: ['main.py']
+  })
+});
+
+// Call MCP tool
+const mcpResponse = await fetch('/api/v1/mcp/tools/generate_diagram', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prompt: 'Simple flowchart',
+    diagram_type: 'mermaid'
   })
 });
 ```
@@ -724,8 +643,8 @@ response = requests.post('http://localhost:8003/api/v1/chat/conversations', json
 })
 conversation_id = response.json()['conversationId']
 
-# Ask question
-question_response = requests.post(
+# Send chat message
+chat_response = requests.post(
     'http://localhost:8003/api/v1/chat/',
     json={
         'message': 'What does this code do?',
@@ -733,6 +652,51 @@ question_response = requests.post(
         'contextFiles': ['main.py']
     }
 )
+
+# Call MCP tool
+mcp_response = requests.post(
+    'http://localhost:8003/api/v1/mcp/tools/generate_diagram',
+    json={
+        'prompt': 'Simple flowchart',
+        'diagram_type': 'mermaid'
+    }
+)
 ```
 
-This API documentation covers the complete FastAPI backend interface used by the Code Chat with AI application. For implementation details, refer to the source code in the `backend/` directory.
+## WebSocket Connection (MCP)
+
+### JavaScript Example
+```javascript
+// Connect to MCP WebSocket
+const ws = new WebSocket('ws://localhost:8003/api/v1/mcp/ws');
+
+ws.onopen = () => {
+  // List available tools
+  ws.send(JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/list"
+  }));
+};
+
+ws.onmessage = (event) => {
+  const response = JSON.parse(event.data);
+  console.log('MCP Response:', response);
+};
+
+// Call a tool
+ws.send(JSON.stringify({
+  jsonrpc: "2.0",
+  id: 2,
+  method: "tools/call",
+  params: {
+    name: "generate_diagram",
+    arguments: {
+      prompt: "Simple flowchart",
+      diagram_type: "mermaid"
+    }
+  }
+}));
+```
+
+This API documentation covers the complete FastAPI backend interface used by the Whysper Web2 application. For implementation details, refer to the source code in the `backend/` directory.

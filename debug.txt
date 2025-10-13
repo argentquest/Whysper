@@ -1,0 +1,2 @@
+env_path: C:\Code2025\Whysper\backend\app\.env
+env_path exists: False

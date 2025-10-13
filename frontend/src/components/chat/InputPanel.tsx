@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Select, Tooltip } from 'antd';
+import { Button, Input, Select, Tooltip, message as antMessage } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
   PlusOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 
@@ -36,6 +37,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   subagentCommands = [],
 }) => {
   const [message, setMessage] = useState('');
+  const [lastSentMessage, setLastSentMessage] = useState<string>('');
   // Compute dynamic placeholder based on current agent
   const dynamicPlaceholder = currentAgent ? `Ask the ${currentAgent} agent... Press Enter to send, Shift+Enter for a new line.` : "Type your next question. Press Enter to send, Shift+Enter for a new line.";
   const finalPlaceholder = placeholder || dynamicPlaceholder;
@@ -70,10 +72,24 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   const handleSend = () => {
     if (message.trim() && !loading) {
-      onSendMessage(message.trim(), selectedCommand);
+      const messageToSend = message.trim();
+      setLastSentMessage(messageToSend);
+      onSendMessage(messageToSend, selectedCommand);
       setMessage('');
       setSelectedCategory('');
       setSelectedCommand('');
+    }
+  };
+
+  const handleCopyLastMessage = async () => {
+    if (lastSentMessage) {
+      try {
+        await navigator.clipboard.writeText(lastSentMessage);
+        antMessage.success('Last prompt copied to clipboard');
+      } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+        antMessage.error('Failed to copy to clipboard');
+      }
     }
   };
 
@@ -168,7 +184,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
           <div className="flex-1" />
 
-          {/* Submit and Clear Buttons */}
+          {/* Submit, Copy, and Clear Buttons */}
           <div className="flex gap-2">
             <Tooltip title="Submit Question">
               <Button
@@ -179,6 +195,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 size="small"
               >
                 Submit
+              </Button>
+            </Tooltip>
+
+            <Tooltip title="Copy Last Prompt">
+              <Button
+                icon={<CopyOutlined />}
+                onClick={handleCopyLastMessage}
+                disabled={!lastSentMessage || loading}
+                size="small"
+              >
+                Copy
               </Button>
             </Tooltip>
 

@@ -150,6 +150,9 @@ function App() {
   // Subagent commands loaded from backend
   const [subagentCommands, setSubagentCommands] = useState<any[]>([]);
 
+  // CODE_PATH from backend settings
+  const [codePath, setCodePath] = useState<string>('');
+
   // ==================== Application Initialization ====================
 
   const loadSettings = useCallback(async () => {
@@ -177,6 +180,12 @@ function App() {
         const configuredAgentName = backendSettings.values?.CURRENT_SYSTEM_PROMPT;
         if (configuredAgentName && typeof configuredAgentName === 'string') {
           setActiveAgentName(configuredAgentName);
+        }
+
+        // Store CODE_PATH for display in footer
+        const codePathValue = backendSettings.values?.CODE_PATH;
+        if (codePathValue && typeof codePathValue === 'string') {
+          setCodePath(codePathValue);
         }
       }
     } catch (error) {
@@ -950,7 +959,7 @@ function App() {
         status={loading ? 'loading' : 'ready'}
         provider={settings.provider}
         model={settings.model}
-        directory={selectedFiles.length > 0 ? 'Selected Files' : 'none'}
+        directory={codePath || 'Not configured'}
         fileCount={selectedFiles.length}
         tokenCount={currentMessages.reduce((sum, msg) => sum + (msg.metadata?.tokens || 0), 0)}
         onOpenDirectory={() => setContextModalOpen(true)}

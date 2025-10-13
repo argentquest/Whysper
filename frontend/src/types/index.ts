@@ -46,12 +46,10 @@ export interface Tab {
   title: string;
   isActive: boolean;
   isDirty: boolean;
-  type: 'chat' | 'file' | 'shell';
+  type: 'chat' | 'file';
   filePath?: string;
   fileContent?: string;
   originalContent?: string;
-  shellSessionId?: string;
-  shellType?: string;
 }
 
 export interface AppSettings {

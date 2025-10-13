@@ -43,19 +43,40 @@ const C4_TO_D2_SHAPES: Record<string, { shape: string; style?: string }> = {
 };
 
 /**
+ * Strip PlantUML fence markers (@startuml/@enduml) and includes
+ */
+const stripPlantUMLMarkers = (code: string): string => {
+  return code
+    .replace(/@startuml\b.*$/gm, '') // Remove @startuml lines
+    .replace(/@enduml\b.*$/gm, '')   // Remove @enduml lines
+    .replace(/!include\s+.*$/gm, '') // Remove !include lines
+    .replace(/!define\s+.*$/gm, '')  // Remove !define lines
+    .trim();
+};
+
+/**
  * Parse C4 Mermaid syntax and convert to D2
  * Enhanced to support boundaries and nested structures
+ * Also supports PlantUML-style C4 diagrams (with @startuml/@enduml)
  */
 export const convertC4ToD2 = (c4Code: string): string => {
+  // Input validation - handle null/undefined/empty gracefully
   if (!c4Code || typeof c4Code !== 'string') {
+    console.warn('Invalid C4 code provided, returning empty string');
     return '';
   }
 
-  const lines = c4Code.trim().split('\n');
+  // Strip PlantUML fence markers if present
+  const cleanedCode = stripPlantUMLMarkers(c4Code);
+
+  const lines = cleanedCode.trim().split('\n');
   const d2Lines: string[] = [];
-  let c4Level = 'Context'; // Default level
-  const indentStack: string[] = []; // Track nesting
   let currentContainer: string | null = null;
+  let entityCount = 0;
+  let relationshipCount = 0;
+  
+  // Track entities and their containers for relationship qualification
+  const entityContainers: Record<string, string> = {};
 
   // Add title if present
   const titleMatch = c4Code.match(/title\s+(.+)/);
@@ -80,7 +101,6 @@ export const convertC4ToD2 = (c4Code: string): string => {
 
     // Detect C4 level
     if (/^C4(Context|Container|Component|Dynamic|Deployment)/i.test(trimmedLine)) {
-      c4Level = trimmedLine.match(/^C4(\w+)/i)?.[1] || 'Context';
       continue;
     }
 
@@ -123,10 +143,14 @@ export const convertC4ToD2 = (c4Code: string): string => {
       const [, type, id, label, description, technology] = entityMatch;
       const shapeInfo = C4_TO_D2_SHAPES[type] || { shape: 'rectangle' };
 
+      // Track entity container for relationship qualification
+      if (currentContainer) {
+        entityContainers[id] = currentContainer;
+      }
+
       // Build entity definition
       const entityLines: string[] = [];
       const prefix = currentContainer ? '  ' : '';
-      const fullId = currentContainer ? `${currentContainer}.${id}` : id;
 
       entityLines.push(`${prefix}${id}: {`);
       entityLines.push(`${prefix}  label: "${label}"`);
@@ -145,6 +169,7 @@ export const convertC4ToD2 = (c4Code: string): string => {
       entityLines.push('');
 
       d2Lines.push(...entityLines);
+      entityCount++;
       continue;
     }
 
@@ -154,11 +179,30 @@ export const convertC4ToD2 = (c4Code: string): string => {
       const [, from, to, label, technology] = relMatch;
 
       // Handle relationships with containers
-      const fromId = currentContainer && !from.includes('.') ? `${currentContainer}.${from}` : from;
-      const toId = currentContainer && !to.includes('.') ? `${currentContainer}.${to}` : to;
+      // First, check if we're currently inside a container
+      let fromId: string;
+      if (currentContainer && !from.includes('.')) {
+        fromId = `${currentContainer}.${from}`;
+      } else if (!from.includes('.') && entityContainers[from]) {
+        // If not inside container but entity is tracked, use its container
+        fromId = `${entityContainers[from]}.${from}`;
+      } else {
+        fromId = from;
+      }
+      
+      let toId: string;
+      if (currentContainer && !to.includes('.')) {
+        toId = `${currentContainer}.${to}`;
+      } else if (!to.includes('.') && entityContainers[to]) {
+        // If not inside container but entity is tracked, use its container
+        toId = `${entityContainers[to]}.${to}`;
+      } else {
+        toId = to;
+      }
 
       const fullLabel = technology ? `${label}\\n[${technology}]` : label;
       d2Lines.push(`${fromId} -> ${toId}: "${fullLabel}"`);
+      relationshipCount++;
       continue;
     }
   }
@@ -169,7 +213,25 @@ export const convertC4ToD2 = (c4Code: string): string => {
     d2Lines.push('');
   }
 
-  return d2Lines.join('\n');
+  // Validate that we converted something
+  if (entityCount === 0 && relationshipCount === 0) {
+    throw new Error(
+      'C4 to D2 conversion produced no entities or relationships. ' +
+      'The C4 code may not be in the expected format. ' +
+      'Expected format: Person(id, "label"), System(id, "label"), Rel(from, to, "label")'
+    );
+  }
+
+  const result = d2Lines.join('\n');
+
+  // Validate result is not empty
+  if (!result.trim()) {
+    throw new Error('C4 to D2 conversion produced empty output');
+  }
+
+  console.log(`✅ C4 to D2 conversion successful: ${entityCount} entities, ${relationshipCount} relationships`);
+
+  return result;
 };
 
 /**
@@ -200,6 +262,7 @@ export const simpleC4ToD2 = (c4Code: string): string => {
 
 /**
  * Detect if code is C4 syntax (even without language marker)
+ * Supports both Mermaid-style and PlantUML-style C4 diagrams
  */
 export const looksLikeC4 = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -207,10 +270,16 @@ export const looksLikeC4 = (code: string): boolean => {
   }
 
   const c4Patterns = [
+    // Mermaid-style C4
     /\b(Person|System|Container|Component)\s*\(/,
     /\bRel\s*\(/,
     /\bC4(Context|Container|Component|Dynamic|Deployment)\b/,
     /\bBoundary\s*\(/,
+
+    // PlantUML-style C4
+    /@startuml/i,
+    /@enduml/i,
+    /!include.*C4/i,  // Common C4-PlantUML include pattern
   ];
 
   return c4Patterns.some(pattern => pattern.test(code));

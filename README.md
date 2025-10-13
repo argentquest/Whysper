@@ -251,3 +251,7 @@ See `DEPLOYMENT.md` for detailed deployment instructions.
 ## 📄 License
 
 This project is provided as-is for educational and development purposes.
+
+## Change History
+
+- **2025-10-11, GEMINI:** Fixed a bug in the C4 diagram detection logic. The detection is now case-sensitive, which aligns with the documentation. Also fixed build errors caused by unused variables.

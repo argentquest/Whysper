@@ -5,10 +5,10 @@ This document explains how to configure, build, and deploy the Whysper Web2 appl
 ## Overview
 
 Whysper uses an integrated deployment model where:
-- **Backend**: FastAPI server runs on port 8001
+- **Backend**: FastAPI server runs on port 8003
 - **Frontend**: React app served as static files from the backend
 - **Configuration**: `.env` file located in `backend/` directory
-- **Single Port**: Both frontend and API accessible on port 8001
+- **Single Port**: Both frontend and API accessible on port 8003
 
 ## Prerequisites
 
@@ -212,9 +212,9 @@ After deployment, verify everything works correctly:
    ```
 
 3. **Verify the application:**
-   - Visit http://localhost:8001 (React frontend should load)
-   - Check http://localhost:8001/docs (API documentation)
-   - Test chat functionality with a simple message
+    - Visit http://localhost:8003 (React frontend should load)
+    - Check http://localhost:8003/docs (API documentation)
+    - Test chat functionality with a simple message
 
 4. **Check browser dev tools:**
    - No 404 errors for CSS/JS assets
@@ -237,10 +237,10 @@ For active development:
    ```
 
 2. **Backend Development**:
-   ```bash
-   cd backend
-   python main.py  # Runs on port 8001
-   ```
+    ```bash
+    cd backend
+    python main.py  # Runs on port 8003
+    ```
 
 3. **Integration Testing**:
    ```bash
@@ -251,7 +251,7 @@ For active development:
    cd backend
    python main.py
    
-   # Test at http://localhost:8001
+   # Test at http://localhost:8003
    ```
 
 ## Configuration

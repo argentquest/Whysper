@@ -18,69 +18,57 @@ Router Organization:
 - /settings: User preferences and configuration
 """
 from fastapi import APIRouter
-from .endpoints import chat, code, files, settings, system, shell, diagram_events
-from typing import Dict, Any
+from .endpoints import (
+    chat, code, files, settings, system, diagram_events
+)
+from mvp_diagram_generator import (
+    rendering_api as diagram_generator_api
+)
 
-# Create the main API router for version 1
-# This router will be included in the main app with /api/v1 prefix
+# Main API router for the application
+# This router includes all other routers for different functionalities
 api_router = APIRouter()
 
-# ==================== System Endpoints ====================
-# Root endpoints for health checks, version info, and system status
-# Available at: /api/v1/, /api/v1/health, /api/v1/version
-api_router.include_router(
-    system.router,
-    tags=["system"],  # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},  # Common error response
-)  # Added missing closing parenthesis
+# =============================================================================
+# Whysper Core API Endpoints
+# =============================================================================
 
-# ==================== Chat Endpoints ====================
-# AI conversation management under /api/v1/chat/*
+# Include routers from the different endpoint modules
+# These are organized by their functionality (chat, code, files, etc.)
+
+# Chat-related endpoints
 api_router.include_router(
     chat.router,
-    prefix="/chat",      # URL prefix for chat operations
-    tags=["chat"],       # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    prefix="/chat",
+    tags=["chat"]
 )
 
-# ==================== Code Extraction Endpoints ====================
-# Code block extraction and language detection services
-# Available at: /api/v1/code/* (extract, languages, detect-language)
+# Code-related endpoints (e.g., code extraction)
 api_router.include_router(
     code.router,
-    prefix="/code",      # URL prefix for code operations
-    tags=["code"],       # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    prefix="/code",
+    tags=["code"]
 )
 
-# ==================== File Management Endpoints ====================
-# File upload, download, and conversation attachment services
-# Available at: /api/v1/files/* (upload, download, list, delete)
+# File system endpoints
 api_router.include_router(
     files.router,
-    prefix="/files",     # URL prefix for file operations
-    tags=["files"],      # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    prefix="/files",
+    tags=["files"]
 )
 
-# ==================== Settings Endpoints ====================
-# User preferences, AI model configuration, and application settings
-# Available at: /api/v1/settings/* (get, update, models, providers)
+# Application settings endpoints
 api_router.include_router(
     settings.router,
-    prefix="/settings",  # URL prefix for settings operations
-    tags=["settings"],   # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    prefix="/settings",
+    tags=["settings"]
 )
 
-# ==================== Shell Endpoints ====================
-# Real-time shell access and command execution via WebSocket
-# Available at: /api/v1/shell/* (sessions, ws, security)
+# System-level endpoints (e.g., health checks)
 api_router.include_router(
-    shell.router,
-    prefix="/shell",     # URL prefix for shell operations
-    tags=["shell"],      # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    system.router,
+    prefix="/system",
+    tags=["system"]
 )
 
 # ==================== Diagram Events Endpoints ====================
@@ -89,6 +77,12 @@ api_router.include_router(
 api_router.include_router(
     diagram_events.router,
     prefix="/diagrams",  # URL prefix for diagram event operations
-    tags=["diagrams"],   # OpenAPI documentation tag
-    responses={404: {"description": "Not found"}},
+    tags=["diagrams"],
+)
+
+# ==================== MVP Diagram Generator Endpoints ====================
+api_router.include_router(
+    diagram_generator_api.router,
+    prefix="/diagrams",
+    tags=["diagrams"],
 )

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Renderer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #diagram-container {
+            max-width: 100%;
+            max-height: 100vh;
+            overflow: auto;
+        }
+
+        #loading {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+        }
+
+        #error {
+            padding: 20px;
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 4px;
+            color: #cf1322;
+            max-width: 800px;
+        }
+
+        #error h3 {
+            margin-bottom: 10px;
+        }
+
+        #error pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        /* Ensure SVG is visible */
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Mark as ready for Playwright to detect */
+        body.render-complete #diagram-container {
+            border: 1px solid transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Loading diagram renderer...</div>
+    <div id="diagram-container" style="display: none;"></div>
+    <div id="error" style="display: none;"></div>
+
+    <!-- Mermaid library -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Arial, sans-serif',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+            },
+        });
+
+        // Make mermaid available globally
+        window.mermaidLib = mermaid;
+        window.mermaidLoaded = true;
+
+        console.log('✅ Mermaid library loaded');
+        checkAndRender();
+    </script>
+
+    <!-- D2 library -->
+    <script type="module">
+        // Import D2 from CDN
+        import { D2 } from 'https://cdn.jsdelivr.net/npm/@terrastruct/d2@latest/dist/index.js';
+
+        // Make D2 available globally
+        window.D2Lib = D2;
+        window.d2Loaded = true;
+
+        console.log('✅ D2 library loaded');
+        checkAndRender();
+    </script>
+
+    <!-- Main rendering logic -->
+    <script>
+        /**
+         * Parse URL parameters to get diagram configuration
+         */
+        function getParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                type: params.get('type') || 'mermaid',
+                code: params.get('code') || '',
+                title: params.get('title') || 'Diagram'
+            };
+        }
+
+        /**
+         * C4 to D2 converter (simplified version from c4ToD2.ts)
+         */
+        function convertC4ToD2(c4Code) {
+            if (!c4Code) return '';
+
+            const lines = c4Code.trim().split('\n');
+            const d2Lines = [];
+
+            // Add direction for better layout
+            d2Lines.push('direction: down');
+            d2Lines.push('');
+
+            // Process line by line
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+
+                // Skip empty lines, comments, and C4 declaration
+                if (!trimmedLine || trimmedLine.startsWith('#') || /^C4(Context|Container|Component)/i.test(trimmedLine)) {
+                    continue;
+                }
+
+                // Parse entity definitions: Type(id, "label", "description")
+                const entityMatch = trimmedLine.match(/^(\w+)\s*\(\s*(\w+)\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?\s*\)/);
+                if (entityMatch) {
+                    const [, type, id, label] = entityMatch;
+                    const shape = getC4Shape(type);
+                    d2Lines.push(`${id}: {`);
+                    d2Lines.push(`  label: "${label}"`);
+                    d2Lines.push(`  shape: ${shape}`);
+                    d2Lines.push('}');
+                    d2Lines.push('');
+                    continue;
+                }
+
+                // Parse relationships: Rel(from, to, "label")
+                const relMatch = trimmedLine.match(/^Rel(?:_[A-Z]+)?\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*\)/);
+                if (relMatch) {
+                    const [, from, to, label] = relMatch;
+                    d2Lines.push(`${from} -> ${to}: "${label}"`);
+                    continue;
+                }
+            }
+
+            return d2Lines.join('\n');
+        }
+
+        /**
+         * Map C4 entity types to D2 shapes
+         */
+        function getC4Shape(type) {
+            const shapeMap = {
+                'Person': 'person',
+                'Person_Ext': 'person',
+                'System': 'rectangle',
+                'System_Ext': 'rectangle',
+                'SystemDb': 'cylinder',
+                'Container': 'rectangle',
+                'ContainerDb': 'cylinder',
+                'Component': 'rectangle',
+                'ComponentDb': 'cylinder',
+            };
+            return shapeMap[type] || 'rectangle';
+        }
+
+        /**
+         * Render Mermaid diagram
+         */
+        async function renderMermaid(code) {
+            console.log('🎨 Rendering Mermaid diagram...');
+
+            if (!window.mermaidLib) {
+                throw new Error('Mermaid library not loaded');
+            }
+
+            try {
+                // Validate syntax first
+                await window.mermaidLib.parse(code);
+                console.log('✅ Mermaid syntax validated');
+
+                // Generate unique ID
+                const id = `mermaid-${Date.now()}`;
+
+                // Render the diagram
+                const { svg } = await window.mermaidLib.render(id, code);
+                console.log('✅ Mermaid SVG generated');
+
+                return svg;
+            } catch (error) {
+                console.error('❌ Mermaid rendering error:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Render D2 diagram
+         */
+        async function renderD2(code) {
+            console.log('🎯 Rendering D2 diagram...');
+
+            if (!window.D2Lib) {
+                throw new Error('D2 library not loaded');
+            }
+
+            try {
+                // Create D2 instance
+                const d2 = new window.D2Lib();
+                console.log('✅ D2 instance created');
+
+                // Compile D2 code
+                const result = await d2.compile(code, {
+                    options: {
+                        layout: 'dagre',
+                        sketch: false,
+                    }
+                });
+                console.log('✅ D2 code compiled');
+
+                // Render to SVG
+                const svg = await d2.render(result.diagram, result.renderOptions);
+                console.log('✅ D2 SVG generated');
+
+                return svg;
+            } catch (error) {
+                console.error('❌ D2 rendering error:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Main rendering function
+         */
+        async function renderDiagram() {
+            const loadingEl = document.getElementById('loading');
+            const containerEl = document.getElementById('diagram-container');
+            const errorEl = document.getElementById('error');
+
+            try {
+                const params = getParams();
+                console.log('📋 Render parameters:', params);
+
+                if (!params.code) {
+                    throw new Error('No diagram code provided. Use ?code=<encoded-code>');
+                }
+
+                // Decode the code
+                let code = decodeURIComponent(params.code);
+                console.log('📝 Diagram code length:', code.length);
+
+                let svg;
+
+                // Handle different diagram types
+                if (params.type === 'mermaid') {
+                    svg = await renderMermaid(code);
+                } else if (params.type === 'd2') {
+                    svg = await renderD2(code);
+                } else if (params.type === 'c4') {
+                    console.log('🏗️ Converting C4 to D2...');
+                    const d2Code = convertC4ToD2(code);
+                    console.log('✅ C4 converted to D2');
+                    svg = await renderD2(d2Code);
+                } else {
+                    throw new Error(`Unknown diagram type: ${params.type}`);
+                }
+
+                // Insert SVG into container
+                containerEl.innerHTML = svg;
+                containerEl.style.display = 'flex';
+                loadingEl.style.display = 'none';
+
+                // Mark as complete for Playwright
+                document.body.classList.add('render-complete');
+
+                console.log('✅ Diagram rendered successfully');
+            } catch (error) {
+                console.error('❌ Rendering failed:', error);
+
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.innerHTML = `
+                    <h3>Rendering Error</h3>
+                    <p>${error.message}</p>
+                    <pre>${error.stack || ''}</pre>
+                `;
+
+                // Mark as error for Playwright
+                document.body.classList.add('render-error');
+            }
+        }
+
+        /**
+         * Check if all libraries are loaded and start rendering
+         */
+        function checkAndRender() {
+            if (window.mermaidLoaded && window.d2Loaded) {
+                console.log('✅ All libraries loaded, starting render...');
+                renderDiagram();
+            }
+        }
+
+        // Auto-start if libraries are already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAndRender);
+        } else {
+            checkAndRender();
+        }
+    </script>
+</body>
+</html>

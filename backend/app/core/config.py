@@ -14,6 +14,7 @@ Key Features:
 - Development and production profiles
 """
 from typing import List, Optional, Dict, Any
+import os
 from pydantic import Field
 try:
     # Try to import from pydantic-settings (Pydantic v2)
@@ -106,6 +107,9 @@ def load_env_defaults() -> Dict[str, Any]:
         "ai_read_timeout": int(env_data.get("AI_READ_TIMEOUT", "120")),
     }
 
+
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+env_path = os.path.join(backend_dir, '.env')
 
 class Settings(BaseSettings):
     """
@@ -305,7 +309,7 @@ class Settings(BaseSettings):
     
     # ==================== Pydantic Model Configuration ====================
     model_config = {
-        "env_file": ".env",           # Load settings from .env file
+        "env_file": env_path,           # Load settings from .env file
         "case_sensitive": False,      # Environment variables are case-insensitive
         "extra": "ignore"            # Ignore extra environment variables
     }
@@ -315,3 +319,7 @@ class Settings(BaseSettings):
 # Create a global settings instance that can be imported throughout the application
 # This ensures consistent configuration access across all modules
 settings = Settings()
+
+def get_settings():
+    return settings
+

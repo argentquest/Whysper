@@ -154,7 +154,7 @@ class Settings(BaseSettings):
     
     # Server Configuration
     host: str = "0.0.0.0"
-    port: int = 8001
+    port: int = 8003
     
     # CORS Configuration
     cors_origins: List[str] = [...]
@@ -492,7 +492,7 @@ cp .env.example .env
 
 ```bash
 # Start the backend server
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
 
 # Or using the direct method
 python app/main.py
@@ -531,9 +531,9 @@ mypy app/
 
 FastAPI automatically generates interactive API documentation:
 
-- **Swagger UI**: http://localhost:8001/docs
-- **ReDoc**: http://localhost:8001/redoc
-- **OpenAPI Schema**: http://localhost:8001/openapi.json
+- **Swagger UI**: http://localhost:8003/docs
+- **ReDoc**: http://localhost:8003/redoc
+- **OpenAPI Schema**: http://localhost:8003/openapi.json
 
 ## Deployment
 
@@ -567,8 +567,8 @@ RUN pip install -r requirements.txt
 COPY app/ ./app/
 COPY common/ ./common/
 
-EXPOSE 8001
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+EXPOSE 8003
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
 ```
 
 ### Health Monitoring

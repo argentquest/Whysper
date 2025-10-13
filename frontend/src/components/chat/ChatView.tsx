@@ -34,7 +34,6 @@ import {
 
 interface MessageItemProps {
   message: Message;
-  onExtractCode?: (messageId: string) => void;
   onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
@@ -48,14 +47,21 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
   const language = match ? match[1] : '';
 
   // Handle C4 diagrams (must check BEFORE Mermaid, as C4 keywords might be in Mermaid)
-  if (isC4Code(language, inline || false) || (language === 'mermaid' && isC4Syntax(String(children)))) {
-    const code = prepareC4Code(String(children));
-    console.log('🏗️ [DIAGRAM RENDER] Rendering C4 diagram (using D2)', {
+  // Supports: c4, c4diagram, plantuml (with C4 content), mermaid (with C4 content)
+  const codeString = String(children);
+  const isPlantUML = language === 'plantuml' || language === 'puml';
+  const isC4Mermaid = language === 'mermaid' && isC4Syntax(codeString);
+  const isC4PlantUML = isPlantUML && isC4Syntax(codeString);
+
+  if (isC4Code(language, inline || false) || isC4Mermaid || isC4PlantUML) {
+    const code = prepareC4Code(codeString);
+    const diagramSource = isC4PlantUML ? 'PlantUML' : isC4Mermaid ? 'Mermaid' : 'C4';
+    console.log(`🏗️ [DIAGRAM RENDER] Rendering C4 diagram from ${diagramSource} (using D2)`, {
       language,
       codeLength: code.length,
       codePreview: code.substring(0, 60) + '...'
     });
-    return <C4Diagram code={code} title="C4 Architecture Diagram" />;
+    return <C4Diagram code={code} title={`C4 Architecture Diagram (${diagramSource})`} />;
   }
 
   // Handle Mermaid diagrams
@@ -381,7 +387,6 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
 
 const MessageItem: React.FC<MessageItemProps> = ({
   message,
-  onExtractCode,
   onShowCode
 }) => {
   const renderMetadataStats = (
@@ -609,28 +614,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
     
     return matches;
   };
-  
-  const hasCodeFragments = (content: string): boolean => {
-    // Check for markdown-style code blocks: ```code```
-    if (/```[\s\S]*?```/.test(content)) {
-      return true;
-    }
-    
-    // Only check for substantial HTML code blocks (multi-line content in <pre><code>)
-    // Ignore small inline <code> tags like <code>ai.py</code>
-    const htmlBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
-    const matches = content.match(htmlBlockRegex);
-    
-    if (matches) {
-      // Only consider it a code fragment if it has multiple lines or reasonable content
-      return matches.some(match => {
-        const innerContent = match.replace(/<\/?[^>]+(>|$)/g, '').trim();
-        return innerContent.includes('\n') || innerContent.length > 30;
-      });
-    }
-    
-    return false;
-  };
 
   const createCodeMenuItems = () => {
     const codeBlocks = detectCodeBlocks(message.content);
@@ -773,19 +756,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     </Tooltip>
                   </Dropdown>
                 )
-              )}
-
-              {/* Extract Code Button */}
-              {hasCodeFragments(message.content) && onExtractCode && (
-                <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
-                  <Button
-                    type="text"
-                    icon={<CodeOutlined />}
-                    onClick={() => onExtractCode(message.id)}
-                    size="small"
-                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                  />
-                </Tooltip>
               )}
 
               <Tooltip title="Exit Fullscreen">
@@ -1047,19 +1017,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 )
               )}
 
-              {/* Extract Code Button */}
-              {hasCodeFragments(message.content) && onExtractCode && (
-                <Tooltip title={`Extract ${codeBlocks.length} code block(s)`}>
-                  <Button
-                    type="text"
-                    icon={<CodeOutlined />}
-                    onClick={() => onExtractCode(message.id)}
-                    size="small"
-                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                  />
-                </Tooltip>
-              )}
-
               <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Maximize"}>
                 <Button
                   type="text"
@@ -1194,14 +1151,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
 interface ChatViewProps {
   messages: Message[];
   loading?: boolean;
-  onExtractCode?: (messageId: string) => void;
   onShowCode?: (code: string, language: string, title?: string) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,
-  onExtractCode,
   onShowCode,
 }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -1233,7 +1188,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
           <MessageItem
             key={message.id}
             message={message}
-            onExtractCode={onExtractCode}
             onShowCode={onShowCode}
           />
         ))}

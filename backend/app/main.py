@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
+from mcp_server.fastmcp_server import get_mcp_router
 from common.logger import get_logger
 
 # Initialize logger for this module
@@ -44,6 +45,11 @@ app.add_middleware(
 # All endpoints are exposed under /api/v1/*
 app.include_router(api_router, prefix="/api/v1")
 
+# Include the MCP router for FastMCP integration
+# MCP endpoints are exposed under /mcp/*
+mcp_router = get_mcp_router()
+app.include_router(mcp_router)
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -57,6 +63,12 @@ async def startup_event():
     logger.info(f"Server running on {settings.host}:{settings.port}")
     logger.info(f"Debug mode: {settings.debug}")
     logger.info(f"CORS origins: {settings.cors_origins}")
+    
+    # Log MCP server integration
+    logger.info("FastMCP server integration initialized")
+    logger.info("MCP endpoints available at /mcp/*")
+    logger.info("MCP tools: generate_diagram, render_diagram, generate_and_render")
+    logger.info("MCP WebSocket endpoint: /mcp/ws")
 
 @app.on_event("shutdown")
 async def shutdown_event():

@@ -71,7 +71,9 @@ async def log_diagram_event(event: DiagramEventRequest):
         )
 
     elif event.event_type == 'render_error':
-        message = f"❌ Error rendering {event.diagram_type.upper()} diagram"
+        # Include error message in main log message for visibility
+        error_detail = f": {event.error_message}" if event.error_message else ""
+        message = f"❌ Error rendering {event.diagram_type.upper()} diagram{error_detail}"
         logger.error(
             message,
             extra={

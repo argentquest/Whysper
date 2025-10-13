@@ -12,7 +12,6 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
-
 from common.ai import create_ai_processor
 from common.lazy_file_scanner import LazyCodebaseScanner
 from common.logger import get_logger
@@ -514,6 +513,11 @@ class ConversationSession:
         # Determine if codebase context is needed
         needs_codebase_context = is_first_message or self._is_tool_command(question)
         logger.debug(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message})")
+        # Auto-detect diagram requests and use appropriate agent prompt
+        if not agent_prompt:
+            agent_prompt = self._detect_diagram_request(question)
+            if agent_prompt:
+                logger.info(f"🎨 [DIAGRAM DEBUG] Auto-detected diagram request, using agent prompt: {agent_prompt[:50]}...")
 
         # Track user message in conversation history
         logger.debug("Adding user message to conversation history")
@@ -530,6 +534,22 @@ class ConversationSession:
         logger.debug("Sending question to AI processor")
         response_text = self._process_with_ai(question, codebase_content)
         logger.debug(f"Received AI response: {len(response_text)} characters")
+        # DEBUG: Log agent prompt usage
+        if agent_prompt:
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Using agent prompt for question: {question[:100]}..."))
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt length: {len(agent_prompt)} characters"))
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt preview: {agent_prompt[:200]}..."))
+        else:
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] No agent prompt provided for question: {question[:100]}..."))
+
+        # DEBUG: Log AI response for diagram generation
+        if "mermaid" in question.lower() or "diagram" in question.lower():
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Question contains diagram keywords"))
+            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response preview: {response_text[:500]}..."))
+            if "```mermaid" in response_text:
+                logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response contains Mermaid code block"))
+            else:
+                logger.warning(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response does NOT contain Mermaid code block"))
 
         # Calculate timing and resources
         processing_time = time.time() - start_time
@@ -991,6 +1011,43 @@ class ConversationManager:
         self._sessions[session_id] = session
         logger.info("Session created", extra={"session_id": session_id})
         return session
+    def _detect_diagram_request(self, question: str) -> Optional[str]:
+        """
+        Detect if the user is requesting a diagram and return the appropriate agent prompt.
+
+        Args:
+            question: The user's question
+
+        Returns:
+            Agent prompt content if diagram detected, None otherwise
+        """
+        question_lower = question.lower()
+
+        # Check for Mermaid diagram requests
+        if ("mermaid" in question_lower and
+            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+            try:
+                from .settings_service import settings_service
+                mermaid_prompt = settings_service.get_agent_prompt_content("mermaid-architecture.md")
+                if mermaid_prompt:
+                    logger.info("🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt")
+                    return mermaid_prompt
+            except Exception as e:
+                logger.error(f"Failed to load mermaid prompt: {e}")
+
+        # Check for D2 diagram requests
+        if ("d2" in question_lower and
+            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+            try:
+                from .settings_service import settings_service
+                d2_prompt = settings_service.get_agent_prompt_content("d2-architecture.md")
+                if d2_prompt:
+                    logger.info("🎨 [DIAGRAM DEBUG] Detected D2 diagram request, loading d2-architecture.md prompt")
+                    return d2_prompt
+            except Exception as e:
+                logger.error(f"Failed to load D2 prompt: {e}")
+
+        return None
 
     def get_session(self, session_id: str) -> ConversationSession:
         if session_id not in self._sessions:
@@ -1005,6 +1062,5 @@ class ConversationManager:
         if session_id in self._sessions:
             self._logger.info("Conversation session removed", extra={"session_id": session_id})
             del self._sessions[session_id]
-
 
 conversation_manager = ConversationManager()

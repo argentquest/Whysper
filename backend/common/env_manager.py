@@ -281,4 +281,6 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
 
 
 # Global instance
-env_manager = EnvManager()
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(backend_dir, '.env')
+env_manager = EnvManager(env_path=env_path)

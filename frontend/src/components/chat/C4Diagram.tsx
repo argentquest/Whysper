@@ -3,7 +3,7 @@ import { Card, Button, Space, message as antMessage, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, CodeOutlined } from '@ant-design/icons';
 import { D2 } from '@terrastruct/d2';
 import { ApiService } from '../../services/api';
-import { convertC4ToD2, extractC4Level } from '../../utils/c4ToD2';
+import { convertC4ToD2, simpleC4ToD2, extractC4Level } from '../../utils/c4ToD2';
 
 interface C4DiagramProps {
   code: string;
@@ -51,31 +51,83 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
       try {
         // Convert C4 to D2
         console.log('🏗️ [C4 DIAGRAM] Converting C4 syntax to D2...');
-        const convertedD2 = convertC4ToD2(code);
+        let convertedD2 = '';
+        let usedFallback = false;
+
+        try {
+          // Try main conversion first
+          convertedD2 = convertC4ToD2(code);
+          console.log('🏗️ [C4 DIAGRAM] Main conversion successful');
+        } catch (conversionError) {
+          console.warn('⚠️ [C4 DIAGRAM] Main conversion failed, trying fallback:', conversionError);
+
+          // Try fallback conversion
+          try {
+            convertedD2 = simpleC4ToD2(code);
+            usedFallback = true;
+            console.log('🏗️ [C4 DIAGRAM] Fallback conversion successful');
+          } catch (fallbackError) {
+            // Both conversions failed
+            throw new Error(
+              `C4 to D2 conversion failed.\n\n` +
+              `Main error: ${conversionError instanceof Error ? conversionError.message : 'Unknown error'}\n\n` +
+              `Fallback error: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}\n\n` +
+              `Please check that your C4 diagram syntax is correct. ` +
+              `Expected format: Person(id, "label"), System(id, "label"), Rel(from, to, "label")`
+            );
+          }
+        }
+
         setD2Code(convertedD2);
         console.log('🏗️ [C4 DIAGRAM] Conversion complete', {
           originalLength: code.length,
-          d2Length: convertedD2.length
+          d2Length: convertedD2.length,
+          usedFallback
         });
+
+        // Validate D2 code is not empty
+        if (!convertedD2 || convertedD2.trim().length === 0) {
+          throw new Error(
+            'C4 to D2 conversion produced empty output. ' +
+            'The C4 code may not contain any recognizable entities or relationships.'
+          );
+        }
 
         // Create D2 instance
         const d2 = new D2();
         console.log('🏗️ [C4 DIAGRAM] D2 instance created, compiling...');
 
         // Compile D2 code with options
-        const result = await d2.compile(convertedD2, {
-          options: {
-            layout: 'dagre', // Use dagre layout (works client-side)
-            sketch: false,
-          }
-        });
-        console.log('🏗️ [C4 DIAGRAM] Compilation successful, rendering SVG...');
+        let result;
+        try {
+          result = await d2.compile(convertedD2, {
+            options: {
+              layout: 'dagre', // Use dagre layout (works client-side)
+              sketch: false,
+            }
+          });
+          console.log('🏗️ [C4 DIAGRAM] Compilation successful, rendering SVG...');
+        } catch (compileError) {
+          throw new Error(
+            `D2 compilation failed: ${compileError instanceof Error ? compileError.message : 'Unknown error'}.\n\n` +
+            `This usually means the converted D2 code has syntax errors. ` +
+            `Please check the converted D2 code below for issues.`
+          );
+        }
 
         // Render the compiled diagram to SVG
-        const svg = await d2.render(result.diagram, result.renderOptions);
-        console.log('🏗️ [C4 DIAGRAM] SVG rendered successfully', {
-          svgLength: svg.length
-        });
+        let svg;
+        try {
+          svg = await d2.render(result.diagram, result.renderOptions);
+          console.log('🏗️ [C4 DIAGRAM] SVG rendered successfully', {
+            svgLength: svg.length
+          });
+        } catch (renderError) {
+          throw new Error(
+            `D2 rendering failed: ${renderError instanceof Error ? renderError.message : 'Unknown error'}.\n\n` +
+            `The diagram compiled successfully but could not be rendered to SVG.`
+          );
+        }
 
         // Store SVG content for export
         setSvgContent(svg);
@@ -91,10 +143,10 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
           event_type: 'render_success',
           diagram_type: 'c4' as any,
           code_length: code.length,
-          detection_method: `c4_level:${level}`
+          detection_method: `c4_level:${level}${usedFallback ? '_fallback' : ''}`
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to render C4 diagram';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to render C4 diagram: Unknown error';
         console.error('❌ [C4 DIAGRAM] Rendering error:', err);
         setError(errorMessage);
 

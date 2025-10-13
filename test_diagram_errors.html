@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Error Handling Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 0; }
+        pre {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Diagram Error Handling Test Suite</h1>
+    <p class="info">This page documents the improved error handling for C4, D2, and Mermaid diagrams.</p>
+
+    <div class="test-case">
+        <h2>✅ Test 1: Valid C4 Diagram</h2>
+        <p><strong>Expected:</strong> <span class="success">Should render successfully</span></p>
+        <pre><code>C4Context
+title System Context diagram for Internet Banking System
+
+Person(customer, "Banking Customer", "A customer of the bank")
+System(banking_system, "Internet Banking System", "Allows customers to view information about their bank accounts")
+System_Ext(mail_system, "E-mail system", "The internal Microsoft Exchange e-mail system")
+
+Rel(customer, banking_system, "Uses")
+Rel(banking_system, mail_system, "Sends e-mails", "SMTP")</code></pre>
+    </div>
+
+    <div class="test-case">
+        <h2>❌ Test 2: Invalid C4 Diagram (Missing Quotes)</h2>
+        <p><strong>Expected:</strong> <span class="error">Should show helpful error message about format</span></p>
+        <pre><code>C4Context
+Person(customer, Banking Customer)
+System(banking_system, Internet Banking)
+Rel(customer, banking_system)</code></pre>
+        <p><strong>Expected Error:</strong> "C4 to D2 conversion produced no entities or relationships..."</p>
+    </div>
+
+    <div class="test-case">
+        <h2>❌ Test 3: Empty C4 Diagram</h2>
+        <p><strong>Expected:</strong> <span class="error">Should show error about empty input</span></p>
+        <pre><code>C4Context
+
+</code></pre>
+        <p><strong>Expected Error:</strong> "C4 to D2 conversion produced no entities or relationships..."</p>
+    </div>
+
+    <div class="test-case">
+        <h2>✅ Test 4: Valid D2 Diagram</h2>
+        <p><strong>Expected:</strong> <span class="success">Should render successfully</span></p>
+        <pre><code>direction: right
+
+user: {
+  label: "User"
+  shape: person
+}
+
+app: {
+  label: "Application"
+  shape: rectangle
+}
+
+db: {
+  label: "Database"
+  shape: cylinder
+}
+
+user -> app: "Uses"
+app -> db: "Reads/Writes"</code></pre>
+    </div>
+
+    <div class="test-case">
+        <h2>❌ Test 5: Invalid D2 Diagram (Syntax Error)</h2>
+        <p><strong>Expected:</strong> <span class="error">Should show specific compilation error with common issues</span></p>
+        <pre><code>user {
+  label "User"  # Missing colon
+  shape: person
+}
+
+app -> user -> db  # Invalid chain</code></pre>
+        <p><strong>Expected Error:</strong> "D2 compilation failed... Common issues: - Missing colons..."</p>
+    </div>
+
+    <div class="test-case">
+        <h2>✅ Test 6: Valid Mermaid Diagram</h2>
+        <p><strong>Expected:</strong> <span class="success">Should render successfully</span></p>
+        <pre><code>graph TD
+    A[Start] --> B{Is it?}
+    B -->|Yes| C[OK]
+    B -->|No| D[End]
+    C --> D</code></pre>
+    </div>
+
+    <div class="test-case">
+        <h2>❌ Test 7: Invalid Mermaid Diagram (Syntax Error)</h2>
+        <p><strong>Expected:</strong> <span class="error">Should show helpful Mermaid syntax error</span></p>
+        <pre><code>graph TD
+    A[Start] => B{Is it?}  # Wrong arrow syntax
+    B ==>|Yes| C[OK]       # Wrong arrow syntax
+    C --> D</code></pre>
+        <p><strong>Expected Error:</strong> "Mermaid syntax error... Common issues: - Incorrect arrow syntax..."</p>
+    </div>
+
+    <div class="test-case">
+        <h2>📊 Error Handling Features</h2>
+        <ul>
+            <li><strong>C4 Diagrams:</strong>
+                <ul>
+                    <li>✅ Validates conversion produces entities/relationships</li>
+                    <li>✅ Tries fallback simple conversion if main conversion fails</li>
+                    <li>✅ Separate error messages for conversion vs rendering failures</li>
+                    <li>✅ Shows both C4 source and converted D2 code in error state</li>
+                </ul>
+            </li>
+            <li><strong>D2 Diagrams:</strong>
+                <ul>
+                    <li>✅ Validates input is not empty</li>
+                    <li>✅ Separate error messages for compilation vs rendering</li>
+                    <li>✅ Lists common D2 syntax issues</li>
+                    <li>✅ Shows D2 source code in error state</li>
+                </ul>
+            </li>
+            <li><strong>Mermaid Diagrams:</strong>
+                <ul>
+                    <li>✅ Pre-validates syntax before rendering</li>
+                    <li>✅ Enhanced error messages for parse and lexical errors</li>
+                    <li>✅ Lists common Mermaid syntax issues</li>
+                    <li>✅ Shows Mermaid source code in error state</li>
+                </ul>
+            </li>
+            <li><strong>All Diagrams:</strong>
+                <ul>
+                    <li>✅ User-friendly error messages</li>
+                    <li>✅ Collapsible source code view in error state</li>
+                    <li>✅ Backend logging of all render attempts</li>
+                    <li>✅ Console logging for debugging</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="test-case">
+        <h2>🎯 Testing Instructions</h2>
+        <ol>
+            <li>Start the Whysper application</li>
+            <li>Ask the AI to generate each test case diagram</li>
+            <li>Verify that:
+                <ul>
+                    <li>Valid diagrams render correctly</li>
+                    <li>Invalid diagrams show user-friendly error messages</li>
+                    <li>Error messages include helpful troubleshooting tips</li>
+                    <li>Source code is viewable in error state</li>
+                    <li>Console shows detailed logging</li>
+                </ul>
+            </li>
+        </ol>
+        <p><strong>Prompt to test C4 diagrams:</strong></p>
+        <pre>Can you create a C4 context diagram for a simple e-commerce system?</pre>
+        <p><strong>Prompt to test error handling:</strong></p>
+        <pre>Can you create a C4 diagram with this code: [paste invalid code from Test 2]</pre>
+    </div>
+</body>
+</html>

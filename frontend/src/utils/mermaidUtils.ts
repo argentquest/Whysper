@@ -33,6 +33,7 @@ const MERMAID_KEYWORDS = [
 
 /**
  * C4 diagram keywords - these will be rendered using D2
+ * Supports both Mermaid-style and PlantUML-style C4 diagrams
  */
 const C4_KEYWORDS = [
   'C4Context',
@@ -40,6 +41,15 @@ const C4_KEYWORDS = [
   'C4Component',
   'C4Dynamic',
   'C4Deployment',
+] as const;
+
+/**
+ * PlantUML C4 markers - these indicate PlantUML-style C4 diagrams
+ */
+const PLANTUML_C4_MARKERS = [
+  '@startuml',
+  '@enduml',
+  '!include',
 ] as const;
 
 /**
@@ -301,39 +311,54 @@ export const isValidD2Diagram = (code: string): boolean => {
 /**
  * Check if a code block should be rendered as a C4 diagram
  * based on the language attribute and inline status
+ * Supports: c4, c4diagram, plantuml (if contains C4 elements)
  */
 export const isC4Code = (language: string, inline: boolean): boolean => {
-  const isC4 = !inline && (language === 'c4' || language === 'c4diagram');
-  if (isC4) {
+  // Direct C4 language markers
+  const isDirectC4 = !inline && (language === 'c4' || language === 'c4diagram');
+
+  // PlantUML marker - need additional check for C4 content
+  const isPlantUML = !inline && (language === 'plantuml' || language === 'puml');
+
+  if (isDirectC4) {
     console.log('🏗️ [DIAGRAM DETECTION] C4 diagram detected (language marker)', { language, inline });
     // Log to backend
     ApiService.logDiagramEvent({
       event_type: 'detection',
-      diagram_type: 'c4' as any, // We'll update the type definition
-      detection_method: 'language_marker'
+      diagram_type: 'c4' as any,
+      detection_method: 'c4_language_marker'
     });
+    return true;
   }
-  return isC4;
+
+  if (isPlantUML) {
+    console.log('🏗️ [DIAGRAM DETECTION] PlantUML detected (language marker), checking for C4 content', { language, inline });
+    // Note: Additional C4 content check will be done by isC4Syntax in the calling code
+    return false; // Let isC4Syntax handle the actual C4 detection
+  }
+
+  return false;
 };
 
 /**
  * Detect if code content contains C4 syntax
  * C4 diagrams use specific keywords for different levels
+ * Supports both Mermaid-style and PlantUML-style C4 diagrams
  */
 export const isC4Syntax = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
     return false;
   }
 
-  // Check if any C4 keyword exists
-  const foundKeyword = C4_KEYWORDS.find(keyword => {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+  // Check for Mermaid-style C4 keywords
+  const foundMermaidKeyword = C4_KEYWORDS.find(keyword => {
+    const regex = new RegExp(`\\b${keyword}\\b`);
     return regex.test(code);
   });
 
-  if (foundKeyword) {
-    console.log('🏗️ [DIAGRAM DETECTION] C4 syntax detected by keyword', {
-      keyword: foundKeyword,
+  if (foundMermaidKeyword) {
+    console.log('🏗️ [DIAGRAM DETECTION] C4 Mermaid syntax detected by keyword', {
+      keyword: foundMermaidKeyword,
       codePreview: code.substring(0, 50) + '...'
     });
     // Log to backend
@@ -342,11 +367,39 @@ export const isC4Syntax = (code: string): boolean => {
       diagram_type: 'c4' as any,
       code_preview: code.substring(0, 100),
       code_length: code.length,
-      detection_method: `c4_keyword:${foundKeyword}`
+      detection_method: `c4_mermaid_keyword:${foundMermaidKeyword}`
     });
+    return true;
   }
 
-  return !!foundKeyword;
+  // Check for PlantUML-style C4 markers
+  const foundPlantUMLMarker = PLANTUML_C4_MARKERS.find(marker => {
+    const regex = new RegExp(marker, 'i');
+    return regex.test(code);
+  });
+
+  if (foundPlantUMLMarker) {
+    // Additional check: make sure it's actually C4, not just any PlantUML
+    const hasC4Elements = /\b(Person|System|Container|Component|Rel)\s*\(/.test(code);
+
+    if (hasC4Elements) {
+      console.log('🏗️ [DIAGRAM DETECTION] C4 PlantUML syntax detected', {
+        marker: foundPlantUMLMarker,
+        codePreview: code.substring(0, 50) + '...'
+      });
+      // Log to backend
+      ApiService.logDiagramEvent({
+        event_type: 'detection',
+        diagram_type: 'c4' as any,
+        code_preview: code.substring(0, 100),
+        code_length: code.length,
+        detection_method: `c4_plantuml_marker:${foundPlantUMLMarker}`
+      });
+      return true;
+    }
+  }
+
+  return false;
 };
 
 /**
@@ -358,7 +411,7 @@ export const getC4Level = (code: string): string => {
   }
 
   for (const keyword of C4_KEYWORDS) {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+    const regex = new RegExp(`\\b${keyword}\\b`);
     if (regex.test(code)) {
       // Extract level name (e.g., "C4Context" -> "Context")
       return keyword.replace('C4', '');
