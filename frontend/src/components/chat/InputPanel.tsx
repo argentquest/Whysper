@@ -5,6 +5,8 @@ import {
   ClearOutlined,
   PlusOutlined,
   CopyOutlined,
+  CompressOutlined,
+  ExpandOutlined,
 } from '@ant-design/icons';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 
@@ -44,6 +46,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
   const textAreaRef = useRef<TextAreaRef>(null);
+  const [currentHeight, setCurrentHeight] = useState<number>(4); // Track current rows
+  const [previousHeight, setPreviousHeight] = useState<number>(4); // Store previous height for restoration
 
   // Auto-resize textarea
   useEffect(() => {
@@ -121,6 +125,42 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       }
     }, 0);
   };
+
+  const handleReduceHeight = () => {
+    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
+    if (textarea && currentHeight > 1) {
+      // Store current height before reducing
+      setPreviousHeight(currentHeight);
+      const newHeight = Math.max(1, Math.ceil(currentHeight * 0.25)); // Reduce by 75%
+      setCurrentHeight(newHeight);
+      textarea.style.height = 'auto';
+      textarea.style.minHeight = `${newHeight * 24}px`; // Approximate row height
+      textarea.style.height = `${newHeight * 24}px`;
+    }
+  };
+
+  const handleRestoreHeight = () => {
+    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
+    if (textarea) {
+      setCurrentHeight(previousHeight);
+      textarea.style.height = 'auto';
+      textarea.style.minHeight = `${previousHeight * 24}px`; // Approximate row height
+      textarea.style.height = `${previousHeight * 24}px`;
+    }
+  };
+
+  // Update current height tracking when auto-resize happens
+  useEffect(() => {
+    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
+    if (textarea) {
+      const height = parseInt(textarea.style.height) || 96; // Default 4 rows * 24px
+      const rows = Math.ceil(height / 24);
+      if (rows !== currentHeight) {
+        setPreviousHeight(currentHeight);
+        setCurrentHeight(rows);
+      }
+    }
+  }, [message]);
 
 
   return (
@@ -224,34 +264,92 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Input Area */}
         <div className="relative">
-          <TextArea
-            ref={textAreaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={finalPlaceholder}
-            disabled={disabled || loading}
-            autoSize={{ minRows: 4, maxRows: 12 }}
-            className="resize-none"
-            style={{
-              borderRadius: '16px',
-              fontSize: '15px',
-              lineHeight: '1.6',
-              padding: '20px 24px',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              border: '2px solid #e2e8f0',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-              transition: 'all 0.3s ease',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#667eea';
-              e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.15)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e2e8f0';
-              e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-            }}
-          />
+          <div className="relative">
+            <TextArea
+              ref={textAreaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={finalPlaceholder}
+              disabled={disabled || loading}
+              autoSize={false} // Disable autoSize to control manually
+              className="resize-none"
+              style={{
+                borderRadius: '16px',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                padding: '8px 50px 8px 8px', // Reduced padding to 8px, keeping right padding for resize buttons
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                border: '2px solid #e2e8f0',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.3s ease',
+                minHeight: `${currentHeight * 24}px`,
+                height: `${currentHeight * 24}px`,
+                maxHeight: '288px', // 12 rows max
+                resize: 'none',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#667eea';
+                e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+              }}
+            />
+            
+            {/* Resize buttons in top-right corner */}
+            <div
+              className="absolute top-2 right-2 flex gap-1"
+              style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '6px',
+                padding: '2px',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(226, 232, 240, 0.8)',
+              }}
+            >
+              <Tooltip title="Reduce height by 75%">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CompressOutlined />}
+                  onClick={handleReduceHeight}
+                  disabled={currentHeight <= 1}
+                  style={{
+                    fontSize: '10px',
+                    height: '20px',
+                    width: '20px',
+                    minWidth: '20px',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                />
+              </Tooltip>
+              
+              <Tooltip title="Restore to previous height">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ExpandOutlined />}
+                  onClick={handleRestoreHeight}
+                  disabled={currentHeight >= previousHeight}
+                  style={{
+                    fontSize: '10px',
+                    height: '20px',
+                    width: '20px',
+                    minWidth: '20px',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                />
+              </Tooltip>
+            </div>
+          </div>
           
           {/* Floating action area */}
           {message.trim() && (

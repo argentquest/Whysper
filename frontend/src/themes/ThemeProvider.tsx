@@ -15,7 +15,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (savedTheme && savedTheme in themes) {
       return savedTheme as ThemeKey;
     }
-    return 'proBlue';
+    return 'modernGradient';
   });
 
   // Update document data-theme attribute and localStorage when theme changes

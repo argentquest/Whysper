@@ -72,6 +72,8 @@ export interface FileItem {
   size: number;
   isSelected: boolean;
   type: 'file' | 'directory';
+  is_uploaded?: boolean; // Flag to indicate if this is an uploaded file
+  content?: string; // File content for uploaded files
 }
 
 export interface ApiResponse<T = unknown> {
@@ -129,5 +131,28 @@ export interface FileSaveResponse {
   data: {
     path: string;
     size: number;
+  };
+}
+
+export interface UploadedFile {
+  name: string;
+  content: string;
+  size: number;
+  type: string;
+}
+
+export interface FileUploadRequest {
+  files: UploadedFile[];
+  target_directory?: string;
+}
+
+export interface FileUploadResponse {
+  success: boolean;
+  message: string;
+  data: {
+    files: FileItem[];
+    total_files: number;
+    total_size: number;
+    upload_directory: string;
   };
 }

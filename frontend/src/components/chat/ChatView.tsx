@@ -30,6 +30,7 @@ import {
   isC4Code,
   processMixedHtmlContent
 } from '../../utils/mermaidUtils';
+import { useTheme } from '../../themes';
 
 
 interface MessageItemProps {
@@ -389,6 +390,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   message,
   onShowCode
 }) => {
+  const { theme } = useTheme();
   const renderMetadataStats = (
     metadata: Message['metadata'],
     options: { theme?: 'light' | 'dark' } = {}
@@ -524,6 +526,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
       /<ul[\s>][\s\S]*?<\/ul>/i,        // Complete unordered list
       /<ol[\s>][\s\S]*?<\/ol>/i,        // Complete ordered list
       /<div[\s>][\s\S]*?<\/div>/i,      // Complete div blocks
+      /<pre[\s>][\s\S]*?<\/pre>/i,      // Complete pre blocks
+      /<p[\s>][\s\S]*?<\/p>/i,          // Complete paragraph blocks
+      /<span[\s>][\s\S]*?<\/span>/i,    // Complete span blocks
+      /<h[1-6][\s>][\s\S]*?<\/h[1-6]>/i, // Complete heading blocks
     ];
     
     // Check if content has substantial HTML structure
@@ -531,10 +537,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
     
     // Additional check: count HTML tags - only show if there are multiple structural tags
     const htmlTagCount = (content.match(/<\/?[a-zA-Z][^>]*>/g) || []).length;
-    const hasMultipleTags = htmlTagCount >= 5; // At least 5 HTML tags
+    const hasMultipleTags = htmlTagCount >= 3; // Reduced threshold to 3 HTML tags
     
-    // Only show HTML view if there's substantial HTML structure OR many HTML tags
-    return hasSubstantialHtml || hasMultipleTags;
+    // Check for HTML attributes which are strong indicators of HTML content
+    const hasHtmlAttributes = /class\s*=|id\s*=|style\s*=|src\s*=|href\s*=|alt\s*=/i.test(content);
+    
+    // Check for HTML entities which indicate HTML content
+    const hasHtmlEntities = /&[a-zA-Z]+;|&#\d+;/.test(content);
+    
+    // Check for self-closing HTML tags
+    const hasSelfClosingTags = /<(br|hr|img|input|meta|link)[^>]*?\/?>/i.test(content);
+    
+    // Only show HTML view if there's substantial HTML structure OR multiple HTML tags OR other HTML indicators
+    return hasSubstantialHtml || hasMultipleTags || hasHtmlAttributes || hasHtmlEntities || hasSelfClosingTags;
   };
   
   const hasHtmlContent = detectHtmlContent(message.content);
@@ -884,8 +899,8 @@ const MessageItem: React.FC<MessageItemProps> = ({
         className="message-card"
         style={{
           border: 'none',
-          borderRadius: message.role === 'user' 
-            ? '20px 20px 4px 20px' 
+          borderRadius: message.role === 'user'
+            ? '20px 20px 4px 20px'
             : '20px 20px 20px 4px',
           boxShadow: message.role === 'user'
             ? '0 8px 24px rgba(102, 126, 234, 0.25)'
@@ -893,14 +908,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
           overflow: 'hidden',
           width: '100%',
           background: 'transparent',
+          backdropFilter: 'blur(10px)',
         }}
         size="default"
-        bodyStyle={{ 
-          padding: '0',
-          background: 'transparent',
-          borderRadius: message.role === 'user' 
-            ? '20px 20px 4px 20px' 
-            : '20px 20px 20px 4px',
+        styles={{
+          body: {
+            padding: '0',
+            background: 'transparent',
+            borderRadius: message.role === 'user'
+              ? '20px 20px 4px 20px'
+              : '20px 20px 20px 4px',
+          }
         }}
       >
         {/* Gradient Header */}
@@ -1053,11 +1071,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* White Content Area */}
         <div
           style={{
-            background: 'white',
+            background: message.role === 'assistant' && (theme === 'modernGradient' || theme === 'modernGradientDark')
+              ? 'rgba(255, 255, 255, 0.95)'
+              : 'white',
             padding: '14px',
-            borderRadius: message.role === 'user' 
-              ? '0 0 4px 20px' 
+            borderRadius: message.role === 'user'
+              ? '0 0 4px 20px'
               : '0 0 20px 4px',
+            backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(10px)' : 'none',
           }}
         >
           
@@ -1069,15 +1090,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 <div
                   className="prose max-w-none"
                   style={{
-                    border: '1px solid #e2e8f0',
+                    border: theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? '1px solid rgba(226, 232, 240, 0.6)'
+                      : '1px solid #e2e8f0',
                     borderRadius: '12px',
                     padding: '12px',
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? 'rgba(248, 250, 252, 0.8)'
+                      : '#f8fafc',
                     maxHeight: '500px',
                     overflowY: 'auto',
                     lineHeight: '1.2',
                     fontSize: '14px',
-                    color: '#1e293b'
+                    color: '#1e293b',
+                    backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(5px)' : 'none',
                   }}
                 >
                   {processDiagramsInHTML(displayContent)}
@@ -1159,6 +1185,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   loading = false,
   onShowCode,
 }) => {
+  const { theme } = useTheme();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1181,8 +1208,26 @@ export const ChatView: React.FC<ChatViewProps> = ({
     );
   }
 
+  // Get theme-specific chat view styles
+  const getChatViewStyles = () => {
+    // Check if we're in a modern gradient theme
+    const isModernGradient = theme === 'modernGradient' || theme === 'modernGradientDark';
+    
+    if (isModernGradient) {
+      return {
+        padding: '24px',
+        background: 'transparent'
+      };
+    }
+    
+    return {
+      padding: '24px',
+      background: 'transparent'
+    };
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+    <div className="flex-1 overflow-y-auto" style={getChatViewStyles()}>
       <div className="w-full px-0">
         {messages.map((message) => (
           <MessageItem
@@ -1197,7 +1242,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
             className="mb-6 w-full"
             style={{ paddingRight: '0' }}
           >
-            <Card 
+            <Card
               className="message-card"
               style={{
                 border: 'none',
@@ -1207,11 +1252,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
                 width: '100%',
                 background: 'transparent',
               }}
-              bodyStyle={{ 
-                padding: '14px',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white',
-                borderRadius: '20px 20px 20px 4px',
+              styles={{
+                body: {
+                  padding: '14px',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  borderRadius: '20px 20px 20px 4px',
+                }
               }}
             >
             <div className="flex items-center gap-3">

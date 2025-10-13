@@ -94,6 +94,9 @@ def load_env_defaults() -> Dict[str, Any]:
         "debug_logging": env_data.get("DEBUG_LOGGING", "false").lower() == "true",
         "show_token_usage": env_data.get("SHOW_TOKEN_USAGE", "true").lower() == "true",
         
+        # Frontend configuration
+        "frontend_timeout": int(env_data.get("FRONT_END_TIMEOUT", "120")),
+        
         # Provider-specific configuration
         "openrouter_api_url": env_data.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions"),
         "openrouter_http_referer": env_data.get("OPENROUTER_HTTP_REFERER", "https://github.com/yourusername/code-chat-ai"),
@@ -233,6 +236,10 @@ class Settings(BaseSettings):
     show_token_usage: bool = Field(
         default=True,
         description="Show token usage information"
+    )
+    frontend_timeout: int = Field(
+        default=120,
+        description="Frontend timeout in seconds for API requests"
     )
     openrouter_api_url: str = Field(
         default="https://openrouter.ai/api/v1/chat/completions",

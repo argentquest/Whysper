@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, Button, Space, Typography, message, Tabs } from 'antd';
+import { Form, Input, Select, Button, Space, Typography, message, Tabs, Modal as AntModal } from 'antd';
 import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
 import ApiService from '../../services/api';
@@ -7,7 +7,6 @@ import ApiService from '../../services/api';
 const { TextArea } = Input;
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 interface Agent {
   name: string;
@@ -23,6 +22,8 @@ interface SystemMessageModalProps {
   onSave: (systemMessage: string) => void;
   currentSystemMessage?: string;
   currentAgent?: string;
+  onClearConversation?: () => void;
+  hasConversationHistory?: boolean;
 }
 
 export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
@@ -31,6 +32,8 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   onSave,
   currentSystemMessage = '',
   currentAgent = '',
+  onClearConversation,
+  hasConversationHistory = false,
 }) => {
   const [form] = Form.useForm();
   const [activeTemplate, setActiveTemplate] = useState<string>(currentAgent);
@@ -86,8 +89,34 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   const handleSave = () => {
     const messageContent = customMessage.trim();
     if (messageContent) {
-      onSave(messageContent);
-      onCancel();
+      // Check if system prompt actually changed
+      const promptChanged = messageContent !== currentSystemMessage;
+      
+      if (promptChanged && hasConversationHistory && onClearConversation) {
+        // Show confirmation dialog about starting new conversation
+        AntModal.confirm({
+          title: 'Start New Conversation?',
+          content: 'Changing the system prompt will start a new conversation to ensure consistent AI behavior. Your current conversation will be saved to history.',
+          okText: 'Start New Conversation',
+          cancelText: 'Keep Current Conversation',
+          onOk: () => {
+            onSave(messageContent);
+            onClearConversation();
+            onCancel();
+            message.success('Agent prompt updated and new conversation started');
+          },
+          onCancel: () => {
+            onSave(messageContent);
+            onCancel();
+            message.warning('Agent prompt updated. Consider starting a new conversation for best results.');
+          }
+        });
+      } else {
+        // No conversation history or no change, just save
+        onSave(messageContent);
+        onCancel();
+        message.success('Agent prompt updated');
+      }
     } else {
       message.warning('Please enter a system message');
     }
@@ -120,142 +149,155 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
       cancelText="Cancel"
       confirmLoading={loading}
     >
-      <Tabs defaultActiveKey="agents">
-        <TabPane tab="Agent Prompts" key="agents">
-          <div className="space-y-4">
-            <div>
-              <Text className="block mb-2 font-medium">Choose an Agent:</Text>
-              <Select
-                value={activeTemplate}
-                onChange={handleTemplateChange}
-                placeholder="Select an agent prompt"
-                className="w-full"
-                loading={loading}
-              >
-                {agents.map(agent => (
-                  <Option key={agent.name} value={agent.name}>
-                    <div>
-                      <div className="font-medium">{agent.title}</div>
-                      <div className="text-xs text-gray-500">{agent.description}</div>
-                      <div className="text-xs text-blue-500">
-                        {agent.category.length > 0 && `Categories: ${agent.category.join(', ')}`}
-                      </div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </div>
+      <Tabs
+        defaultActiveKey="agents"
+        items={[
+          {
+            key: 'agents',
+            label: 'Agent Prompts',
+            children: (
+              <div className="space-y-4">
+                <div>
+                  <Text className="block mb-2 font-medium">Choose an Agent:</Text>
+                  <Select
+                    value={activeTemplate}
+                    onChange={handleTemplateChange}
+                    placeholder="Select an agent prompt"
+                    className="w-full"
+                    loading={loading}
+                  >
+                    {agents.map(agent => (
+                      <Option key={agent.name} value={agent.name}>
+                        <div>
+                          <div className="font-medium">{agent.title}</div>
+                          <div className="text-xs text-gray-500">{agent.description}</div>
+                          <div className="text-xs text-blue-500">
+                            {agent.category.length > 0 && `Categories: ${agent.category.join(', ')}`}
+                          </div>
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
 
-            {activeTemplate && (
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <Text strong>Preview:</Text>
+                {activeTemplate && (
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <Text strong>Preview:</Text>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<CopyOutlined />}
+                        onClick={() => handleCopy(customMessage)}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                      {customMessage}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'custom',
+            label: 'Custom',
+            children: (
+              <Form form={form} layout="vertical">
+                <Form.Item
+                  label="System Message"
+                  name="systemMessage"
+                  help="This message defines how the AI assistant should behave and respond."
+                >
+                  <TextArea
+                    value={customMessage}
+                    onChange={(e) => setCustomMessage(e.target.value)}
+                    rows={12}
+                    placeholder="Enter a custom system message..."
+                    className="font-mono text-sm"
+                  />
+                </Form.Item>
+
+                <div className="flex justify-between items-center">
+                  <Space>
+                    <Button
+                      icon={<ReloadOutlined />}
+                      onClick={handleReset}
+                    >
+                      Reset to Default
+                    </Button>
+                    <Text type="secondary" className="text-sm">
+                      Characters: {customMessage.length}
+                    </Text>
+                  </Space>
+
                   <Button
                     type="link"
-                    size="small"
                     icon={<CopyOutlined />}
                     onClick={() => handleCopy(customMessage)}
                   >
-                    Copy
+                    Copy Message
                   </Button>
                 </div>
-                <div className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
-                  {customMessage}
-                </div>
-              </div>
-            )}
-          </div>
-        </TabPane>
-
-        <TabPane tab="Custom" key="custom">
-          <Form form={form} layout="vertical">
-            <Form.Item
-              label="System Message"
-              name="systemMessage"
-              help="This message defines how the AI assistant should behave and respond."
-            >
-              <TextArea
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                rows={12}
-                placeholder="Enter a custom system message..."
-                className="font-mono text-sm"
-              />
-            </Form.Item>
-
-            <div className="flex justify-between items-center">
-              <Space>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={handleReset}
-                >
-                  Reset to Default
-                </Button>
-                <Text type="secondary" className="text-sm">
-                  Characters: {customMessage.length}
-                </Text>
-              </Space>
-
-              <Button
-                type="link"
-                icon={<CopyOutlined />}
-                onClick={() => handleCopy(customMessage)}
-              >
-                Copy Message
-              </Button>
-            </div>
-          </Form>
-        </TabPane>
-
-        <TabPane tab="Available Agents" key="examples">
-          <div className="space-y-4">
-            <Title level={5}>Available Agent Prompts</Title>
-            
-            {agents.map((agent) => (
-              <div key={agent.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <Text strong>{agent.title}</Text>
-                    <Text type="secondary" className="block text-sm">{agent.description}</Text>
-                    {agent.category.length > 0 && (
-                      <Text type="secondary" className="block text-xs">
-                        Categories: {agent.category.join(', ')}
-                      </Text>
-                    )}
+              </Form>
+            ),
+          },
+          {
+            key: 'examples',
+            label: 'Available Agents',
+            children: (
+              <div className="space-y-4">
+                <Title level={5}>Available Agent Prompts</Title>
+                
+                {agents.map((agent) => (
+                  <div key={agent.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <Text strong>{agent.title}</Text>
+                        <Text type="secondary" className="block text-sm">{agent.description}</Text>
+                        {agent.category.length > 0 && (
+                          <Text type="secondary" className="block text-xs">
+                            Categories: {agent.category.join(', ')}
+                          </Text>
+                        )}
+                      </div>
+                      <Space>
+                        <Button
+                          size="small"
+                          onClick={() => handleTemplateChange(agent.name)}
+                          loading={loading}
+                        >
+                          Use This
+                        </Button>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={async () => {
+                            try {
+                              const response = await ApiService.getAgentPrompt(agent.filename);
+                              if (response.success && response.data) {
+                                await handleCopy(response.data.content);
+                              }
+                            } catch (error) {
+                              message.error('Failed to copy agent content');
+                            }
+                          }}
+                        />
+                      </Space>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                      <Text type="secondary">File: {agent.filename}</Text>
+                    </div>
                   </div>
-                  <Space>
-                    <Button
-                      size="small"
-                      onClick={() => handleTemplateChange(agent.name)}
-                      loading={loading}
-                    >
-                      Use This
-                    </Button>
-                    <Button
-                      type="link"
-                      size="small"
-                      icon={<CopyOutlined />}
-                      onClick={async () => {
-                        try {
-                          const response = await ApiService.getAgentPrompt(agent.filename);
-                          if (response.success && response.data) {
-                            await handleCopy(response.data.content);
-                          }
-                        } catch (error) {
-                          message.error('Failed to copy agent content');
-                        }
-                      }}
-                    />
-                  </Space>
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                  <Text type="secondary">File: {agent.filename}</Text>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </TabPane>
-      </Tabs>
+            ),
+          },
+        ]}
+      />
     </Modal>
   );
 };

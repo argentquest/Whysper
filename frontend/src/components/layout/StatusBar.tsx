@@ -18,6 +18,7 @@ interface StatusBarProps {
   model?: string;
   directory?: string;
   fileCount?: number;
+  totalSize?: number;
   tokenCount?: number;
   onOpenDirectory?: () => void;
   errorMessage?: string;
@@ -29,6 +30,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   model = 'x-ai/grok-code-fast-1',
   directory = 'none',
   fileCount = 0,
+  totalSize = 0,
   tokenCount = 0,
   onOpenDirectory,
   errorMessage,
@@ -66,6 +68,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       return `${(num / 1000).toFixed(1)}K`;
     }
     return num.toString();
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   return (
@@ -117,13 +127,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </Tooltip>
         )}
 
-        {/* File Count & Directory */}
+        {/* File Count, Total Size & Directory */}
         <div className="flex items-center gap-2">
-          <Tooltip title={`${fileCount} files in context`}>
+          <Tooltip title={`${fileCount} files in context${totalSize > 0 ? `, total size: ${formatFileSize(totalSize)}` : ''}`}>
             <div className="flex items-center gap-1">
               <FileTextOutlined className="text-gray-500" />
               <Text className="text-xs text-gray-600 dark:text-gray-400">
                 Files: {fileCount}
+                {totalSize > 0 && (
+                  <span className="ml-1 text-gray-500">
+                    ({formatFileSize(totalSize)})
+                  </span>
+                )}
               </Text>
             </div>
           </Tooltip>

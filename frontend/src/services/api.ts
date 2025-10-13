@@ -23,14 +23,17 @@
 import axios from 'axios';
 
 // TypeScript type definitions for API communication
-import type { 
+import type {
   ApiResponse,   // Standard API response wrapper
   ChatRequest,   // Chat message request structure
   ChatResponse,  // Chat message response structure
   Conversation,  // Conversation data structure
   AppSettings,   // Application settings structure
   FileItem,      // File attachment structure
-  CodeBlock      // Code block structure
+  CodeBlock,     // Code block structure
+  FileUploadRequest,  // File upload request structure
+  FileUploadResponse, // File upload response structure
+  UploadedFile   // Uploaded file structure
 } from '../types';
 
 // Backend API base URL - development mode uses separate ports
@@ -192,6 +195,21 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to delete conversation',
+      };
+    }
+  }
+
+  static async clearConversation(conversationId: string): Promise<ApiResponse<{message: string, conversationId: string}>> {
+    try {
+      const response = await api.post(`/chat/conversations/${conversationId}/clear`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to clear conversation',
       };
     }
   }
@@ -414,6 +432,39 @@ export class ApiService {
       throw error;
     }
   }
+}
+
+  // File upload endpoints
+  static async uploadFiles(request: FileUploadRequest): Promise<ApiResponse<FileUploadResponse>> {
+    try {
+      const response = await api.post('/files/upload', request);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to upload files',
+      };
+    }
+  }
+
+  static async getUploadedFiles(): Promise<ApiResponse<FileItem[]>> {
+    try {
+      const response = await api.get('/files/uploaded');
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch uploaded files',
+      };
+    }
+  }
+
 }
 
 export default ApiService;

@@ -378,596 +378,616 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           lastOutputFormat: 'markdown',
         }}
       >
-        <Tabs defaultActiveKey="api">
-          {/* API Configuration */}
-          <Tabs.TabPane tab="🔑 API" key="api">
-            <div className="space-y-4">
-              <Title level={5}>Provider Configuration</Title>
+        <Tabs
+          defaultActiveKey="api"
+          items={[
+            {
+              key: 'api',
+              label: '🔑 API',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Provider Configuration</Title>
 
-              <Form.Item
-                label="API Provider"
-                name="provider"
-                rules={[{ required: true, message: 'Please select a provider' }]}
-                tooltip="AI service provider (openrouter, custom, etc.)"
-              >
-                <Select>
-                  {providerOptions.map(provider => (
-                    <Option key={provider} value={provider}>{provider}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                  <Form.Item
+                    label="API Provider"
+                    name="provider"
+                    rules={[{ required: true, message: 'Please select a provider' }]}
+                    tooltip="AI service provider (openrouter, custom, etc.)"
+                  >
+                    <Select>
+                      {providerOptions.map(provider => (
+                        <Option key={provider} value={provider}>{provider}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
 
-              <Form.Item
-                label="Available Providers"
-                name="providersList"
-                tooltip="Comma-separated list of available providers"
-              >
-                <TextArea rows={2} placeholder="openrouter,custom" />
-              </Form.Item>
+                  <Form.Item
+                    label="Available Providers"
+                    name="providersList"
+                    tooltip="Comma-separated list of available providers"
+                  >
+                    <TextArea rows={2} placeholder="openrouter,custom" />
+                  </Form.Item>
 
-              <Form.Item
-                label="API Key"
-                name="apiKey"
-                rules={[{ required: true, message: 'Please enter your API key' }]}
-                tooltip="Your API key for the selected provider"
-              >
-                <Input.Password placeholder="sk-or-v1-..." />
-              </Form.Item>
+                  <Form.Item
+                    label="API Key"
+                    name="apiKey"
+                    rules={[{ required: true, message: 'Please enter your API key' }]}
+                    tooltip="Your API key for the selected provider"
+                  >
+                    <Input.Password placeholder="sk-or-v1-..." />
+                  </Form.Item>
 
-              <Form.Item
-                label="API URL"
-                name="apiUrl"
-                tooltip="API endpoint URL for chat completions"
-              >
-                <Input placeholder="https://api.openrouter.ai/v1/chat/completions" />
-              </Form.Item>
+                  <Form.Item
+                    label="API URL"
+                    name="apiUrl"
+                    tooltip="API endpoint URL for chat completions"
+                  >
+                    <Input placeholder="https://api.openrouter.ai/v1/chat/completions" />
+                  </Form.Item>
 
-              <Form.Item
-                label="Token URL"
-                name="tokenUrl"
-                tooltip="URL for token authentication (if required)"
-              >
-                <Input placeholder="https://api.openrouter.ai/v1/token" />
-              </Form.Item>
+                  <Form.Item
+                    label="Token URL"
+                    name="tokenUrl"
+                    tooltip="URL for token authentication (if required)"
+                  >
+                    <Input placeholder="https://api.openrouter.ai/v1/token" />
+                  </Form.Item>
 
-              <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Form.Item
+                      label="Token User ID"
+                      name="tokenUseId"
+                      tooltip="User ID for token authentication"
+                    >
+                      <Input placeholder="Optional" />
+                    </Form.Item>
+
+                    <Form.Item
+                      label="Token Password"
+                      name="tokenPassword"
+                      tooltip="Password for token authentication"
+                    >
+                      <Input.Password placeholder="Optional" />
+                    </Form.Item>
+                  </div>
+
+                <Title level={5}>OpenRouter Settings</Title>
+
                 <Form.Item
-                  label="Token User ID"
-                  name="tokenUseId"
-                  tooltip="User ID for token authentication"
+                  label="OpenRouter API URL"
+                  name="openrouterApiUrl"
+                  tooltip="API endpoint for OpenRouter requests"
                 >
-                  <Input placeholder="Optional" />
+                  <Input placeholder="https://openrouter.ai/api/v1/chat/completions" />
                 </Form.Item>
 
                 <Form.Item
-                  label="Token Password"
-                  name="tokenPassword"
-                  tooltip="Password for token authentication"
+                  label="HTTP Referer"
+                  name="openrouterHttpReferer"
+                  tooltip="Referer header required by OpenRouter"
                 >
-                  <Input.Password placeholder="Optional" />
-                </Form.Item>
-              </div>
-
-            <Title level={5}>OpenRouter Settings</Title>
-
-            <Form.Item
-              label="OpenRouter API URL"
-              name="openrouterApiUrl"
-              tooltip="API endpoint for OpenRouter requests"
-            >
-              <Input placeholder="https://openrouter.ai/api/v1/chat/completions" />
-            </Form.Item>
-
-            <Form.Item
-              label="HTTP Referer"
-              name="openrouterHttpReferer"
-              tooltip="Referer header required by OpenRouter"
-            >
-              <Input placeholder="https://github.com/yourusername/code-chat-ai" />
-            </Form.Item>
-
-            <Form.Item
-              label="Request Title"
-              name="openrouterTitle"
-              tooltip="X-Title header describing your integration"
-            >
-              <Input placeholder="Code Chat with AI" />
-            </Form.Item>
-
-            <Form.Item
-              label={`OpenRouter Temperature: ${form.getFieldValue('openrouterTemperature')?.toFixed(1) ?? '0.1'}`}
-              name="openrouterTemperature"
-              tooltip="Default temperature for OpenRouter requests"
-            >
-              <Slider
-                min={0}
-                max={2}
-                step={0.1}
-                marks={{
-                  0: '0',
-                  0.5: '0.5',
-                  1: '1',
-                  2: '2',
-                }}
-              />
-            </Form.Item>
-
-            <Title level={5}>Custom Provider Settings</Title>
-
-            <Form.Item
-              label="Custom Provider API URL"
-              name="customProviderApiUrl"
-              tooltip="API endpoint for the custom provider"
-            >
-              <Input placeholder="https://your-api.com/v1/chat" />
-            </Form.Item>
-
-            <Form.Item
-              label="Custom Provider Timeout (seconds)"
-              name="customProviderRequestTimeout"
-              tooltip="Request timeout for custom provider calls"
-            >
-              <InputNumber min={1} max={600} className="w-full" />
-            </Form.Item>
-
-            <Form.Item
-              label="Validate SSL"
-              name="validateSsl"
-              tooltip="Enable SSL certificate validation"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-            </div>
-          </Tabs.TabPane>
-
-          {/* Model Configuration */}
-          <Tabs.TabPane tab="🤖 Model" key="model">
-            <div className="space-y-4">
-              <Title level={5}>Model Selection</Title>
-
-              <Form.Item
-                label="Available Models"
-                name="modelsList"
-                tooltip="Comma-separated list of available models"
-              >
-                <TextArea rows={3} placeholder="model-a,model-b" />
-              </Form.Item>
-
-              <Form.Item
-                label="Default Model"
-                name="defaultModel"
-                rules={[{ required: true, message: 'Please select a model' }]}
-                tooltip="AI model to use for responses"
-              >
-                <Select showSearch placeholder="Select a model">
-                  {modelOptions.length === 0 && (
-                    <Option value="" disabled>No models configured</Option>
-                  )}
-                  {modelOptions.map(model => (
-                    <Option key={model} value={model}>{model}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Title level={5}>Model Parameters</Title>
-
-              <Form.Item
-                label={`Max Tokens: ${form.getFieldValue('maxTokens') || 4000}`}
-                name="maxTokens"
-                tooltip="Maximum number of tokens in the response (1-16000)"
-              >
-                <Slider
-                  min={100}
-                  max={16000}
-                  step={100}
-                  marks={{
-                    100: '100',
-                    4000: '4K',
-                    8000: '8K',
-                    16000: '16K',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={`Temperature: ${form.getFieldValue('temperature')?.toFixed(1) || '0.7'}`}
-                name="temperature"
-                tooltip="Controls creativity/randomness (0.0 = deterministic, 2.0 = very creative)"
-              >
-                <Slider
-                  min={0}
-                  max={2}
-                  step={0.1}
-                  marks={{
-                    0: '0',
-                    0.7: '0.7',
-                    1: '1',
-                    2: '2',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={`Top P: ${form.getFieldValue('topP')?.toFixed(1) || '1.0'}`}
-                name="topP"
-                tooltip="Nucleus sampling parameter (0.0-1.0)"
-              >
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  marks={{
-                    0: '0',
-                    0.5: '0.5',
-                    1: '1',
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={`Frequency Penalty: ${form.getFieldValue('frequencyPenalty')?.toFixed(1) || '0.0'}`}
-                name="frequencyPenalty"
-                tooltip="Penalize repeated tokens (-2.0 to 2.0)"
-              >
-                <Slider
-                  min={-2}
-                  max={2}
-                  step={0.1}
-                  marks={{
-                    '-2': '-2',
-                    0: '0',
-                    2: '2',
-                  }}
-                />
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
-
-          {/* UI Configuration */}
-          <Tabs.TabPane tab="🎨 Interface" key="interface">
-            <div className="space-y-4">
-              <Title level={5}>Theme & Display</Title>
-
-              <Form.Item
-                label="Theme"
-                name="theme"
-                tooltip="Choose between light and dark theme"
-              >
-                <Select onChange={handleThemeChange}>
-                  <Option value="light">Light</Option>
-                  <Option value="dark">Dark</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                label="Language"
-                name="language"
-                tooltip="Interface language"
-              >
-                <Select>
-                  <Option value="en">English</Option>
-                  <Option value="es">Spanish</Option>
-                  <Option value="fr">French</Option>
-                  <Option value="de">German</Option>
-                </Select>
-              </Form.Item>
-
-              <Title level={5}>Display Options</Title>
-
-              <Form.Item
-                label="Auto-save conversations"
-                name="autoSaveConversations"
-                tooltip="Automatically save conversations"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-
-              <Form.Item
-                label="Show line numbers in code"
-                name="showLineNumbers"
-                tooltip="Display line numbers in code blocks"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-
-              <Form.Item
-                label="Enable streaming responses"
-                name="enableStreaming"
-                tooltip="Stream responses as they're generated"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-
-              <Form.Item
-                label="Show token usage"
-                name="showTokenUsage"
-                tooltip="Display token consumption information"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
-
-          {/* File System */}
-          <Tabs.TabPane tab="📁 Files" key="files">
-            <div className="space-y-4">
-              <Title level={5}>File System Configuration</Title>
-
-              <Form.Item
-                label="Code Path"
-                name="codePath"
-                tooltip="Root directory for your codebase"
-              >
-                <Input placeholder="C:\Code2025\Whysper" />
-              </Form.Item>
-
-              <Form.Item
-                label="Ignore Folders"
-                name="ignoreFolders"
-                tooltip="Comma-separated list of folders to ignore"
-              >
-                <Input placeholder="node_modules,__pycache__,.git" />
-              </Form.Item>
-
-              <Form.Item
-                label="Supported Extensions"
-                name="supportedExtensions"
-                tooltip="Comma-separated list of file extensions to process"
-              >
-                <TextArea
-                  rows={3}
-                  placeholder=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs"
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Max File Size (bytes)"
-                name="maxFileSize"
-                tooltip="Maximum file size to process (default: 10MB)"
-              >
-                <InputNumber
-                  min={1024}
-                  max={104857600}
-                  step={1048576}
-                  className="w-full"
-                  formatter={(value) => {
-                    const mb = (value || 0) / 1048576;
-                    return `${mb.toFixed(1)} MB`;
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Output Directory"
-                name="dirSave"
-                tooltip="Directory for saving results"
-              >
-                <Input placeholder="results" />
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
-
-          {/* System Prompts */}
-          <Tabs.TabPane tab="💬 Prompts" key="prompts">
-            <div className="space-y-4">
-              <Title level={5}>System Message Configuration</Title>
-
-              <Form.Item
-                label="Current System Prompt File"
-                name="currentSystemPrompt"
-                tooltip="System message file to use"
-              >
-                <Input placeholder="systemmessage_documentation.txt" />
-              </Form.Item>
-
-              <Form.Item
-                label="Custom System Prompt"
-                name="systemPrompt"
-                tooltip="Override system prompt with custom text"
-              >
-                <TextArea
-                  rows={6}
-                  placeholder="Enter custom system prompt here..."
-                />
-              </Form.Item>
-
-              <Text type="secondary" className="text-xs">
-                💡 Leave custom prompt empty to use the file specified above
-              </Text>
-            </div>
-          </Tabs.TabPane>
-
-          {/* Server Configuration */}
-          <Tabs.TabPane tab="🌐 Server" key="server">
-            <div className="space-y-4">
-              <Title level={5}>Backend Server</Title>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Form.Item
-                  label="API Host"
-                  name="apiHost"
-                  tooltip="Host address for the API server"
-                >
-                  <Input placeholder="0.0.0.0" />
+                  <Input placeholder="https://github.com/yourusername/code-chat-ai" />
                 </Form.Item>
 
                 <Form.Item
-                  label="API Port"
-                  name="apiPort"
-                  tooltip="Port for the FastAPI server"
+                  label="Request Title"
+                  name="openrouterTitle"
+                  tooltip="X-Title header describing your integration"
                 >
-                  <InputNumber min={1} max={65535} className="w-full" />
+                  <Input placeholder="Code Chat with AI" />
                 </Form.Item>
-              </div>
 
-              <Title level={5}>Frontend Configuration</Title>
+                <Form.Item
+                  label={`OpenRouter Temperature: ${form.getFieldValue('openrouterTemperature')?.toFixed(1) ?? '0.1'}`}
+                  name="openrouterTemperature"
+                  tooltip="Default temperature for OpenRouter requests"
+                >
+                  <Slider
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    marks={{
+                      0: '0',
+                      0.5: '0.5',
+                      1: '1',
+                      2: '2',
+                    }}
+                  />
+                </Form.Item>
 
-              <Form.Item
-                label="FastAPI URL"
-                name="fastapiUrl"
-                tooltip="Backend URL for frontend to connect to"
-              >
-                <Input placeholder="http://localhost:8000" />
-              </Form.Item>
+                <Title level={5}>Custom Provider Settings</Title>
 
-              <Form.Item
-                label="Base URL"
-                name="baseUrl"
-                tooltip="Custom API base URL (optional)"
-              >
-                <Input placeholder="Optional custom base URL" />
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
+                <Form.Item
+                  label="Custom Provider API URL"
+                  name="customProviderApiUrl"
+                  tooltip="API endpoint for the custom provider"
+                >
+                  <Input placeholder="https://your-api.com/v1/chat" />
+                </Form.Item>
 
-          {/* Advanced Settings */}
-          <Tabs.TabPane tab="🔧 Advanced" key="advanced">
-            <div className="space-y-4">
-              <Title level={5}>Performance</Title>
+                <Form.Item
+                  label="Custom Provider Timeout (seconds)"
+                  name="customProviderRequestTimeout"
+                  tooltip="Request timeout for custom provider calls"
+                >
+                  <InputNumber min={1} max={600} className="w-full" />
+                </Form.Item>
 
-              <Form.Item
-                label={`Request Timeout: ${form.getFieldValue('requestTimeout') || 60}s`}
-                name="requestTimeout"
-                tooltip="How long to wait for AI responses (1-300 seconds)"
-              >
-                <Slider
-                  min={1}
-                  max={300}
-                  step={5}
-                  marks={{
-                    1: '1s',
-                    60: '1m',
-                    180: '3m',
-                    300: '5m',
-                  }}
-                />
-              </Form.Item>
+                <Form.Item
+                  label="Validate SSL"
+                  name="validateSsl"
+                  tooltip="Enable SSL certificate validation"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'model',
+              label: '🤖 Model',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Model Selection</Title>
 
-              <Form.Item
-                label="Connect Timeout (seconds)"
-                name="aiConnectTimeout"
-                tooltip="Timeout for establishing connections to AI providers"
-              >
-                <InputNumber min={1} max={300} className="w-full" />
-              </Form.Item>
+                  <Form.Item
+                    label="Available Models"
+                    name="modelsList"
+                    tooltip="Comma-separated list of available models"
+                  >
+                    <TextArea rows={3} placeholder="model-a,model-b" />
+                  </Form.Item>
 
-              <Form.Item
-                label="Read Timeout (seconds)"
-                name="aiReadTimeout"
-                tooltip="Timeout for reading responses from AI providers"
-              >
-                <InputNumber min={1} max={600} className="w-full" />
-              </Form.Item>
+                  <Form.Item
+                    label="Default Model"
+                    name="defaultModel"
+                    rules={[{ required: true, message: 'Please select a model' }]}
+                    tooltip="AI model to use for responses"
+                  >
+                    <Select showSearch placeholder="Select a model">
+                      {modelOptions.length === 0 && (
+                        <Option value="" disabled>No models configured</Option>
+                      )}
+                      {modelOptions.map(model => (
+                        <Option key={model} value={model}>{model}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
 
-              <Form.Item
-                label="Retry Attempts"
-                name="retryAttempts"
-                tooltip="Number of retry attempts for failed requests"
-              >
-                <Select>
-                  <Option value={1}>1</Option>
-                  <Option value={2}>2</Option>
-                  <Option value={3}>3</Option>
-                  <Option value={5}>5</Option>
-                  <Option value={10}>10</Option>
-                </Select>
-              </Form.Item>
+                  <Title level={5}>Model Parameters</Title>
 
-              <Form.Item
-                label="Cache Size"
-                name="cacheSize"
-                tooltip="Number of files to cache in memory (1-1000)"
-              >
-                <InputNumber min={1} max={1000} className="w-full" />
-              </Form.Item>
+                  <Form.Item
+                    label={`Max Tokens: ${form.getFieldValue('maxTokens') || 4000}`}
+                    name="maxTokens"
+                    tooltip="Maximum number of tokens in the response (1-16000)"
+                  >
+                    <Slider
+                      min={100}
+                      max={16000}
+                      step={100}
+                      marks={{
+                        100: '100',
+                        4000: '4K',
+                        8000: '8K',
+                        16000: '16K',
+                      }}
+                    />
+                  </Form.Item>
 
-              <Title level={5}>Logging</Title>
+                  <Form.Item
+                    label={`Temperature: ${form.getFieldValue('temperature')?.toFixed(1) || '0.7'}`}
+                    name="temperature"
+                    tooltip="Controls creativity/randomness (0.0 = deterministic, 2.0 = very creative)"
+                  >
+                    <Slider
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      marks={{
+                        0: '0',
+                        0.7: '0.7',
+                        1: '1',
+                        2: '2',
+                      }}
+                    />
+                  </Form.Item>
 
-              <Form.Item
-                label="Log Level"
-                name="logLevel"
-                tooltip="Logging verbosity level"
-              >
-                <Select>
-                  <Option value="DEBUG">Debug</Option>
-                  <Option value="INFO">Info</Option>
-                  <Option value="WARNING">Warning</Option>
-                  <Option value="ERROR">Error</Option>
-                  <Option value="CRITICAL">Critical</Option>
-                </Select>
-              </Form.Item>
+                  <Form.Item
+                    label={`Top P: ${form.getFieldValue('topP')?.toFixed(1) || '1.0'}`}
+                    name="topP"
+                    tooltip="Nucleus sampling parameter (0.0-1.0)"
+                  >
+                    <Slider
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      marks={{
+                        0: '0',
+                        0.5: '0.5',
+                        1: '1',
+                      }}
+                    />
+                  </Form.Item>
 
-              <Form.Item
-                label="Log Directory"
-                name="logDir"
-                tooltip="Directory for log files"
-              >
-                <Input placeholder="logs" />
-              </Form.Item>
+                  <Form.Item
+                    label={`Frequency Penalty: ${form.getFieldValue('frequencyPenalty')?.toFixed(1) || '0.0'}`}
+                    name="frequencyPenalty"
+                    tooltip="Penalize repeated tokens (-2.0 to 2.0)"
+                  >
+                    <Slider
+                      min={-2}
+                      max={2}
+                      step={0.1}
+                      marks={{
+                        '-2': '-2',
+                        0: '0',
+                        2: '2',
+                      }}
+                    />
+                  </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'interface',
+              label: '🎨 Interface',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Theme & Display</Title>
 
-              <Form.Item
-                label="Enable debug logging"
-                name="debugLogging"
-                tooltip="Log detailed information for troubleshooting"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
+                  <Form.Item
+                    label="Theme"
+                    name="theme"
+                    tooltip="Choose between light and dark theme"
+                  >
+                    <Select onChange={handleThemeChange}>
+                      <Option value="light">Light</Option>
+                      <Option value="dark">Dark</Option>
+                    </Select>
+                  </Form.Item>
 
-          {/* CLI Memory */}
-          <Tabs.TabPane tab="💾 CLI Memory" key="cli">
-            <div className="space-y-4">
-              <Title level={5}>Interactive CLI Settings</Title>
-              <Text type="secondary" className="block mb-4">
-                These settings store the last used values for CLI interactive mode
-              </Text>
+                  <Form.Item
+                    label="Language"
+                    name="language"
+                    tooltip="Interface language"
+                  >
+                    <Select>
+                      <Option value="en">English</Option>
+                      <Option value="es">Spanish</Option>
+                      <Option value="fr">French</Option>
+                      <Option value="de">German</Option>
+                    </Select>
+                  </Form.Item>
 
-              <Form.Item
-                label="Last Used Folder"
-                name="lastUsedFolder"
-                tooltip="Last folder processed in CLI mode"
-              >
-                <Input placeholder="Automatically updated" />
-              </Form.Item>
+                  <Title level={5}>Display Options</Title>
 
-              <Form.Item
-                label="Last Used Question"
-                name="lastUsedQuestion"
-                tooltip="Last question asked in CLI mode"
-              >
-                <TextArea rows={2} placeholder="Automatically updated" />
-              </Form.Item>
+                  <Form.Item
+                    label="Auto-save conversations"
+                    name="autoSaveConversations"
+                    tooltip="Automatically save conversations"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
 
-              <Form.Item
-                label="Last Exclude Patterns"
-                name="lastExcludePatterns"
-                tooltip="Last exclude patterns used"
-              >
-                <Input placeholder="Automatically updated" />
-              </Form.Item>
+                  <Form.Item
+                    label="Show line numbers in code"
+                    name="showLineNumbers"
+                    tooltip="Display line numbers in code blocks"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
 
-              <Form.Item
-                label="Last Output Format"
-                name="lastOutputFormat"
-                tooltip="Last output format used"
-              >
-                <Select>
-                  <Option value="markdown">Markdown</Option>
-                  <Option value="json">JSON</Option>
-                  <Option value="text">Text</Option>
-                  <Option value="html">HTML</Option>
-                </Select>
-              </Form.Item>
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
+                  <Form.Item
+                    label="Enable streaming responses"
+                    name="enableStreaming"
+                    tooltip="Stream responses as they're generated"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Show token usage"
+                    name="showTokenUsage"
+                    tooltip="Display token consumption information"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'files',
+              label: '📁 Files',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>File System Configuration</Title>
+
+                  <Form.Item
+                    label="Code Path"
+                    name="codePath"
+                    tooltip="Root directory for your codebase"
+                  >
+                    <Input placeholder="C:\Code2025\Whysper" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Ignore Folders"
+                    name="ignoreFolders"
+                    tooltip="Comma-separated list of folders to ignore"
+                  >
+                    <Input placeholder="node_modules,__pycache__,.git" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Supported Extensions"
+                    name="supportedExtensions"
+                    tooltip="Comma-separated list of file extensions to process"
+                  >
+                    <TextArea
+                      rows={3}
+                      placeholder=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Max File Size (bytes)"
+                    name="maxFileSize"
+                    tooltip="Maximum file size to process (default: 10MB)"
+                  >
+                    <InputNumber
+                      min={1024}
+                      max={104857600}
+                      step={1048576}
+                      className="w-full"
+                      formatter={(value) => {
+                        const mb = (value || 0) / 1048576;
+                        return `${mb.toFixed(1)} MB`;
+                      }}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Output Directory"
+                    name="dirSave"
+                    tooltip="Directory for saving results"
+                  >
+                    <Input placeholder="results" />
+                  </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'prompts',
+              label: '💬 Prompts',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>System Message Configuration</Title>
+
+                  <Form.Item
+                    label="Current System Prompt File"
+                    name="currentSystemPrompt"
+                    tooltip="System message file to use"
+                  >
+                    <Input placeholder="systemmessage_documentation.txt" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Custom System Prompt"
+                    name="systemPrompt"
+                    tooltip="Override system prompt with custom text"
+                  >
+                    <TextArea
+                      rows={6}
+                      placeholder="Enter custom system prompt here..."
+                    />
+                  </Form.Item>
+
+                  <Text type="secondary" className="text-xs">
+                    💡 Leave custom prompt empty to use the file specified above
+                  </Text>
+                </div>
+              ),
+            },
+            {
+              key: 'server',
+              label: '🌐 Server',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Backend Server</Title>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Form.Item
+                      label="API Host"
+                      name="apiHost"
+                      tooltip="Host address for the API server"
+                    >
+                      <Input placeholder="0.0.0.0" />
+                    </Form.Item>
+
+                    <Form.Item
+                      label="API Port"
+                      name="apiPort"
+                      tooltip="Port for the FastAPI server"
+                    >
+                      <InputNumber min={1} max={65535} className="w-full" />
+                    </Form.Item>
+                  </div>
+
+                  <Title level={5}>Frontend Configuration</Title>
+
+                  <Form.Item
+                    label="FastAPI URL"
+                    name="fastapiUrl"
+                    tooltip="Backend URL for frontend to connect to"
+                  >
+                    <Input placeholder="http://localhost:8000" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Base URL"
+                    name="baseUrl"
+                    tooltip="Custom API base URL (optional)"
+                  >
+                    <Input placeholder="Optional custom base URL" />
+                  </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'advanced',
+              label: '🔧 Advanced',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Performance</Title>
+
+                  <Form.Item
+                    label={`Request Timeout: ${form.getFieldValue('requestTimeout') || 60}s`}
+                    name="requestTimeout"
+                    tooltip="How long to wait for AI responses (1-300 seconds)"
+                  >
+                    <Slider
+                      min={1}
+                      max={300}
+                      step={5}
+                      marks={{
+                        1: '1s',
+                        60: '1m',
+                        180: '3m',
+                        300: '5m',
+                      }}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Connect Timeout (seconds)"
+                    name="aiConnectTimeout"
+                    tooltip="Timeout for establishing connections to AI providers"
+                  >
+                    <InputNumber min={1} max={300} className="w-full" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Read Timeout (seconds)"
+                    name="aiReadTimeout"
+                    tooltip="Timeout for reading responses from AI providers"
+                  >
+                    <InputNumber min={1} max={600} className="w-full" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Retry Attempts"
+                    name="retryAttempts"
+                    tooltip="Number of retry attempts for failed requests"
+                  >
+                    <Select>
+                      <Option value={1}>1</Option>
+                      <Option value={2}>2</Option>
+                      <Option value={3}>3</Option>
+                      <Option value={5}>5</Option>
+                      <Option value={10}>10</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Cache Size"
+                    name="cacheSize"
+                    tooltip="Number of files to cache in memory (1-1000)"
+                  >
+                    <InputNumber min={1} max={1000} className="w-full" />
+                  </Form.Item>
+
+                  <Title level={5}>Logging</Title>
+
+                  <Form.Item
+                    label="Log Level"
+                    name="logLevel"
+                    tooltip="Logging verbosity level"
+                  >
+                    <Select>
+                      <Option value="DEBUG">Debug</Option>
+                      <Option value="INFO">Info</Option>
+                      <Option value="WARNING">Warning</Option>
+                      <Option value="ERROR">Error</Option>
+                      <Option value="CRITICAL">Critical</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Log Directory"
+                    name="logDir"
+                    tooltip="Directory for log files"
+                  >
+                    <Input placeholder="logs" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Enable debug logging"
+                    name="debugLogging"
+                    tooltip="Log detailed information for troubleshooting"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
+                </div>
+              ),
+            },
+            {
+              key: 'cli',
+              label: '💾 CLI Memory',
+              children: (
+                <div className="space-y-4">
+                  <Title level={5}>Interactive CLI Settings</Title>
+                  <Text type="secondary" className="block mb-4">
+                    These settings store the last used values for CLI interactive mode
+                  </Text>
+
+                  <Form.Item
+                    label="Last Used Folder"
+                    name="lastUsedFolder"
+                    tooltip="Last folder processed in CLI mode"
+                  >
+                    <Input placeholder="Automatically updated" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Last Used Question"
+                    name="lastUsedQuestion"
+                    tooltip="Last question asked in CLI mode"
+                  >
+                    <TextArea rows={2} placeholder="Automatically updated" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Last Exclude Patterns"
+                    name="lastExcludePatterns"
+                    tooltip="Last exclude patterns used"
+                  >
+                    <Input placeholder="Automatically updated" />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Last Output Format"
+                    name="lastOutputFormat"
+                    tooltip="Last output format used"
+                  >
+                    <Select>
+                      <Option value="markdown">Markdown</Option>
+                      <Option value="json">JSON</Option>
+                      <Option value="text">Text</Option>
+                      <Option value="html">HTML</Option>
+                    </Select>
+                  </Form.Item>
+                </div>
+              ),
+            },
+          ]}
+        />
       </Form>
     </Modal>
   );

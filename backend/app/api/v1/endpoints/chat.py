@@ -518,3 +518,33 @@ def delete_conversation_history(conversation_id: str):
         raise HTTPException(
             status_code=500, detail=f"Failed to delete history: {str(e)}"
         )
+
+
+@router.post("/conversations/{conversation_id}/clear")
+def clear_conversation(conversation_id: str):
+    """Clear conversation history for a specific conversation."""
+    logger.debug(f"clear_conversation endpoint called for: {conversation_id}")
+    try:
+        session = conversation_manager.get_session(conversation_id)
+        if session:
+            # Clear the conversation history in the session
+            session.clear_conversation()
+            logger.info(f"Conversation cleared for session: {conversation_id}")
+            return {
+                "success": True,
+                "message": "Conversation cleared successfully",
+                "conversationId": conversation_id
+            }
+        else:
+            logger.warning(f"Conversation session not found: {conversation_id}")
+            return {"success": False, "error": "Conversation not found"}
+    except KeyError:
+        logger.warning(f"Conversation session not found: {conversation_id}")
+        return {"success": False, "error": "Conversation not found"}
+    except Exception as e:
+        logger.error(
+            f"Failed to clear conversation for {conversation_id}: {e}"
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to clear conversation: {str(e)}"
+        )

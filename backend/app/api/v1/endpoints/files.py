@@ -29,6 +29,9 @@ from schemas import (
     FileReadResponse,
     FileCreateRequest,
     FileCreateResponse,
+    FileUploadRequest,
+    FileUploadResponse,
+    UploadedFileItem,
 )
 from common.logger import get_logger
 from app.utils.session_utils import session_summary_model
@@ -533,4 +536,204 @@ def get_files(directory: str = None, recursive: bool = True):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload", response_model=FileUploadResponse)
+def upload_files(request: FileUploadRequest):
+    """
+    Upload files directly to the server, bypassing the local file system.
+    
+    This endpoint allows users to upload files directly to the server memory
+    without writing them to the local file system. Files are stored in memory
+    and can be used as context for AI conversations.
+    
+    Expected request body:
+    {
+        "files": [
+            {
+                "name": "example.py",
+                "content": "print('hello world')",
+                "size": 25
+            }
+        ],
+        "target_directory": "uploads"  # Optional
+    }
+    """
+    try:
+        import os
+        import tempfile
+        import uuid
+        from common.env_manager import env_manager
+        from common.logger import get_logger
+        
+        logger = get_logger(__name__)
+        
+        # Get the base directory from CODE_PATH
+        env_vars = env_manager.load_env_file()
+        base_directory = env_vars.get("CODE_PATH", ".")
+        
+        # Create a temporary directory for uploaded files if it doesn't exist
+        upload_dir = os.path.join(base_directory, request.target_directory or "uploads")
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir, exist_ok=True)
+        
+        uploaded_files = []
+        total_size = 0
+        
+        for file_data in request.files:
+            try:
+                # Validate file data
+                if not all(key in file_data for key in ['name', 'content']):
+                    logger.warning(f"Skipping invalid file data: missing required fields")
+                    continue
+                
+                file_name = file_data['name']
+                file_content = file_data['content']
+                file_size = len(file_content.encode('utf-8'))
+                
+                # Security check: validate file name
+                if not file_name or '/' in file_name or '\\' in file_name:
+                    logger.warning(f"Skipping invalid file name: {file_name}")
+                    continue
+                
+                # Generate a unique filename to avoid conflicts
+                name, ext = os.path.splitext(file_name)
+                unique_id = str(uuid.uuid4())[:8]
+                unique_filename = f"{name}_{unique_id}{ext}"
+                
+                # Create file path
+                file_path = os.path.join(request.target_directory or "uploads", unique_filename)
+                
+                # Write file to disk (for persistence across sessions)
+                full_path = os.path.join(upload_dir, unique_filename)
+                with open(full_path, 'w', encoding='utf-8') as f:
+                    f.write(file_content)
+                
+                # Create uploaded file item
+                uploaded_file = UploadedFileItem(
+                    path=file_path,
+                    name=file_name,
+                    size=file_size,
+                    content=file_content,
+                    type="file",
+                    is_uploaded=True
+                )
+                
+                uploaded_files.append(uploaded_file)
+                total_size += file_size
+                
+                logger.info(f"Successfully uploaded file: {file_name} ({file_size} bytes)")
+                
+            except Exception as e:
+                logger.error(f"Error processing file upload: {str(e)}")
+                continue
+        
+        if not uploaded_files:
+            raise HTTPException(
+                status_code=400,
+                detail="No valid files were uploaded"
+            )
+        
+        logger.info(f"File upload completed: {len(uploaded_files)} files, {total_size} bytes total")
+        
+        return FileUploadResponse(
+            success=True,
+            message=f"Successfully uploaded {len(uploaded_files)} files",
+            data={
+                "files": [file.dict() for file in uploaded_files],
+                "total_files": len(uploaded_files),
+                "total_size": total_size,
+                "upload_directory": request.target_directory or "uploads"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in file upload: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/uploaded")
+def get_uploaded_files():
+    """
+    Get list of uploaded files that can be used as context.
+    
+    This endpoint returns a list of files that have been uploaded
+    and are available for use in AI conversations.
+    """
+    try:
+        import os
+        import json
+        from common.env_manager import env_manager
+        from common.logger import get_logger
+        
+        logger = get_logger(__name__)
+        
+        # Get the base directory from CODE_PATH
+        env_vars = env_manager.load_env_file()
+        base_directory = env_vars.get("CODE_PATH", ".")
+        
+        # Check for uploaded files directory
+        upload_dir = os.path.join(base_directory, "uploads")
+        if not os.path.exists(upload_dir):
+            return {
+                "success": True,
+                "data": []
+            }
+        
+        uploaded_files = []
+        
+        try:
+            for filename in os.listdir(upload_dir):
+                file_path = os.path.join(upload_dir, filename)
+                if os.path.isfile(file_path):
+                    try:
+                        # Read file content
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        
+                        # Extract original name from unique filename
+                        # Format: original_name_uuid.ext
+                        parts = filename.split('_')
+                        if len(parts) >= 2:
+                            uuid_part = parts[-1]
+                            name_parts = parts[:-1]
+                            original_name = '_'.join(name_parts)
+                            
+                            # Re-add the extension from the UUID part
+                            if '.' in uuid_part:
+                                ext = uuid_part.split('.', 1)[1]
+                                original_name += f'.{ext}'
+                        else:
+                            original_name = filename
+                        
+                        stat = os.stat(file_path)
+                        
+                        uploaded_file = {
+                            "path": os.path.join("uploads", filename),
+                            "name": original_name,
+                            "size": stat.st_size,
+                            "content": content,
+                            "type": "file",
+                            "is_uploaded": True
+                        }
+                        
+                        uploaded_files.append(uploaded_file)
+                        
+                    except (UnicodeDecodeError, PermissionError) as e:
+                        logger.warning(f"Could not read uploaded file {filename}: {str(e)}")
+                        continue
+                        
+        except (OSError, PermissionError) as e:
+            logger.error(f"Error accessing upload directory: {str(e)}")
+        
+        return {
+            "success": True,
+            "data": uploaded_files
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting uploaded files: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

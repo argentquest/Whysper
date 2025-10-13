@@ -226,6 +226,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             "TOOL_DEBUG": "Prompt to ask for help debugging the code",
             "TOOL_STYLEGUIDE": "Prompt to check for style guide conformance",
             "VALIDATE_SSL": "SSL certificate validation for API requests (true/false; default: true)",
+            "FRONT_END_TIMEOUT": "Frontend timeout in seconds for API requests (default: 120)",
         }
 
     def validate_env_var(self, key: str, value: str) -> Tuple[bool, str]:

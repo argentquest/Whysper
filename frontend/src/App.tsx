@@ -878,13 +878,111 @@ function App() {
     }
   };
 
+  // Function to clear current conversation
+  const handleClearConversation = async () => {
+    const activeTab = tabs.find(tab => tab.id === activeTabId);
+    if (!activeTab || activeTab.type !== 'chat') return;
+
+    const conversationId = activeTab.conversationId;
+    
+    try {
+      // Call backend to clear conversation history
+      const response = await ApiService.clearConversation(conversationId);
+      if (response.success) {
+        // Clear the conversation history but keep the conversation structure
+        setConversations(prev => ({
+          ...prev,
+          [conversationId]: {
+            ...prev[conversationId],
+            messages: [],
+            updatedAt: new Date().toISOString(),
+          }
+        }));
+
+        // Mark tab as not dirty since we cleared it
+        setTabs(prev => prev.map(tab =>
+          tab.id === activeTabId ? { ...tab, isDirty: false } : tab
+        ));
+
+        // Clear extracted code blocks for fresh start
+        setExtractedCodeBlocks([]);
+        
+        message.success('Conversation cleared - starting fresh with new system prompt');
+      } else {
+        message.error(response.error || 'Failed to clear conversation');
+      }
+    } catch (error) {
+      console.error('Error clearing conversation:', error);
+      message.error('Failed to clear conversation');
+    }
+  };
+
   // Get current conversation
   const activeTab = tabs.find(tab => tab.id === activeTabId);
   const currentConversation = activeTab ? conversations[activeTab.conversationId] : null;
   const currentMessages = currentConversation?.messages || [];
+  
+  // Check if current conversation has history
+  const hasConversationHistory = currentMessages.length > 0;
+
+  // Get theme-specific background styles
+  const getThemeBackgroundStyles = () => {
+    switch (theme) {
+      case 'modernGradient':
+        return {
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          minHeight: '100vh'
+        };
+      case 'modernGradientDark':
+        return {
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          minHeight: '100vh'
+        };
+      case 'proBlue':
+        return {
+          background: '#fafbfc',
+          minHeight: '100vh'
+        };
+      case 'proDark':
+        return {
+          background: '#000000',
+          minHeight: '100vh'
+        };
+      case 'dark':
+        return {
+          background: '#141414',
+          minHeight: '100vh'
+        };
+      case 'purple':
+        return {
+          background: '#f9f0ff',
+          minHeight: '100vh'
+        };
+      case 'green':
+        return {
+          background: '#f6ffed',
+          minHeight: '100vh'
+        };
+      case 'orange':
+        return {
+          background: '#fff7e6',
+          minHeight: '100vh'
+        };
+      case 'red':
+        return {
+          background: '#fff2f0',
+          minHeight: '100vh'
+        };
+      default:
+        return {
+          background: '#ffffff',
+          minHeight: '100vh'
+        };
+    }
+  };
 
   return (
-    <Layout className="h-screen flex flex-col bg-gray-50">
+    <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>
       {/* Header */}
       <Header
         onSetContext={() => setContextModalOpen(true)}
@@ -914,7 +1012,12 @@ function App() {
       />
 
       {/* Main Content */}
-      <Content className="flex-1 flex flex-col overflow-hidden" style={{ margin: '0', background: 'transparent' }}>
+      <Content className="flex-1 flex flex-col overflow-hidden" style={{
+        margin: '0',
+        background: theme === 'modernGradient' || theme === 'modernGradientDark'
+          ? 'transparent'
+          : 'inherit'
+      }}>
         {activeTab?.type === 'file' ? (
           // File Editor View
           <FileEditorView
@@ -936,11 +1039,20 @@ function App() {
               onShowCode={handleShowCode}
             />
             
-            <div style={{ 
-              background: 'white', 
-              borderTop: '1px solid #f0f0f0',
-              boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)',
-              padding: '16px 24px'
+            <div style={{
+              background: theme === 'modernGradient' || theme === 'modernGradientDark'
+                ? 'rgba(255, 255, 255, 0.95)'
+                : 'white',
+              borderTop: theme === 'modernGradient' || theme === 'modernGradientDark'
+                ? '1px solid rgba(240, 240, 240, 0.6)'
+                : '1px solid #f0f0f0',
+              boxShadow: theme === 'modernGradient' || theme === 'modernGradientDark'
+                ? '0 -4px 20px rgba(0, 0, 0, 0.1)'
+                : '0 -2px 8px rgba(0, 0, 0, 0.06)',
+              padding: '16px 24px',
+              backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(10px)' : 'none',
+              borderRadius: theme === 'modernGradient' || theme === 'modernGradientDark' ? '20px 20px 0 0' : '0',
+              margin: theme === 'modernGradient' || theme === 'modernGradientDark' ? '0 24px' : '0',
             }}>
               <InputPanel
                 onSendMessage={handleSendMessage}
@@ -961,6 +1073,7 @@ function App() {
         model={settings.model}
         directory={codePath || 'Not configured'}
         fileCount={selectedFiles.length}
+        totalSize={selectedFiles.reduce((sum, file) => sum + (file.size || 0), 0)}
         tokenCount={currentMessages.reduce((sum, msg) => sum + (msg.metadata?.tokens || 0), 0)}
         onOpenDirectory={() => setContextModalOpen(true)}
       />
@@ -996,10 +1109,11 @@ function App() {
         onCancel={() => setSystemMessageModalOpen(false)}
         onSave={(systemMessage) => {
           setSettings(prev => ({ ...prev, systemPrompt: systemMessage }));
-          message.success('Agent prompt updated');
         }}
         currentSystemMessage={settings.systemPrompt}
         currentAgent={activeAgentName}
+        onClearConversation={handleClearConversation}
+        hasConversationHistory={hasConversationHistory}
       />
 
       <CodeFragmentsModal

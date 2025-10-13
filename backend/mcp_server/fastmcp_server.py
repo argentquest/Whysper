@@ -83,37 +83,81 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
         
         # ACTUAL AI INTEGRATION
         try:
+            # DEBUG: Log import attempts
+            logger.info("DEBUG: Attempting to import app.core.config")
             from app.core.config import get_settings
+            
+            logger.info("DEBUG: Attempting to import common.ai")
             from common.ai import create_ai_processor
+            
+            logger.info("DEBUG: Attempting to import app.utils.code_extraction")
             from app.utils.code_extraction import extract_code_blocks_from_content
             
+            logger.info("DEBUG: All imports successful, getting settings")
             settings = get_settings()
-            logger.info(f"AI processor creation - API key present: {bool(settings.api_key)}")
-            logger.info(f"AI processor creation - Provider: openrouter")
-            logger.info(f"AI processor creation - Model: {settings.default_model}")
+            
+            # DEBUG: Log configuration details with masked sensitive data
+            config_debug = SecurityUtils.safe_debug_info({
+                'api_key_present': bool(settings.api_key),
+                'api_key_length': len(settings.api_key) if settings.api_key else 0,
+                'provider': 'openrouter',
+                'model': settings.default_model,
+                'api_url': getattr(settings, 'openrouter_api_url', 'not_set')
+            })
+            logger.info(f"DEBUG: Configuration loaded: {config_debug}")
             
             # Check if prompt file exists
             prompt_file_path = f"C:\\Code2025\\Whysper\\prompts\\coding\\agent\\{diagram_type}-architecture.md"
             prompt_file_exists = os.path.exists(prompt_file_path)
-            logger.info(f"AI processor creation - Prompt file exists: {prompt_file_exists} at {prompt_file_path}")
+            logger.info(f"DEBUG: Prompt file check - exists: {prompt_file_exists}, path: {prompt_file_path}")
             
             if not prompt_file_exists:
-                raise FileNotFoundError(f"Prompt file not found: {prompt_file_path}")
+                # DEBUG: Try alternative paths
+                alt_paths = [
+                    f"prompts/coding/agent/{diagram_type}-architecture.md",
+                    f"../prompts/coding/agent/{diagram_type}-architecture.md",
+                    f"prompts/{diagram_type}-architecture.md"
+                ]
+                for alt_path in alt_paths:
+                    logger.info(f"DEBUG: Checking alternative path: {alt_path}")
+                    if os.path.exists(alt_path):
+                        prompt_file_path = alt_path
+                        prompt_file_exists = True
+                        logger.info(f"DEBUG: Found prompt file at alternative path: {alt_path}")
+                        break
+                
+                if not prompt_file_exists:
+                    logger.error(f"DEBUG: Prompt file not found at any path, checked: {[prompt_file_path] + alt_paths}")
+                    raise FileNotFoundError(f"Prompt file not found: {prompt_file_path}")
             
             # Load the appropriate agent prompt
+            logger.info(f"DEBUG: Loading prompt file: {prompt_file_path}")
             with open(prompt_file_path, "r") as f:
                 agent_prompt = f.read()
+            logger.info(f"DEBUG: Prompt loaded, length: {len(agent_prompt)}")
             
             # Construct the conversation
             conversation_history = [
                 {"role": "system", "content": agent_prompt},
                 {"role": "user", "content": prompt},
             ]
+            logger.info(f"DEBUG: Conversation history constructed with {len(conversation_history)} messages")
             
             # Get AI response
+            logger.info("DEBUG: Creating AI processor...")
             ai_processor = create_ai_processor(settings.api_key, "openrouter")
-            logger.info("AI processor created successfully")
+            logger.info("DEBUG: AI processor created successfully")
             
+            # DEBUG: Log AI processor details
+            processor_debug = SecurityUtils.safe_debug_info({
+                'processor_type': type(ai_processor).__name__,
+                'provider': ai_processor.provider,
+                'api_key_set': ai_processor.validate_api_key(),
+                'available_providers': ai_processor.get_available_providers()
+            })
+            logger.info(f"DEBUG: AI processor details: {processor_debug}")
+            
+            logger.info(f"DEBUG: Making AI call with model: {settings.default_model}")
             full_response = ai_processor.process_question(
                 question=prompt,
                 conversation_history=conversation_history,
@@ -121,7 +165,8 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
                 model=settings.default_model,
             )
             
-            logger.info(f"AI response received, length: {len(full_response)}")
+            logger.info(f"DEBUG: AI response received, length: {len(full_response)}")
+            logger.info(f"DEBUG: AI response preview: {full_response[:200]}...")
             
             # Extract and validate the diagram
             code_blocks = extract_code_blocks_from_content(

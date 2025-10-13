@@ -13,6 +13,7 @@ Key Features:
 Note: This is the API-only version. For full application with frontend serving,
 use backend/main.py instead.
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -23,22 +24,52 @@ from common.logger import get_logger
 # Initialize logger for this module
 logger = get_logger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for the FastAPI application.
+    
+    Handles startup and shutdown events in a modern, non-deprecated way.
+    This replaces the deprecated @app.on_event() decorators.
+    """
+    # Startup code - equivalent to the old startup_event()
+    logger.info(f"Starting {settings.api_title} v{settings.api_version}")
+    logger.info(f"Server running on {settings.host}:{settings.port}")
+    logger.info(f"Debug mode: {settings.debug}")
+    logger.info(f"CORS origins: {settings.cors_origins}")
+    
+    # Log MCP server integration
+    logger.info("FastMCP server integration initialized")
+    logger.info("MCP endpoints available at /mcp/*")
+    logger.info(
+        "MCP tools: generate_diagram, render_diagram, generate_and_render"
+    )
+    logger.info("MCP WebSocket endpoint: /mcp/ws")
+    
+    yield  # Application runs here
+    
+    # Shutdown code - equivalent to the old shutdown_event()
+    logger.info("Shutting down Whysper Web2 Backend")
+
+
 # Create FastAPI application instance with configuration from settings
 app = FastAPI(
     title=settings.api_title,              # API title for documentation
     description=settings.api_description,  # API description for documentation
     version=settings.api_version,          # API version for versioning
     debug=settings.debug,                  # Debug mode for development
+    lifespan=lifespan,                     # Lifespan context manager
 )
 
 # Configure CORS middleware to allow cross-origin requests from frontend
 # This enables the React frontend to communicate with the FastAPI backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,   # Allowed frontend origins (localhost:5173, etc.)
-    allow_credentials=True,                # Allow cookies and authentication headers
-    allow_methods=["*"],                   # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],                   # Allow all headers in requests
+    allow_origins=settings.cors_origins,   # Allowed frontend origins
+    allow_credentials=True,                # Allow cookies and auth headers
+    allow_methods=["*"],                   # Allow all HTTP methods
+    allow_headers=["*"],                   # Allow all headers
 )
 
 # Include the main API router with versioned prefix
@@ -49,37 +80,6 @@ app.include_router(api_router, prefix="/api/v1")
 # MCP endpoints are exposed under /mcp/*
 mcp_router = get_mcp_router()
 app.include_router(mcp_router)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """
-    Application startup event handler.
-    
-    Called when the FastAPI application starts up. Logs essential
-    configuration information for debugging and monitoring.
-    """
-    logger.info(f"Starting {settings.api_title} v{settings.api_version}")
-    logger.info(f"Server running on {settings.host}:{settings.port}")
-    logger.info(f"Debug mode: {settings.debug}")
-    logger.info(f"CORS origins: {settings.cors_origins}")
-    
-    # Log MCP server integration
-    logger.info("FastMCP server integration initialized")
-    logger.info("MCP endpoints available at /mcp/*")
-    logger.info("MCP tools: generate_diagram, render_diagram, generate_and_render")
-    logger.info("MCP WebSocket endpoint: /mcp/ws")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    Application shutdown event handler.
-    
-    Called when the FastAPI application is shutting down. Logs
-    shutdown information for monitoring and cleanup purposes.
-    """
-    logger.info("Shutting down Whysper Web2 Backend")
-
 
 # Direct execution entry point for development
 if __name__ == "__main__":
