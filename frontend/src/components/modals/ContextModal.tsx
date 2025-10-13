@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented, Upload } from 'antd';
 import {
   ReloadOutlined,
   FolderOutlined,
   FileOutlined,
   UnorderedListOutlined,
   ApartmentOutlined,
+  UploadOutlined,
+  CloudUploadOutlined,
 } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
-import type { FileItem } from '../../types';
+import type { FileItem, UploadedFile } from '../../types';
 import ApiService from '../../services/api';
 import FileTreeModal from './FileTreeModal';
 
@@ -29,12 +31,15 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   onApply,
   initialFiles = [],
 }) => {
-  const [viewMode, setViewMode] = useState<'list' | 'tree'>('tree');
+  const [viewMode, setViewMode] = useState<'list' | 'tree' | 'uploaded'>('list');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [currentDirectory, setCurrentDirectory] = useState('Root (All Files)');
+  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([]);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize selected files from props
   useEffect(() => {
@@ -47,6 +52,13 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   useEffect(() => {
     if (open) {
       loadFiles();
+    }
+  }, [open]);
+
+  // Load uploaded files when modal opens
+  useEffect(() => {
+    if (open) {
+      loadUploadedFiles();
     }
   }, [open]);
 
@@ -67,6 +79,17 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     }
   };
 
+  const loadUploadedFiles = async () => {
+    try {
+      const response = await ApiService.getUploadedFiles();
+      if (response.success && response.data) {
+        setUploadedFiles(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading uploaded files:', error);
+    }
+  };
+
   const loadDirectory = async (path?: string) => {
     setLoading(true);
     try {
@@ -84,6 +107,67 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileUpload = async (fileList: File[]) => {
+    if (fileList.length === 0) return;
+
+    setUploadLoading(true);
+    
+    try {
+      const uploadedFiles: UploadedFile[] = [];
+      
+      // Process each file
+      for (const file of fileList) {
+        const content = await readFileAsText(file);
+        uploadedFiles.push({
+          name: file.name,
+          content,
+          size: file.size,
+          type: file.type || 'text/plain'
+        });
+      }
+
+      // Upload files to backend
+      const response = await ApiService.uploadFiles({
+        files: uploadedFiles,
+        target_directory: 'uploads'
+      });
+
+      if (response.success && response.data) {
+        message.success(`Successfully uploaded ${uploadedFiles.length} file(s)`);
+        
+        // Refresh uploaded files list
+        await loadUploadedFiles();
+        
+        // Switch to uploaded files view
+        setViewMode('uploaded');
+        
+        // Auto-select uploaded files
+        const newPaths = response.data.files.map(f => f.path);
+        setSelectedFiles(new Set([...selectedFiles, ...newPaths]));
+      } else {
+        message.error(response.error || 'Failed to upload files');
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      message.error('Error uploading files');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  const handleUploadButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   const filteredFiles = files.filter(file =>
@@ -119,6 +203,9 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   };
 
   const getFileIcon = (file: FileItem) => {
+    if (file.is_uploaded) {
+      return <CloudUploadOutlined className="text-green-500" />;
+    }
     return file.type === 'directory' ? (
       <FolderOutlined className="text-blue-500" />
     ) : (
@@ -127,7 +214,9 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   };
 
   const handleApply = () => {
-    const selectedFileItems = files.filter(file => selectedFiles.has(file.path));
+    // Combine regular files and uploaded files
+    const allFiles = [...files, ...uploadedFiles];
+    const selectedFileItems = allFiles.filter(file => selectedFiles.has(file.path));
     onApply(selectedFileItems);
     onCancel();
   };
@@ -162,6 +251,9 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     );
   }
 
+  // Use uploaded files for the uploaded view mode
+  const displayFiles = viewMode === 'uploaded' ? uploadedFiles : files;
+
   // Otherwise render the list view
   return (
     <Modal
@@ -178,7 +270,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         <div className="flex items-center justify-between">
           <Segmented
             value={viewMode}
-            onChange={(value) => setViewMode(value as 'list' | 'tree')}
+            onChange={(value) => setViewMode(value as 'list' | 'tree' | 'uploaded')}
             options={[
               {
                 label: 'List View',
@@ -190,12 +282,60 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                 value: 'tree',
                 icon: <ApartmentOutlined />,
               },
+              {
+                label: 'Uploaded Files',
+                value: 'uploaded',
+                icon: <CloudUploadOutlined />,
+              },
             ]}
           />
         </div>
 
-        {/* Directory Selection */}
-        <div className="flex items-center gap-4">
+        {/* File Upload Button - Show in all views except tree */}
+        {viewMode !== 'tree' && (
+          <div className="flex items-center gap-4">
+            <Button
+              type="primary"
+              icon={<UploadOutlined />}
+              onClick={handleUploadButtonClick}
+              loading={uploadLoading}
+              className="mb-4"
+            >
+              Upload Files
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".txt,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,.yml,.yaml,.xml,.csv,.sql,.sh,.bat,.ps1,.go,.rs,.java,.cpp,.c,.h,.hpp,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.dart,.lua,.r,.m,.nim,.v,.zig,.cr,.ex,.exs,.elm,.purs,.tsv,.ini,.cfg,.conf,.toml,.env,.gitignore,.dockerfile,.makefile,.cmake"
+              style={{ display: 'none' }}
+              aria-label="Upload files for context"
+              title="Upload files to use as context in conversations"
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  handleFileUpload(Array.from(files));
+                }
+                // Reset input value to allow uploading the same file again
+                e.target.value = '';
+              }}
+            />
+            {viewMode === 'uploaded' && (
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={loadUploadedFiles}
+                loading={loading}
+                className="mb-4"
+              >
+                Refresh
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Directory Selection - Hide in uploaded view */}
+        {viewMode !== 'uploaded' && (
+          <div className="flex items-center gap-4">
           <div className="flex-1">
             <Text className="block mb-2 text-sm font-medium">Select Folder</Text>
             <Select
@@ -221,31 +361,35 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           >
             Load Directory
           </Button>
-        </div>
+          </div>
+        )}
 
         {/* File Selection Status */}
         <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
           <Text className="text-sm text-gray-600">
-            {selectedFiles.size > 0 
-              ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''} selected` 
+            {selectedFiles.size > 0
+              ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''} selected`
               : 'No files selected'
             }
           </Text>
           
           <Text className="text-sm text-gray-600">
-            Directory scanned successfully
+            {viewMode === 'uploaded'
+              ? `${uploadedFiles.length} uploaded file${uploadedFiles.length !== 1 ? 's' : ''}`
+              : 'Directory scanned successfully'
+            }
           </Text>
         </div>
 
-        {/* File Actions */}
+        {/* File Actions - Hide search in uploaded view */}
         <div className="flex items-center justify-between">
           <Space>
             <Button
               onClick={handleSelectAll}
               size="small"
-              disabled={filteredFiles.length === 0}
+              disabled={displayFiles.length === 0}
             >
-              Select All ({filteredFiles.length})
+              Select All ({displayFiles.length})
             </Button>
             <Button
               onClick={handleSelectNone}
@@ -256,36 +400,38 @@ export const ContextModal: React.FC<ContextModalProps> = ({
             </Button>
           </Space>
 
-          <Search
-            placeholder="Filter files..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
-            size="small"
-          />
+          {viewMode !== 'uploaded' && (
+            <Search
+              placeholder="Filter files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-64"
+              size="small"
+            />
+          )}
         </div>
 
         {/* File List */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
           <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 dark:text-gray-400">
-              <div className="col-span-7">File Path</div>
+              <div className="col-span-7">{viewMode === 'uploaded' ? 'File Name' : 'File Path'}</div>
               <div className="col-span-3">Size</div>
-              <div className="col-span-2 text-right">Actions</div>
+              <div className="col-span-2 text-right">Type</div>
             </div>
           </div>
           
           <div className="max-h-96 overflow-y-auto">
-            {loading ? (
+            {(loading || uploadLoading) ? (
               <div className="flex items-center justify-center py-8">
                 <Spin size="large" />
               </div>
-            ) : filteredFiles.length === 0 ? (
+            ) : displayFiles.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No files found
+                {viewMode === 'uploaded' ? 'No uploaded files found' : 'No files found'}
               </div>
             ) : (
-              filteredFiles.map((file) => (
+              displayFiles.map((file) => (
                 <div
                   key={file.path}
                   className="grid grid-cols-12 gap-4 px-4 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -296,7 +442,14 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                       onChange={(e) => handleFileToggle(file.path, e.target.checked)}
                     />
                     {getFileIcon(file)}
-                    <Text className="text-sm truncate">{file.path}</Text>
+                    <Text className="text-sm truncate">
+                      {viewMode === 'uploaded' ? file.name : file.path}
+                    </Text>
+                    {file.is_uploaded && (
+                      <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                        Uploaded
+                      </span>
+                    )}
                   </div>
                   
                   <div className="col-span-3 flex items-center">
@@ -305,8 +458,12 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                     </Text>
                   </div>
                   
-                  <div className="col-span-2 flex justify-end">
-                    {/* Could add file-specific actions here */}
+                  <div className="col-span-2 flex justify-end items-center">
+                    {file.is_uploaded ? (
+                      <Text className="text-xs text-green-600 dark:text-green-400">Upload</Text>
+                    ) : (
+                      <Text className="text-xs text-gray-400">Local</Text>
+                    )}
                   </div>
                 </div>
               ))
@@ -321,7 +478,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
             {selectedFiles.size > 0 && (
               <span className="text-gray-600 dark:text-gray-400 ml-2">
                 Total size: {formatFileSize(
-                  files
+                  [...files, ...uploadedFiles]
                     .filter(f => selectedFiles.has(f.path))
                     .reduce((sum, f) => sum + f.size, 0)
                 )}

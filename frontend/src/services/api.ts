@@ -432,8 +432,6 @@ export class ApiService {
       throw error;
     }
   }
-}
-
   // File upload endpoints
   static async uploadFiles(request: FileUploadRequest): Promise<ApiResponse<FileUploadResponse>> {
     try {
@@ -464,7 +462,6 @@ export class ApiService {
       };
     }
   }
-
 }
 
 export default ApiService;
