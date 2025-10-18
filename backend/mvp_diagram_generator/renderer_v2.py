@@ -12,12 +12,12 @@ import os
 import sys
 import tempfile
 import platform
-from playwright.async_api import async_playwright
 
-# Fix Windows asyncio issue AT MODULE LEVEL
+# Fix Windows asyncio issue AT MODULE LEVEL BEFORE ANY OTHER IMPORTS
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+from playwright.async_api import async_playwright
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -54,12 +54,19 @@ async def render_diagram(
     # URL-encode the diagram code
     encoded_code = urllib.parse.quote(diagram_code)
 
-    # Try multiple rendering strategies
-    strategies = [
-        ("Playwright Browser", render_with_playwright),
-        ("Static HTML with JS Libraries", render_with_static_html),
-        ("Pure Python SVG Generation", render_with_python_svg)
-    ]
+    # Try multiple rendering strategies - skip Playwright on Windows due to subprocess issues
+    if platform.system() == "Windows":
+        logger.info("Windows detected: skipping Playwright strategy due to subprocess limitations")
+        strategies = [
+            ("Static HTML with JS Libraries", render_with_static_html),
+            ("Pure Python SVG Generation", render_with_python_svg)
+        ]
+    else:
+        strategies = [
+            ("Playwright Browser", render_with_playwright),
+            ("Static HTML with JS Libraries", render_with_static_html),
+            ("Pure Python SVG Generation", render_with_python_svg)
+        ]
 
     for strategy_name, strategy_func in strategies:
         try:

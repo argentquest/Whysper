@@ -219,7 +219,7 @@ export const isD2Code = (language: string, inline: boolean): boolean => {
 
 /**
  * Detect if code content contains D2 syntax
- * Uses heuristic pattern matching to identify D2 diagram syntax
+ * Uses simplified pattern matching - backend handles actual validation
  */
 export const isD2Syntax = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -231,22 +231,18 @@ export const isD2Syntax = (code: string): boolean => {
     return false;
   }
 
-  // Check each line for D2 patterns
-  const lines = trimmed.split('\n').filter(line => line.trim().length > 0);
+  // Look for basic D2 patterns
+  const d2Patterns = [
+    /\w+\s*->\s*\w+/, // Connections
+    /direction:\s*\w+/, // Direction
+    /\w+:\s*"[^"]+"\s*\{/, // Object definitions
+    /style\.\w+:/ // Style properties
+  ];
 
-  // At least one line should match a D2 pattern
-  const matchedLines: string[] = [];
-  const hasMatch = lines.some(line => {
-    const matches = D2_PATTERNS.some(pattern => pattern.test(line.trim()));
-    if (matches) {
-      matchedLines.push(line.trim().substring(0, 40));
-    }
-    return matches;
-  });
+  const hasMatch = d2Patterns.some(pattern => pattern.test(trimmed));
 
   if (hasMatch) {
     console.log('🎯 [DIAGRAM DETECTION] D2 syntax detected by pattern matching', {
-      matchedLines: matchedLines.slice(0, 3),
       codePreview: code.substring(0, 50) + '...'
     });
     // Log to backend

@@ -15,6 +15,7 @@ import {
   MoreOutlined,
   DownOutlined,
   EditOutlined,
+  FileSearchOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 
@@ -32,6 +33,7 @@ interface HeaderProps {
   onSystemMessage: () => void;
   onAbout: () => void;
   onCodeFragments: () => void;
+  onGenerateDocumentation: () => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
   onRunSystemPrompt: (systemName: string) => void;
@@ -48,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSystemMessage,
   onAbout,
   onCodeFragments,
+  onGenerateDocumentation,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -232,6 +235,26 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               Set Context
+            </Button>
+          </Tooltip>
+          
+          <Tooltip title="Generate Documentation">
+            <Button
+              type="primary"
+              icon={<FileSearchOutlined />}
+              onClick={onGenerateDocumentation}
+              size="large"
+              style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                padding: '0 20px',
+                height: '44px',
+              }}
+            >
+              Generate Docs
             </Button>
           </Tooltip>
           

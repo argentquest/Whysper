@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Card, Button, Typography, Tooltip, Avatar, Dropdown } from 'antd';
+import { Card, Button, Typography, Tooltip, Avatar, Dropdown, Modal, App } from 'antd';
 import {
   ExpandOutlined,
   CompressOutlined,
@@ -11,12 +11,13 @@ import {
   RobotOutlined,
   FullscreenOutlined,
   FullscreenExitOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Message } from '../../types';
 import { MermaidDiagram } from './MermaidDiagram';
-import { D2Diagram } from './D2Diagram';
+import { D2DiagramBackend } from './D2DiagramBackend';
 import { C4Diagram } from './C4Diagram';
 import {
   isMermaidSyntax,
@@ -24,7 +25,6 @@ import {
   isMermaidCode,
   isD2Syntax,
   prepareD2Code,
-  isD2Code,
   isC4Syntax,
   prepareC4Code,
   isC4Code,
@@ -32,6 +32,123 @@ import {
 } from '../../utils/mermaidUtils';
 import { useTheme } from '../../themes';
 
+
+// Function to print the visual output of a message element
+const printMessageElement = (messageId: string, fullContent: string) => {
+  // Find the message element by ID
+  const messageElement = document.getElementById(`message-${messageId}`);
+  
+  if (!messageElement) {
+    console.error(`Message element with ID message-${messageId} not found`);
+    return;
+  }
+  
+  // Create a unique ID for this print session
+  const printId = `print-${messageId}-${Date.now()}`;
+  
+  // Create a new iframe for printing
+  const printFrame = document.createElement('iframe');
+  printFrame.id = printId;
+  printFrame.style.position = 'absolute';
+  printFrame.style.left = '-9999px';
+  printFrame.style.top = '-9999px';
+  document.body.appendChild(printFrame);
+  
+  // Get the iframe document
+  const frameDoc = printFrame.contentWindow || printFrame.contentDocument.document;
+  
+  // Clone the message content
+  const messageContent = messageElement.querySelector('.message-content');
+  if (!messageContent) {
+    console.error('Message content element not found');
+    document.body.removeChild(printFrame);
+    return;
+  }
+  
+  const clonedContent = messageContent.cloneNode(true);
+  
+  // Expand all collapsible elements in the cloned content
+  const detailsElements = clonedContent.querySelectorAll('details');
+  detailsElements.forEach(details => {
+    details.setAttribute('open', '');
+  });
+  
+  // Write the content to the iframe with the full content
+  frameDoc.document.open();
+  frameDoc.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Whysper AI Response</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          color: #333;
+        }
+        pre {
+          background: #f4f4f4;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+          white-space: pre-wrap;
+        }
+        code {
+          background: #f4f4f4;
+          padding: 2px 4px;
+          border-radius: 3px;
+        }
+        h1, h2, h3 { color: #333; }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        img { max-width: 100%; height: auto; }
+        details { margin-bottom: 16px; }
+        summary {
+          font-weight: 500;
+          padding: 8px 12px;
+          background-color: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        @media print {
+          body { margin: 0; padding: 10px; }
+          .show-more-less { display: none; }
+          summary {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Whysper AI Response</h1>
+      <div id="printed-content"></div>
+    </body>
+    </html>
+  `);
+  frameDoc.document.close();
+  
+  // Append the cloned content to the iframe
+  const printedContent = frameDoc.document.getElementById('printed-content');
+  printedContent.appendChild(clonedContent);
+  
+  // Wait for the content to load, then trigger print
+  setTimeout(() => {
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
+    
+    // Remove the iframe after printing
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
+  }, 500);
+};
 
 interface MessageItemProps {
   message: Message;
@@ -79,12 +196,12 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
   // Handle D2 diagrams
   if (isD2Code(language, inline || false)) {
     const code = prepareD2Code(String(children));
-    console.log('🎯 [DIAGRAM RENDER] Rendering D2 diagram', {
+    console.log('🎯 [DIAGRAM RENDER] Rendering D2 diagram via backend', {
       language,
       codeLength: code.length,
       codePreview: code.substring(0, 60) + '...'
     });
-    return <D2Diagram code={code} title="D2 Diagram" />;
+    return <D2DiagramBackend code={code} title="D2 Diagram" />;
   }
 
   // Regular code blocks
@@ -180,7 +297,7 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
         title={`${diagramLabel} Diagram ${confidenceIcon}`}
       />
     ) : (
-      <D2Diagram
+      <D2DiagramBackend
         key={`diagram-render-${diagramCount}-${type}`}
         code={code}
         title={`${diagramLabel} Diagram ${confidenceIcon}`}
@@ -333,7 +450,7 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
                 title="Mermaid Diagram"
               />
             ) : (
-              <D2Diagram
+              <D2DiagramBackend
                 key={`fallback-diagram-render-${match.index}`}
                 code={decodedCode}
                 title="D2 Diagram"
@@ -391,6 +508,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   onShowCode
 }) => {
   const { theme } = useTheme();
+  const { message: appMessage } = App.useApp();
   const renderMetadataStats = (
     metadata: Message['metadata'],
     options: { theme?: 'light' | 'dark' } = {}
@@ -577,6 +695,37 @@ const MessageItem: React.FC<MessageItemProps> = ({
     }
   };
 
+  const handlePrintContent = () => {
+    Modal.confirm({
+      title: 'Print Response',
+      content: (
+        <div>
+          <p>This will open the browser's print dialog to print or save the response as PDF.</p>
+          <p style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
+            ⚠️ Please note: For large responses with images, this operation may take up to 20 seconds.
+          </p>
+        </div>
+      ),
+      okText: 'Print',
+      cancelText: 'Cancel',
+      onOk: () => {
+        // Show loading message
+        const loadingMessage = appMessage.loading('Preparing response for printing...', 0);
+        
+        // Add a timeout to ensure the loading message is visible
+        setTimeout(() => {
+          printMessageElement(message.id, message.content);
+          
+          // Hide the loading message after a delay to give the print dialog time to appear
+          setTimeout(() => {
+            loadingMessage();
+            appMessage.success('Print dialog opened. You can now print or save the response.');
+          }, 2000);
+        }, 500);
+      },
+    });
+  };
+
   const detectCodeBlocks = (content: string) => {
     const matches = [];
     
@@ -741,6 +890,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 </>
               )}
 
+              {/* Print Button - Only for assistant messages */}
+              {message.role === 'assistant' && (
+                <Tooltip title="Print Response">
+                  <Button
+                    type="text"
+                    icon={<PrinterOutlined />}
+                    onClick={handlePrintContent}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
+              )}
+
               {/* Show Code Button/Dropdown */}
               {codeBlocks.length > 0 && onShowCode && (
                 codeBlocks.length === 1 ? (
@@ -888,9 +1050,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
   }
 
   return (
-    <div 
+    <div
+      id={`message-${message.id}`}
       className="mb-6 w-full"
-      style={{ 
+      style={{
         paddingLeft: '0',
         paddingRight: '0',
       }}
@@ -1001,6 +1164,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     />
                   </Tooltip>
                 </>
+              )}
+
+              {/* Print Button - Only for assistant messages */}
+              {message.role === 'assistant' && (
+                <Tooltip title="Print Response">
+                  <Button
+                    type="text"
+                    icon={<PrinterOutlined />}
+                    onClick={handlePrintContent}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
               )}
 
               {/* Show Code Button/Dropdown */}

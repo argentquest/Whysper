@@ -34,6 +34,8 @@ from .diagram_validators import (
     is_valid_mermaid_diagram,
     is_valid_c4_diagram,
 )
+from .d2_syntax_fixer import fix_d2_syntax
+from .d2_cli_validator import validate_and_fix_d2_with_cli, is_d2_cli_available
 
 # Import rendering and conversion modules
 from .renderer_v2 import render_diagram  # Use new renderer with frontend HTML
@@ -135,7 +137,17 @@ async def generate_diagram(
 
         is_valid = False
         if request.diagram_type == "d2":
-            is_valid = is_valid_d2_diagram(diagram_code)
+            # Use CLI validation if available (most reliable)
+            if is_d2_cli_available():
+                is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
+                    diagram_code, max_attempts=3
+                )
+                diagram_code = corrected_code
+            else:
+                # Fallback to pattern-based validation
+                fix_result = fix_d2_syntax(diagram_code)
+                is_valid = fix_result.is_valid
+                diagram_code = fix_result.corrected_code
         elif request.diagram_type == "mermaid":
             is_valid = is_valid_mermaid_diagram(diagram_code)
         elif request.diagram_type == "c4":
@@ -144,6 +156,16 @@ async def generate_diagram(
                 diagram_code = convert_c4_to_d2(diagram_code)
                 # After conversion, the diagram type is d2
                 request.diagram_type = "d2"
+                # Apply D2 syntax fixing to the converted code
+                if is_d2_cli_available():
+                    is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
+                        diagram_code, max_attempts=3
+                    )
+                    diagram_code = corrected_code
+                else:
+                    fix_result = fix_d2_syntax(diagram_code)
+                    is_valid = fix_result.is_valid
+                    diagram_code = fix_result.corrected_code
 
         if not is_valid:
             error_message = (

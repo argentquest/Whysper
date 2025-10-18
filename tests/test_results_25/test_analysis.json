@@ -1,0 +1,339 @@
+{
+  "timestamp": "2025-10-16T11:52:43.576145",
+  "d2_cli_available": true,
+  "summary": {
+    "total_tests": 25,
+    "tests_with_code": 0,
+    "tests_valid": 0,
+    "tests_fixed": 0,
+    "tests_still_invalid": 0,
+    "success_rate": 0
+  },
+  "analyses": [
+    {
+      "test_id": 1,
+      "name": "Basic Hierarchy and Flow",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 2,
+      "name": "Layout and Missing Connector Type",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 3,
+      "name": "Complex Attributes and Styling",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 4,
+      "name": "Ambiguous Naming and External Entity",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 5,
+      "name": "Multi-Dimensional Containment and Relationship",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 6,
+      "name": "Sequence-like Flow",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 7,
+      "name": "Flowchart Decision Node",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 8,
+      "name": "Inheritance/Class Structure",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 9,
+      "name": "C4: System Context Diagram (C1)",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 10,
+      "name": "C4: Container Diagram (C2) Focus",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 11,
+      "name": "C4: Component Diagram (C3) Focus",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 12,
+      "name": "C4: Flow and Technology (C2)",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 13,
+      "name": "Testing Edge Labels and Protocols",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 14,
+      "name": "Object Styling (Background Color)",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 15,
+      "name": "Directional Layout Change",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 16,
+      "name": "Cross-System Labeled Edge",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 17,
+      "name": "Container Labeling and Grouping",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 18,
+      "name": "Shape Customization",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 19,
+      "name": "Sub-Object Naming (Dots)",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 20,
+      "name": "Testing Simple Naming Conventions",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 21,
+      "name": "C4: Ambiguous C4 Level",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 22,
+      "name": "C4: Container Decomposition of Frontend",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 23,
+      "name": "C4: External System Boundary",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 24,
+      "name": "C4: Component Flow with Databases",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    },
+    {
+      "test_id": 25,
+      "name": "Testing Complex Container Nesting",
+      "has_code": false,
+      "was_fixed": false,
+      "fixes_applied": [],
+      "errors": [],
+      "estimated_valid": false,
+      "code_info": {
+        "original_length": 0,
+        "fixed_length": 0
+      }
+    }
+  ]
+}

@@ -462,6 +462,105 @@ export class ApiService {
       };
     }
   }
+
+  // Documentation endpoints
+  static async generateDocumentation(request: {
+    file_paths: string[];
+    documentation_type: string;
+    output_format?: string;
+    include_examples?: boolean;
+    include_diagrams?: boolean;
+    target_audience?: string;
+    language?: string;
+  }): Promise<ApiResponse<{
+    id: string;
+    content: string;
+    metadata: Record<string, any>;
+    diagrams: Array<Record<string, any>>;
+    examples: Array<Record<string, any>>;
+    references: string[];
+    generated_at: string;
+    processing_time: number;
+    token_usage: Record<string, number>;
+  }>> {
+    try {
+      const response = await api.post('/documentation/generate', request);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate documentation',
+      };
+    }
+  }
+
+  static async generateBulkDocumentation(request: {
+    file_paths: string[];
+    include_source_files?: boolean;
+    documentation_types?: string[];
+  }): Promise<Blob> {
+    try {
+      const response = await api.post('/documentation/generate-bulk', request, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to generate bulk documentation');
+    }
+  }
+
+  static async getDocumentationTemplates(): Promise<ApiResponse<{
+    templates: Array<{
+      name: string;
+      title: string;
+      description: string;
+      supported_formats: string[];
+      instructions: string;
+    }>;
+    count: number;
+  }>> {
+    try {
+      const response = await api.get('/documentation/templates');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch documentation templates',
+      };
+    }
+  }
+
+  static async exportDocumentation(request: {
+    documentation_id: string;
+    export_format: string;
+    content: string;
+    filename?: string;
+    options?: Record<string, any>;
+  }): Promise<ApiResponse<{
+    content: string;
+    format: string;
+    filename: string;
+    content_type: string;
+  }>> {
+    try {
+      const response = await api.post('/documentation/export', request);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to export documentation',
+      };
+    }
+  }
 }
 
 export default ApiService;

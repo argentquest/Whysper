@@ -1,0 +1,503 @@
+{
+  "d2_capability_tests": [
+    {
+    "id": 100,
+    "name": "C4: Deployment Diagram (C3 Focus)",
+    "description": "Generate a **D2 diagram** (C4 Deployment Level) showing the 'E-commerce Backend Service' deployed on a 'Kubernetes Cluster'. Detail the cluster with '3 Worker Nodes' and a 'Load Balancer' in front of them.",
+    "tests": [
+      "Multi-level Deployment",
+      "Cluster Decomposition",
+      "Custom Icon/Shape usage"
+    ]
+  },
+  {
+    "id": 101,
+    "name": "C4: Component Diagram (C3 Focus)",
+    "description": "Generate a **D2 diagram** (C4 Component Level) for the 'User Service'. Decompose it into 'API Gateway', 'User Registration Component', and 'Authentication Component'. Show the flow: Gateway -> Auth -> Registration.",
+    "tests": [
+      "Component Interaction Flow",
+      "Detail Abstraction",
+      "Directional Flow within Boundary"
+    ]
+  },
+  {
+    "id": 102,
+    "name": "Layered Architecture",
+    "description": "Generate a **D2 diagram** showing a standard 3-tier **Layered Architecture** for a 'SaaS Application'. Include the 'Presentation Layer', 'Business Logic Layer', and 'Data Access Layer'. Show strict downward dependencies.",
+    "tests": [
+      "Z-Order Control",
+      "Enclosed Layers",
+      "Strict Dependencies (Downward)"
+    ]
+  },
+  {
+    "id": 103,
+    "name": "Microservices Mesh",
+    "description": "Generate a **D2 diagram** showing five microservices: 'Order', 'Inventory', 'Shipping', 'Billing', and 'Notification'. Use a **different shape** for 'Billing' and show a **Service Mesh** (Boundary) encompassing all but 'Shipping'.",
+    "tests": [
+      "Custom Shapes",
+      "Boundary Grouping",
+      "Indirect Relationships"
+    ]
+  },
+  {
+    "id": 104,
+    "name": "Event-Driven Architecture",
+    "description": "Generate a **D2 diagram** for an **Event-Driven Architecture**. Show 'Producers' (Mobile App, Web Hook), a central 'Kafka Broker', and two 'Consumers' (Analytics Service, Data Warehouse). Use dashed lines for event streams.",
+    "tests": [
+      "Asynchronous Flow",
+      "Edge Styles (Dashed)",
+      "Fan-out Relationship"
+    ]
+  },
+  {
+    "id": 105,
+    "name": "Hexagonal Architecture",
+    "description": "Generate a **D2 diagram** for a **Hexagonal Architecture** ('Ports & Adapters'). Show the central 'Domain Core' and its 'Ports'. Include 'Database Adapter' and 'REST API Adapter' connected to their respective ports.",
+    "tests": [
+      "Shape Customization (Hexagon)",
+      "Port Representation",
+      "Dependency Inversion Modeling"
+    ]
+  },
+  {
+    "id": 106,
+    "name": "AWS VPC Network",
+    "description": "Generate a **D2 diagram** of an **AWS VPC**. Inside, include a 'Public Subnet' with an 'Internet Gateway' and a 'Private Subnet' with a 'RDS PostgreSQL' instance. Show traffic flowing from the Internet -> Gateway -> Public Subnet.",
+    "tests": [
+      "Deep Nesting",
+      "External Gateway Representation",
+      "Cloud Iconography"
+    ]
+  },
+  {
+    "id": 107,
+    "name": "Database Replication",
+    "description": "Generate a **D2 diagram** for a primary-replica setup. Show a 'Primary DB' that asynchronously replicates data to two 'Replica DBs'. Use a **double-arrowhead line** for the replication link.",
+    "tests": [
+      "Specific Edge Arrowheads",
+      "Asynchronous Relationship",
+      "Fan-out Replication"
+    ]
+  },
+  {
+    "id": 108,
+    "name": "Firewall and DMZ",
+    "description": "Generate a **D2 diagram** showing an internal 'Application Server' protected by a 'Firewall'. Place a 'Reverse Proxy' in a **DMZ** boundary outside the Firewall. Show external 'Users' connecting through the proxy.",
+    "tests": [
+      "Security Boundary (DMZ)",
+      "Intercepting Components",
+      "Layered Access Control"
+    ]
+  },
+  {
+    "id": 109,
+    "name": "Load Balancing",
+    "description": "Generate a **D2 diagram** showing a **Load Balancer** distributing traffic equally to three identical 'Web Servers'. Use an **Arc Arrow** or a curved line to represent the distribution.",
+    "tests": [
+      "Non-linear Flow (Arc/Curve)",
+      "Fan-out from a Single Point",
+      "Equal Distribution Representation"
+    ]
+  },
+  {
+    "id": 110,
+    "name": "Payment State Machine",
+    "description": "Generate a **D2 diagram** of a **State Machine** for a payment process: 'Pending' -> 'Processing' -> ('Successful' **OR** 'Failed'). Show the 'Processing' state timing out back to 'Pending'.",
+    "tests": [
+      "State Transitions",
+      "Conditional Branching (Diamond)",
+      "Self-loop/Timeout"
+    ]
+  },
+  {
+    "id": 111,
+    "name": "User Onboarding Flow",
+    "description": "Generate a **D2 flowchart** for user onboarding: 'Start' -> 'Email Verification' (Decision: Verified?). If YES -> 'Profile Setup'. If NO -> 'Send Reminder' (Loop back). End at 'Dashboard'.",
+    "tests": [
+      "Flowchart Shapes (Start/End, Decision)",
+      "Looping/Feedback Path",
+      "Conditional Logic"
+    ]
+  },
+  {
+    "id": 112,
+    "name": "Inventory Reorder Logic",
+    "description": "Generate a **D2 flowchart** detailing the **inventory reorder logic**: 'Check Stock' -> (Decision: Low Stock?). If YES -> 'Create Reorder Ticket' (Subprocess shape). If NO -> 'Wait 24h' (Delay shape).",
+    "tests": [
+      "Custom Flowchart Shapes (Subprocess, Delay)",
+      "Complex Logic",
+      "Time-based Flow Control"
+    ]
+  },
+  {
+    "id": 113,
+    "name": "Entity-Relationship Diagram (ERD)",
+    "description": "Generate a **D2 diagram** showing an **ERD** for three entities: 'Book', 'Author', and 'Publisher'. Show 'Book' has a **many-to-one** relationship with 'Author' and a **one-to-many** relationship with 'Publisher.",
+    "tests": [
+      "Cardinality Notation (Crows Foot/UML)",
+      "ERD Style",
+      "Multi-relationship per Entity"
+    ]
+  },
+  {
+    "id": 114,
+    "name": "UML Class Diagram",
+    "description": "Generate a **D2 diagram** showing a simplified **UML Class Diagram** for 'Animal' (abstract class), 'Dog' (subclass), and 'Vet' (association). Show 'Dog' **inherits** from 'Animal' and 'Vet' **aggregates** 'Dog' (hollow diamond).",
+    "tests": [
+      "Inheritance (UML Arrow)",
+      "Aggregation (Hollow Diamond)",
+      "Class Attributes and Methods"
+    ]
+  },
+  {
+    "id": 115,
+    "name": "Database Schema",
+    "description": "Generate a **D2 diagram** showing a table 'Users' with fields `id` (PK), `email`, and `created_at`. Show it linked to a 'Orders' table via a **Foreign Key** on `user_id`.",
+    "tests": [
+      "Field/Attribute Listing",
+      "Key Notation (PK, FK)",
+      "Database Iconography"
+    ]
+  },
+  {
+    "id": 116,
+    "name": "Custom Shape & Color Palette",
+    "description": "Generate a **D2 diagram** with six nodes arranged in a circle. Assign a **unique, vibrant color** and a **unique, non-standard shape** (e.g., triangle, pentagon) to each node.",
+    "tests": [
+      "Circular Layout",
+      "Custom Shapes & Colors",
+      "Styling Overrides"
+    ]
+  },
+  {
+    "id": 117,
+    "name": "Orthogonal vs. Spline Edges",
+    "description": "Generate a **D2 diagram** with four nodes (A, B, C, D). Show A -> B using a **straight orthogonal** edge and C -> D using a **curvy spline** edge.",
+    "tests": [
+      "Specific Edge Routing (Orthogonal/Spline)",
+      "Mixed Routing in one Diagram",
+      "Edge Styling Control"
+    ]
+  },
+  {
+    "id": 118,
+    "name": "Directionality Test (Top to Bottom/Left to Right)",
+    "description": "Generate a **D2 diagram** showing two distinct groups of nodes. Set 'Group 1' to render **Top to Bottom** and 'Group 2' to render **Left to Right**. Show a link between the two groups.",
+    "tests": [
+      "Directional Overrides",
+      "Mixed Layouts",
+      "Cross-Directional Linking"
+    ]
+  },
+  {
+    "id": 119,
+    "name": "Nested Container Styling",
+    "description": "Generate a **D2 diagram** showing a 'Region' container. Inside, place a 'Cluster' container. Set the 'Region' border to **thick solid blue** and the 'Cluster' border to **thin dashed red**.",
+    "tests": [
+      "Multi-level Styling",
+      "Border Style Control (Thickness, Pattern, Color)",
+      "Nesting Complexity"
+    ]
+  },
+  {
+    "id": 120,
+    "name": "The Scientific Method",
+    "description": "Generate a **D2 diagram** modeling the **Scientific Method**: Observation -> Hypothesis -> Experiment -> Analysis -> Conclusion. Show a feedback loop from 'Conclusion' back to 'Hypothesis' (Refinement).",
+    "tests": [
+      "Abstract Modeling",
+      "Non-Linear Flow",
+      "Feedback Loop"
+    ]
+  },
+  {
+    "id": 121,
+    "name": "Supply Chain Flow",
+    "description": "Generate a **D2 diagram** of a simplified **Supply Chain**: Raw Material Supplier -> Manufacturer -> Distributor -> Retail Store -> Customer. Use **different connector labels** (e.g., *Ships*, *Buys*, *Sells*).",
+    "tests": [
+      "Labeled Edges",
+      "Complex Sequence",
+      "Industry-Specific Model"
+    ]
+  },
+  {
+    "id": 122,
+    "name": "SWOT Analysis",
+    "description": "Generate a **D2 diagram** that visually represents a **SWOT Analysis** (Strengths, Weaknesses, Opportunities, Threats) in a 2x2 grid layout.",
+    "tests": [
+      "Grid/Matrix Layout",
+      "Non-Flowchart Structure",
+      "Text-Heavy Nodes"
+    ]
+  },
+  {
+    "id": 123,
+    "name": "Project Management Phases",
+    "description": "Generate a **D2 diagram** showing the five phases of a project: Initiation, Planning, Execution, Monitoring, Closing. Arrange them in a **horizontal timeline** with arrows showing sequential progression.",
+    "tests": [
+      "Timeline Layout",
+      "Sequential Ordering",
+      "Horizontal Flow"
+    ]
+  },
+  {
+    "id": 124,
+    "name": "The Water Cycle",
+    "description": "Generate a **D2 diagram** showing the **Water Cycle**: Evaporation -> Condensation -> Precipitation -> Collection. Use a **circular layout** to show the continuous cycle.",
+    "tests": [
+      "Circular/Continuous Flow",
+      "Abstract Science Modeling",
+      "Looping Layout"
+    ]
+  },
+  {
+    "id": 125,
+    "name": "Basic UML Sequence Diagram",
+    "description": "Generate a **D2 diagram** that mimics a **UML Sequence Diagram** for 'Client' requesting data from 'Server'. Show 'Client' sends 'Request' and 'Server' replies with 'Response' down **Lifelines**.",
+    "tests": [
+      "Lifeline Representation",
+      "Vertical Sequence Flow",
+      "Message Passing"
+    ]
+  },
+  {
+    "id": 126,
+    "name": "Time-Based Gantt Chart",
+    "description": "Generate a **D2 diagram** that loosely represents a **Gantt Chart** for three tasks: 'Design' (3 days), 'Develop' (5 days), 'Test' (2 days). Show them sequentially with the length of the node proportional to time.",
+    "tests": [
+      "Time-based Visualization",
+      "Proportional Sizing",
+      "Horizontal Timeline"
+    ]
+  },
+  {
+    "id": 127,
+    "name": "Activity Diagram (Fork/Join)",
+    "description": "Generate a **D2 diagram** showing an **Activity Diagram** with a 'Fork' after 'Start' that leads to two parallel activities: 'Prepare Data' and 'Setup Environment'. They 'Join' before the final 'Run Test'.",
+    "tests": [
+      "Parallel Processing (Fork/Join)",
+      "Activity Notation",
+      "Synchronization Bar"
+    ]
+  },
+  {
+    "id": 128,
+    "name": "Mind Map",
+    "description": "Generate a **D2 diagram** styled as a **Mind Map**. The central 'Idea' branches out to three main 'Topics', each with two 'Sub-points'. Use a radial or tree structure.",
+    "tests": [
+      "Radial/Tree Layout",
+      "Hierarchical Branching",
+      "Non-directional Links"
+    ]
+  },
+  {
+    "id": 129,
+    "name": "Multi-Line Node Label",
+    "description": "Generate a **D2 diagram** with a node 'API Gateway'. Give it a **multi-line label** that includes the title, version, and a brief description (e.g., 'v2.1', 'Handles Auth and Rate Limiting').",
+    "tests": [
+      "Multi-line Text Formatting",
+      "Rich Node Content",
+      "Text wrapping"
+    ]
+  },
+  {
+    "id": 130,
+    "name": "Bidirectional Labeled Edge",
+    "description": "Generate a **D2 diagram** showing 'User' and 'System'. Connect them with a **bidirectional edge**. Label one direction 'Sends Data' and the other direction 'Receives Response'.",
+    "tests": [
+      "Bidirectional Edge Labels",
+      "Multiple Labels on a Single Edge",
+      "Arrowhead Control"
+    ]
+  },
+  {
+    "id": 131,
+    "name": "Edge with Custom Stroke/Weight",
+    "description": "Generate a **D2 diagram** showing 'Database' connected to 'Analytics Service'. Use a **thick, dotted purple** line for the connection to signify a high-volume ETL process.",
+    "tests": [
+      "Custom Line Styles (Thickness, Pattern, Color)",
+      "ETL Representation",
+      "Styling Significance"
+    ]
+  },
+  {
+    "id": 132,
+    "name": "External Hyperlink Annotation",
+    "description": "Generate a **D2 diagram** with a 'Documentation' node. Add an **external hyperlink annotation** to the node text (e.g., `[Docs Link](https://docs.example.com)`).",
+    "tests": [
+      "Hyperlink/URL Embedding",
+      "Rich Text in Nodes",
+      "Interactive Element"
+    ]
+  },
+  {
+    "id": 133,
+    "name": "Diagram with Embedded Table",
+    "description": "Generate a **D2 diagram** showing a 'Configuration' node. Inside the node, embed a **small table** listing 'Key', 'Value', and 'Default' for three settings.",
+    "tests": [
+      "Text/Markdown Table Embedding within a Node",
+      "Complex Node Content",
+      "Nested Formatting"
+    ]
+  },
+  {
+    "id": 134,
+    "name": "Diagram with Code Snippet",
+    "description": "Generate a **D2 diagram** with a 'Function' node. Inside the node, embed a **multi-line code snippet** (e.g., three lines of Python or JavaScript) with appropriate syntax highlighting/fencing.",
+    "tests": [
+      "Code Block Embedding",
+      "Pre-formatted Text",
+      "Syntax Highlighting Emulation"
+    ]
+  },
+  {
+    "id": 135,
+    "name": "Git Branching Model",
+    "description": "Generate a **D2 diagram** illustrating a simplified **Git Flow** with 'main', 'develop', and 'feature' branches. Show merging from 'feature' to 'develop' and 'develop' to 'main'.",
+    "tests": [
+      "Tree Structure",
+      "Merge Operations",
+      "Branch Naming/Style"
+    ]
+  },
+  {
+    "id": 136,
+    "name": "Peer-to-Peer Network",
+    "description": "Generate a **D2 diagram** of a 5-node **P2P network** where every node is connected to every other node (a complete graph $K_5$).",
+    "tests": [
+      "Complete Graph Rendering",
+      "High Edge Density",
+      "Layout Optimization (Circular)"
+    ]
+  },
+  {
+    "id": 137,
+    "name": "SaaS Tenant Isolation",
+    "description": "Generate a **D2 diagram** showing a Multi-Tenant SaaS. Include two boundaries: 'Tenant A' and 'Tenant B'. Show a shared 'App Server' but separate 'Database A' and 'Database B'.",
+    "tests": [
+      "Shared/Separate Resource Modeling",
+      "Boundary Isolation",
+      "Resource Scoping"
+    ]
+  },
+  {
+    "id": 138,
+    "name": "Circular Dependency",
+    "description": "Generate a **D2 diagram** showing three components 'A', 'B', and 'C' where 'A' depends on 'B', 'B' depends on 'C', and 'C' depends on 'A'. Label it clearly as a **Circular Dependency**.",
+    "tests": [
+      "Edge Cycles",
+      "Dependency Warning Highlight",
+      "Labeling of Cycles"
+    ]
+  },
+  {
+    "id": 139,
+    "name": "Data Transformation Pipeline",
+    "description": "Generate a **D2 diagram** for an **ETL pipeline**: 'S3 Source' $\rightarrow$ 'Lambda Transform' $\rightarrow$ 'S3 Intermediate' $\rightarrow$ 'Glue Job' $\rightarrow$ 'Redshift Sink'.",
+    "tests": [
+      "Linear Pipeline Flow",
+      "Distinct Service Icons",
+      "Sequential Data Flow"
+    ]
+  },
+  {
+    "id": 140,
+    "name": "Human Resources Structure",
+    "description": "Generate a **D2 diagram** modeling an **Organizational Chart** for a small team: CEO at the top, two managers below, each with three reports. Use the `tree` layout.",
+    "tests": [
+      "Hierarchical Tree Layout",
+      "Org Chart Symbols",
+      "Depth Control"
+    ]
+  },
+  {
+    "id": 141,
+    "name": "Security Access Matrix",
+    "description": "Generate a **D2 diagram** that visually represents a **simple Access Matrix**: show 'User A' can *Read* 'Resource X' but not *Write*, and 'User B' can *Write* 'Resource Y' but not *Read*. Use specific colors for Read/Write.",
+    "tests": [
+      "Matrix Representation",
+      "Color-coded Permissions",
+      "Conditional Edge Labeling"
+    ]
+  },
+  {
+    "id": 142,
+    "name": "Multi-Cloud Deployment",
+    "description": "Generate a **D2 diagram** with two large boundaries: 'AWS Cloud' and 'Azure Cloud'. Show a 'Web App' in AWS connecting to an 'Auth Service' in Azure via a **VPN Gateway**.",
+    "tests": [
+      "Multi-Boundary",
+      "Cross-Boundary Link",
+      "Gateway Representation"
+    ]
+  },
+  {
+    "id": 143,
+    "name": "System Time Sync Flow",
+    "description": "Generate a **D2 diagram** showing a 'Local Server' attempting to sync time: 'Local' -> 'NTP Server 1' (Primary) and, if Primary fails (dashed line/X label), 'Local' -> 'NTP Server 2' (Secondary).",
+    "tests": [
+      "Failover/Fallback Path",
+      "Conditional Edge",
+      "Prioritized Connections"
+    ]
+  },
+  {
+    "id": 144,
+    "name": "Kubernetes Pod Structure",
+    "description": "Generate a **D2 diagram** showing a 'Kubernetes Node' boundary. Inside, place a 'Pod' boundary containing a 'Main Container' and a 'Sidecar Container'.",
+    "tests": [
+      "Deep Container Nesting",
+      "Sidecar Pattern",
+      "Micro-level Architecture"
+    ]
+  },
+  {
+    "id": 145,
+    "name": "Weighted Edge Graph",
+    "description": "Generate a **D2 diagram** showing a simple graph (A, B, C, D) where the edges are labeled with **numerical weights** (e.g., A -> B (5), B -> C (3)).",
+    "tests": [
+      "Numerical Edge Weights",
+      "Graph Theory Modeling",
+      "Edge Labeling"
+    ]
+  },
+  {
+    "id": 146,
+    "name": "CI/CD Pipeline",
+    "description": "Generate a **D2 diagram** showing a **CI/CD Pipeline**: 'Code Commit' $\rightarrow$ 'Build Stage' $\rightarrow$ 'Test Stage' $\rightarrow$ (Manual Approval) $\rightarrow$ 'Deployment Stage'. Use an **hourglass shape** for 'Manual Approval'.",
+    "tests": [
+      "Pipeline Steps",
+      "Custom Shape for Intervention",
+      "Sequential Flow with Gate"
+    ]
+  },
+  {
+    "id": 147,
+    "name": "Data Privacy Zones",
+    "description": "Generate a **D2 diagram** with two boundaries: 'Public Data Zone' and 'Private Data Zone'. Show a 'Data Sanitization Service' that connects the two zones, acting as a gateway.",
+    "tests": [
+      "Zonal Separation",
+      "Intermediate Gateway Component",
+      "Controlled Access Modeling"
+    ]
+  },
+  {
+    "id": 148,
+    "name": "Asset Tracking",
+    "description": "Generate a **D2 diagram** showing assets linked by ownership: 'Company' owns 'Building A' and 'Vehicle X'. 'Building A' contains 'Server Rack 1'. Use a clear **contains/owns** relationship.",
+    "tests": [
+      "Part-of/Belongs-to Relationships",
+      "Clear Verb Labels",
+      "Asset Hierarchy"
+    ]
+  },
+  {
+    "id": 149,
+    "name": "Non-Deterministic Flow",
+    "description": "Generate a **D2 flowchart** where 'Event' leads to 'Process A' and 'Process B' **concurrently** without a formal Fork/Join, implying non-deterministic execution order.",
+    "tests": [
+      "Concurrent/Implicit Parallelism",
+      "Ambiguous Flow",
+      "Layout of Parallel Paths"
+    ]
+  }]
+}

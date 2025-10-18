@@ -12,6 +12,8 @@ if a given string contains valid diagram syntax for the respective type.
 """
 
 import re
+from .d2_syntax_fixer import fix_d2_syntax
+from .d2_cli_validator import validate_d2_with_cli, is_d2_cli_available
 
 # Mermaid diagram type keywords
 # These are the main diagram types supported by Mermaid.js
@@ -112,19 +114,19 @@ def is_valid_d2_diagram(code: str) -> bool:
     """
     Validate if a string contains valid D2 diagram syntax.
     
-    This function checks if the given code contains D2 patterns by searching
-    for common D2 syntax constructs like arrows, shapes, and style definitions.
+    This function first tries to use the D2 CLI executable for reliable validation,
+    and falls back to pattern-based validation if CLI is not available.
     
     Args:
         code (str): The diagram code to validate
         
     Returns:
-        bool: True if valid D2 syntax is detected, False otherwise
+        bool: True if valid D2 syntax is detected or can be fixed, False otherwise
         
     Note:
-        - Checks all non-empty lines for D2 patterns
-        - Uses regex patterns to detect D2 syntax
-        - More comprehensive than keyword matching
+        - Prefers D2 CLI validation when available (most reliable)
+        - Falls back to pattern-based validation if CLI not available
+        - Attempts to fix common syntax errors before validation
     """
     # Input validation
     if not code or not isinstance(code, str):
@@ -135,12 +137,20 @@ def is_valid_d2_diagram(code: str) -> bool:
     if not trimmed:
         return False
 
-    # Check each non-empty line for D2 patterns
-    lines = [line.strip() for line in trimmed.split("\n") if line.strip()]
-    return any(
-        any(pattern.search(line) for pattern in D2_PATTERNS)
-        for line in lines
-    )
+    # First try to validate using D2 CLI if available
+    if is_d2_cli_available():
+        is_valid, _ = validate_d2_with_cli(trimmed)
+        if is_valid:
+            return True
+        
+        # If CLI validation fails, try to fix and validate again
+        from .d2_cli_validator import validate_and_fix_d2_with_cli
+        is_valid, fixed_code, _ = validate_and_fix_d2_with_cli(trimmed)
+        return is_valid
+    
+    # Fallback to pattern-based validation if CLI not available
+    result = fix_d2_syntax(trimmed)
+    return result.is_valid
 
 def is_valid_c4_diagram(code: str) -> bool:
     """

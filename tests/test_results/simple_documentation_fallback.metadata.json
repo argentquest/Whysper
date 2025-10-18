@@ -1,0 +1,16 @@
+{
+  "result_id": "c2a2f103-760a-46a3-a6b1-71c3fe3f2ccd",
+  "processing_time": 10.393013715744019,
+  "metadata": {
+    "file_count": 1,
+    "documentation_type": "api",
+    "output_format": "markdown",
+    "template": null,
+    "languages": [
+      "python"
+    ],
+    "total_functions": 0,
+    "total_classes": 0
+  },
+  "content_length": 7672
+}

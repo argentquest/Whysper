@@ -19,7 +19,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, diagram_events
+    chat, code, files, settings, system, diagram_events, d2_render
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -85,4 +85,13 @@ api_router.include_router(
     diagram_generator_api.router,
     prefix="/diagrams",
     tags=["diagrams"],
+)
+
+# ==================== D2 Rendering Endpoints ====================
+# D2 diagram rendering using CLI
+# Available at: /api/v1/d2/* (render, validate, batch, info, health)
+api_router.include_router(
+    d2_render.router,
+    prefix="/d2",
+    tags=["d2"],
 )

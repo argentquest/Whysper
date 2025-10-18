@@ -1,1 +1,0 @@
-# Tests for Whysper Web2 Backend
