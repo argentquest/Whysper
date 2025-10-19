@@ -3,7 +3,7 @@
  * Handles communication with the backend D2 rendering API
  */
 
-import { ApiService } from './api';
+import ApiService from './api';
 
 export interface D2RenderRequest {
   code: string;
@@ -65,10 +65,9 @@ export interface D2InfoResponse {
 
 export class D2ApiService {
   private static instance: D2ApiService;
-  private api: ApiService;
 
   private constructor() {
-    this.api = ApiService.getInstance();
+    // ApiService is a static class, no initialization needed
   }
 
   static getInstance(): D2ApiService {
@@ -84,7 +83,7 @@ export class D2ApiService {
   async renderD2(request: D2RenderRequest): Promise<D2RenderResponse> {
     try {
       console.log('[D2 API] Rendering D2 diagram via backend API');
-      const response = await this.api.post('/api/v1/d2/render', request);
+      const response = await ApiService.post('/d2/render', request);
       return response.data;
     } catch (error) {
       console.error('[D2 API] Render failed:', error);
@@ -98,7 +97,7 @@ export class D2ApiService {
   async validateD2(request: D2ValidationRequest): Promise<D2ValidationResponse> {
     try {
       console.log('[D2 API] Validating D2 code via backend API');
-      const response = await this.api.post('/api/v1/d2/validate', request);
+      const response = await ApiService.post('/d2/validate', request);
       return response.data;
     } catch (error) {
       console.error('[D2 API] Validation failed:', error);
@@ -112,7 +111,7 @@ export class D2ApiService {
   async renderD2Batch(request: D2BatchRenderRequest): Promise<D2BatchRenderResponse> {
     try {
       console.log(`[D2 API] Rendering batch of ${request.codes.length} diagrams`);
-      const response = await this.api.post('/api/v1/d2/render/batch', request);
+      const response = await ApiService.post('/d2/render/batch', request);
       return response.data;
     } catch (error) {
       console.error('[D2 API] Batch render failed:', error);
@@ -126,7 +125,7 @@ export class D2ApiService {
   async getD2Info(): Promise<D2InfoResponse> {
     try {
       console.log('[D2 API] Getting D2 CLI info');
-      const response = await this.api.get('/api/v1/d2/info');
+      const response = await ApiService.get('/d2/info');
       return response.data;
     } catch (error) {
       console.error('[D2 API] Get info failed:', error);
@@ -140,7 +139,7 @@ export class D2ApiService {
   async checkD2Health(): Promise<{ status: string; d2_available: boolean; timestamp: string; error?: string }> {
     try {
       console.log('[D2 API] Checking D2 service health');
-      const response = await this.api.get('/api/v1/d2/health');
+      const response = await ApiService.get('/d2/health');
       return response.data;
     } catch (error) {
       console.error('[D2 API] Health check failed:', error);

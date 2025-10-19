@@ -10,13 +10,15 @@ import uuid
 from typing import Tuple, Optional, Dict, Any
 import logging
 from datetime import datetime
-import json
 
 logger = logging.getLogger(__name__)
 
 class D2RenderService:
     """Service for rendering D2 diagrams using the D2 CLI"""
-    
+
+    # Maximum D2 code length (500KB should be more than enough for any diagram)
+    MAX_D2_CODE_LENGTH = 500 * 1024  # 500KB
+
     def __init__(self):
         self.d2_executable = self._find_d2_executable()
         if not self.d2_executable:
@@ -51,15 +53,19 @@ class D2RenderService:
     def validate_d2_code(self, d2_code: str) -> Tuple[bool, str]:
         """
         Validate D2 code using the CLI
-        
+
         Args:
             d2_code (str): The D2 code to validate
-            
+
         Returns:
             Tuple[bool, str]: (is_valid, error_message)
         """
         if not d2_code or not d2_code.strip():
             return False, "D2 code is empty"
+
+        # Check code length to prevent excessive memory usage
+        if len(d2_code) > self.MAX_D2_CODE_LENGTH:
+            return False, f"D2 code too large ({len(d2_code)} bytes). Maximum allowed: {self.MAX_D2_CODE_LENGTH} bytes"
         
         # Create temporary input file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_file:
@@ -68,7 +74,8 @@ class D2RenderService:
             temp_file.flush()
         
         try:
-            # Run D2 to validate using stdout output
+            # Run D2 to validate by attempting to render to stdout
+            # Don't use -t flag to ensure validation matches actual rendering
             result = subprocess.run(
                 [self.d2_executable, temp_file_name, '-'],
                 capture_output=True,
@@ -76,7 +83,9 @@ class D2RenderService:
                 check=True,
                 timeout=10
             )
-            
+
+            # Log validation success with output info
+            logger.debug(f"D2 validation successful - output size: {len(result.stdout)} bytes")
             return True, "D2 Syntax is Valid."
             
         except subprocess.CalledProcessError as e:
@@ -110,16 +119,20 @@ class D2RenderService:
     def render_d2_to_svg(self, d2_code: str, output_dir: Optional[str] = None) -> Tuple[bool, str, Optional[str]]:
         """
         Render D2 code to SVG using the CLI
-        
+
         Args:
             d2_code (str): The D2 code to render
             output_dir (Optional[str]): Directory to save the SVG. If None, uses temp directory.
-            
+
         Returns:
             Tuple[bool, str, Optional[str]]: (success, error_message, svg_path_or_svg_content)
         """
         if not d2_code or not d2_code.strip():
             return False, "D2 code is empty", None
+
+        # Check code length
+        if len(d2_code) > self.MAX_D2_CODE_LENGTH:
+            return False, f"D2 code too large ({len(d2_code)} bytes). Maximum allowed: {self.MAX_D2_CODE_LENGTH} bytes", None
         
         # Create temporary input file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_file:
@@ -145,7 +158,13 @@ class D2RenderService:
                 check=True,
                 timeout=30
             )
-            
+
+            # Log rendering success
+            if result.stdout:
+                logger.debug(f"D2 render output: {result.stdout.strip()}")
+            if result.stderr:
+                logger.debug(f"D2 render stderr: {result.stderr.strip()}")
+
             # Check if output file was created
             if os.path.exists(svg_path) and os.path.getsize(svg_path) > 0:
                 # Read the SVG content

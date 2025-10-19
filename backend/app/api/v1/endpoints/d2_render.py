@@ -4,12 +4,14 @@ Handles D2 diagram rendering requests using the CLI service
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
 import asyncio
+import os
 from datetime import datetime
+from pathlib import Path
 
 from app.services.d2_render_service import get_d2_service, D2RenderService
 from security_utils import SecurityUtils
@@ -333,3 +335,57 @@ async def d2_health_check(d2_service: D2RenderService = Depends(get_d2_service))
             "error": str(e),
             "timestamp": datetime.now().isoformat(),
         }
+
+
+@router.get("/download/{filename}")
+async def download_d2_svg(filename: str):
+    """
+    Download a pre-rendered D2 SVG file
+
+    This endpoint serves SVG files that were generated during the chat conversation.
+    Files are stored in backend/static/d2_diagrams/ directory.
+
+    Args:
+        filename: The SVG filename to download (e.g., d2_diagram_20251018_123456_abc123.svg)
+
+    Returns:
+        FileResponse: The SVG file for download
+    """
+    # Validate filename to prevent directory traversal attacks
+    if ".." in filename or "/" in filename or "\\" in filename:
+        logger.warning(f"[D2 DOWNLOAD] Attempted directory traversal: {filename}")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid filename"
+        )
+
+    # Ensure filename ends with .svg
+    if not filename.endswith(".svg"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only SVG files can be downloaded"
+        )
+
+    # Construct file path
+    svg_dir = Path("backend") / "static" / "d2_diagrams"
+    file_path = svg_dir / filename
+
+    # Check if file exists
+    if not file_path.exists() or not file_path.is_file():
+        logger.warning(f"[D2 DOWNLOAD] File not found: {file_path}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"SVG file '{filename}' not found"
+        )
+
+    logger.info(f"[D2 DOWNLOAD] Serving file: {filename}")
+
+    # Return the file
+    return FileResponse(
+        path=str(file_path),
+        media_type="image/svg+xml",
+        filename=filename,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )

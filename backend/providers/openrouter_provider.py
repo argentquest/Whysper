@@ -98,15 +98,23 @@ class OpenRouterProvider(BaseAIProvider):
         """Extract response content from OpenRouter response."""
         try:
             # Standard OpenAI format path
-            content = response_data["choices"][0]["message"]["content"]
-            
+            message = response_data["choices"][0]["message"]
+            content = message.get("content", "")
+
+            # Handle Grok's reasoning mode - if content is empty but reasoning exists
+            if not content or content.strip() == "":
+                reasoning = message.get("reasoning", "")
+                if reasoning:
+                    # Use reasoning as the response when content is empty
+                    content = reasoning
+
             # OpenRouter might include model info or routing details
             if "model" in response_data:
                 actual_model = response_data.get("model", "unknown")
                 # Could log or use this info if needed in the future
-            
-            return content
-            
+
+            return content if content else ""
+
         except (KeyError, IndexError, TypeError) as e:
             raise Exception(f"Failed to extract OpenRouter response content: {str(e)}")
     

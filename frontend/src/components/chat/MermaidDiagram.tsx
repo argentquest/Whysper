@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
-import { Card, Button, Space, message as antMessage } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined } from '@ant-design/icons';
+import { Card, Button, Space, message as antMessage, Tooltip } from 'antd';
+import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { ApiService } from '../../services/api';
 import { validateAndCorrectMermaidSyntax, looksLikeValidMermaid } from '../../utils/mermaidSyntaxValidator';
 
@@ -36,6 +36,11 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
   const [isValid, setIsValid] = useState<boolean | null>(null); // null = checking, true = valid, false = invalid
   const [svgContent, setSvgContent] = useState<string>('');
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
+  const [zoom, setZoom] = useState(1); // Zoom level (1 = 100%)
+  const [pan, setPan] = useState({ x: 0, y: 0 }); // Pan position
+  const [isPanning, setIsPanning] = useState(false);
+  const [startPan, setStartPan] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -189,7 +194,22 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
     };
 
     renderDiagram();
-  }, [code]);
+  }, [code, renderKey]); // Re-render when code OR renderKey changes
+
+  // Monitor container visibility and size changes to trigger re-render
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      // Trigger re-render when container size changes (e.g., fullscreen toggle)
+      console.log('🎨 [MERMAID DIAGRAM] Container resized, triggering re-render');
+      setRenderKey(prev => prev + 1);
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   // If diagram is invalid, don't render anything (fail silently)
   if (isValid === false) {
@@ -284,6 +304,43 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
     window.open(url, '_blank');
   };
 
+  // Zoom controls
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.25, 3)); // Max 300%
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.25, 0.25)); // Min 25%
+  };
+
+  const handleResetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  // Pan controls
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom === 1) return; // Only allow panning when zoomed
+    setIsPanning(true);
+    setStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    setPan({ x: e.clientX - startPan.x, y: e.clientY - startPan.y });
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Mouse wheel zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(prev => Math.max(0.25, Math.min(3, prev + delta)));
+  };
+
   return (
     <Card
       title={title || 'Mermaid Diagram'}
@@ -291,6 +348,29 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
       style={{ marginTop: 16 }}
       extra={
         <Space>
+          <Tooltip title={`Zoom: ${Math.round(zoom * 100)}%`}>
+            <Space.Compact size="small">
+              <Button
+                icon={<ZoomOutOutlined />}
+                size="small"
+                onClick={handleZoomOut}
+                disabled={zoom <= 0.25}
+              />
+              <Button
+                size="small"
+                onClick={handleResetZoom}
+                style={{ minWidth: 50 }}
+              >
+                {Math.round(zoom * 100)}%
+              </Button>
+              <Button
+                icon={<ZoomInOutlined />}
+                size="small"
+                onClick={handleZoomIn}
+                disabled={zoom >= 3}
+              />
+            </Space.Compact>
+          </Tooltip>
           <Button
             icon={<CopyOutlined />}
             size="small"
@@ -378,15 +458,50 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
 
       {!isRendering && !error && (
         <div
-          ref={containerRef}
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '20px',
-            overflow: 'auto',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default',
+            background: '#f5f5f5',
+            borderRadius: '4px',
+            minHeight: '200px',
           }}
-        />
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+        >
+          <div
+            ref={containerRef}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+              transformOrigin: 'center center',
+              transition: isPanning ? 'none' : 'transform 0.1s ease-out',
+            }}
+          />
+          {zoom > 1 && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                right: '10px',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                pointerEvents: 'none',
+              }}
+            >
+              Click and drag to pan • Scroll to zoom
+            </div>
+          )}
+        </div>
       )}
     </Card>
   );

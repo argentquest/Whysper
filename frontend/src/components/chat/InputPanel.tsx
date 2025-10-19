@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Select, Tooltip, message as antMessage } from 'antd';
+import { Button, Select, Tooltip, message as antMessage } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
@@ -8,9 +8,9 @@ import {
   CompressOutlined,
   ExpandOutlined,
 } from '@ant-design/icons';
-import type { TextAreaRef } from 'antd/es/input/TextArea';
+import Editor from '@monaco-editor/react';
+import type * as Monaco from 'monaco-editor';
 
-const { TextArea } = Input;
 const { Option } = Select;
 
 interface SubagentCommand {
@@ -33,7 +33,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   onSendMessage,
   onClear,
   loading = false,
-  placeholder = "Type your next question. Press Enter to send, Shift+Enter for a new line.",
+  placeholder = "Type your next question. Press Ctrl+Enter to send.",
   currentAgent,
   disabled = false,
   subagentCommands = [],
@@ -41,22 +41,57 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const [message, setMessage] = useState('');
   const [lastSentMessage, setLastSentMessage] = useState<string>('');
   // Compute dynamic placeholder based on current agent
-  const dynamicPlaceholder = currentAgent ? `Ask the ${currentAgent} agent... Press Enter to send, Shift+Enter for a new line.` : "Type your next question. Press Enter to send, Shift+Enter for a new line.";
+  const dynamicPlaceholder = currentAgent ? `Ask the ${currentAgent} agent... Press Ctrl+Enter to send.` : "Type your next question. Press Ctrl+Enter to send.";
   const finalPlaceholder = placeholder || dynamicPlaceholder;
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
-  const textAreaRef = useRef<TextAreaRef>(null);
-  const [currentHeight, setCurrentHeight] = useState<number>(4); // Track current rows
-  const [previousHeight, setPreviousHeight] = useState<number>(4); // Store previous height for restoration
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [currentHeight, setCurrentHeight] = useState<number>(120); // Track current height in pixels
+  const [previousHeight, setPreviousHeight] = useState<number>(120); // Store previous height for restoration
 
-  // Auto-resize textarea
+  // Refs to store current values for key binding
+  const messageRef = useRef(message);
+  const loadingRef = useRef(loading);
+  const selectedCommandRef = useRef(selectedCommand);
+
+  // Update refs when values change
   useEffect(() => {
-    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
+    messageRef.current = message;
   }, [message]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    selectedCommandRef.current = selectedCommand;
+  }, [selectedCommand]);
+
+  // Handle editor mount
+  const handleEditorDidMount = (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
+    editorRef.current = editor;
+
+    // Add custom key binding: Ctrl+Enter to submit
+    editor.addAction({
+      id: 'submit-message',
+      label: 'Submit Message',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+      run: () => {
+        const currentMessage = messageRef.current;
+        const currentLoading = loadingRef.current;
+        const currentCommand = selectedCommandRef.current;
+
+        if (currentMessage.trim() && !currentLoading) {
+          const messageToSend = currentMessage.trim();
+          setLastSentMessage(messageToSend);
+          onSendMessage(messageToSend, currentCommand);
+          setMessage('');
+          setSelectedCategory('');
+          setSelectedCommand('');
+        }
+      }
+    });
+  };
 
   // Get unique categories from subagent commands
   const categories = React.useMemo(() => {
@@ -97,13 +132,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   const handleClear = () => {
     setMessage('');
     setSelectedCategory('');
@@ -114,53 +142,27 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const injectSubagentCommand = (subcommand: string) => {
     const newMessage = message ? `${message}\n\n${subcommand}` : subcommand;
     setMessage(newMessage);
-    
-    // Focus textarea after inserting command
+
+    // Focus editor after inserting command
     setTimeout(() => {
-      textAreaRef.current?.focus();
-      const textarea = textAreaRef.current?.resizableTextArea?.textArea;
-      if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
+      editorRef.current?.focus();
     }, 0);
   };
 
   const handleReduceHeight = () => {
-    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
-    if (textarea && currentHeight > 1) {
+    if (currentHeight > 60) {
       // Store current height before reducing
       setPreviousHeight(currentHeight);
-      const newHeight = Math.max(1, Math.ceil(currentHeight * 0.25)); // Reduce by 75%
+      const newHeight = Math.max(60, Math.ceil(currentHeight * 0.25)); // Reduce by 75%, min 60px
       setCurrentHeight(newHeight);
-      textarea.style.height = 'auto';
-      textarea.style.minHeight = `${newHeight * 24}px`; // Approximate row height
-      textarea.style.height = `${newHeight * 24}px`;
     }
   };
 
   const handleRestoreHeight = () => {
-    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
-    if (textarea) {
+    if (currentHeight < previousHeight) {
       setCurrentHeight(previousHeight);
-      textarea.style.height = 'auto';
-      textarea.style.minHeight = `${previousHeight * 24}px`; // Approximate row height
-      textarea.style.height = `${previousHeight * 24}px`;
     }
   };
-
-  // Update current height tracking when auto-resize happens
-  useEffect(() => {
-    const textarea = textAreaRef.current?.resizableTextArea?.textArea;
-    if (textarea) {
-      const height = parseInt(textarea.style.height) || 96; // Default 4 rows * 24px
-      const rows = Math.ceil(height / 24);
-      if (rows !== currentHeight) {
-        setPreviousHeight(currentHeight);
-        setCurrentHeight(rows);
-      }
-    }
-  }, [message]);
 
 
   return (
@@ -264,40 +266,61 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
         {/* Input Area */}
         <div className="relative">
-          <div className="relative">
-            <TextArea
-              ref={textAreaRef}
+          <div
+            className="relative"
+            style={{
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              border: '2px solid #e2e8f0',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              overflow: 'hidden',
+              minHeight: `${currentHeight}px`,
+              height: `${currentHeight}px`,
+              maxHeight: '400px',
+            }}
+          >
+            <div style={{ padding: '0 10px' }}>
+              <Editor
+              height={`${currentHeight}px`}
+              defaultLanguage="markdown"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={finalPlaceholder}
-              disabled={disabled || loading}
-              autoSize={false} // Disable autoSize to control manually
-              className="resize-none"
-              style={{
-                borderRadius: '16px',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                padding: '8px 50px 8px 8px', // Reduced padding to 8px, keeping right padding for resize buttons
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                border: '2px solid #e2e8f0',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                transition: 'all 0.3s ease',
-                minHeight: `${currentHeight * 24}px`,
-                height: `${currentHeight * 24}px`,
-                maxHeight: '288px', // 12 rows max
-                resize: 'none',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea';
-                e.target.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.15)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
+              onChange={(value) => setMessage(value || '')}
+              onMount={handleEditorDidMount}
+              theme="light"
+              options={{
+                minimap: { enabled: false },
+                lineNumbers: 'off',
+                glyphMargin: false,
+                folding: false,
+                lineDecorationsWidth: 0,
+                lineNumbersMinChars: 0,
+                renderLineHighlight: 'none',
+                scrollBeyondLastLine: false,
+                fontSize: 15,
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                wordWrap: 'on',
+                wrappingIndent: 'none',
+                padding: { top: 10, bottom: 10 },
+                overviewRulerBorder: false,
+                overviewRulerLanes: 0,
+                hideCursorInOverviewRuler: true,
+                scrollbar: {
+                  vertical: 'auto',
+                  horizontal: 'hidden',
+                  verticalScrollbarSize: 8,
+                },
+                readOnly: disabled || loading,
+                suggest: {
+                  showKeywords: false,
+                  showSnippets: false,
+                },
+                quickSuggestions: false,
+                parameterHints: { enabled: false },
+                acceptSuggestionOnEnter: 'off',
               }}
             />
-            
+            </div>
+
             {/* Resize buttons in top-right corner */}
             <div
               className="absolute top-2 right-2 flex gap-1"
@@ -315,7 +338,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                   size="small"
                   icon={<CompressOutlined />}
                   onClick={handleReduceHeight}
-                  disabled={currentHeight <= 1}
+                  disabled={currentHeight <= 60}
                   style={{
                     fontSize: '10px',
                     height: '20px',
@@ -363,14 +386,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
             >
-              <span 
-                style={{ 
-                  fontSize: '12px', 
+              <span
+                style={{
+                  fontSize: '12px',
                   color: '#64748b',
                   fontWeight: 500
                 }}
               >
-                Press Enter to send
+                Press Ctrl+Enter to send
               </span>
             </div>
           )}

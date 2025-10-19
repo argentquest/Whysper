@@ -29,7 +29,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """
     Lifespan context manager for the FastAPI application.
-    
+
     Handles startup and shutdown events in a modern, non-deprecated way.
     This replaces the deprecated @app.on_event() decorators.
     """
@@ -38,7 +38,12 @@ async def lifespan(app: FastAPI):
     logger.info(f"Server running on {settings.host}:{settings.port}")
     logger.info(f"Debug mode: {settings.debug}")
     logger.info(f"CORS origins: {settings.cors_origins}")
-    
+
+    # Initialize real-time log broadcasting
+    from common.log_broadcaster import setup_log_broadcasting
+    setup_log_broadcasting()
+    logger.info("Real-time log broadcasting enabled - connect to GET /api/v1/logs/stream")
+
     # Log MCP server integration
     logger.info("FastMCP server integration initialized")
     logger.info("MCP endpoints available at /mcp/*")
@@ -46,9 +51,9 @@ async def lifespan(app: FastAPI):
         "MCP tools: generate_diagram, render_diagram, generate_and_render"
     )
     logger.info("MCP WebSocket endpoint: /mcp/ws")
-    
+
     yield  # Application runs here
-    
+
     # Shutdown code - equivalent to the old shutdown_event()
     logger.info("Shutting down Whysper Web2 Backend")
 

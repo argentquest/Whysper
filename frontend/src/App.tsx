@@ -239,10 +239,8 @@ function App() {
     });
   }, [agentPrompts]);
 
-  // Initialize the application with default state
-  // Creates the first tab and conversation, then loads user settings from backend.
-  // This ensures the app always has a usable conversation interface ready.
-  const initializeApp = useCallback(async () => {
+  // Initialize the application when component mounts (only once)
+  useEffect(() => {
     // Create the initial tab for the first conversation
     const initialTab: Tab = {
       id: 'tab-1',                    // Unique tab identifier
@@ -268,17 +266,15 @@ function App() {
     setConversations({ [initialConversation.id]: initialConversation });
 
     // Load user settings from backend (API keys, preferences, etc.)
-    await loadSettings();
-    // Load agent prompts from separate endpoint
-    await loadAgentPrompts();
-    // Load subagent commands from separate endpoint
-    await loadSubagentCommands();
-  }, [loadSettings, loadAgentPrompts, loadSubagentCommands]);
+    const initializeApp = async () => {
+      await loadSettings();
+      await loadAgentPrompts();
+      await loadSubagentCommands();
+    };
 
-  // Initialize the application when component mounts
-  useEffect(() => {
     initializeApp();
-  }, [initializeApp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - run only once on mount
 
   // Chat functions
   const handleSendMessage = async (messageText: string, command?: string) => {
@@ -286,10 +282,14 @@ function App() {
     console.log('Message text:', messageText);
     console.log('Command:', command);
     console.log('Active tab ID:', activeTabId);
-    
+    console.log('All tabs:', tabs);
+    console.log('All conversations:', conversations);
+
     const activeTab = tabs.find(tab => tab.id === activeTabId);
     if (!activeTab) {
       console.error('❌ No active tab found');
+      console.error('Available tabs:', tabs);
+      console.error('Looking for activeTabId:', activeTabId);
       console.groupEnd();
       return;
     }
@@ -297,10 +297,12 @@ function App() {
     const conversation = conversations[activeTab.conversationId];
     if (!conversation) {
       console.error('❌ No conversation found for tab');
+      console.error('Looking for conversation ID:', activeTab.conversationId);
+      console.error('Available conversations:', Object.keys(conversations));
       console.groupEnd();
       return;
     }
-    
+
     console.log('Active conversation:', conversation.id);
 
     // Create user message

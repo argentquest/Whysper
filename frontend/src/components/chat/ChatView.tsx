@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import type { Message } from '../../types';
 import { MermaidDiagram } from './MermaidDiagram';
 import { D2DiagramBackend } from './D2DiagramBackend';
@@ -634,7 +635,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
   // Detect HTML content to determine initial view mode
   const detectHtmlContent = (content: string): boolean => {
     // Only show HTML view for substantial HTML content, not just scattered tags
-    
+
+    // Check for D2 diagram containers specifically (pre-rendered diagrams from backend)
+    if (content.includes('class="d2-diagram-container"') || content.includes('class="d2-rendered-diagram"')) {
+      console.log('🎯 [CHAT VIEW] Detected pre-rendered D2 diagram - using HTML view');
+      return true;
+    }
+
     // Check for HTML document structure or substantial HTML blocks
     const substantialHtmlPatterns = [
       /<html[\s>]/i,           // Full HTML document
@@ -675,10 +682,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
     hasHtmlContent ? 'html' : 'markdown'
   );
   
-  const isLongContent = message.content.length > 1000;
+  const isLongContent = message.content.length > 5000;
   const shouldTruncate = isLongContent && !showFullContent;
-  const displayContent = shouldTruncate 
-    ? message.content.substring(0, 1000) + '...' 
+  const displayContent = shouldTruncate
+    ? message.content.substring(0, 5000) + '...'
     : message.content;
 
   const formatTimestamp = (timestamp: string) => {
@@ -987,16 +994,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             ) : (
               // Markdown View - Use ReactMarkdown (default)
-              <div 
-                className="prose prose-slate max-w-none" 
-                style={{ 
-                  lineHeight: '1.2', 
+              <div
+                className="prose prose-slate max-w-none"
+                style={{
+                  lineHeight: '1.2',
                   fontSize: '15px',
                   color: '#1e293b'
                 }}
               >
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
                   components={{
                     code: CodeComponentRenderer,
                     // Style other markdown elements for dark text
@@ -1286,16 +1294,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 </div>
               ) : (
                 // Markdown View - Use ReactMarkdown (default)
-                <div 
-                  className="prose prose-slate max-w-none" 
-                  style={{ 
-                    lineHeight: '1.2', 
+                <div
+                  className="prose prose-slate max-w-none"
+                  style={{
+                    lineHeight: '1.2',
                     fontSize: '14px',
                     color: '#1e293b'
                   }}
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
                     components={{
                       code: CodeComponentRenderer,
                       // Style other markdown elements for dark text

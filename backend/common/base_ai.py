@@ -263,13 +263,21 @@ class BaseAIProvider(ABC):
                         raise Exception("Connection failed after multiple retries. Please check your internet connection.")
             
             response_data = response.json()
-            
+
+            # DEBUG: Log the full API response to understand empty responses
+            import json
+            from common.logger import get_logger
+            debug_logger = get_logger(__name__)
+            debug_logger.debug(f"Full API response: {json.dumps(response_data, indent=2)[:1000]}")
+
             # Calculate execution time
             end_time = time.time()
             execution_time = end_time - start_time
-            
+
             # Extract AI response using provider-specific method
             ai_response = self._extract_response_content(response_data)
+            debug_logger.debug(f"Extracted AI response length: {len(ai_response)} characters")
+            debug_logger.debug(f"Extracted AI response preview: {ai_response[:200] if ai_response else 'EMPTY'}")
             
             # Extract token usage information using provider-specific method
             prompt_tokens, completion_tokens, total_tokens = self._extract_token_usage(response_data)

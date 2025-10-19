@@ -19,11 +19,11 @@ interface D2DiagramBackendProps {
   onRenderComplete?: (success: boolean, svg?: string) => void;
 }
 
-export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({ 
-  code, 
-  title = 'D2 Diagram', 
+export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
+  code,
+  title = 'D2 Diagram',
   showCode = false,
-  onRenderComplete 
+  onRenderComplete
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
@@ -31,12 +31,28 @@ export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [renderResult, setRenderResult] = useState<D2RenderResponse | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
 
   useEffect(() => {
     if (code) {
       renderDiagram();
     }
-  }, [code]);
+  }, [code, renderKey]); // Re-render when code OR renderKey changes
+
+  // Monitor container visibility and size changes to trigger re-render
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      // Trigger re-render when container size changes (e.g., fullscreen toggle)
+      console.log('🎯 [D2 DIAGRAM] Container resized, triggering re-render');
+      setRenderKey(prev => prev + 1);
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   const renderDiagram = async () => {
     if (!code || !containerRef.current) {

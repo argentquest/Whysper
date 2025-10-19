@@ -512,7 +512,7 @@ class ConversationSession:
 
         # Determine if codebase context is needed
         needs_codebase_context = is_first_message or self._is_tool_command(question)
-        logger.debug(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message})")
+        logger.info(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message})")
         # Auto-detect diagram requests and use appropriate agent prompt
         if not agent_prompt:
             agent_prompt = self._detect_diagram_request(question)
@@ -520,20 +520,25 @@ class ConversationSession:
                 logger.info(f"🎨 [DIAGRAM DEBUG] Auto-detected diagram request, using agent prompt: {agent_prompt[:50]}...")
 
         # Track user message in conversation history
-        logger.debug("Adding user message to conversation history")
+        logger.info("Adding user message to conversation history")
         self.app_state.conversation_history.append(
             ConversationMessage(role="user", content=question)
         )
 
         # Gather codebase content
-        logger.debug("Gathering codebase content for AI processing")
+        logger.info("Gathering codebase content for AI processing")
         codebase_content = self._get_codebase_content(is_first_message, needs_codebase_context)
         logger.debug(f"Codebase content length: {len(codebase_content)} characters")
 
-        # Process question with AI
-        logger.debug("Sending question to AI processor")
+        # Process question with AI (with automatic D2 validation and retry)
+        logger.info("Sending question to AI processor")
         response_text = self._process_with_ai(question, codebase_content)
-        logger.debug(f"Received AI response: {len(response_text)} characters")
+        logger.info(f"Received AI response: {len(response_text)} characters")
+
+        # Auto-validate and fix D2 diagrams if present
+        response_text = self._validate_and_fix_d2_diagrams(response_text, question)
+        logger.info(f"After D2 validation/fix: {len(response_text)} characters")
+
         # DEBUG: Log agent prompt usage
         if agent_prompt:
             logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Using agent prompt for question: {question[:100]}..."))
@@ -847,6 +852,251 @@ class ConversationSession:
             model=self.app_state.selected_model,
         )
 
+    def _validate_and_fix_d2_diagrams(self, response_text: str, original_question: str, max_retries: int = 2) -> str:
+        """
+        Automatically validate D2 diagrams in the response and retry with error feedback if invalid.
+
+        Args:
+            response_text: The AI's response containing potential D2 diagrams
+            original_question: The original user question
+            max_retries: Maximum number of retry attempts (default: 2)
+
+        Returns:
+            Corrected response text with valid D2 diagrams
+        """
+        import re
+        from app.services.d2_render_service import get_d2_service
+
+        # Check if response contains D2 code blocks
+        # Match ```d2 with optional whitespace before newline or content
+        d2_pattern = r'```d2\s*\n?(.*?)```'
+        d2_matches = re.findall(d2_pattern, response_text, re.DOTALL)
+
+        if not d2_matches:
+            logger.debug("No D2 diagrams found in response, skipping validation")
+            return response_text
+
+        logger.info(f"🔍 [D2 PROGRESS] Found {len(d2_matches)} D2 diagram(s) - validating syntax...")
+
+        try:
+            d2_service = get_d2_service()
+            retry_count = 0
+            current_response = response_text
+
+            while retry_count < max_retries:
+                all_valid = True
+                validation_errors = []
+
+                logger.debug(f"Validation attempt {retry_count + 1}/{max_retries}")
+
+                # Validate each D2 diagram
+                for i, d2_code in enumerate(re.findall(d2_pattern, current_response, re.DOTALL)):
+                    is_valid, error_msg = d2_service.validate_d2_code(d2_code)
+
+                    if not is_valid:
+                        all_valid = False
+                        validation_errors.append(f"D2 Diagram #{i+1} Error:\n{error_msg}")
+                        logger.warning(f"D2 diagram #{i+1} validation failed: {error_msg[:200]}")
+
+                if all_valid:
+                    logger.info("✅ [D2 PROGRESS] All D2 diagrams validated successfully!")
+                    logger.info("🎨 [D2 PROGRESS] Rendering diagrams to SVG...")
+
+                    # Pre-render all D2 diagrams to SVG to avoid frontend re-extraction corruption
+                    current_response = self._pre_render_d2_diagrams(current_response)
+
+                    logger.info("✅ [D2 PROGRESS] D2 diagrams rendered and ready for display!")
+                    return current_response
+
+                # If validation failed, send errors back to AI for correction
+                retry_count += 1
+                logger.info(f"🔧 [D2 PROGRESS] Validation errors found - requesting AI auto-fix (attempt {retry_count}/{max_retries})...")
+
+                error_summary = "\n\n".join(validation_errors)
+                correction_prompt = (
+                    f"FIX THESE D2 SYNTAX ERRORS:\n\n{error_summary}\n\n"
+                    f"RULES:\n"
+                    f"- Databases: shape: cylinder\n"
+                    f"- Web/Apps: shape: rectangle\n"
+                    f"- Users: shape: person\n"
+                    f"- Cloud: shape: cloud\n"
+                    f"- Strings: Always close quotes\n\n"
+                    f"Return ONLY the corrected ```d2 code block. Keep it SIMPLE and COMPLETE."
+                )
+
+                # Send correction request to AI
+                conversation_for_api = []
+                for message in self.app_state.conversation_history[:-1]:
+                    if message.role != "system":
+                        conversation_for_api.append(message.to_dict())
+
+                corrected_response = self.ai_processor.process_question(
+                    question=correction_prompt,
+                    conversation_history=conversation_for_api,
+                    codebase_content="",
+                    model=self.app_state.selected_model,
+                )
+
+                logger.info(f"✅ [D2 PROGRESS] Received corrected D2 code ({len(corrected_response)} chars) - re-validating...")
+
+                # Check if response looks truncated (ends abruptly without closing backticks)
+                if corrected_response.count('```d2') > corrected_response.count('```\n') and corrected_response.count('```d2') > corrected_response.count('```'):
+                    logger.warning(f"⚠️  Corrected response may be TRUNCATED! Model: {self.app_state.selected_model}")
+                    logger.warning(f"⚠️  Try switching to a model that doesn't truncate (e.g., qwen/qwen3-coder-30b-a3b-instruct or anthropic/claude-4.5-sonnet)")
+
+                current_response = corrected_response
+
+            # If we exhausted retries, include validation errors in the response
+            logger.warning(f"D2 validation failed after {max_retries} retries")
+
+            # Create error report section
+            error_report = "\n\n---\n\n"
+            error_report += "## ⚠️ D2 Diagram Validation Failed\n\n"
+            error_report += f"The D2 diagram could not be validated after {max_retries} auto-fix attempts.\n\n"
+            error_report += "**Validation Errors:**\n\n"
+
+            for error in validation_errors:
+                error_report += f"```\n{error}\n```\n\n"
+
+            error_report += "**Common fixes:**\n"
+            error_report += "- Use `shape: cylinder` for databases\n"
+            error_report += "- Use `shape: rectangle` for web/app components\n"
+            error_report += "- Use `shape: person` for users\n"
+            error_report += "- Use `shape: cloud` for cloud services\n"
+            error_report += "- Ensure all strings are properly quoted\n"
+            error_report += "- Check for syntax errors in relationships (use `->` or `--`)\n\n"
+
+            error_report += "**D2 Code (Failed Validation):**\n\n"
+
+            # Extract the D2 code that failed
+            failed_d2_matches = re.findall(d2_pattern, current_response, re.DOTALL)
+            if failed_d2_matches:
+                for i, d2_code in enumerate(failed_d2_matches):
+                    error_report += f"```d2\n{d2_code}\n```\n\n"
+
+            # Try to pre-render anyway (might partially work)
+            logger.warning(f"Attempting pre-render despite validation errors...")
+            try:
+                current_response = self._pre_render_d2_diagrams(current_response)
+                error_report += "*Note: Pre-rendering was attempted but may have failed. Check the output above.*\n\n"
+            except Exception as e:
+                logger.error(f"Pre-render also failed: {str(e)}")
+                error_report += f"*Pre-rendering failed: {str(e)}*\n\n"
+
+            # Append error report to response
+            current_response += error_report
+
+            return current_response
+
+        except Exception as e:
+            logger.error(f"Error during D2 validation/fix: {str(e)}")
+            # Return original response if validation fails
+            return response_text
+
+    def _pre_render_d2_diagrams(self, response_text: str) -> str:
+        """
+        Pre-render validated D2 diagrams to SVG and embed them in the response.
+        This prevents frontend re-extraction corruption.
+
+        Args:
+            response_text: Response containing validated D2 diagrams
+
+        Returns:
+            Response with D2 diagrams replaced by rendered SVG
+        """
+        import re
+        import os
+        import hashlib
+        from datetime import datetime
+        from app.services.d2_render_service import get_d2_service
+
+        # Match ```d2 with optional whitespace before newline or content
+        d2_pattern = r'```d2\s*\n?(.*?)```'
+
+        try:
+            d2_service = get_d2_service()
+
+            # Create directory for saved SVG files
+            svg_dir = os.path.join("backend", "static", "d2_diagrams")
+            os.makedirs(svg_dir, exist_ok=True)
+
+            diagram_count = 0
+
+            def render_d2_block(match):
+                nonlocal diagram_count
+                diagram_count += 1
+
+                d2_code = match.group(1)
+                logger.info(f"Pre-rendering D2 diagram #{diagram_count} ({len(d2_code)} chars)")
+
+                # Render to SVG
+                success, error_msg, svg_content = d2_service.render_d2_to_svg(d2_code)
+
+                if success and svg_content:
+                    # Generate unique filename based on content hash and timestamp
+                    content_hash = hashlib.md5(d2_code.encode()).hexdigest()[:8]
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"d2_diagram_{timestamp}_{content_hash}.svg"
+                    filepath = os.path.join(svg_dir, filename)
+
+                    # Save SVG to file
+                    try:
+                        with open(filepath, 'w', encoding='utf-8') as f:
+                            f.write(svg_content)
+                        logger.info(f"Saved D2 diagram to: {filepath}")
+
+                        # Create download URL
+                        download_url = f"/api/v1/d2/download/{filename}"
+                    except Exception as e:
+                        logger.error(f"Failed to save SVG file: {str(e)}")
+                        download_url = None
+
+                    # Replace D2 code block with rendered SVG
+                    # Keep the original D2 code in a collapsed HTML details section
+                    download_link = f'<p style="margin-top: 8px; margin-bottom: 8px;"><a href="{download_url}" download="{filename}" style="display: inline-block; padding: 8px 16px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500;">⬇️ Download SVG</a></p>\n' if download_url else ''
+
+                    # Add status badge showing rendering was successful
+                    status_badge = (
+                        f'<div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; '
+                        f'background: linear-gradient(135deg, #10b981 0%, #059669 100%); '
+                        f'border-radius: 6px; margin-bottom: 12px; font-size: 12px; font-weight: 500; color: white;">\n'
+                        f'  <span style="font-size: 14px;">✅</span>\n'
+                        f'  <span>D2 Diagram Rendered Successfully</span>\n'
+                        f'</div>\n'
+                    )
+
+                    return (
+                        f'<div class="d2-diagram-container" style="margin: 16px 0;">\n'
+                        f'{status_badge}'
+                        f'  <div class="d2-rendered-diagram">\n'
+                        f'    {svg_content}\n'
+                        f'  </div>\n'
+                        f'{download_link}'
+                        f'  <details style="margin-top: 8px;">\n'
+                        f'    <summary style="cursor: pointer; padding: 8px 12px; background-color: #f1f5f9; '
+                        f'border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 500; '
+                        f'color: #475569; user-select: none;">📝 View D2 Source Code (click to expand/copy)</summary>\n'
+                        f'    <pre style="background-color: #1e293b; color: #e2e8f0; padding: 16px; '
+                        f'border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; border-top: none; '
+                        f'overflow-x: auto; font-size: 13px; line-height: 1.2; margin-top: 0;"><code>{d2_code}</code></pre>\n'
+                        f'  </details>\n'
+                        f'</div>\n'
+                    )
+                else:
+                    logger.warning(f"Failed to pre-render D2: {error_msg}")
+                    # Keep original D2 code block
+                    return match.group(0)
+
+            # Replace all D2 blocks with rendered versions
+            rendered_response = re.sub(d2_pattern, render_d2_block, response_text, flags=re.DOTALL)
+
+            logger.info("D2 diagrams pre-rendered successfully")
+            return rendered_response
+
+        except Exception as e:
+            logger.error(f"Error pre-rendering D2 diagrams: {str(e)}")
+            return response_text
+
     def _update_conversation_history(
         self, response_text: str, is_first_message: bool, codebase_content: str, agent_prompt: str = None
     ) -> None:
@@ -971,6 +1221,44 @@ class ConversationSession:
             "cached_tokens": 0
         }
 
+    def _detect_diagram_request(self, question: str) -> Optional[str]:
+        """
+        Detect if the user is requesting a diagram and return the appropriate agent prompt.
+
+        Args:
+            question: The user's question
+
+        Returns:
+            Agent prompt content if diagram detected, None otherwise
+        """
+        question_lower = question.lower()
+
+        # Check for Mermaid diagram requests
+        if ("mermaid" in question_lower and
+            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+            try:
+                from .settings_service import settings_service
+                mermaid_prompt = settings_service.get_agent_prompt_content("mermaid-architecture.md")
+                if mermaid_prompt:
+                    logger.info("🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt")
+                    return mermaid_prompt
+            except Exception as e:
+                logger.error(f"Failed to load mermaid prompt: {e}")
+
+        # Check for D2 diagram requests
+        if ("d2" in question_lower and
+            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+            try:
+                from .settings_service import settings_service
+                d2_prompt = settings_service.get_agent_prompt_content("d2-architecture.md")
+                if d2_prompt:
+                    logger.info("🎨 [DIAGRAM DEBUG] Detected D2 diagram request, loading d2-architecture.md prompt")
+                    return d2_prompt
+            except Exception as e:
+                logger.error(f"Failed to load D2 prompt: {e}")
+
+        return None
+
 
 class ConversationManager:
     """Registry for active conversation sessions."""
@@ -1011,43 +1299,6 @@ class ConversationManager:
         self._sessions[session_id] = session
         logger.info("Session created", extra={"session_id": session_id})
         return session
-    def _detect_diagram_request(self, question: str) -> Optional[str]:
-        """
-        Detect if the user is requesting a diagram and return the appropriate agent prompt.
-
-        Args:
-            question: The user's question
-
-        Returns:
-            Agent prompt content if diagram detected, None otherwise
-        """
-        question_lower = question.lower()
-
-        # Check for Mermaid diagram requests
-        if ("mermaid" in question_lower and
-            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
-            try:
-                from .settings_service import settings_service
-                mermaid_prompt = settings_service.get_agent_prompt_content("mermaid-architecture.md")
-                if mermaid_prompt:
-                    logger.info("🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt")
-                    return mermaid_prompt
-            except Exception as e:
-                logger.error(f"Failed to load mermaid prompt: {e}")
-
-        # Check for D2 diagram requests
-        if ("d2" in question_lower and
-            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
-            try:
-                from .settings_service import settings_service
-                d2_prompt = settings_service.get_agent_prompt_content("d2-architecture.md")
-                if d2_prompt:
-                    logger.info("🎨 [DIAGRAM DEBUG] Detected D2 diagram request, loading d2-architecture.md prompt")
-                    return d2_prompt
-            except Exception as e:
-                logger.error(f"Failed to load D2 prompt: {e}")
-
-        return None
 
     def get_session(self, session_id: str) -> ConversationSession:
         if session_id not in self._sessions:

@@ -43,15 +43,18 @@ const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api
 
 /**
  * Axios HTTP client configuration
- * 
+ *
  * Configured with:
- * - 30-second timeout for AI operations (some AI calls can be slow)
+ * - 60-second timeout for AI operations (D2 rendering can take time)
  * - JSON content type for all requests
  * - Base URL pointing to FastAPI backend
+ * - Increased max content length for large diagram responses
  */
 const api = axios.create({
   baseURL: API_BASE_URL,                    // FastAPI backend URL
-  timeout: 30000,                           // 30 second timeout for AI operations
+  timeout: 60000,                           // 60 second timeout for AI operations (was 30000)
+  maxContentLength: 50 * 1024 * 1024,       // 50 MB max response size
+  maxBodyLength: 50 * 1024 * 1024,          // 50 MB max request size
   headers: {
     'Content-Type': 'application/json',     // JSON API communication
   },

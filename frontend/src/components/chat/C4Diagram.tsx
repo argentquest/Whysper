@@ -1,9 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Button, Space, message as antMessage, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, CodeOutlined } from '@ant-design/icons';
-import { D2 } from '@terrastruct/d2';
 import { ApiService } from '../../services/api';
 import { convertC4ToD2, simpleC4ToD2, extractC4Level } from '../../utils/c4ToD2';
+import d2Api from '../../services/d2Api';
+
+/**
+ * C4 Diagram Component
+ *
+ * Converts C4 PlantUML syntax to D2 and renders using backend D2 CLI service.
+ * All rendering happens server-side to avoid client-side D2 library dependencies.
+ */
 
 interface C4DiagramProps {
   code: string;
@@ -18,6 +25,7 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
   const [c4Level, setC4Level] = useState<string>('Context');
   const [d2Code, setD2Code] = useState<string>('');
   const [showD2Code, setShowD2Code] = useState(false);
+  const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -93,39 +101,29 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
           );
         }
 
-        // Create D2 instance
-        const d2 = new D2();
-        console.log('🏗️ [C4 DIAGRAM] D2 instance created, compiling...');
+        // Render D2 code using backend API (server-side rendering via D2 CLI)
+        console.log('🏗️ [C4 DIAGRAM] Sending D2 code to backend for rendering...');
 
-        // Compile D2 code with options
-        let result;
+        let svg: string;
         try {
-          result = await d2.compile(convertedD2, {
-            options: {
-              layout: 'dagre', // Use dagre layout (works client-side)
-              sketch: false,
-            }
-          });
-          console.log('🏗️ [C4 DIAGRAM] Compilation successful, rendering SVG...');
-        } catch (compileError) {
-          throw new Error(
-            `D2 compilation failed: ${compileError instanceof Error ? compileError.message : 'Unknown error'}.\n\n` +
-            `This usually means the converted D2 code has syntax errors. ` +
-            `Please check the converted D2 code below for issues.`
-          );
-        }
+          const renderResponse = await d2Api.renderD2(convertedD2);
 
-        // Render the compiled diagram to SVG
-        let svg;
-        try {
-          svg = await d2.render(result.diagram, result.renderOptions);
-          console.log('🏗️ [C4 DIAGRAM] SVG rendered successfully', {
+          if (!renderResponse.success || !renderResponse.svgContent) {
+            throw new Error(
+              renderResponse.error ||
+              'Backend D2 rendering failed - no SVG content returned'
+            );
+          }
+
+          svg = renderResponse.svgContent;
+          console.log('🏗️ [C4 DIAGRAM] Backend rendering successful', {
             svgLength: svg.length
           });
         } catch (renderError) {
           throw new Error(
-            `D2 rendering failed: ${renderError instanceof Error ? renderError.message : 'Unknown error'}.\n\n` +
-            `The diagram compiled successfully but could not be rendered to SVG.`
+            `Backend D2 rendering failed: ${renderError instanceof Error ? renderError.message : 'Unknown error'}.\n\n` +
+            `The converted D2 code could not be rendered by the backend service. ` +
+            `Check that the D2 CLI is properly installed and configured.`
           );
         }
 
@@ -166,7 +164,22 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
     };
 
     renderDiagram();
-  }, [code]);
+  }, [code, renderKey]); // Re-render when code OR renderKey changes
+
+  // Monitor container visibility and size changes to trigger re-render
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      // Trigger re-render when container size changes (e.g., fullscreen toggle)
+      console.log('🏗️ [C4 DIAGRAM] Container resized, triggering re-render');
+      setRenderKey(prev => prev + 1);
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleCopy = async () => {
     try {

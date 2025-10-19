@@ -119,13 +119,17 @@ export const Header: React.FC<HeaderProps> = ({
             className="w-full"
             size="large"
             placeholder="Select agent prompt"
-            dropdownStyle={{ width: '80vw', maxWidth: '1200px' }}
+            styles={{
+              popup: {
+                root: { width: '80vw', maxWidth: '1200px' }
+              }
+            }}
             optionLabelProp="label"
             style={{
               borderRadius: '12px',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
             }}
-            dropdownRender={(menu) => (
+            popupRender={(menu) => (
               <div>
                 {/* Table Header */}
                 <div className="py-3 px-4 bg-gray-50 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-500">
