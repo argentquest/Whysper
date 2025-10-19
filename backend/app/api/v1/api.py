@@ -19,7 +19,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, diagram_events, d2_render
+    chat, code, files, settings, system, diagram_events, d2_render, documentation
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -94,4 +94,11 @@ api_router.include_router(
     d2_render.router,
     prefix="/d2",
     tags=["d2"],
+)
+
+# ==================== Documentation Generator Endpoints ====================
+api_router.include_router(
+    documentation.router,
+    prefix="/documentation",
+    tags=["documentation"],
 )

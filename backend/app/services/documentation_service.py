@@ -96,6 +96,7 @@ class DocumentationService:
         
         # Initialize AI processor
         self.ai_processor = None
+        self.cache = {}
     
     def _initialize_ai_processor(self):
         """Initialize AI processor with current settings"""
@@ -134,7 +135,7 @@ class DocumentationService:
                 
                 if language in self.supported_languages:
                     # Read file content
-                    content = file_service.read_files([file_path])
+                    content = file_service.read_file(file_path)
                     
                     # Analyze based on language
                     analyzer = self.supported_languages[language]
@@ -231,7 +232,7 @@ class DocumentationService:
                             'name': item.name,
                             'line_number': item.lineno,
                             'args': [arg.arg for arg in item.args.args],
-                            'returns': ast.unparse(item.returns) if hasattr(ast, 'unparse') else None,
+                            'returns': ast.unparse(item.returns) if hasattr(ast, 'unparse') and item.returns else None,
                             'docstring': ast.get_docstring(item),
                             'is_async': isinstance(item, ast.AsyncFunctionDef),
                             'decorators': [ast.unparse(d) for d in item.decorator_list] if hasattr(ast, 'unparse') else []
@@ -281,7 +282,7 @@ class DocumentationService:
                         'name': node.name,
                         'line_number': node.lineno,
                         'args': [arg.arg for arg in node.args.args],
-                        'returns': ast.unparse(node.returns) if hasattr(ast, 'unparse') else None,
+                        'returns': ast.unparse(node.returns) if hasattr(ast, 'unparse') and node.returns else None,
                         'docstring': ast.get_docstring(node),
                         'is_async': isinstance(node, ast.AsyncFunctionDef),
                         'decorators': [ast.unparse(d) for d in node.decorator_list] if hasattr(ast, 'unparse') else []
@@ -333,7 +334,7 @@ class DocumentationService:
                 if docstring:
                     docstrings.append({
                         'content': docstring,
-                        'line_number': node.lineno,
+                        'line_number': node.lineno if not isinstance(node, ast.Module) else 1,
                         'type': type(node).__name__
                     })
         
@@ -2028,6 +2029,8 @@ Contributing guidelines will be included here.
         # Add GUID to metadata
         result.metadata['session_guid'] = session_guid
         result.metadata['guid_prefixed_files'] = {}
+        
+        self.cache[session_guid] = ([result], request.file_paths)
         
         return result
     

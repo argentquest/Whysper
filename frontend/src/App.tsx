@@ -56,6 +56,7 @@ import ThemePickerModal from './components/modals/ThemePickerModal';
 
 // File editor components
 import { FileEditorView } from './components/editor/FileEditorView';
+import { DocumentationView } from './components/documentation/DocumentationView';
 
 // Terminal components  
 
@@ -134,6 +135,7 @@ function App() {
   const [newFileModalOpen, setNewFileModalOpen] = useState(false);         // New file creation modal
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
+  const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
   
   // ==================== Data State Management ====================
   
@@ -983,6 +985,71 @@ function App() {
     }
   };
 
+  const handleGenerateDocumentation = async () => {
+    if (selectedFiles.length === 0) {
+      message.warning('Please select at least one file to generate documentation.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const file_paths = selectedFiles.map(f => f.path);
+      const response = await ApiService.generateDocumentation({
+        file_paths,
+        documentation_type: 'all',
+      });
+
+      if (response.success && response.data) {
+        const { content, metadata } = response.data;
+        setDocumentationData({ content, metadata });
+
+        const newTabId = `doc-tab-${Date.now()}`;
+        const newDocTab: Tab = {
+          id: newTabId,
+          conversationId: '', // No conversation for documentation tabs
+          title: 'Documentation',
+          isActive: true,
+          isDirty: false,
+          type: 'documentation',
+        };
+
+        setTabs(prev => [
+          ...prev.map(tab => ({ ...tab, isActive: false })),
+          newDocTab,
+        ]);
+        setActiveTabId(newTabId);
+
+        message.success('Documentation generated successfully!');
+      } else {
+        message.error(response.error || 'Failed to generate documentation.');
+      }
+    } catch (error) {
+      console.error('Error generating documentation:', error);
+      message.error('An error occurred while generating documentation.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadDocumentation = async (session_guid: string) => {
+    try {
+      const response = await ApiService.get(`/documentation/download/${session_guid}`);
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${session_guid}-documentation.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      message.success('Documentation downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading documentation:', error);
+      message.error('An error occurred while downloading documentation.');
+    }
+  };
+
   return (
     <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>
       {/* Header */}
@@ -996,6 +1063,7 @@ function App() {
         onSystemMessage={() => setSystemMessageModalOpen(true)}
         onAbout={() => setAboutModalOpen(true)}
         onCodeFragments={() => setCodeFragmentsModalOpen(true)}
+        onGenerateDocumentation={handleGenerateDocumentation}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1028,6 +1096,15 @@ function App() {
             onSave={handleFileSave}
             theme={getEditorTheme(theme)}
           />
+        ) : activeTab?.type === 'documentation' ? (
+          // Documentation View
+          documentationData && (
+            <DocumentationView
+              content={documentationData.content}
+              metadata={documentationData.metadata}
+              onDownload={handleDownloadDocumentation}
+            />
+          )
         ) : (
           // Chat View
           <>

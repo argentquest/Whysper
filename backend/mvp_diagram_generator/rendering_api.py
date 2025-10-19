@@ -140,7 +140,7 @@ async def generate_diagram(
             # Use CLI validation if available (most reliable)
             if is_d2_cli_available():
                 is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
-                    diagram_code, max_attempts=3
+                    diagram_code, max_attempts=5
                 )
                 diagram_code = corrected_code
             else:
@@ -159,7 +159,7 @@ async def generate_diagram(
                 # Apply D2 syntax fixing to the converted code
                 if is_d2_cli_available():
                     is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
-                        diagram_code, max_attempts=3
+                        diagram_code, max_attempts=5
                     )
                     diagram_code = corrected_code
                 else:
