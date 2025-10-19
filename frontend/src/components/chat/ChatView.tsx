@@ -12,6 +12,7 @@ import {
   FullscreenOutlined,
   FullscreenExitOutlined,
   PrinterOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -799,6 +800,27 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
   const codeBlocks = detectCodeBlocks(message.content);
 
+  // Detect if message contains diagrams
+  const hasDiagrams = () => {
+    const blocks = detectCodeBlocks(message.content);
+    return blocks.some(block =>
+      block.language === 'mermaid' ||
+      block.language === 'd2' ||
+      block.language === 'c4' ||
+      block.language === 'c4diagram' ||
+      block.language === 'plantuml' ||
+      isMermaidSyntax(block.code) ||
+      isD2Syntax(block.code) ||
+      isC4Syntax(block.code)
+    );
+  };
+
+  // Force re-render of the message by updating a key
+  const [refreshKey, setRefreshKey] = useState(0);
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   // Fullscreen overlay component
   if (isFullscreen) {
     return (
@@ -942,6 +964,18 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 )
               )}
 
+              {hasDiagrams() && (
+                <Tooltip title="Refresh Diagrams">
+                  <Button
+                    type="text"
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefresh}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
+              )}
+
               <Tooltip title="Exit Fullscreen">
                 <Button
                   type="text"
@@ -975,10 +1009,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
             overflow: 'auto',
           }}
         >
-          <div className="message-content">
+          <div key={refreshKey} className="message-content">
             {viewMode === 'html' && hasHtmlContent ? (
               // HTML View - Detect and render Mermaid diagrams from HTML
               <div
+                key={refreshKey}
                 className="prose max-w-none"
                 style={{
                   border: '1px solid #e2e8f0',
@@ -995,6 +1030,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             ) : (
               // Markdown View - Use ReactMarkdown (default)
               <div
+                key={refreshKey}
                 className="prose prose-slate max-w-none"
                 style={{
                   lineHeight: '1.2',
@@ -1217,6 +1253,18 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     </Tooltip>
                   </Dropdown>
                 )
+              )}
+
+              {hasDiagrams() && (
+                <Tooltip title="Refresh Diagrams">
+                  <Button
+                    type="text"
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefresh}
+                    size="small"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                  />
+                </Tooltip>
               )}
 
               <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Maximize"}>

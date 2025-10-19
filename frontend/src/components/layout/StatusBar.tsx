@@ -80,11 +80,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         const logEvent: LogEvent = JSON.parse(event.data);
         setCurrentLog(logEvent);
 
-        // Add to history buffer (keep last 10)
+        // Add to history buffer (keep last 30)
         setLogHistory((prev) => {
           const newHistory = [...prev, logEvent];
-          // Keep only last 10 logs
-          return newHistory.slice(-10);
+          // Keep only last 30 logs
+          return newHistory.slice(-30);
         });
       } catch (error) {
         console.error('❌ [STATUS BAR] Failed to parse log event:', error);
@@ -147,7 +147,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
-  // Log history popover content
+  // Log history popover content (reversed to show newest first)
   const logHistoryContent = (
     <div style={{ width: '500px', maxHeight: '300px', overflowY: 'auto' }}>
       {logHistory.length === 0 ? (
@@ -156,13 +156,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </Text>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {logHistory.map((log, index) => (
+          {[...logHistory].reverse().map((log, index) => (
             <div
               key={`${log.timestamp}-${index}`}
               style={{
                 padding: '6px 8px',
                 borderRadius: '4px',
-                backgroundColor: index === logHistory.length - 1 ? '#f0f9ff' : '#f8fafc',
+                backgroundColor: index === 0 ? '#f0f9ff' : '#f8fafc',
                 borderLeft: `3px solid ${log.level === 'INFO' ? '#10b981' : '#ef4444'}`,
               }}
             >
@@ -252,7 +252,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <HistoryOutlined />
-            <span>Log History (Last {logHistory.length} of 10)</span>
+            <span>Log History (Last {logHistory.length} of 30)</span>
           </div>
         }
         trigger="click"
