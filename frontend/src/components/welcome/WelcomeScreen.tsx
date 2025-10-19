@@ -17,6 +17,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
       const response = await ApiService.verifyAccessKey(values.access_key);
       if (response.success) {
         message.success('Access granted!');
+        localStorage.setItem('access_key', values.access_key);
         onSuccess();
       } else {
         message.error(response.error || 'Invalid access key.');
@@ -45,6 +46,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} style={{ width: '100%' }}>
               Enter
+            </Button>
+          </Form.Item>
+          <Form.Item>
+            <Button type="default" style={{ width: '100%' }} onClick={() => window.open('/static/QUICKGUIDE.MD', '_blank')}>
+              Quick Start Guide
             </Button>
           </Form.Item>
         </Form>

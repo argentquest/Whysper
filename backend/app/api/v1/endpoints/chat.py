@@ -402,12 +402,17 @@ def send_chat_message(request: dict):
             # Create new session if it doesn't exist
             logger.info(f"Creating new conversation session: {conversation_id}", extra={'session_id': conversation_id})
 
+            access_key = settings.get("access_key")
+            if not access_key or access_key != env_config.get("ACCESS_KEY"):
+                raise HTTPException(status_code=401, detail="Invalid access key")
+
             session = conversation_manager.create_session(
                 api_key=api_key,
                 provider=provider,
                 models=models_list,
                 default_model=model,
                 session_id=conversation_id,
+                access_key=access_key,
             )
 
         # Add context files IMMEDIATELY after session creation/retrieval
@@ -590,11 +595,16 @@ def create_conversation(request: ConversationCreateRequest):
     provider = request.provider or env_provider
     default_model = request.model or env_default_model or (models[0] if models else "")
 
+    access_key = request.access_key
+
+    if not access_key or access_key != env_config.get("ACCESS_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid access key")
+
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
 
     session = conversation_manager.create_session(
-        provider=provider, api_key=api_key, models=models
+        provider=provider, api_key=api_key, models=models, access_key=access_key
     )
 
     if default_model:

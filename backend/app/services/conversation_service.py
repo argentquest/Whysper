@@ -85,6 +85,7 @@ class ConversationSession:
     provider: str
     available_models: List[str]
     default_model: str
+    access_key: str = ""
     app_state: AppState = field(default_factory=AppState)
     codebase_scanner: LazyCodebaseScanner = field(default_factory=LazyCodebaseScanner)
     selected_directory: str = ""
@@ -682,8 +683,9 @@ class ConversationSession:
         response_text = self.ai_processor.process_question(
             question=system_message,
             conversation_history=[],  # Fresh context for system analysis
-            codebase_content="",      # System prompt carries its own context
             model=self.app_state.selected_model,
+            max_tokens=self.app_state.max_tokens,
+            temperature=self.app_state.temperature,
         )
         processing_time = time.time() - start_time
         token_usage = self._get_last_token_usage()
@@ -940,6 +942,8 @@ class ConversationSession:
                     conversation_history=conversation_for_api,
                     codebase_content="",
                     model=self.app_state.selected_model,
+                    max_tokens=self.app_state.max_tokens,
+                    temperature=self.app_state.temperature,
                 )
 
                 logger.info(f"✅ [D2 PROGRESS] Received corrected D2 code ({len(corrected_response)} chars) - re-validating...")
@@ -1279,6 +1283,7 @@ class ConversationManager:
         models: List[str],
         default_model: Optional[str] = None,
         session_id: Optional[str] = None,
+        access_key: Optional[str] = None,
     ) -> ConversationSession:
         logger.info(
             "Creating conversation session",
@@ -1299,6 +1304,7 @@ class ConversationManager:
             provider=provider,
             available_models=models,
             default_model=default_model,
+            access_key=access_key,
         )
         session.set_api_key(api_key)
         self._sessions[session_id] = session
