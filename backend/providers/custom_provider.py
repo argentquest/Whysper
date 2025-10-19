@@ -115,13 +115,13 @@ class CustomProvider(BaseAIProvider):
 
         return headers
 
-    def _prepare_request_data(self, messages: List[Dict], model: str) -> Dict[str, Any]:
+    def _prepare_request_data(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
         """Prepare custom request data."""
         data = {
             self.custom_config["model_param"]: model,
             self.custom_config["messages_param"]: messages,
-            self.custom_config["max_tokens_param"]: self.custom_config.get("default_max_tokens", settings.max_tokens),
-            self.custom_config["temperature_param"]: self.custom_config.get("default_temperature", settings.temperature),
+            self.custom_config["max_tokens_param"]: max_tokens,
+            self.custom_config["temperature_param"]: temperature,
             self.custom_config["stream_param"]: False
         }
 

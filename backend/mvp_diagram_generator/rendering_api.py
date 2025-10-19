@@ -88,13 +88,11 @@ async def generate_diagram(
     try:
         # 1. Load the appropriate agent prompt
         try:
-            with open(
-                (
-                    f"C:\\Code2025\\Whysper\\prompts\\coding\\agent\\"
-                    f"{request.diagram_type}-architecture.md"
-                ),
-                "r",
-            ) as f:
+            # Construct path relative to this script's location
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            prompt_file_path = os.path.join(script_dir, f"..\..\prompts\coding\agent\{request.diagram_type}-architecture.md")
+
+            with open(prompt_file_path, "r",) as f:
                 agent_prompt = f.read()
         except FileNotFoundError:
             raise HTTPException(status_code=400, detail="Invalid diagram type")
@@ -140,7 +138,7 @@ async def generate_diagram(
             # Use CLI validation if available (most reliable)
             if is_d2_cli_available():
                 is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
-                    diagram_code, max_attempts=5
+                    diagram_code, max_attempts=8
                 )
                 diagram_code = corrected_code
             else:
@@ -159,7 +157,7 @@ async def generate_diagram(
                 # Apply D2 syntax fixing to the converted code
                 if is_d2_cli_available():
                     is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
-                        diagram_code, max_attempts=5
+                        diagram_code, max_attempts=8
                     )
                     diagram_code = corrected_code
                 else:

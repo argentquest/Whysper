@@ -131,11 +131,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
         // Store SVG content for export
         setSvgContent(svg);
 
-        // Insert the SVG into the container
-        if (containerRef.current) {
-          containerRef.current.innerHTML = svg;
-          console.log('🎨 [MERMAID DIAGRAM] SVG inserted into DOM');
-        }
+
 
         // Show notification if corrections were applied
         if (validation.corrections.length > 0) {
@@ -483,6 +479,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
               transformOrigin: 'center center',
               transition: isPanning ? 'none' : 'transform 0.1s ease-out',
             }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
           />
           {zoom > 1 && (
             <div

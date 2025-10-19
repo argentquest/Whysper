@@ -438,7 +438,7 @@ class ConversationSession:
     # ------------------------------------------------------------------
     # Conversation operations
     # ------------------------------------------------------------------
-    def ask_question(self, question: str, agent_prompt: str = None) -> Dict[str, Any]:
+    def ask_question(self, question: str, agent_prompt: str = None, context_files: List[str] = None) -> Dict[str, Any]:
         """
         Process a user question and generate an AI response.
 
@@ -468,6 +468,9 @@ class ConversationSession:
             Subsequent messages may use persistent file context.
         """
         logger.debug(f"Processing question for session {self.session_id}")
+
+        if context_files is not None:
+            self.update_selected_files(context_files)
 
         # Input validation
         if not question.strip():
@@ -850,9 +853,11 @@ class ConversationSession:
             conversation_history=conversation_for_api,
             codebase_content=codebase_content,
             model=self.app_state.selected_model,
+            max_tokens=self.app_state.max_tokens,
+            temperature=self.app_state.temperature,
         )
 
-    def _validate_and_fix_d2_diagrams(self, response_text: str, original_question: str, max_retries: int = 2) -> str:
+    def _validate_and_fix_d2_diagrams(self, response_text: str, original_question: str, max_retries: int = 8) -> str:
         """
         Automatically validate D2 diagrams in the response and retry with error feedback if invalid.
 

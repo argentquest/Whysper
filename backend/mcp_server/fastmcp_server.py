@@ -106,8 +106,9 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
             })
             logger.info(f"DEBUG: Configuration loaded: {config_debug}")
             
-            # Check if prompt file exists
-            prompt_file_path = f"C:\\Code2025\\Whysper\\prompts\\coding\\agent\\{diagram_type}-architecture.md"
+            # Construct path relative to this script's location
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            prompt_file_path = os.path.join(script_dir, f"..\prompts\coding\agent\{diagram_type}-architecture.md")
             prompt_file_exists = os.path.exists(prompt_file_path)
             logger.info(f"DEBUG: Prompt file check - exists: {prompt_file_exists}, path: {prompt_file_path}")
             

@@ -35,16 +35,12 @@ Node.js and npm (Node Package Manager) are required to run the frontend applicat
 Once the prerequisites are installed, you can clone the application repository.
 
 1.  Open a new **Command Prompt** or **PowerShell** window.
-2.  Navigate to the directory where you want to store the application (e.g., `C:\`):
+2.  Clone the repository to a directory of your choice:
     ```bash
-    cd C:\
-    ```
-3.  Clone the repository using Git:
-    ```bash
-    git clone <repository_url> Whysper
+    git clone <repository_url>
     ```
     (Replace `<repository_url>` with the actual URL of the repository.)
-4.  Navigate into the cloned repository's directory:
+3.  Navigate into the cloned repository's directory. If you cloned the repository with the default name, you can use:
     ```bash
     cd Whysper
     ```
@@ -93,8 +89,8 @@ A virtual environment is used to isolate the Python dependencies for the applica
     # Default AI model to use
     DEFAULT_MODEL=google/gemini-2.5-flash-preview-09-2025
 
-    # Path to the codebase to be analyzed
-    CODE_PATH=C:\Code2025\Whysper
+    # Path to the codebase to be analyzed. Replace this with the full path to the project's root directory.
+    CODE_PATH=.
     ```
     **Note:** Replace `your_api_key_here` with your actual API key from the selected provider.
 

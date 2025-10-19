@@ -75,14 +75,14 @@ class OpenRouterProvider(BaseAIProvider):
         
         return headers
     
-    def _prepare_request_data(self, messages: List[Dict], model: str) -> Dict[str, Any]:
+    def _prepare_request_data(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
         """Prepare OpenRouter-specific request data."""
         # Base OpenAI-compatible format
         data = {
             "model": model,
             "messages": messages,
-            "max_tokens": settings.max_tokens,
-            "temperature": settings.openrouter_temperature,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
             "stream": False  # Ensure no streaming for OpenRouter
         }
         

@@ -7,6 +7,9 @@
 # 🔑 API CONFIGURATION (REQUIRED)
 # =============================================================================
 
+# Access Key for the application
+ACCESS_KEY="your_secret_key"
+
 # Primary API Key - REQUIRED for all AI operations
 # Get your OpenRouter key from: https://openrouter.ai/keys
 API_KEY=""
@@ -52,9 +55,7 @@ PROVIDERS="openrouter,custom"
 API_URL="https://api.openrouter.ai/v1/chat/completions"
 TOKEN_URL="https://api.openrouter.ai/v1/token"
 
-# Token authentication (if required by your provider)
-TOKEN_USE_ID=""
-TOKEN_PASSWORD=""
+
 
 # =============================================================================
 # 🤖 MODEL CONFIGURATION (REQUIRED)
@@ -76,13 +77,9 @@ MAX_TOKENS="10000"
 # Temperature: Controls creativity/randomness (0.0-2.0)
 TEMPERATURE="0.7"
 
-# Top-p nucleus sampling (0.0-1.0)
-TOP_P="1.0"
 
-# Frequency penalty (-2.0 to 2.0)
-FREQUENCY_PENALTY="0.0"
 
-CODE_PATH="C:\Code2025\Whysper"
+CODE_PATH=.
 
 VALIDATE_SSL="true"
 # =============================================================================
@@ -183,22 +180,7 @@ FASTAPI_URL="http://localhost:8000"
 # Port for NiceGUI web server (default: 8080)
 WEB_PORT="8080"
 
-# =============================================================================
-# 💾 INTERACTIVE CLI MEMORY (OPTIONAL)
-# =============================================================================
-# These variables store the last used settings for Rich CLI interactive mode
 
-# Last folder processed
-LAST_USED_FOLDER=""
-
-# Last question asked
-LAST_USED_QUESTION=""
-
-# Last exclude patterns used
-LAST_EXCLUDE_PATTERNS=""
-
-# Last output format used
-LAST_OUTPUT_FORMAT="markdown"
 
 # =============================================================================
 # 📁 OUTPUT DIRECTORY CONFIGURATION

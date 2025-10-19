@@ -57,6 +57,7 @@ import ThemePickerModal from './components/modals/ThemePickerModal';
 // File editor components
 import { FileEditorView } from './components/editor/FileEditorView';
 import { DocumentationView } from './components/documentation/DocumentationView';
+import { WelcomeScreen } from './components/welcome/WelcomeScreen';
 
 // Terminal components  
 
@@ -136,6 +137,7 @@ function App() {
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // ==================== Data State Management ====================
   
@@ -243,6 +245,10 @@ function App() {
 
   // Initialize the application when component mounts (only once)
   useEffect(() => {
+    const storedAuth = localStorage.getItem('whysper_authenticated');
+    if (storedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
     // Create the initial tab for the first conversation
     const initialTab: Tab = {
       id: 'tab-1',                    // Unique tab identifier
@@ -1049,6 +1055,15 @@ function App() {
       message.error('An error occurred while downloading documentation.');
     }
   };
+
+  const handleAuthenticationSuccess = () => {
+    localStorage.setItem('whysper_authenticated', 'true');
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <WelcomeScreen onSuccess={handleAuthenticationSuccess} />;
+  }
 
   return (
     <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>

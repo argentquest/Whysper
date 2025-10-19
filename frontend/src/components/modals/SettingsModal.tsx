@@ -182,13 +182,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         .filter(Boolean)
         .join(',');
 
-      const normalizedModels = (values.modelsList || '')
+      const models = (values.modelsList || '')
         .split(',')
         .map((model: string) => model.trim())
-        .filter(Boolean)
-        .join(',');
+        .filter(Boolean);
 
-      values.providersList = normalizedProviders;
+      if (values.defaultModel && !models.includes(values.defaultModel)) {
+        models.push(values.defaultModel);
+      }
+
+      const normalizedModels = models.join(',');
+
       values.modelsList = normalizedModels;
 
       // Map form values back to backend environment format
@@ -199,17 +203,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         PROVIDERS: normalizedProviders,
         API_URL: values.apiUrl || '',
         TOKEN_URL: values.tokenUrl || '',
-        TOKEN_USE_ID: values.tokenUseId || '',
-        TOKEN_PASSWORD: values.tokenPassword || '',
         VALIDATE_SSL: values.validateSsl ? 'true' : 'false',
 
         // Model Configuration
         DEFAULT_MODEL: values.defaultModel || '',
         MODELS: normalizedModels,
-        MAX_TOKENS: (values.maxTokens ?? 4000).toString(),
-        TEMPERATURE: (values.temperature ?? 0.7).toString(),
-        TOP_P: (values.topP ?? 1.0).toString(),
-        FREQUENCY_PENALTY: (values.frequencyPenalty ?? 0.0).toString(),
 
         // UI Configuration
         UI_THEME: values.uiTheme || 'light',
@@ -434,23 +432,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Input placeholder="https://api.openrouter.ai/v1/token" />
                   </Form.Item>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Form.Item
-                      label="Token User ID"
-                      name="tokenUseId"
-                      tooltip="User ID for token authentication"
-                    >
-                      <Input placeholder="Optional" />
-                    </Form.Item>
 
-                    <Form.Item
-                      label="Token Password"
-                      name="tokenPassword"
-                      tooltip="Password for token authentication"
-                    >
-                      <Input.Password placeholder="Optional" />
-                    </Form.Item>
-                  </div>
 
                 <Title level={5}>OpenRouter Settings</Title>
 
@@ -594,39 +576,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </Form.Item>
 
-                  <Form.Item
-                    label={`Top P: ${form.getFieldValue('topP')?.toFixed(1) || '1.0'}`}
-                    name="topP"
-                    tooltip="Nucleus sampling parameter (0.0-1.0)"
-                  >
-                    <Slider
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      marks={{
-                        0: '0',
-                        0.5: '0.5',
-                        1: '1',
-                      }}
-                    />
-                  </Form.Item>
 
-                  <Form.Item
-                    label={`Frequency Penalty: ${form.getFieldValue('frequencyPenalty')?.toFixed(1) || '0.0'}`}
-                    name="frequencyPenalty"
-                    tooltip="Penalize repeated tokens (-2.0 to 2.0)"
-                  >
-                    <Slider
-                      min={-2}
-                      max={2}
-                      step={0.1}
-                      marks={{
-                        '-2': '-2',
-                        0: '0',
-                        2: '2',
-                      }}
-                    />
-                  </Form.Item>
                 </div>
               ),
             },
@@ -713,7 +663,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     name="codePath"
                     tooltip="Root directory for your codebase"
                   >
-                    <Input placeholder="C:\Code2025\Whysper" />
+                    <Input placeholder="/path/to/your/project" />
                   </Form.Item>
 
                   <Form.Item
@@ -933,55 +883,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     valuePropName="checked"
                   >
                     <Switch />
-                  </Form.Item>
-                </div>
-              ),
-            },
-            {
-              key: 'cli',
-              label: '💾 CLI Memory',
-              children: (
-                <div className="space-y-4">
-                  <Title level={5}>Interactive CLI Settings</Title>
-                  <Text type="secondary" className="block mb-4">
-                    These settings store the last used values for CLI interactive mode
-                  </Text>
-
-                  <Form.Item
-                    label="Last Used Folder"
-                    name="lastUsedFolder"
-                    tooltip="Last folder processed in CLI mode"
-                  >
-                    <Input placeholder="Automatically updated" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Last Used Question"
-                    name="lastUsedQuestion"
-                    tooltip="Last question asked in CLI mode"
-                  >
-                    <TextArea rows={2} placeholder="Automatically updated" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Last Exclude Patterns"
-                    name="lastExcludePatterns"
-                    tooltip="Last exclude patterns used"
-                  >
-                    <Input placeholder="Automatically updated" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Last Output Format"
-                    name="lastOutputFormat"
-                    tooltip="Last output format used"
-                  >
-                    <Select>
-                      <Option value="markdown">Markdown</Option>
-                      <Option value="json">JSON</Option>
-                      <Option value="text">Text</Option>
-                      <Option value="html">HTML</Option>
-                    </Select>
                   </Form.Item>
                 </div>
               ),

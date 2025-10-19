@@ -564,6 +564,21 @@ export class ApiService {
       };
     }
   }
+
+  static async verifyAccessKey(accessKey: string): Promise<ApiResponse<{success: boolean}>> {
+    try {
+      const response = await api.post('/auth/verify', { access_key: accessKey });
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Invalid access key.',
+      };
+    }
+  }
 }
 
 export default ApiService;

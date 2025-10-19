@@ -79,7 +79,7 @@ class BaseAIProvider(ABC):
         pass
     
     @abstractmethod
-    def _prepare_request_data(self, messages: List[Dict], model: str) -> Dict[str, Any]:
+    def _prepare_request_data(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
         """Prepare provider-specific request data."""
         pass
     
@@ -167,6 +167,8 @@ class BaseAIProvider(ABC):
         conversation_history: List[Dict[str, str]],
         codebase_content: str,
         model: str,
+        max_tokens: int,
+        temperature: float,
         update_callback: Optional[Callable[[str, str], None]] = None
     ) -> str:
         """
@@ -213,7 +215,7 @@ class BaseAIProvider(ABC):
             
             # Prepare provider-specific API request
             headers = self._prepare_headers()
-            data = self._prepare_request_data(messages, model)
+            data = self._prepare_request_data(messages, model, max_tokens, temperature)
             
             # Start timing the API call
             start_time = time.time()

@@ -153,6 +153,8 @@ class AppState:
         # API configuration
         self.api_key: str = ""
         self.selected_model: str = AppConfig.get_default().default_model
+        self.max_tokens: int = AppConfig.get_default().default_max_tokens
+        self.temperature: float = AppConfig.get_default().default_temperature
         
     def add_message(self, role: str, content: str):
         """

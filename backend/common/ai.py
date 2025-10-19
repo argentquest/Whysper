@@ -273,6 +273,8 @@ class AIProcessor:
         conversation_history: List[Dict[str, str]],
         codebase_content: str,
         model: str,
+        max_tokens: int,
+        temperature: float,
         update_callback: Optional[Callable[[str, str], None]] = None
     ) -> str:
         """
@@ -292,7 +294,7 @@ class AIProcessor:
             Exception: If API call fails or API key is invalid
         """
         return self._provider.process_question(
-            question, conversation_history, codebase_content, model, update_callback
+            question, conversation_history, codebase_content, model, max_tokens, temperature, update_callback
         )
     
     def process_question_async(

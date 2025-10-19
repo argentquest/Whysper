@@ -443,6 +443,10 @@ def send_chat_message(request: dict):
             session.set_provider(settings["provider"])
         if settings.get("model"):
             session.set_model(settings["model"])
+        if settings.get("maxTokens"):
+            session.app_state.max_tokens = settings["maxTokens"]
+        if settings.get("temperature"):
+            session.app_state.temperature = settings["temperature"]
 
         # Send message to AI and get response
         logger.info(f"Processing AI request for conversation {conversation_id}", extra={'session_id': conversation_id})
@@ -452,7 +456,7 @@ def send_chat_message(request: dict):
         if agent_prompt:
             logger.debug(f"Using agent prompt: {agent_prompt[:100]}...")
 
-        result = session.ask_question(message, agent_prompt=agent_prompt)
+        result = session.ask_question(message, agent_prompt=agent_prompt, context_files=context_files)
 
         # Convert result to frontend-compatible format
         import time
