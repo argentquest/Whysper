@@ -53,6 +53,7 @@ import {
   NewFileModal,
   HelpModal,
   MermaidTesterModal, // Mermaid diagram testing and validation
+  D2TesterModal,      // D2 diagram testing and validation
 } from './components/modals';
 import ThemePickerModal from './components/modals/ThemePickerModal';
 
@@ -136,8 +137,9 @@ function App() {
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
   const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
   const [newFileModalOpen, setNewFileModalOpen] = useState(false);
-  const [helpModalOpen, setHelpModalOpen] = useState(false);         // New file creation modal
+  const [helpModalOpen, setHelpModalOpen] = useState(false);         // Help modal
   const [mermaidTesterModalOpen, setMermaidTesterModalOpen] = useState(false); // Mermaid diagram tester modal
+  const [d2TesterModalOpen, setD2TesterModalOpen] = useState(false); // D2 diagram tester modal
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
@@ -1089,6 +1091,7 @@ function App() {
         onGenerateDocumentation={handleGenerateDocumentation}
         onHelp={handleToggleHelpModal}
         onMermaidTester={() => setMermaidTesterModalOpen(true)}
+        onD2Tester={() => setD2TesterModalOpen(true)}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1294,6 +1297,12 @@ function App() {
       <MermaidTesterModal
         open={mermaidTesterModalOpen}
         onCancel={() => setMermaidTesterModalOpen(false)}
+      />
+
+      {/* D2 Diagram Tester Modal */}
+      <D2TesterModal
+        open={d2TesterModalOpen}
+        onCancel={() => setD2TesterModalOpen(false)}
       />
     </Layout>
   );
