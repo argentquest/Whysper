@@ -23,9 +23,7 @@ interface InputPanelProps {
   onSendMessage: (message: string, command?: string) => void;
   onClear: () => void;
   loading?: boolean;
-  placeholder?: string;
   disabled?: boolean;
-  currentAgent?: string;
   subagentCommands?: SubagentCommand[];
 }
 
@@ -33,16 +31,12 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   onSendMessage,
   onClear,
   loading = false,
-  placeholder = "Type your next question. Press Ctrl+Enter to send.",
-  currentAgent,
   disabled = false,
   subagentCommands = [],
 }) => {
   const [message, setMessage] = useState('');
   const [lastSentMessage, setLastSentMessage] = useState<string>('');
-  // Compute dynamic placeholder based on current agent
-  const dynamicPlaceholder = currentAgent ? `Ask the ${currentAgent} agent... Press Ctrl+Enter to send.` : "Type your next question. Press Ctrl+Enter to send.";
-  const finalPlaceholder = placeholder || dynamicPlaceholder;
+
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);

@@ -186,18 +186,7 @@ export const getMermaidDiagramType = (code: string): string => {
  * Common D2 diagram keywords and patterns
  * D2 uses a simpler syntax than Mermaid - connections with arrows, shapes, etc.
  */
-const D2_PATTERNS = [
-  /^[a-zA-Z0-9_]+\s*-+>/, // Arrow connections: a -> b
-  /^[a-zA-Z0-9_]+\s*<-+>/, // Bidirectional: a <-> b
-  /^[a-zA-Z0-9_]+\s*<-+/, // Reverse arrow: a <- b
-  /\.shape\s*:/, // Shape definition: x.shape: rectangle
-  /\.style\./,  // Style definition: x.style.fill: blue
-  /\.label\s*:/, // Label definition: x.label: "text"
-  /\.class\s*:/, // Class definition
-  /layers\s*\{/, // Layers block
-  /scenarios\s*\{/, // Scenarios block
-  /direction\s*:/, // Direction specification
-] as const;
+
 
 /**
  * Check if a code block should be rendered as a D2 diagram

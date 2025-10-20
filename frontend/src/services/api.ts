@@ -33,7 +33,6 @@ import type {
   CodeBlock,     // Code block structure
   FileUploadRequest,  // File upload request structure
   FileUploadResponse, // File upload response structure
-  UploadedFile   // Uploaded file structure
 } from '../types';
 
 // Backend API base URL - development mode uses separate ports

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented, Upload } from 'antd';
+import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented } from 'antd';
 import {
   ReloadOutlined,
   FolderOutlined,
@@ -144,7 +144,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         setViewMode('uploaded');
         
         // Auto-select uploaded files
-        const newPaths = response.data.files.map(f => f.path);
+        const newPaths = response.data.data.files.map((f: FileItem) => f.path);
         setSelectedFiles(new Set([...selectedFiles, ...newPaths]));
       } else {
         message.error(response.error || 'Failed to upload files');
@@ -292,7 +292,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         </div>
 
         {/* File Upload Button - Show in all views except tree */}
-        {viewMode !== 'tree' && (
+                {String(viewMode) !== 'tree' && (
           <div className="flex items-center gap-4">
             <Button
               type="primary"

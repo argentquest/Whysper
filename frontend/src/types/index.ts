@@ -46,7 +46,7 @@ export interface Tab {
   title: string;
   isActive: boolean;
   isDirty: boolean;
-  type: 'chat' | 'file';
+  type: 'chat' | 'file' | 'documentation';
   filePath?: string;
   fileContent?: string;
   originalContent?: string;

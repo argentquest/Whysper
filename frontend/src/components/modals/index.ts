@@ -8,3 +8,4 @@ export { default as CodeFragmentsModal } from './CodeFragmentsModal';
 export { default as FileSelectionModal } from './FileSelectionModal';
 export { default as NewFileModal } from './NewFileModal';
 export { HelpModal } from './HelpModal';
+export { default as MermaidTesterModal } from './MermaidTesterModal';

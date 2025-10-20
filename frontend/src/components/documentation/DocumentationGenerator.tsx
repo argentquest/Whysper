@@ -8,9 +8,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Select, Switch, Card, Space, Typography, Divider, Alert, Spin } from 'antd';
 import { FileTextOutlined, DownloadOutlined, SettingOutlined } from '@ant-design/icons';
-import { api } from '../../services/api';
+import ApiService from '../../services/api';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
 interface DocumentationGeneratorProps {
@@ -27,18 +27,6 @@ interface DocumentationRequest {
   include_diagrams: boolean;
   target_audience: string;
   language?: string;
-}
-
-interface DocumentationResponse {
-  id: string;
-  content: string;
-  metadata: Record<string, any>;
-  diagrams: Array<Record<string, any>>;
-  examples: Array<Record<string, any>>;
-  references: string[];
-  generated_at: string;
-  processing_time: number;
-  token_usage: Record<string, number>;
 }
 
 const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
@@ -62,7 +50,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const response = await api.get('/api/v1/documentation/templates');
+        const response = await ApiService.get('/api/v1/documentation/templates');
         setTemplates(response.data.templates || []);
       } catch (err) {
         console.error('Failed to load templates:', err);
@@ -90,7 +78,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     setError('');
 
     try {
-      const response = await api.post<DocumentationResponse>(
+      const response = await ApiService.post(
         '/api/v1/documentation/generate',
         request
       );
@@ -117,7 +105,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     }
 
     try {
-      const response = await api.post(
+      const response = await ApiService.post(
         '/api/v1/documentation/export',
         {
           documentation_id: 'temp',

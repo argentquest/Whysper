@@ -41,7 +41,7 @@ export function validateAndCorrectMermaidSyntax(code: string): MermaidValidation
   correctedCode = fixSubgraphSyntax(correctedCode, corrections);
 
   // Fix 5: Class diagram syntax issues
-  correctedCode = fixClassDiagramSyntax(correctedCode, corrections);
+  correctedCode = fixClassDiagramSyntax(correctedCode);
 
   // Fix 6: Sequence diagram syntax issues
   correctedCode = fixSequenceDiagramSyntax(correctedCode, corrections);
@@ -149,7 +149,7 @@ function fixNodeSyntax(code: string, corrections: string[]): string {
   let fixedCode = code;
   
   // Fix nodes with special characters that need quotes
-  fixedCode = fixedCode.replace(/(\w+)\s*\[\s*([^\]]+?)\s*\]/g, (match, id, label) => {
+  fixedCode = fixedCode.replace(/(\w+)\s*\[\s*([^\]]+?)\s*\]/g, (_match, id, label) => {
     // If label contains special characters, ensure it's properly quoted
     if (label.includes(' ') || label.includes('-') || label.includes('(') || label.includes(')')) {
       if (!label.startsWith('"') && !label.endsWith('"')) {
@@ -157,14 +157,14 @@ function fixNodeSyntax(code: string, corrections: string[]): string {
         return `${id}["${label}"]`;
       }
     }
-    return match;
+    return _match;
   });
   
   // Fix node definitions with colons (common mistake)
   fixedCode = fixedCode.replace(/(\w+):\s*(\[|\()/g, '$1$2');
   
   // Fix parentheses for round nodes (should be [])
-  fixedCode = fixedCode.replace(/(\w+)\s*\(\s*([^)]+?)\s*\)/g, (match, id, label) => {
+  fixedCode = fixedCode.replace(/(\w+)\s*\(\s*([^)]+?)\s*\)/g, (_match, id, label) => {
     corrections.push(`Changed parentheses to brackets for node: ${id}`);
     return `${id}[${label}]`;
   });
@@ -189,7 +189,7 @@ function fixSubgraphSyntax(code: string, corrections: string[]): string {
   }
   
   // Fix subgraph title formatting
-  fixedCode = fixedCode.replace(/subgraph\s+["']([^"']+)["']/gi, (match, title) => {
+  fixedCode = fixedCode.replace(/subgraph\s+["']([^"']+)["']/gi, (_match, title) => {
     return `subgraph "${title}"`;
   });
   
@@ -199,7 +199,7 @@ function fixSubgraphSyntax(code: string, corrections: string[]): string {
 /**
  * Fix class diagram syntax issues
  */
-function fixClassDiagramSyntax(code: string, corrections: string[]): string {
+function fixClassDiagramSyntax(code: string): string {
   let fixedCode = code;
   
   // Fix class inheritance syntax (should use --> or <--)
@@ -210,7 +210,7 @@ function fixClassDiagramSyntax(code: string, corrections: string[]): string {
   fixedCode = fixedCode.replace(/(\w+)\s*-\s*([^>\-]+)\s*-\s*(\w+)/g, '$1 --> $2 : $3');
   
   // Fix class member syntax (should be +, -, #)
-  fixedCode = fixedCode.replace(/(\w+)\s*:\s*(\w+)/g, (match, member, type) => {
+  fixedCode = fixedCode.replace(/(\w+)\s*:\s*(\w+)/g, (_match, member, type) => {
     // This is a simplified fix - in real cases we'd need to detect visibility
     return `+${member}: ${type}`;
   });
@@ -225,7 +225,7 @@ function fixSequenceDiagramSyntax(code: string, corrections: string[]): string {
   let fixedCode = code;
   
   // Fix participant declarations
-  fixedCode = fixedCode.replace(/participant\s+(\w+)\s+as\s+(\w+)/gi, (match, actor, alias) => {
+  fixedCode = fixedCode.replace(/participant\s+(\w+)\s+as\s+(\w+)/gi, (_match, actor, alias) => {
     return `participant ${actor} as ${alias}`;
   });
   
@@ -263,7 +263,7 @@ function cleanupFormatting(code: string, corrections: string[]): string {
   }).join('\n');
   
   // Ensure proper spacing around arrows
-  fixedCode = fixedCode.replace(/(\w+)(-->|<-->|->>|--x|-\x)(\w+)/g, '$1 $2 $3');
+  fixedCode = fixedCode.replace(/(\w+)(-->|<-->|->>|--x|-\\x)(\w+)/g, '$1 $2 $3');
   
   if (fixedCode !== code) {
     corrections.push('Cleaned up formatting and whitespace');

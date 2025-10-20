@@ -36,6 +36,7 @@ interface HeaderProps {
   onCodeFragments: () => void;
   onGenerateDocumentation: () => void;
   onHelp: () => void;
+  onMermaidTester: () => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
   onRunSystemPrompt: (systemName: string) => void;
@@ -54,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   onCodeFragments,
   onGenerateDocumentation,
   onHelp,
+  onMermaidTester,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -338,6 +340,12 @@ export const Header: React.FC<HeaderProps> = ({
               label: 'Settings',
               icon: <SettingOutlined />,
                   onClick: onOpenSettings,
+                },
+                {
+                  key: 'mermaid-tester',
+                  label: 'Mermaid Tester',
+                  icon: <PlayCircleOutlined />,
+                  onClick: onMermaidTester,
                 },
                 {
                   type: 'divider',

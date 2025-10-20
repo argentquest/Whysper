@@ -52,6 +52,7 @@ import {
   FileSelectionModal, // File selection for editing
   NewFileModal,
   HelpModal,
+  MermaidTesterModal, // Mermaid diagram testing and validation
 } from './components/modals';
 import ThemePickerModal from './components/modals/ThemePickerModal';
 
@@ -136,6 +137,7 @@ function App() {
   const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
   const [newFileModalOpen, setNewFileModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);         // New file creation modal
+  const [mermaidTesterModalOpen, setMermaidTesterModalOpen] = useState(false); // Mermaid diagram tester modal
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
@@ -1086,6 +1088,7 @@ function App() {
         onCodeFragments={() => setCodeFragmentsModalOpen(true)}
         onGenerateDocumentation={handleGenerateDocumentation}
         onHelp={handleToggleHelpModal}
+        onMermaidTester={() => setMermaidTesterModalOpen(true)}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1159,7 +1162,6 @@ function App() {
                 onSendMessage={handleSendMessage}
                 onClear={handleClearInput}
                 loading={loading}
-                 currentAgent={activeAgentName}
                 subagentCommands={subagentCommands}
               />
             </div>
@@ -1286,6 +1288,12 @@ function App() {
       <HelpModal
         open={helpModalOpen}
         onCancel={handleToggleHelpModal}
+      />
+
+      {/* Mermaid Diagram Tester Modal */}
+      <MermaidTesterModal
+        open={mermaidTesterModalOpen}
+        onCancel={() => setMermaidTesterModalOpen(false)}
       />
     </Layout>
   );

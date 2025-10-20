@@ -14,6 +14,8 @@ if a given string contains valid diagram syntax for the respective type.
 import re
 from .d2_syntax_fixer import fix_d2_syntax
 from .d2_cli_validator import validate_d2_with_cli, is_d2_cli_available
+from .mermaid_cli_validator import validate_mermaid_with_cli, is_mermaid_cli_available
+from .mermaid_syntax_fixer import fix_mermaid_syntax
 
 # Mermaid diagram type keywords
 # These are the main diagram types supported by Mermaid.js
@@ -78,21 +80,20 @@ D2_PATTERNS = [
 def is_valid_mermaid_diagram(code: str) -> bool:
     """
     Validate if a string contains valid Mermaid diagram syntax.
-    
-    This function checks if the given code contains Mermaid diagram keywords
-    in the first few lines, which is where Mermaid diagram types are typically
-    declared.
-    
+
+    This function first tries to use the Mermaid CLI (mmdc) for reliable validation,
+    and falls back to pattern-based validation if CLI is not available.
+
     Args:
         code (str): The diagram code to validate
-        
+
     Returns:
-        bool: True if valid Mermaid syntax is detected, False otherwise
-        
+        bool: True if valid Mermaid syntax is detected or can be fixed, False otherwise
+
     Note:
-        - Only checks the first 3 lines for efficiency
-        - Uses keyword matching rather than full syntax validation
-        - Does not guarantee the diagram will render successfully
+        - Prefers Mermaid CLI validation when available (most reliable)
+        - Falls back to pattern-based validation if CLI not available
+        - Attempts to fix common syntax errors before validation
     """
     # Input validation
     if not code or not isinstance(code, str):
@@ -103,12 +104,20 @@ def is_valid_mermaid_diagram(code: str) -> bool:
     if not trimmed:
         return False
 
-    # Check first 3 lines for Mermaid keywords (diagram type declarations)
-    first_lines = "\n".join(trimmed.split("\n")[:3])
-    return any(
-        re.search(rf"\b{keyword}\b", first_lines, re.IGNORECASE)
-        for keyword in MERMAID_KEYWORDS
-    )
+    # First try to validate using Mermaid CLI if available
+    if is_mermaid_cli_available():
+        is_valid, _ = validate_mermaid_with_cli(trimmed)
+        if is_valid:
+            return True
+
+        # If CLI validation fails, try to fix and validate again
+        from .mermaid_cli_validator import validate_and_fix_mermaid_with_cli
+        is_valid, fixed_code, _ = validate_and_fix_mermaid_with_cli(trimmed)
+        return is_valid
+
+    # Fallback to pattern-based validation if CLI not available
+    result = fix_mermaid_syntax(trimmed)
+    return result.is_valid
 
 def is_valid_d2_diagram(code: str) -> bool:
     """

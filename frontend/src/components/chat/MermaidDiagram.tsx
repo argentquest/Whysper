@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { Card, Button, Space, message as antMessage, Tooltip } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, FullscreenOutlined } from '@ant-design/icons';
+import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { ApiService } from '../../services/api';
 import { validateAndCorrectMermaidSyntax, looksLikeValidMermaid } from '../../utils/mermaidSyntaxValidator';
 
@@ -151,8 +151,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
           event_type: 'render_success',
           diagram_type: 'mermaid',
           code_length: code.length,
-          corrections_applied: validation.corrections.length,
-          warnings: validation.warnings.length
+          detection_method: `syntax_validation_fix`
         });
       } catch (err) {
         let errorMessage = err instanceof Error ? err.message : 'Failed to render diagram';

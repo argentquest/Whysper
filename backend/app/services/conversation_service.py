@@ -543,6 +543,10 @@ class ConversationSession:
         response_text = self._validate_and_fix_d2_diagrams(response_text, question)
         logger.info(f"After D2 validation/fix: {len(response_text)} characters")
 
+        # Auto-validate and fix Mermaid diagrams if present
+        response_text = self._validate_and_fix_mermaid_diagrams(response_text, question)
+        logger.info(f"After Mermaid validation/fix: {len(response_text)} characters")
+
         # DEBUG: Log agent prompt usage
         if agent_prompt:
             logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Using agent prompt for question: {question[:100]}..."))
@@ -999,6 +1003,137 @@ class ConversationSession:
 
         except Exception as e:
             logger.error(f"Error during D2 validation/fix: {str(e)}")
+            # Return original response if validation fails
+            return response_text
+
+    def _validate_and_fix_mermaid_diagrams(self, response_text: str, original_question: str, max_retries: int = 5) -> str:
+        """
+        Automatically validate Mermaid diagrams in the response and retry with error feedback if invalid.
+
+        Args:
+            response_text: The AI's response containing potential Mermaid diagrams
+            original_question: The original user question
+            max_retries: Maximum number of retry attempts (default: 5)
+
+        Returns:
+            Corrected response text with valid Mermaid diagrams
+        """
+        import re
+        from app.services.mermaid_render_service import get_mermaid_service
+
+        # Check if response contains Mermaid code blocks
+        # Match ```mermaid with optional whitespace before newline or content
+        mermaid_pattern = r'```mermaid\s*\n?(.*?)```'
+        mermaid_matches = re.findall(mermaid_pattern, response_text, re.DOTALL)
+
+        if not mermaid_matches:
+            logger.debug("No Mermaid diagrams found in response, skipping validation")
+            return response_text
+
+        logger.info(f"🔍 [MERMAID PROGRESS] Found {len(mermaid_matches)} Mermaid diagram(s) - validating syntax...")
+
+        try:
+            mermaid_service = get_mermaid_service()
+            retry_count = 0
+            current_response = response_text
+
+            while retry_count < max_retries:
+                all_valid = True
+                validation_errors = []
+
+                logger.debug(f"[MERMAID PROGRESS] Validation attempt {retry_count + 1}/{max_retries}")
+
+                # Validate each Mermaid diagram
+                for i, mermaid_code in enumerate(re.findall(mermaid_pattern, current_response, re.DOTALL)):
+                    is_valid, error_msg = mermaid_service.validate_mermaid_code(mermaid_code)
+
+                    if not is_valid:
+                        all_valid = False
+                        validation_errors.append(f"Mermaid Diagram #{i+1} Error:\n{error_msg}")
+                        logger.warning(f"[MERMAID PROGRESS] Diagram #{i+1} validation failed: {error_msg[:200]}")
+
+                if all_valid:
+                    logger.info("✅ [MERMAID PROGRESS] All Mermaid diagrams validated successfully!")
+                    return current_response
+
+                # If validation failed, send errors back to AI for correction
+                retry_count += 1
+                logger.info(f"🔧 [MERMAID PROGRESS] Validation errors found - requesting AI auto-fix (attempt {retry_count}/{max_retries})...")
+
+                error_summary = "\n\n".join(validation_errors)
+                correction_prompt = (
+                    f"FIX THESE MERMAID SYNTAX ERRORS:\n\n{error_summary}\n\n"
+                    f"RULES:\n"
+                    f"- Always start with diagram type (flowchart TD, sequenceDiagram, etc.)\n"
+                    f"- Use proper arrow syntax with spaces: A --> B (not A-->B)\n"
+                    f"- Quote labels with special characters: A[\"My Node\"]\n"
+                    f"- Do NOT use reserved keywords as node IDs (end, start, subgraph, etc.)\n"
+                    f"- Close all subgraphs with 'end'\n"
+                    f"- For sequence diagrams, use: participant, -->>, -->>  \n\n"
+                    f"Return ONLY the corrected ```mermaid code block. Keep it SIMPLE and COMPLETE."
+                )
+
+                # Send correction request to AI
+                conversation_for_api = []
+                for message in self.app_state.conversation_history[:-1]:
+                    if message.role != "system":
+                        conversation_for_api.append(message.to_dict())
+
+                corrected_response = self.ai_processor.process_question(
+                    question=correction_prompt,
+                    conversation_history=conversation_for_api,
+                    codebase_content="",
+                    model=self.app_state.selected_model,
+                    max_tokens=self.app_state.max_tokens,
+                    temperature=self.app_state.temperature,
+                )
+
+                logger.info(f"✅ [MERMAID PROGRESS] Received corrected Mermaid code ({len(corrected_response)} chars) - re-validating...")
+
+                # Check if response looks truncated
+                if corrected_response.count('```mermaid') > corrected_response.count('```\n'):
+                    logger.warning(f"⚠️  Corrected response may be TRUNCATED! Model: {self.app_state.selected_model}")
+                    logger.warning(f"⚠️  Try switching to a model that doesn't truncate")
+
+                current_response = corrected_response
+
+            # If we exhausted retries, include validation errors in the response
+            logger.warning(f"[MERMAID PROGRESS] ❌ Validation failed after {max_retries} retries")
+
+            # Create error report section
+            error_report = "\n\n---\n\n"
+            error_report += "## ⚠️ Mermaid Diagram Validation Failed\n\n"
+            error_report += f"The Mermaid diagram could not be validated after {max_retries} auto-fix attempts.\n\n"
+            error_report += "**Validation Errors:**\n\n"
+
+            for error in validation_errors:
+                error_report += f"```\n{error}\n```\n\n"
+
+            error_report += "**Common fixes:**\n"
+            error_report += "- Always include diagram type: `flowchart TD`, `sequenceDiagram`, etc.\n"
+            error_report += "- Use proper spacing: `A --> B` not `A-->B`\n"
+            error_report += "- Quote labels with spaces: `A[\"My Label\"]`\n"
+            error_report += "- Avoid reserved words as node IDs: `end`, `start`, `subgraph`\n"
+            error_report += "- Close subgraphs with `end`\n"
+            error_report += "- Check arrow syntax for diagram type\n\n"
+
+            error_report += "**Mermaid Code (Failed Validation):**\n\n"
+
+            # Extract the Mermaid code that failed
+            failed_mermaid_matches = re.findall(mermaid_pattern, current_response, re.DOTALL)
+            if failed_mermaid_matches:
+                for i, mermaid_code in enumerate(failed_mermaid_matches):
+                    error_report += f"```mermaid\n{mermaid_code}\n```\n\n"
+
+            error_report += "*Note: The diagram above may contain errors and might not render properly.*\n\n"
+
+            # Append error report to response
+            current_response += error_report
+
+            return current_response
+
+        except Exception as e:
+            logger.error(f"[MERMAID PROGRESS] Error during validation/fix: {str(e)}", exc_info=True)
             # Return original response if validation fails
             return response_text
 

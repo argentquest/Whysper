@@ -106,16 +106,16 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
 
         let svg: string;
         try {
-          const renderResponse = await d2Api.renderD2(convertedD2);
+          const renderResponse = await d2Api.renderD2({ code: convertedD2 });
 
-          if (!renderResponse.success || !renderResponse.svgContent) {
+          if (!renderResponse.success || !renderResponse.svg_content) {
             throw new Error(
               renderResponse.error ||
               'Backend D2 rendering failed - no SVG content returned'
             );
           }
 
-          svg = renderResponse.svgContent;
+          svg = renderResponse.svg_content;
           console.log('🏗️ [C4 DIAGRAM] Backend rendering successful', {
             svgLength: svg.length
           });

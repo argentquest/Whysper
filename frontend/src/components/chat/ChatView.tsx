@@ -27,6 +27,7 @@ import {
   isMermaidCode,
   isD2Syntax,
   prepareD2Code,
+  isD2Code,
   isC4Syntax,
   prepareC4Code,
   isC4Code,
@@ -36,7 +37,7 @@ import { useTheme } from '../../themes';
 
 
 // Function to print the visual output of a message element
-const printMessageElement = (messageId: string, fullContent: string) => {
+const printMessageElement = (messageId: string) => {
   // Find the message element by ID
   const messageElement = document.getElementById(`message-${messageId}`);
   
@@ -57,7 +58,8 @@ const printMessageElement = (messageId: string, fullContent: string) => {
   document.body.appendChild(printFrame);
   
   // Get the iframe document
-  const frameDoc = printFrame.contentWindow || printFrame.contentDocument.document;
+  const frameDoc = printFrame.contentWindow?.document || printFrame.contentDocument;
+  if (!frameDoc) return;
   
   // Clone the message content
   const messageContent = messageElement.querySelector('.message-content');
@@ -70,14 +72,14 @@ const printMessageElement = (messageId: string, fullContent: string) => {
   const clonedContent = messageContent.cloneNode(true);
   
   // Expand all collapsible elements in the cloned content
-  const detailsElements = clonedContent.querySelectorAll('details');
-  detailsElements.forEach(details => {
+  const detailsElements = (clonedContent as Element).querySelectorAll('details');
+  detailsElements.forEach((details: HTMLDetailsElement) => {
     details.setAttribute('open', '');
   });
   
   // Write the content to the iframe with the full content
-  frameDoc.document.open();
-  frameDoc.document.write(`
+  frameDoc.open();
+  frameDoc.write(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -134,16 +136,20 @@ const printMessageElement = (messageId: string, fullContent: string) => {
     </body>
     </html>
   `);
-  frameDoc.document.close();
+  frameDoc.close();
   
   // Append the cloned content to the iframe
-  const printedContent = frameDoc.document.getElementById('printed-content');
-  printedContent.appendChild(clonedContent);
+  const printedContent = frameDoc.getElementById('printed-content');
+  if (printedContent) {
+    printedContent.appendChild(clonedContent);
+  }
   
   // Wait for the content to load, then trigger print
   setTimeout(() => {
-    printFrame.contentWindow.focus();
-    printFrame.contentWindow.print();
+    if (printFrame.contentWindow) {
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+    }
     
     // Remove the iframe after printing
     setTimeout(() => {
@@ -371,27 +377,24 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
       const diagramType = isMermaid ? 'mermaid' : 'd2';
       const decodedCode = isMermaid ? decodedMermaid : decodedD2;
       
-      if (!alreadyProcessed) {
-        // This is a new diagram not caught by enhanced detection
-        diagramCount++;
-        const diagramLabel = isMermaid ? 'Mermaid' : 'D2';
-        
-        parts.push(
-          diagramType === 'mermaid' ? (
-            <MermaidDiagram
-              key={`fallback-diagram-render-${match.index}`}
-              code={decodedCode}
-              title="Mermaid Diagram"
-            />
-          ) : (
-            <D2DiagramBackend
-              key={`fallback-diagram-render-${match.index}`}
-              code={decodedCode}
-              title="D2 Diagram"
-            />
-          )
-        );
-      }
+      // This is a new diagram not caught by enhanced detection
+      diagramCount++;
+      
+      parts.push(
+        diagramType === 'mermaid' ? (
+          <MermaidDiagram
+            key={`fallback-diagram-render-${match.index}`}
+            code={decodedCode}
+            title="Mermaid Diagram"
+          />
+        ) : (
+          <D2DiagramBackend
+            key={`fallback-diagram-render-${match.index}`}
+            code={decodedCode}
+            title="D2 Diagram"
+          />
+        )
+      );
     } else {
       // Not a diagram, render as regular code block
       parts.push(
@@ -653,7 +656,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         
         // Add a timeout to ensure the loading message is visible
         setTimeout(() => {
-          printMessageElement(message.id, message.content);
+          printMessageElement(message.id);
           
           // Hide the loading message after a delay to give the print dialog time to appear
           setTimeout(() => {
@@ -1342,6 +1345,7 @@ interface ChatViewProps {
   messages: Message[];
   loading?: boolean;
   onShowCode?: (code: string, language: string, title?: string) => void;
+  onExtractCode: (messageId: string) => void;
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({

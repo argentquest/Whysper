@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Backend Validation Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.secondary {
+            background-color: #2196F3;
+        }
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            cursor: pointer;
+        }
+        .test-case:hover {
+            background-color: #f0f0f0;
+        }
+        .test-case.invalid {
+            border-left-color: #f44336;
+        }
+        #renderedDiagram {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 200px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .status-online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mermaid Backend Validation Test</h1>
+        <p class="subtitle">Test the new backend validation API for Mermaid diagrams</p>
+        <div id="serverStatus"></div>
+    </div>
+
+    <div class="grid">
+        <div class="container">
+            <h2>Mermaid Code Editor</h2>
+            <textarea id="mermaidCode" placeholder="Enter your Mermaid diagram code here...">flowchart TD
+    A[Start] --> B{Is it valid?}
+    B -->|Yes| C[Render]
+    B -->|No| D[Fix Syntax]
+    D --> B
+    C --> E[End]</textarea>
+
+            <button onclick="validateMermaid()">Validate Only</button>
+            <button onclick="validateAndFix()">Validate & Auto-Fix</button>
+            <button class="secondary" onclick="renderMermaid()">Validate & Render</button>
+
+            <div id="validationResult"></div>
+        </div>
+
+        <div class="container">
+            <h2>Test Cases</h2>
+            <p>Click to load a test case:</p>
+
+            <div class="test-case" onclick="loadTestCase('valid1')">
+                <strong>✅ Valid Flowchart</strong><br>
+                Basic flowchart with decision nodes
+            </div>
+
+            <div class="test-case" onclick="loadTestCase('valid2')">
+                <strong>✅ Valid Sequence Diagram</strong><br>
+                Simple sequence diagram with participants
+            </div>
+
+            <div class="test-case invalid" onclick="loadTestCase('invalid1')">
+                <strong>❌ Missing Diagram Type</strong><br>
+                Should be auto-fixed by adding "flowchart TD"
+            </div>
+
+            <div class="test-case invalid" onclick="loadTestCase('invalid2')">
+                <strong>❌ Reserved Keyword Error</strong><br>
+                Using 'end' as a node ID (reserved word)
+            </div>
+
+            <div class="test-case" onclick="loadTestCase('complex1')">
+                <strong>🔧 Complex Architecture</strong><br>
+                Multi-tier system architecture
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Rendered Diagram</h2>
+        <div id="renderedDiagram">
+            <p style="color: #999;">Rendered diagram will appear here...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8003/api/v1/mermaid';
+
+        const testCases = {
+            valid1: `flowchart TD
+    A[Start] --> B{Is it valid?}
+    B -->|Yes| C[Render]
+    B -->|No| D[Fix Syntax]
+    D --> B
+    C --> E[End]`,
+
+            valid2: `sequenceDiagram
+    participant User
+    participant API
+    participant Database
+
+    User->>API: Request data
+    API->>Database: Query
+    Database-->>API: Results
+    API-->>User: Response`,
+
+            invalid1: `A[Start] --> B{Decision}
+    B -->|Yes| C[Success]
+    B -->|No| D[Failure]`,
+
+            invalid2: `flowchart TD
+    A[Start] --> B[Process]
+    B --> end
+    end --> C[Done]`,
+
+            complex1: `flowchart TB
+    subgraph "Frontend"
+        UI[User Interface]
+        Router[React Router]
+    end
+
+    subgraph "Backend"
+        API[FastAPI Server]
+        Auth[Authentication]
+        DB[Database]
+    end
+
+    UI --> Router
+    Router --> API
+    API --> Auth
+    API --> DB
+    Auth --> DB`
+        };
+
+        // Check server status on load
+        window.addEventListener('load', checkServerStatus);
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`, { timeout: 5000 });
+                const data = await response.json();
+
+                const statusDiv = document.getElementById('serverStatus');
+                if (data.status === 'healthy') {
+                    statusDiv.innerHTML = `
+                        <span class="status-badge status-online">● Server Online</span>
+                        <span style="color: #666;">Mermaid CLI: ${data.mermaid_available ? 'Available' : 'Not Available'}</span>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <span class="status-badge status-offline">● Server Offline</span>
+                        <span style="color: #666;">Cannot connect to backend</span>
+                    `;
+                }
+            } catch (error) {
+                const statusDiv = document.getElementById('serverStatus');
+                statusDiv.innerHTML = `
+                    <span class="status-badge status-offline">● Server Offline</span>
+                    <span style="color: #666;">Make sure backend is running on port 8003</span>
+                `;
+            }
+        }
+
+        function loadTestCase(caseId) {
+            document.getElementById('mermaidCode').value = testCases[caseId];
+            validateMermaid();
+        }
+
+        async function validateMermaid() {
+            const code = document.getElementById('mermaidCode').value;
+            const resultDiv = document.getElementById('validationResult');
+
+            if (!code.trim()) {
+                resultDiv.innerHTML = `<div class="result error"><strong>Error:</strong> Please enter some Mermaid code</div>`;
+                return;
+            }
+
+            resultDiv.innerHTML = `<div class="result info">Validating...</div>`;
+
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, auto_fix: false })
+                });
+
+                const data = await response.json();
+
+                if (data.is_valid) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Valid Mermaid Syntax!</strong><br>
+                            Code length: ${data.code_length} characters
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Invalid Mermaid Syntax</strong><br>
+                            <strong>Error:</strong><br>
+                            <pre>${escapeHtml(data.error || 'Unknown error')}</pre>
+                            <p><em>Tip: Try the "Validate & Auto-Fix" button to automatically fix common issues</em></p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>Request Failed</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function validateAndFix() {
+            const code = document.getElementById('mermaidCode').value;
+            const resultDiv = document.getElementById('validationResult');
+
+            if (!code.trim()) {
+                resultDiv.innerHTML = `<div class="result error"><strong>Error:</strong> Please enter some Mermaid code</div>`;
+                return;
+            }
+
+            resultDiv.innerHTML = `<div class="result info">Validating and attempting auto-fix...</div>`;
+
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, auto_fix: true })
+                });
+
+                const data = await response.json();
+
+                if (data.is_valid && data.auto_fixed) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Auto-Fix Successful!</strong><br>
+                            ${data.fix_message}<br><br>
+                            <strong>Fixed Code:</strong><br>
+                            <pre>${escapeHtml(data.fixed_code)}</pre>
+                            <button onclick="applyFixedCode(\`${escapeHtml(data.fixed_code)}\`)">Apply Fixed Code</button>
+                        </div>
+                    `;
+                } else if (data.is_valid) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Valid Mermaid Syntax!</strong><br>
+                            No fixes needed
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Could Not Auto-Fix</strong><br>
+                            <strong>Error:</strong><br>
+                            <pre>${escapeHtml(data.error || 'Unknown error')}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>Request Failed</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function renderMermaid() {
+            const code = document.getElementById('mermaidCode').value;
+            const resultDiv = document.getElementById('validationResult');
+            const renderDiv = document.getElementById('renderedDiagram');
+
+            if (!code.trim()) {
+                resultDiv.innerHTML = `<div class="result error"><strong>Error:</strong> Please enter some Mermaid code</div>`;
+                return;
+            }
+
+            resultDiv.innerHTML = `<div class="result info">Validating and rendering...</div>`;
+            renderDiv.innerHTML = `<p style="color: #999;">Rendering...</p>`;
+
+            try {
+                const response = await fetch(`${API_BASE}/render`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code,
+                        return_svg: true,
+                        output_format: 'svg'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Rendering Successful!</strong><br>
+                            Render time: ${data.metadata.render_time.toFixed(2)}s<br>
+                            ${data.validation.auto_fixed ? `<em>Note: Code was auto-fixed</em>` : ''}
+                        </div>
+                    `;
+
+                    renderDiv.innerHTML = data.svg_content;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Rendering Failed</strong><br>
+                            <strong>Error:</strong><br>
+                            <pre>${escapeHtml(data.error || 'Unknown error')}</pre>
+                        </div>
+                    `;
+                    renderDiv.innerHTML = `<p style="color: #999;">Rendering failed. See error above.</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>Request Failed</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                renderDiv.innerHTML = `<p style="color: #999;">Rendering failed.</p>`;
+            }
+        }
+
+        function applyFixedCode(fixedCode) {
+            document.getElementById('mermaidCode').value = fixedCode;
+            validateMermaid();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

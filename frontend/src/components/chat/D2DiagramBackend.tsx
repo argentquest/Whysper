@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Space, Tag, Spin, Alert, Collapse, Typography } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { CopyOutlined, DownloadOutlined, ExpandOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import d2Api from '../../services/d2Api';
 import type { D2RenderResponse } from '../../services/d2Api';
 

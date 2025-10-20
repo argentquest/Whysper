@@ -19,7 +19,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, diagram_events, d2_render, documentation, auth
+    chat, code, files, settings, system, diagram_events, d2_render, mermaid_render, documentation, auth
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -94,6 +94,15 @@ api_router.include_router(
     d2_render.router,
     prefix="/d2",
     tags=["d2"],
+)
+
+# ==================== Mermaid Rendering Endpoints ====================
+# Mermaid diagram rendering using CLI (mmdc)
+# Available at: /api/v1/mermaid/* (render, validate, info, health)
+api_router.include_router(
+    mermaid_render.router,
+    prefix="/mermaid",
+    tags=["mermaid"],
 )
 
 # ==================== Documentation Generator Endpoints ====================
