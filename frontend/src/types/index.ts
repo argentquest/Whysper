@@ -24,6 +24,7 @@ export interface Message {
     elapsedTime?: number; // in seconds
     codeBlocks?: CodeBlock[];
     mermaidDiagrams?: MermaidDiagram[];
+    d2Diagrams?: D2Diagram[];
   };
 }
 
@@ -38,6 +39,13 @@ export interface MermaidDiagram {
   id: string;
   code: string;
   title?: string;
+}
+
+export interface D2Diagram {
+  id: string;
+  code: string;
+  title?: string;
+  svgContent?: string;
 }
 
 export interface Tab {
