@@ -250,11 +250,7 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
  * - Second identical block: Render as diagram
  * - This matches LLM pattern: "Code" then "Rendered Diagram"
  */
-// Type for tracking diagram occurrences
-type DiagramOccurrence = {
-  count: number;
-  type: 'mermaid' | 'd2';
-};
+
 
 const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
   // Use enhanced detection for mixed HTML content
@@ -268,22 +264,10 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
   // Process HTML with detected diagrams
   const parts: React.ReactNode[] = [];
   let diagramCount = 0;
-  const diagramOccurrences = new Map<string, DiagramOccurrence>();
-
 
   // Process each detected diagram
   for (const diagram of diagrams) {
     const { code, type, confidence } = diagram;
-
-    // Track occurrences for duplicate handling
-    const existingEntry = diagramOccurrences.get(code);
-    const occurrenceCount = existingEntry?.count || 0;
-    diagramOccurrences.set(code, { count: occurrenceCount + 1, type });
-
-    // Skip duplicate diagrams (only render the first occurrence)
-    if (occurrenceCount > 0) {
-      continue;
-    }
 
     diagramCount++;
 
@@ -387,79 +371,26 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
       const diagramType = isMermaid ? 'mermaid' : 'd2';
       const decodedCode = isMermaid ? decodedMermaid : decodedD2;
       
-      // Check if we already processed this diagram
-      const alreadyProcessed = diagrams.some(d => d.code === decodedCode && d.type === diagramType);
-      
       if (!alreadyProcessed) {
         // This is a new diagram not caught by enhanced detection
-        const existingEntry = diagramOccurrences.get(decodedCode);
-        const occurrenceCount = existingEntry?.count || 0;
-        diagramOccurrences.set(decodedCode, { count: occurrenceCount + 1, type: diagramType });
-
-        if (occurrenceCount === 0) {
-          // Show as collapsible code block
-          diagramCount++;
-          const diagramLabel = isMermaid ? 'Mermaid' : 'D2';
-          
-          parts.push(
-            <details
-              key={`fallback-diagram-code-${match.index}`}
-              style={{
-                marginTop: '8px',
-                marginBottom: '8px'
-              }}
-            >
-              <summary
-                style={{
-                  cursor: 'pointer',
-                  padding: '8px 12px',
-                  backgroundColor: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#475569',
-                  userSelect: 'none'
-                }}
-              >
-                📝 {diagramLabel} Code (click to view/copy)
-              </summary>
-              <pre
-                style={{
-                  backgroundColor: '#1e293b',
-                  color: '#e2e8f0',
-                  padding: '16px',
-                  borderRadius: '0 0 6px 6px',
-                  border: '1px solid #cbd5e1',
-                  borderTop: 'none',
-                  overflowX: 'auto',
-                  fontSize: '13px',
-                  lineHeight: '1.2',
-                  marginTop: '0'
-                }}
-              >
-                <code>{decodedCode}</code>
-              </pre>
-            </details>
-          );
-        } else {
-          // Render as diagram
-          parts.push(
-            diagramType === 'mermaid' ? (
-              <MermaidDiagram
-                key={`fallback-diagram-render-${match.index}`}
-                code={decodedCode}
-                title="Mermaid Diagram"
-              />
-            ) : (
-              <D2DiagramBackend
-                key={`fallback-diagram-render-${match.index}`}
-                code={decodedCode}
-                title="D2 Diagram"
-              />
-            )
-          );
-        }
+        diagramCount++;
+        const diagramLabel = isMermaid ? 'Mermaid' : 'D2';
+        
+        parts.push(
+          diagramType === 'mermaid' ? (
+            <MermaidDiagram
+              key={`fallback-diagram-render-${match.index}`}
+              code={decodedCode}
+              title="Mermaid Diagram"
+            />
+          ) : (
+            <D2DiagramBackend
+              key={`fallback-diagram-render-${match.index}`}
+              code={decodedCode}
+              title="D2 Diagram"
+            />
+          )
+        );
       }
     } else {
       // Not a diagram, render as regular code block
@@ -630,7 +561,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const [isExpanded, setIsExpanded] = useState(true);
-  const [showFullContent, setShowFullContent] = useState(false);
+  const [showFullContent, setShowFullContent] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Detect HTML content to determine initial view mode

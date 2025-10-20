@@ -21,6 +21,8 @@ from app.api.v1.api import api_router
 from mcp_server.fastmcp_server import get_mcp_router
 from common.logger import get_logger
 
+from fastapi.staticfiles import StaticFiles
+
 # Initialize logger for this module
 logger = get_logger(__name__)
 
@@ -85,6 +87,12 @@ app.include_router(api_router, prefix="/api/v1")
 # MCP endpoints are exposed under /mcp/*
 mcp_router = get_mcp_router()
 app.include_router(mcp_router)
+
+# Mount static files directory
+# This allows serving files from the backend/static directory
+import os
+static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Direct execution entry point for development
 if __name__ == "__main__":

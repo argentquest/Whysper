@@ -383,7 +383,7 @@ class LazyCodebaseScanner:
 
         except Exception as e:
             logger.error("Error reading file", file=file_path, error=str(e))
-            return f"Error reading file {os.path.basename(file_path)}: {str(e)}"
+            raise IOError(f"Error reading file {os.path.basename(file_path)}: {str(e)}")
         finally:
             read_time = time.time() - start_time
             self.stats["total_read_time"] += read_time

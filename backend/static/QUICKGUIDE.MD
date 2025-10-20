@@ -52,7 +52,7 @@ This multi-agent system allows Whysper to handle complex requests and provide mo
 
 ### Main Window
 
-*   **File Explorer:** Browse and select files and directories.
+*   **Top Nav:** Show all the options for a common toolbar
 *   **Conversation Panel:** View your conversation history.
 *   **Chat Input:** Type your questions and messages.
 

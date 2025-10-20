@@ -127,6 +127,8 @@ class DocumentationService:
         self.logger.info(f"Analyzing code structure for {len(file_paths)} files")
         
         structures = []
+        env_vars = env_manager.load_env_file()
+        code_path = env_vars.get("CODE_PATH", os.getcwd())
         
         for file_path in file_paths:
             try:
@@ -135,7 +137,11 @@ class DocumentationService:
                 
                 if language in self.supported_languages:
                     # Read file content
-                    content = file_service.read_file(file_path)
+                    safe_path = SecurityUtils.safe_path_resolve(code_path, file_path)
+                    if not safe_path:
+                        self.logger.error(f"Path resolution failed for {file_path}")
+                        continue
+                    content = file_service.read_file(safe_path)
                     
                     # Analyze based on language
                     analyzer = self.supported_languages[language]
@@ -1531,11 +1537,14 @@ class DocumentationService:
             formatted_prompt = self._format_agent_prompt(agent_prompt, codebase_content, request, template)
             
             # Process with AI
+            from app.core.config import settings
             response = self.ai_processor.process_question(
                 question=formatted_prompt,
                 conversation_history=[],
                 codebase_content="",
-                model="google/gemini-2.5-flash-preview-09-2025"
+                model=settings.default_model,
+                max_tokens=settings.max_tokens,
+                temperature=settings.temperature,
             )
             
             return response

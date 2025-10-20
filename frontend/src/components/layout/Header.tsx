@@ -16,6 +16,7 @@ import {
   DownOutlined,
   EditOutlined,
   FileSearchOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 
@@ -34,6 +35,7 @@ interface HeaderProps {
   onAbout: () => void;
   onCodeFragments: () => void;
   onGenerateDocumentation: () => void;
+  onHelp: () => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
   onRunSystemPrompt: (systemName: string) => void;
@@ -51,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAbout,
   onCodeFragments,
   onGenerateDocumentation,
+  onHelp,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -344,6 +347,12 @@ export const Header: React.FC<HeaderProps> = ({
                   label: 'About',
                   icon: <InfoCircleOutlined />,
                   onClick: onAbout,
+                },
+                {
+                  key: 'help',
+                  label: 'Help',
+                  icon: <QuestionCircleOutlined />,
+                  onClick: onHelp,
                 },
               ],
             }}

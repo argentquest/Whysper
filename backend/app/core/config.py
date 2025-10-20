@@ -76,6 +76,7 @@ def load_env_defaults() -> Dict[str, Any]:
     return {
         # Core AI configuration
         "api_key": env_data.get("API_KEY", ""),
+        "access_key": env_data.get("ACCESS_KEY", ""),
         "provider": env_data.get("PROVIDER", "openrouter"),
         "models": models,
         "default_model": default_model,
@@ -161,8 +162,13 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5175",
         "http://127.0.0.1:5176",
         "http://127.0.0.1:5177",
-        "http://127.0.0.1:5178",
     ]
+    frontend_url: Optional[str] = Field(default=None, env="FRONTEND_URL")
+
+    def __init__(self, **values: Any):
+        super().__init__(**values)
+        if self.frontend_url and self.frontend_url not in self.cors_origins:
+            self.cors_origins.append(self.frontend_url)
     
     # ==================== AI Provider Configuration ====================
     # Configuration for AI chat providers (OpenRouter, Anthropic, OpenAI)

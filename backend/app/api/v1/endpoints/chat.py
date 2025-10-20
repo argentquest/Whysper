@@ -403,7 +403,7 @@ def send_chat_message(request: dict):
             logger.info(f"Creating new conversation session: {conversation_id}", extra={'session_id': conversation_id})
 
             access_key = settings.get("access_key")
-            if not access_key or access_key != env_config.get("ACCESS_KEY"):
+            if not access_key or access_key != env_config.get("access_key"):
                 raise HTTPException(status_code=401, detail="Invalid access key")
 
             session = conversation_manager.create_session(
@@ -597,7 +597,7 @@ def create_conversation(request: ConversationCreateRequest):
 
     access_key = request.access_key
 
-    if not access_key or access_key != env_config.get("ACCESS_KEY"):
+    if not access_key or access_key != env_config.get("access_key"):
         raise HTTPException(status_code=401, detail="Invalid access key")
 
     if not api_key:

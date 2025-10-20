@@ -50,7 +50,8 @@ import {
   SystemMessageModal,// System prompt customization
   CodeFragmentsModal,// Extracted code blocks management
   FileSelectionModal, // File selection for editing
-  NewFileModal,       // New file creation modal
+  NewFileModal,
+  HelpModal,
 } from './components/modals';
 import ThemePickerModal from './components/modals/ThemePickerModal';
 
@@ -133,7 +134,8 @@ function App() {
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
   const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
-  const [newFileModalOpen, setNewFileModalOpen] = useState(false);         // New file creation modal
+  const [newFileModalOpen, setNewFileModalOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);         // New file creation modal
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
@@ -245,7 +247,7 @@ function App() {
 
   // Initialize the application when component mounts (only once)
   useEffect(() => {
-    const storedAuth = localStorage.getItem('whysper_authenticated');
+    const storedAuth = sessionStorage.getItem('whysper_authenticated');
     if (storedAuth === 'true') {
       setIsAuthenticated(true);
     }
@@ -1057,8 +1059,12 @@ function App() {
   };
 
   const handleAuthenticationSuccess = () => {
-    localStorage.setItem('whysper_authenticated', 'true');
+    sessionStorage.setItem('whysper_authenticated', 'true');
     setIsAuthenticated(true);
+  };
+
+  const handleToggleHelpModal = () => {
+    setHelpModalOpen(prev => !prev);
   };
 
   if (!isAuthenticated) {
@@ -1079,6 +1085,7 @@ function App() {
         onAbout={() => setAboutModalOpen(true)}
         onCodeFragments={() => setCodeFragmentsModalOpen(true)}
         onGenerateDocumentation={handleGenerateDocumentation}
+        onHelp={handleToggleHelpModal}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1274,6 +1281,11 @@ function App() {
         open={newFileModalOpen}
         onCancel={() => setNewFileModalOpen(false)}
         onCreateFile={handleCreateNewFile}
+      />
+
+      <HelpModal
+        open={helpModalOpen}
+        onCancel={handleToggleHelpModal}
       />
     </Layout>
   );

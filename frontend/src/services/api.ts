@@ -140,7 +140,7 @@ export class ApiService {
   // Chat endpoints
   static async sendMessage(request: ChatRequest): Promise<ApiResponse<ChatResponse>> {
     try {
-      const accessKey = localStorage.getItem('access_key');
+      const accessKey = sessionStorage.getItem('access_key');
       const requestData = { ...request, settings: { ...request.settings, access_key: accessKey } };
       const response = await api.post('/chat', requestData);
       return {
