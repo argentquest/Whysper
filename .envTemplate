@@ -55,7 +55,15 @@ PROVIDERS="openrouter,custom"
 API_URL="https://api.openrouter.ai/v1/chat/completions"
 TOKEN_URL="https://api.openrouter.ai/v1/token"
 
+# OpenRouter specific configuration (optional)
+OPENROUTER_API_URL="https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_HTTP_REFERER="https://github.com/yourusername/code-chat-ai"
+OPENROUTER_TITLE="Code Chat with AI"
+OPENROUTER_TEMPERATURE="0.1"
 
+# Custom provider configuration (if using custom provider)
+CUSTOM_PROVIDER_API_URL="https://your-api.com/v1/chat"
+CUSTOM_PROVIDER_REQUEST_TIMEOUT="30"
 
 # =============================================================================
 # 🤖 MODEL CONFIGURATION (REQUIRED)
@@ -77,9 +85,13 @@ MAX_TOKENS="10000"
 # Temperature: Controls creativity/randomness (0.0-2.0)
 TEMPERATURE="0.7"
 
+# AI request timeouts (seconds)
+AI_CONNECT_TIMEOUT="30"
+AI_READ_TIMEOUT="120"
 
 
-CODE_PATH=.
+
+CODE_PATH="."
 
 VALIDATE_SSL="true"
 # =============================================================================
@@ -130,6 +142,9 @@ SHOW_LINE_NUMBERS="true"
 
 # Enable streaming responses
 ENABLE_STREAMING="true"
+
+# Frontend timeout in seconds
+FRONT_END_TIMEOUT="120"
 
 # Number of retry attempts for failed requests
 RETRY_ATTEMPTS="3"
@@ -186,11 +201,67 @@ WEB_PORT="8080"
 
 
 # =============================================================================
-# 📁 OUTPUT DIRECTORY CONFIGURATION
+# 📁 PATH CONFIGURATION (for deployment on different servers)
 # =============================================================================
 
 # Directory for saving interactive session results
 # This directory will be created if it doesn't exist
 DIR_SAVE="results"
+
+# Static files directory (absolute or relative path from project root)
+# Project structure: backend/static/ contains static files served by FastAPI
+# Default: Empty = auto-detects backend/static relative to backend/app/main.py
+# Local/Dev: Leave empty or set to "backend/static"
+# Production: Use absolute path like "/var/www/whysper/backend/static" or "C:/www/whysper/backend/static"
+STATIC_DIR=""
+
+# Prompts directory (absolute or relative path from project root)
+# Project structure:
+#   - Root contains systemmessage_*.txt files (optional)
+#   - prompts/coding/agent/ contains agent prompt files (*.md)
+# Default: Empty = uses current working directory (project root)
+# Local/Dev: Leave empty (assumes you run from project root)
+# Production: Use absolute path to project root like "/var/www/whysper" or "C:/www/whysper"
+PROMPTS_DIR=""
+
+# D2 diagram executable path (absolute or relative path)
+# Project structure: bin/d2.exe (Windows) or bin/d2 (Linux) at project root
+# Default: Empty = auto-detects in order: PATH, bin/d2.exe, bin/d2, /usr/local/bin/d2, /usr/bin/d2
+# Local/Dev: Leave empty (will auto-detect bin/d2.exe in project root)
+# Production: Use absolute path like "/var/www/whysper/bin/d2" or "C:/www/whysper/bin/d2.exe"
+D2_EXECUTABLE_PATH=""
+
+# =============================================================================
+# 🔧 ADDITIONAL CONFIGURATION
+# =============================================================================
+
+# System prompt (legacy/alternative way to set system prompt)
+SYSTEM_PROMPT=""
+
+# Token-based authentication (optional)
+TOKEN_USE_ID=""
+TOKEN_PASSWORD=""
+
+# Advanced AI parameters
+TOP_P="1"
+FREQUENCY_PENALTY="0"
+
+# =============================================================================
+# 💾 SESSION PERSISTENCE (auto-saved by application)
+# =============================================================================
+# These values are automatically saved by the application
+# You typically don't need to set these manually
+
+# Last used folder path
+LAST_USED_FOLDER=""
+
+# Last used question/prompt
+LAST_USED_QUESTION=""
+
+# Last exclude patterns used
+LAST_EXCLUDE_PATTERNS=""
+
+# Last output format selected
+LAST_OUTPUT_FORMAT="markdown"
 
 # =============================================================================

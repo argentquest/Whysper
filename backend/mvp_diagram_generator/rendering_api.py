@@ -88,11 +88,26 @@ async def generate_diagram(
     try:
         # 1. Load the appropriate agent prompt
         try:
-            # Construct path relative to this script's location
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            prompt_file_path = os.path.join(script_dir, f"..\..\prompts\coding\agent\{request.diagram_type}-architecture.md")
+            from common.env_manager import env_manager
 
-            with open(prompt_file_path, "r",) as f:
+            # Get prompts directory from environment
+            env_vars = env_manager.load_env_file()
+            prompts_dir = env_vars.get('PROMPTS_DIR', '').strip()
+            if not prompts_dir:
+                # Default: prompts directory relative to project root
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                prompts_dir = os.path.join(script_dir, "..", "..", "prompts")
+            else:
+                # Use configured path (can be absolute or relative)
+                if not os.path.isabs(prompts_dir):
+                    prompts_dir = os.path.abspath(prompts_dir)
+                # Append prompts if not already in path
+                if not prompts_dir.endswith('prompts'):
+                    prompts_dir = os.path.join(prompts_dir, "prompts")
+
+            prompt_file_path = os.path.join(prompts_dir, "coding", "agent", f"{request.diagram_type}-architecture.md")
+
+            with open(prompt_file_path, "r") as f:
                 agent_prompt = f.read()
         except FileNotFoundError:
             raise HTTPException(status_code=400, detail="Invalid diagram type")

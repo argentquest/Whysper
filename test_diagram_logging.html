@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Diagram Detection Logging</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .log {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 10px;
+        }
+        .log-success { border-left-color: #10b981; }
+        .log-error { border-left-color: #ef4444; }
+        .log-warn { border-left-color: #f59e0b; }
+        pre {
+            background: #2d3748;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagram Detection Testing</h1>
+    <p>This tests the exact logic used in Whysper to detect Mermaid diagrams in HTML content.</p>
+
+    <div id="log-output" class="log"></div>
+
+    <h2>Test HTML Content</h2>
+    <div id="test-content"></div>
+
+    <script type="module">
+        const logOutput = document.getElementById('log-output');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logOutput.appendChild(entry);
+            console.log(message);
+        }
+
+        // Replicate the Mermaid keywords from your codebase
+        const MERMAID_KEYWORDS = [
+            'classDiagram',
+            'sequenceDiagram',
+            'graph',
+            'flowchart',
+            'stateDiagram',
+            'stateDiagram-v2',
+            'erDiagram',
+            'gantt',
+            'pie',
+            'journey',
+            'gitGraph',
+            'mindmap',
+            'timeline',
+            'quadrantChart',
+            'requirementDiagram',
+            'sankey-beta',
+            'gitgraph',
+        ];
+
+        // Replicate the isMermaidSyntax function
+        function isMermaidSyntax(code) {
+            if (!code || typeof code !== 'string') {
+                return false;
+            }
+
+            const foundKeyword = MERMAID_KEYWORDS.find(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                return regex.test(code);
+            });
+
+            if (foundKeyword) {
+                log(`✅ Mermaid syntax detected by keyword: ${foundKeyword}`, 'success');
+            } else {
+                log(`❌ No Mermaid keyword found in code`, 'error');
+            }
+
+            return !!foundKeyword;
+        }
+
+        // Replicate HTML entity decoding
+        function decodeMermaidCode(code) {
+            if (!code || typeof code !== 'string') {
+                return code;
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = code;
+            const decoded = textarea.value;
+
+            log(`🔧 Decoded HTML entities: ${code.length} chars -> ${decoded.length} chars`, 'info');
+            return decoded;
+        }
+
+        // Replicate prepareMermaidCode
+        function prepareMermaidCode(code) {
+            if (!code || typeof code !== 'string') {
+                return '';
+            }
+
+            let prepared = String(code).replace(/\\n$/, '');
+            prepared = decodeMermaidCode(prepared);
+
+            return prepared;
+        }
+
+        // Test with the actual LLM response
+        const htmlContent = `<pre><code>graph TD
+    A[Android App Architecture] --&gt; B[UI Layer]
+    A --&gt; C[Business Logic Layer]
+    A --&gt; D[Data Layer]
+
+    B --&gt; B1[Activities]
+    B --&gt; B2[Fragments]
+    B --&gt; B3[Views]
+
+    C --&gt; C1[ViewModel]
+    C --&gt; C2[Repository]
+    C --&gt; C3[Use Cases]
+
+    D --&gt; D1[Local Database]
+    D --&gt; D2[Room]
+    D --&gt; D3[Shared Preferences]
+
+    style A fill:#4CAF50,stroke:#333,color:white
+    style B fill:#2196F3,stroke:#333,color:white
+    style C fill:#FF9800,stroke:#333,color:white
+    style D fill:#9C27B0,stroke:#333,color:white
+</code></pre>`;
+
+        log('🚀 Starting diagram detection test...', 'info');
+        log(`📝 HTML content length: ${htmlContent.length} characters`, 'info');
+
+        // Extract code from <pre><code> blocks
+        const codeBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+        let match;
+        let foundAny = false;
+
+        while ((match = codeBlockRegex.exec(htmlContent)) !== null) {
+            foundAny = true;
+            log('', 'info');
+            log('📦 Found <pre><code> block', 'info');
+
+            const rawCode = match[1];
+            log(`   Raw code length: ${rawCode.length} chars`, 'info');
+            log(`   Raw code preview: ${rawCode.substring(0, 50)}...`, 'info');
+
+            const decodedCode = prepareMermaidCode(rawCode);
+            log(`   Decoded code length: ${decodedCode.length} chars`, 'info');
+            log(`   Decoded preview: ${decodedCode.substring(0, 50)}...`, 'info');
+
+            const isMermaid = isMermaidSyntax(decodedCode);
+
+            if (isMermaid) {
+                log('✅ DETECTED AS MERMAID DIAGRAM!', 'success');
+                log('   Should render MermaidDiagram component', 'success');
+
+                // Try to render it
+                import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')
+                    .then(({ default: mermaid }) => {
+                        mermaid.initialize({ startOnLoad: false });
+
+                        const testDiv = document.getElementById('test-content');
+                        const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+
+                        mermaid.render(id, decodedCode)
+                            .then(({ svg }) => {
+                                log('✅ Successfully rendered Mermaid diagram!', 'success');
+                                testDiv.innerHTML = `
+                                    <h3 style="color: #10b981;">✅ Diagram Rendered Successfully!</h3>
+                                    ${svg}
+                                `;
+                            })
+                            .catch(err => {
+                                log(`❌ Mermaid render error: ${err.message}`, 'error');
+                                testDiv.innerHTML = `
+                                    <h3 style="color: #ef4444;">❌ Render Failed</h3>
+                                    <pre>${err.message}</pre>
+                                `;
+                            });
+                    });
+            } else {
+                log('❌ NOT detected as Mermaid diagram', 'error');
+                log('   Will render as regular code block', 'warn');
+            }
+        }
+
+        if (!foundAny) {
+            log('❌ No <pre><code> blocks found in HTML content!', 'error');
+        }
+
+        log('', 'info');
+        log('✅ Detection test complete', 'success');
+    </script>
+</body>
+</html>

@@ -106,30 +106,29 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
             })
             logger.info(f"DEBUG: Configuration loaded: {config_debug}")
             
-            # Construct path relative to this script's location
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            prompt_file_path = os.path.join(script_dir, f"..\prompts\coding\agent\{diagram_type}-architecture.md")
+            # Get prompts directory from environment
+            from common.env_manager import env_manager
+            env_vars = env_manager.load_env_file()
+            prompts_dir = env_vars.get('PROMPTS_DIR', '').strip()
+            if not prompts_dir:
+                # Default: prompts directory relative to project root
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                prompts_dir = os.path.join(script_dir, "..", "..", "prompts")
+            else:
+                # Use configured path (can be absolute or relative)
+                if not os.path.isabs(prompts_dir):
+                    prompts_dir = os.path.abspath(prompts_dir)
+                # Append prompts if not already in path
+                if not prompts_dir.endswith('prompts'):
+                    prompts_dir = os.path.join(prompts_dir, "prompts")
+
+            prompt_file_path = os.path.join(prompts_dir, "coding", "agent", f"{diagram_type}-architecture.md")
             prompt_file_exists = os.path.exists(prompt_file_path)
             logger.info(f"DEBUG: Prompt file check - exists: {prompt_file_exists}, path: {prompt_file_path}")
-            
+
             if not prompt_file_exists:
-                # DEBUG: Try alternative paths
-                alt_paths = [
-                    f"prompts/coding/agent/{diagram_type}-architecture.md",
-                    f"../prompts/coding/agent/{diagram_type}-architecture.md",
-                    f"prompts/{diagram_type}-architecture.md"
-                ]
-                for alt_path in alt_paths:
-                    logger.info(f"DEBUG: Checking alternative path: {alt_path}")
-                    if os.path.exists(alt_path):
-                        prompt_file_path = alt_path
-                        prompt_file_exists = True
-                        logger.info(f"DEBUG: Found prompt file at alternative path: {alt_path}")
-                        break
-                
-                if not prompt_file_exists:
-                    logger.error(f"DEBUG: Prompt file not found at any path, checked: {[prompt_file_path] + alt_paths}")
-                    raise FileNotFoundError(f"Prompt file not found: {prompt_file_path}")
+                logger.error(f"DEBUG: Prompt file not found at: {prompt_file_path}")
+                raise FileNotFoundError(f"Prompt file not found: {prompt_file_path}")
             
             # Load the appropriate agent prompt
             logger.info(f"DEBUG: Loading prompt file: {prompt_file_path}")

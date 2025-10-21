@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Actual LLM Response</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Testing Actual LLM Response Format</h1>
+    <p>This is the exact format the AI returned:</p>
+
+    <pre><code>graph TD
+    A[Android App Architecture] --&gt; B[UI Layer]
+    A --&gt; C[Business Logic Layer]
+    A --&gt; D[Data Layer]
+
+    B --&gt; B1[Activities]
+    B --&gt; B2[Fragments]
+    B --&gt; B3[Views]
+
+    C --&gt; C1[ViewModel]
+    C --&gt; C2[Repository]
+    C --&gt; C3[Use Cases]
+
+    D --&gt; D1[Local Database]
+    D --&gt; D2[Room]
+    D --&gt; D3[Shared Preferences]
+
+    style A fill:#4CAF50,stroke:#333,color:white
+    style B fill:#2196F3,stroke:#333,color:white
+    style C fill:#FF9800,stroke:#333,color:white
+    style D fill:#9C27B0,stroke:#333,color:white
+</code></pre>
+
+    <h2>Analysis</h2>
+    <p><strong>Issues:</strong></p>
+    <ul>
+        <li>❌ No language marker (<code>class="language-mermaid"</code>)</li>
+        <li>❌ HTML entities encoded (<code>--&gt;</code> instead of <code>--></code>)</li>
+        <li>❌ Wrapped in generic <code>&lt;pre&gt;&lt;code&gt;</code> without type info</li>
+    </ul>
+
+    <p><strong>What should happen:</strong></p>
+    <ol>
+        <li>The <code>processMixedHtmlContent()</code> function should extract this code</li>
+        <li>The <code>prepareMermaidCode()</code> function should decode HTML entities</li>
+        <li>The <code>isMermaidSyntax()</code> function should detect "graph" keyword</li>
+        <li>The MermaidDiagram component should render it</li>
+    </ol>
+
+    <h2>Expected Decoded Version:</h2>
+    <pre><code class="language-mermaid">graph TD
+    A[Android App Architecture] --> B[UI Layer]
+    A --> C[Business Logic Layer]
+    A --> D[Data Layer]
+
+    B --> B1[Activities]
+    B --> B2[Fragments]
+    B --> B3[Views]
+
+    C --> C1[ViewModel]
+    C --> C2[Repository]
+    C --> C3[Use Cases]
+
+    D --> D1[Local Database]
+    D --> D2[Room]
+    D --> D3[Shared Preferences]
+
+    style A fill:#4CAF50,stroke:#333,color:white
+    style B fill:#2196F3,stroke:#333,color:white
+    style C fill:#FF9800,stroke:#333,color:white
+    style D fill:#9C27B0,stroke:#333,color:white
+</code></pre>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+        mermaid.initialize({ startOnLoad: true });
+
+        // Test the HTML entity decoding
+        const encodedText = "A --&gt; B";
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = encodedText;
+        const decoded = textarea.value;
+
+        console.log('Encoded:', encodedText);
+        console.log('Decoded:', decoded);
+        console.log('Matches arrow syntax:', decoded === 'A --> B');
+    </script>
+</body>
+</html>

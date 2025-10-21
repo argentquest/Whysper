@@ -91,7 +91,21 @@ app.include_router(mcp_router)
 # Mount static files directory
 # This allows serving files from the backend/static directory
 import os
-static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+from common.env_manager import env_manager
+
+# Get static directory from environment or use default
+env_vars = env_manager.load_env_file()
+static_dir = env_vars.get('STATIC_DIR', '').strip()
+if not static_dir:
+    # Default: backend/static directory
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+else:
+    # Use configured path (can be absolute or relative)
+    if not os.path.isabs(static_dir):
+        # If relative, make it relative to the project root
+        static_dir = os.path.abspath(static_dir)
+
+logger.info(f"Static files directory: {static_dir}")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Direct execution entry point for development

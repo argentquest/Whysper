@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Rendering Test</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Arial, sans-serif',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+            }
+        });
+
+        async function renderDiagram(code, containerId) {
+            const container = document.getElementById(containerId);
+
+            try {
+                console.log('Testing Mermaid code:', code);
+
+                // Test parse first
+                await mermaid.parse(code);
+                console.log('✅ Parse successful');
+
+                // Generate unique ID
+                const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
+
+                // Render
+                const { svg } = await mermaid.render(id, code);
+                console.log('✅ Render successful');
+
+                container.innerHTML = `
+                    <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                        ${svg}
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('afterbegin',
+                    '<div style="color: green; margin-bottom: 10px;">✅ Diagram rendered successfully!</div>'
+                );
+            } catch (error) {
+                console.error('❌ Render failed:', error);
+                container.innerHTML = `
+                    <div style="background: #fee; padding: 20px; border-radius: 8px; border: 1px solid #f00; margin: 10px 0;">
+                        <strong style="color: #c00;">❌ Render failed:</strong>
+                        <pre style="margin-top: 10px; font-size: 12px;">${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            // Test 1: Simple flowchart
+            renderDiagram(`graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Do Something]
+    B -->|No| D[Do Something Else]
+    C --> E[End]
+    D --> E`, 'test1');
+
+            // Test 2: Sequence diagram
+            renderDiagram(`sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello Bob, how are you?
+    Bob-->>Alice: I am good thanks!
+    Alice->>Bob: Great to hear!`, 'test2');
+
+            // Test 3: Without diagram type (should fail)
+            renderDiagram(`A[Start] --> B[End]`, 'test3');
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Mermaid Rendering Diagnostic Test</h1>
+    <p>This page tests if Mermaid diagrams can render properly in your browser.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Simple Flowchart (Should Work ✅)</h2>
+        <pre>graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Do Something]
+    B -->|No| D[Do Something Else]
+    C --> E[End]
+    D --> E</pre>
+        <div id="test1"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Sequence Diagram (Should Work ✅)</h2>
+        <pre>sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello Bob, how are you?
+    Bob-->>Alice: I am good thanks!
+    Alice->>Bob: Great to hear!</pre>
+        <div id="test2"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Missing Diagram Type (Should Fail ❌)</h2>
+        <pre>A[Start] --> B[End]</pre>
+        <div id="test3"></div>
+    </div>
+
+    <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin-top: 30px; border: 1px solid #ffc107;">
+        <h3 style="margin-top: 0;">📋 Troubleshooting Steps:</h3>
+        <ol>
+            <li><strong>Open Browser Console (F12)</strong> - Check for error messages</li>
+            <li><strong>Verify Diagram Syntax</strong> - Make sure diagrams start with a type declaration (graph TD, sequenceDiagram, etc.)</li>
+            <li><strong>Check Network Tab</strong> - Ensure Mermaid library is loading</li>
+            <li><strong>Test in Whysper App</strong> - Try asking the AI to generate a Mermaid diagram</li>
+        </ol>
+
+        <h4>Example Prompt for AI:</h4>
+        <pre style="background: #f0f0f0; color: #333; border: 1px solid #ccc;">Show me a flowchart of a simple login process using Mermaid</pre>
+    </div>
+</body>
+</html>

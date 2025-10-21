@@ -13,19 +13,44 @@ from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
-def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool, str]:
+def _get_d2_executable_path() -> str:
+    """
+    Get the D2 executable path from environment or use default.
+
+    Returns:
+        str: Path to D2 executable
+    """
+    try:
+        from common.env_manager import env_manager
+        env_vars = env_manager.load_env_file()
+        d2_path = env_vars.get('D2_EXECUTABLE_PATH', '').strip()
+        if d2_path:
+            if not os.path.isabs(d2_path):
+                d2_path = os.path.abspath(d2_path)
+            return d2_path
+    except Exception as e:
+        logger.debug(f"Could not load D2 path from environment: {e}")
+
+    # Default to 'd2' in PATH
+    return "d2"
+
+def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool, str]:
     """
     Validates D2 code syntax by running the d2 executable as a subprocess.
-    
+
     Args:
         d2_code (str): The D2 code to validate
-        d2_executable (str): Path to the d2 executable (default: "d2")
-        
+        d2_executable (str): Path to the d2 executable (default: from environment or "d2")
+
     Returns:
         Tuple[bool, str]: A tuple containing:
             - bool: True if valid, False if invalid
             - str: Success message or error message
     """
+    # Get D2 executable path from environment if not provided
+    if d2_executable is None:
+        d2_executable = _get_d2_executable_path()
+
     # Create a temporary file to write the D2 code for the executable
     with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_file:
         temp_file_name = temp_file.name
@@ -78,16 +103,20 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         except Exception as e:
             logger.warning(f"Failed to clean up temp file {temp_file_name}: {e}")
 
-def is_d2_cli_available(d2_executable: str = "d2") -> bool:
+def is_d2_cli_available(d2_executable: str = None) -> bool:
     """
     Check if the D2 CLI executable is available.
-    
+
     Args:
-        d2_executable (str): Path to the d2 executable (default: "d2")
-        
+        d2_executable (str): Path to the d2 executable (default: from environment or "d2")
+
     Returns:
         bool: True if D2 CLI is available, False otherwise
     """
+    # Get D2 executable path from environment if not provided
+    if d2_executable is None:
+        d2_executable = _get_d2_executable_path()
+
     try:
         result = subprocess.run(
             [d2_executable, "--version"],

@@ -23,23 +23,50 @@ class D2RenderService:
         self.d2_executable = self._find_d2_executable()
         if not self.d2_executable:
             raise RuntimeError("D2 CLI not found. Please install D2 from https://d2lang.com/")
-    
+
     def _find_d2_executable(self) -> Optional[str]:
-        """Find the D2 executable in the system PATH or known locations"""
-        # Check common locations
+        """Find the D2 executable using environment variable or known locations"""
+        from common.env_manager import env_manager
+
+        # Get D2 executable path from environment
+        env_vars = env_manager.load_env_file()
+        d2_path = env_vars.get('D2_EXECUTABLE_PATH', '').strip()
+
+        if d2_path:
+            # Use configured path from environment
+            if not os.path.isabs(d2_path):
+                d2_path = os.path.abspath(d2_path)
+
+            # Verify the configured path works
+            try:
+                result = subprocess.run([d2_path, '--version'],
+                                      capture_output=True,
+                                      text=True,
+                                      timeout=5)
+                if result.returncode == 0:
+                    logger.info(f"Found D2 executable at: {d2_path} (from environment)")
+                    logger.info(f"D2 version: {result.stdout.strip()}")
+                    return d2_path
+                else:
+                    logger.warning(f"D2 executable configured in environment at {d2_path} but not working, falling back to auto-detection")
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError) as e:
+                logger.warning(f"D2 executable configured in environment at {d2_path} but failed: {e}, falling back to auto-detection")
+
+        # Auto-detect in common locations
         possible_paths = [
             'd2',  # In PATH
-            os.path.join(os.getcwd(), 'bin', 'd2.exe'),  # Windows local
+            os.path.join(os.getcwd(), 'bin', 'd2.exe'),  # Windows local (project root)
+            os.path.join(os.getcwd(), 'bin', 'd2'),  # Linux/Mac local (project root)
             os.path.join(os.getcwd(), 'D2', 'd2-v0.7.1', 'bin', 'd2.exe'),  # Windows project
             '/usr/local/bin/d2',  # macOS/Linux
             '/usr/bin/d2',  # Linux
         ]
-        
+
         for path in possible_paths:
             try:
-                result = subprocess.run([path, '--version'], 
-                                      capture_output=True, 
-                                      text=True, 
+                result = subprocess.run([path, '--version'],
+                                      capture_output=True,
+                                      text=True,
                                       timeout=5)
                 if result.returncode == 0:
                     logger.info(f"Found D2 executable at: {path}")
@@ -47,7 +74,7 @@ class D2RenderService:
                     return path
             except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
                 continue
-        
+
         return None
     
     def validate_d2_code(self, d2_code: str) -> Tuple[bool, str]:

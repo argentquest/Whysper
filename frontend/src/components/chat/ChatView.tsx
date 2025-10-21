@@ -617,10 +617,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
     hasHtmlContent ? 'html' : 'markdown'
   );
   
-  const isLongContent = message.content.length > 5000;
+  // Always show expand/collapse for longer messages (lowered threshold from 5000 to 500)
+  const isLongContent = message.content.length > 500;
   const shouldTruncate = isLongContent && !showFullContent;
   const displayContent = shouldTruncate
-    ? message.content.substring(0, 5000) + '...'
+    ? message.content.substring(0, 500) + '...'
     : message.content;
 
   const formatTimestamp = (timestamp: string) => {
