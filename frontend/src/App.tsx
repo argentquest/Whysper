@@ -146,9 +146,20 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // ==================== Data State Management ====================
-  
+
   // Files selected for AI context inclusion
+  // Server-side state - managed by backend conversation session
   const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
+
+  // DEBUG: Expose selectedFiles to browser console for debugging
+  useEffect(() => {
+    (window as any).getSelectedFiles = () => {
+      console.log('📋 Current selectedFiles state:', selectedFiles);
+      console.log('📋 Count:', selectedFiles.length);
+      console.log('📋 Paths:', selectedFiles.map(f => f.path));
+      return selectedFiles;
+    };
+  }, [selectedFiles]);
   
   // Code blocks extracted from AI responses for download/management
   const [extractedCodeBlocks, setExtractedCodeBlocks] = useState<CodeBlock[]>([]);
@@ -182,10 +193,16 @@ function App() {
           contextFiles: [],
           maxTokens: parseInt(backendSettings.values?.MAX_TOKENS || '4000', 10),
           temperature: parseFloat(backendSettings.values?.TEMPERATURE || '0.7'),
+          timeout: backendSettings.timeout || 120, // Frontend timeout in seconds (default: 120)
         };
 
         console.log('⚙️ Mapped settings:', mappedSettings);
         setSettings(mappedSettings);
+
+        // Apply timeout to API client if provided
+        if (mappedSettings.timeout) {
+          ApiService.setRequestTimeout(mappedSettings.timeout);
+        }
 
         const configuredAgentName = backendSettings.values?.CURRENT_SYSTEM_PROMPT;
         if (configuredAgentName && typeof configuredAgentName === 'string') {
@@ -236,6 +253,41 @@ function App() {
     }
   }, []);
 
+  const loadConversationFiles = useCallback(async (conversationId: string) => {
+    console.log(`🟡 loadConversationFiles() called for conversation: ${conversationId}`);
+    try {
+      const response = await ApiService.getConversationFiles(conversationId);
+      if (response.success && response.data) {
+        const { files, count } = response.data;
+        console.log(`🟡 Backend returned ${count} files:`, files);
+
+        // Only update if we actually got files, or if we're explicitly clearing
+        // This prevents overwriting user's selection before first message is sent
+        if (count > 0 || response.data.conversationId) {
+          console.log(`🟡 Updating selectedFiles state with ${count} files`);
+          // Convert file paths to FileItem objects
+          const fileItems: FileItem[] = files.map(path => ({
+            path,
+            name: path.split(/[/\\]/).pop() || path,
+            size: 0, // Size not needed for display
+            isSelected: true,
+            type: 'file' as const,
+          }));
+
+          setSelectedFiles(fileItems);
+          console.log(`🟡 setSelectedFiles() called with ${fileItems.length} items`);
+        } else {
+          console.log('🟡 Count is 0 and no conversationId, NOT updating state');
+        }
+      } else {
+        // Session doesn't exist yet - that's OK, don't clear selection
+        console.log('🟡 Backend session not found (probably not created yet)');
+      }
+    } catch (error) {
+      console.warn('🟡 Could not load conversation files:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (agentPrompts.length === 0) {
       return;
@@ -250,11 +302,19 @@ function App() {
   }, [agentPrompts]);
 
   // Initialize the application when component mounts (only once)
+  // NOTE: Message history is reset on every full page reload since state is not persisted
   useEffect(() => {
     const storedAuth = sessionStorage.getItem('whysper_authenticated');
     if (storedAuth === 'true') {
       setIsAuthenticated(true);
     }
+
+    // Reset message history: Clear any in-memory state from previous sessions
+    // This ensures a fresh start after each full browser reload
+    setConversations({});
+    setTabs([]);
+    
+
     // Create the initial tab for the first conversation
     const initialTab: Tab = {
       id: 'tab-1',                    // Unique tab identifier
@@ -284,6 +344,9 @@ function App() {
       await loadSettings();
       await loadAgentPrompts();
       await loadSubagentCommands();
+      // Note: Don't load conversation files on initial mount
+      // The backend session doesn't exist yet, so there are no files to load
+      // Files will be loaded when user switches tabs or after first message
     };
 
     initializeApp();
@@ -347,6 +410,12 @@ function App() {
     setLoading(true);
 
     try {
+      // DEBUG: Check selectedFiles state RIGHT before creating request
+      console.log('🔴 BEFORE creating apiRequest:');
+      console.log('🔴 selectedFiles:', selectedFiles);
+      console.log('🔴 selectedFiles.length:', selectedFiles.length);
+      console.log('🔴 Type of selectedFiles:', typeof selectedFiles, Array.isArray(selectedFiles));
+
       // Send to API with ALL selected files (no limit)
       const apiRequest = {
         message: messageText,
@@ -354,10 +423,11 @@ function App() {
         contextFiles: selectedFiles.map(f => f.path),
         settings,
       };
-      
+
       console.log('📡 Sending API request:', apiRequest);
       console.log('🗂️ Selected files count:', selectedFiles.length);
       console.log('🗂️ Selected files:', selectedFiles.map(f => f.path));
+      console.log('🔴 apiRequest.contextFiles:', apiRequest.contextFiles);
       
       const response = await ApiService.sendMessage(apiRequest);
       console.log('📡 Chat API response:', response);
@@ -381,6 +451,12 @@ function App() {
 
         // Extract code blocks if any
         await extractCodeFromMessage(assistantMessage);
+
+        // Note: We don't reload files from backend here because we just sent them!
+        // The frontend state is already correct. Only load from backend when:
+        // 1. Switching tabs (to get that conversation's files)
+        // 2. After page refresh (to restore state)
+
         console.log('✅ Chat message sent successfully');
       } else {
         console.error('❌ API response failed:', response.error);
@@ -614,20 +690,93 @@ function App() {
 
   // Tab management
   const handleTabChange = (tabId: string) => {
+    // Only load files if actually switching to a different tab
+    const isTabChange = tabId !== activeTabId;
+
     setActiveTabId(tabId);
+
+    // Load context files from backend session when switching to a DIFFERENT chat tab
+    if (isTabChange) {
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab && tab.type === 'chat' && tab.conversationId) {
+        loadConversationFiles(tab.conversationId);
+      }
+    }
+  };
+
+  /**
+   * Handle New Session - Complete reset of the application state
+   * Clears all tabs, conversations, context files, and message history
+   * Creates a fresh session as if the user just logged in
+   */
+  const handleNewSession = async () => {
+    try {
+      console.log('🔄 Starting new session - clearing all state...');
+
+      // Clear all active conversation sessions on the backend
+      const conversationIds = Object.keys(conversations);
+      for (const convId of conversationIds) {
+        try {
+          await ApiService.clearConversation(convId);
+          console.log(`✓ Cleared backend conversation: ${convId}`);
+        } catch (error) {
+          console.warn(`Failed to clear conversation ${convId}:`, error);
+        }
+      }
+
+      // Reset all state to initial values
+      setConversations({});
+      setTabs([]);
+      setSelectedFiles([]);
+      setExtractedCodeBlocks([]);
+      setSettings(prev => ({
+        ...prev,
+        contextFiles: [],
+      }));
+
+      // Clear persisted context files from localStorage
+      localStorage.removeItem('whysper_context_files');
+
+      // Create initial conversation and tab (like app initialization)
+      const initialTabId = `tab-${Date.now()}`;
+      const initialConversationId = `conv-${Date.now()}`;
+
+      const initialTab: Tab = {
+        id: initialTabId,
+        conversationId: initialConversationId,
+        title: 'New Conversation',
+        isActive: true,
+        isDirty: false,
+        type: 'chat',
+      };
+
+      const initialConversation: Conversation = {
+        id: initialConversationId,
+        title: 'New Conversation',
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setTabs([initialTab]);
+      setConversations({ [initialConversationId]: initialConversation });
+      setActiveTabId(initialTabId);
+
+      message.success('New session started - all history and context cleared');
+      console.log('✓ New session created successfully');
+    } catch (error) {
+      console.error('❌ Failed to start new session:', error);
+      message.error('Failed to start new session');
+    }
   };
 
   const handleNewTab = () => {
     const newTabId = `tab-${Date.now()}`;
     const newConversationId = `conv-${Date.now()}`;
-    
-    // Clear context and extracted data for the new chat session
-    setSelectedFiles([]);
+
+    // Clear extracted data for the new chat session
+    // Note: Context files (selectedFiles) persist across tabs - only cleared on "New Session"
     setExtractedCodeBlocks([]);
-    setSettings(prev => ({
-      ...prev,
-      contextFiles: [],
-    }));
 
     const newTab: Tab = {
       id: newTabId,
@@ -1081,6 +1230,7 @@ function App() {
       <Header
         onSetContext={() => setContextModalOpen(true)}
         onNewConversation={handleNewTab}
+        onNewSession={handleNewSession}
         onEditFile={() => setFileSelectionModalOpen(true)}
         onOpenSettings={() => setSettingsModalOpen(true)}
         onToggleTheme={toggleTheme}
@@ -1189,7 +1339,10 @@ function App() {
         open={contextModalOpen}
         onCancel={() => setContextModalOpen(false)}
         onApply={(files) => {
+          console.log(`🔵 ContextModal onApply called with ${files.length} files`);
+          console.log('🔵 Files:', files.map(f => f.path));
           setSelectedFiles(files);
+          console.log('🔵 setSelectedFiles called, state should now have', files.length, 'files');
           setContextModalOpen(false);
           message.success(`${files.length} files selected for context`);
         }}

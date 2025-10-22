@@ -515,8 +515,10 @@ class ConversationSession:
         logger.debug(".3f")
 
         # Determine if codebase context is needed
-        needs_codebase_context = is_first_message or self._is_tool_command(question)
-        logger.info(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message})")
+        # ALWAYS include context if files are selected, regardless of message number
+        has_selected_files = len(self.selected_files) > 0
+        needs_codebase_context = is_first_message or self._is_tool_command(question) or has_selected_files
+        logger.info(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message}, has_files={has_selected_files}, file_count={len(self.selected_files)})")
         # Auto-detect diagram requests and use appropriate agent prompt
         if not agent_prompt:
             agent_prompt = self._detect_diagram_request(question)
@@ -533,6 +535,10 @@ class ConversationSession:
         logger.info("Gathering codebase content for AI processing")
         codebase_content = self._get_codebase_content(is_first_message, needs_codebase_context)
         logger.debug(f"Codebase content length: {len(codebase_content)} characters")
+
+        # Inject/update system message with current context BEFORE calling AI
+        logger.info("Injecting/updating system message with current context")
+        self._inject_or_update_system_message(codebase_content, agent_prompt)
 
         # Process question with AI (with automatic D2 validation and retry)
         logger.info("Sending question to AI processor")
@@ -1241,43 +1247,65 @@ class ConversationSession:
             logger.error(f"Error pre-rendering D2 diagrams: {str(e)}")
             return response_text
 
-    def _update_conversation_history(
-        self, response_text: str, is_first_message: bool, codebase_content: str, agent_prompt: str = None
-    ) -> None:
-        self.app_state.conversation_history.append(
-            ConversationMessage(role="assistant", content=response_text)
-        )
-        if is_first_message:
-            # Use agent prompt if provided, otherwise fall back to default
-            if agent_prompt:
-                system_msg = self._format_agent_prompt(agent_prompt, codebase_content)
-            else:
-                # Default system message for backwards compatibility
-                system_msg = (
-                    "🚨 CRITICAL FORMATTING REQUIREMENT: You MUST respond EXCLUSIVELY in pure markdown format. 🚨\n\n"
-                    "You are a helpful AI assistant that helps with code analysis and development.\n\n"
-                    "ABSOLUTELY REQUIRED:\n"
-                    "- Use ONLY markdown syntax for ALL formatting\n"
-                    "- For headers: Use # ## ### (NOT <h1> <h2> <h3>)\n"
-                    "- For code blocks: Use ```language syntax (NOT <pre><code>)\n"
-                    "- For lists: Use - or 1. syntax (NOT <ul><li>)\n"
-                    "- For emphasis: Use **bold** and *italic* (NOT <strong><em>)\n"
-                    "- For links: Use [text](url) syntax (NOT <a href>)\n\n"
-                    "STRICTLY FORBIDDEN:\n"
-                    "- NO HTML tags whatsoever: no <p>, <div>, <span>, <pre>, <code>, <h1-6>, <ul>, <li>, <strong>, <em>, <a>, etc.\n"
-                    "- NO HTML entities: no &lt; &gt; &nbsp; etc.\n"
-                    "- NO HTML attributes or styling\n\n"
-                    "If you include mermaid diagrams, use this EXACT format:\n"
-                    "```mermaid\n"
-                    "graph TD\n"
-                    "    A --> B\n"
-                    "```\n\n"
-                    "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
-                    f"The user has provided the following codebase:\n\n{codebase_content}"
-                )
+    def _inject_or_update_system_message(self, codebase_content: str, agent_prompt: str = None) -> None:
+        """
+        Inject or update the system message with current context.
+        This should be called BEFORE sending messages to the AI.
+
+        Args:
+            codebase_content: The current codebase content
+            agent_prompt: Optional agent prompt to use instead of default
+        """
+        # Build the system message with current context
+        if agent_prompt:
+            system_msg = self._format_agent_prompt(agent_prompt, codebase_content)
+        else:
+            # Default system message for backwards compatibility
+            system_msg = (
+                "🚨 CRITICAL FORMATTING REQUIREMENT: You MUST respond EXCLUSIVELY in pure markdown format. 🚨\n\n"
+                "You are a helpful AI assistant that helps with code analysis and development.\n\n"
+                "ABSOLUTELY REQUIRED:\n"
+                "- Use ONLY markdown syntax for ALL formatting\n"
+                "- For headers: Use # ## ### (NOT <h1> <h2> <h3>)\n"
+                "- For code blocks: Use ```language syntax (NOT <pre><code>)\n"
+                "- For lists: Use - or 1. syntax (NOT <ul><li>)\n"
+                "- For emphasis: Use **bold** and *italic* (NOT <strong><em>)\n"
+                "- For links: Use [text](url) syntax (NOT <a href>)\n\n"
+                "STRICTLY FORBIDDEN:\n"
+                "- NO HTML tags whatsoever: no <p>, <div>, <span>, <pre>, <code>, <h1-6>, <ul>, <li>, <strong>, <em>, <a>, etc.\n"
+                "- NO HTML entities: no &lt; &gt; &nbsp; etc.\n"
+                "- NO HTML attributes or styling\n\n"
+                "If you include mermaid diagrams, use this EXACT format:\n"
+                "```mermaid\n"
+                "graph TD\n"
+                "    A --> B\n"
+                "```\n\n"
+                "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
+                f"The user has provided the following codebase:\n\n{codebase_content}"
+            )
+
+        # Check if system message already exists at position 0
+        if len(self.app_state.conversation_history) > 0 and self.app_state.conversation_history[0].role == "system":
+            # Replace existing system message with updated context
+            self.app_state.conversation_history[0] = ConversationMessage(role="system", content=system_msg)
+            logger.debug("Updated existing system message with current context")
+        else:
+            # Insert new system message at position 0
             self.app_state.conversation_history.insert(
                 0, ConversationMessage(role="system", content=system_msg)
             )
+            logger.debug("Inserted new system message with current context")
+
+    def _update_conversation_history(
+        self, response_text: str, is_first_message: bool, codebase_content: str, agent_prompt: str = None
+    ) -> None:
+        """
+        Update conversation history with the assistant's response.
+        Note: System message injection now happens BEFORE AI call, not here.
+        """
+        self.app_state.conversation_history.append(
+            ConversationMessage(role="assistant", content=response_text)
+        )
 
     def _format_agent_prompt(self, agent_prompt: str, codebase_content: str) -> str:
         """

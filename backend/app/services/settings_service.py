@@ -25,12 +25,17 @@ class SettingsService:
             key: SecurityUtils.mask_api_key(value) if "KEY" in key else value
             for key, value in env_vars.items()
         }
+
+        # Get frontend timeout (default to 120 seconds if not set)
+        frontend_timeout = int(env_vars.get("FRONT_END_TIMEOUT", "120"))
+
         return {
             "values": env_vars,
             "masked": masked,
             "descriptions": env_manager.get_env_descriptions(),
             "theme": theme_manager.current_theme_name,
             "availableThemes": theme_manager.get_available_themes(),
+            "timeout": frontend_timeout,  # Add timeout to settings response
         }
 
     def _parse_yaml_frontmatter(self, content: str) -> Optional[Dict[str, Any]]:

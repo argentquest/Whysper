@@ -118,6 +118,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           // Advanced Configuration
           cacheSize: parseInt(settings.values?.CACHE_SIZE || '100'),
           requestTimeout: parseInt(settings.values?.REQUEST_TIMEOUT || '60'),
+          frontendTimeout: parseInt(settings.values?.FRONT_END_TIMEOUT || '120'),
           aiConnectTimeout: parseInt(settings.values?.AI_CONNECT_TIMEOUT || '30'),
           aiReadTimeout: parseInt(settings.values?.AI_READ_TIMEOUT || '120'),
           openrouterApiUrl: settings.values?.OPENROUTER_API_URL || '',
@@ -239,6 +240,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         // Advanced Configuration
         CACHE_SIZE: (values.cacheSize ?? 100).toString(),
         REQUEST_TIMEOUT: (values.requestTimeout ?? 60).toString(),
+        FRONT_END_TIMEOUT: (values.frontendTimeout ?? 120).toString(),
         AI_CONNECT_TIMEOUT: (values.aiConnectTimeout ?? 30).toString(),
         AI_READ_TIMEOUT: (values.aiReadTimeout ?? 120).toString(),
         OPENROUTER_API_URL: values.openrouterApiUrl || '',
@@ -264,6 +266,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await ApiService.updateEnvSettings(backendSettings);
 
       if (response.success) {
+        // Apply the new timeout immediately to the API client
+        if (values.frontendTimeout) {
+          ApiService.setRequestTimeout(values.frontendTimeout);
+        }
+
         onSave(values);
         message.success('Settings saved successfully');
         onCancel();
@@ -366,6 +373,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           logLevel: 'INFO',
           cacheSize: 100,
           requestTimeout: 60,
+          frontendTimeout: 120,
           aiConnectTimeout: 30,
           aiReadTimeout: 120,
           openrouterTemperature: 0.1,
@@ -810,6 +818,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         60: '1m',
                         180: '3m',
                         300: '5m',
+                      }}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={`Frontend Timeout: ${form.getFieldValue('frontendTimeout') || 120}s`}
+                    name="frontendTimeout"
+                    tooltip="Frontend API request timeout in seconds (applies to all frontend HTTP requests)"
+                  >
+                    <Slider
+                      min={10}
+                      max={600}
+                      step={10}
+                      marks={{
+                        10: '10s',
+                        60: '1m',
+                        120: '2m',
+                        300: '5m',
+                        600: '10m',
                       }}
                     />
                   </Form.Item>

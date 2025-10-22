@@ -130,12 +130,31 @@ api.interceptors.response.use(
 
 /**
  * API Service Class
- * 
+ *
  * Provides static methods for all backend API operations.
  * Each method handles a specific API endpoint and provides
  * type-safe interfaces for frontend components.
  */
 export class ApiService {
+  /**
+   * Update the axios client timeout dynamically.
+   *
+   * @param timeoutSeconds - Timeout in seconds (will be converted to milliseconds)
+   */
+  static setRequestTimeout(timeoutSeconds: number): void {
+    const timeoutMs = timeoutSeconds * 1000;
+    api.defaults.timeout = timeoutMs;
+    console.log(`⏱️ API request timeout updated to ${timeoutSeconds} seconds (${timeoutMs}ms)`);
+  }
+
+  /**
+   * Get the current timeout value in seconds.
+   *
+   * @returns Current timeout in seconds
+   */
+  static getRequestTimeout(): number {
+    return (api.defaults.timeout || 60000) / 1000;
+  }
   // Chat endpoints
   static async sendMessage(request: ChatRequest): Promise<ApiResponse<ChatResponse>> {
     try {
@@ -214,6 +233,21 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to clear conversation',
+      };
+    }
+  }
+
+  static async getConversationFiles(conversationId: string): Promise<ApiResponse<{files: string[], count: number}>> {
+    try {
+      const response = await api.get(`/chat/conversations/${conversationId}/files`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get conversation files',
       };
     }
   }

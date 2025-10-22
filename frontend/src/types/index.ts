@@ -68,6 +68,7 @@ export interface AppSettings {
   contextFiles: string[];
   maxTokens: number;
   temperature: number;
+  timeout?: number; // Frontend timeout in seconds for API requests
   values?: {[key: string]: string};
   masked?: {[key: string]: boolean};
   agentPrompts?: AgentPrompt[];

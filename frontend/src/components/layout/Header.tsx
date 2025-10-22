@@ -27,6 +27,7 @@ const { Option } = Select;
 interface HeaderProps {
   onSetContext: () => void;
   onNewConversation: () => void;
+  onNewSession: () => void;
   onEditFile: () => void;
   onOpenSettings: () => void;
   onToggleTheme: () => void;
@@ -47,6 +48,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onSetContext,
   onNewConversation,
+  onNewSession,
   onEditFile,
   onOpenSettings,
   onToggleTheme,
@@ -248,7 +250,28 @@ export const Header: React.FC<HeaderProps> = ({
               Set Context
             </Button>
           </Tooltip>
-          
+
+          <Tooltip title="Start New Session (Clear all history and context)">
+            <Button
+              type="primary"
+              danger
+              icon={<MessageOutlined />}
+              onClick={onNewSession}
+              size="large"
+              style={{
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                padding: '0 20px',
+                height: '44px',
+              }}
+            >
+              New Session
+            </Button>
+          </Tooltip>
+
           <Tooltip title="Generate Documentation">
             <Button
               type="primary"

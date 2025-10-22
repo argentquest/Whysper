@@ -796,3 +796,33 @@ def clear_conversation(conversation_id: str):
         raise HTTPException(
             status_code=500, detail=f"Failed to clear conversation: {str(e)}"
         )
+
+
+@router.get("/conversations/{conversation_id}/files")
+def get_conversation_files(conversation_id: str):
+    """Get the list of context files selected for a conversation session."""
+    logger.debug(f"get_conversation_files endpoint called for: {conversation_id}")
+    try:
+        session = conversation_manager.get_session(conversation_id)
+        if session:
+            files = session.selected_files
+            logger.info(f"Retrieved {len(files)} context files for session: {conversation_id}")
+            return {
+                "success": True,
+                "conversationId": conversation_id,
+                "files": files,
+                "count": len(files)
+            }
+        else:
+            logger.warning(f"Conversation session not found: {conversation_id}")
+            return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
+    except KeyError:
+        logger.warning(f"Conversation session not found: {conversation_id}")
+        return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
+    except Exception as e:
+        logger.error(
+            f"Failed to get conversation files for {conversation_id}: {e}"
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get conversation files: {str(e)}"
+        )
