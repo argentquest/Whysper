@@ -35,6 +35,7 @@ from schemas import (
 )
 from common.logger import get_logger
 from app.utils.session_utils import session_summary_model
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -43,6 +44,7 @@ router = APIRouter()
 
 
 @router.post("/conversations/{conversation_id}/directory", response_model=SetDirectoryResponse)
+@log_method_call
 def set_directory(conversation_id: str, request: SetDirectoryRequest):
     logger.debug(f"set_directory endpoint started for conversation_id: {conversation_id}")
     """Set the working directory for a conversation."""
@@ -66,6 +68,7 @@ def set_directory(conversation_id: str, request: SetDirectoryRequest):
     logger.info(f"Set directory to {request.path} completed for conversation: {conversation_id}")
     
 @router.post("/conversations/{conversation_id}/files", response_model=ConversationSummaryModel)
+@log_method_call
 def update_files(conversation_id: str, request: UpdateFilesRequest):
     logger.debug(f"update_files endpoint started for conversation_id: {conversation_id}")
     """Update selected files for a conversation."""
@@ -82,6 +85,7 @@ def update_files(conversation_id: str, request: UpdateFilesRequest):
 
 
 @router.post("/scan", response_model=DirectoryScanResponse)
+@log_method_call
 def scan_directory(request: DirectoryScanRequest):
     """
     Scan a directory for files and build a file tree.
@@ -106,6 +110,7 @@ def scan_directory(request: DirectoryScanRequest):
 
 
 @router.post("/content", response_model=FileContentResponse)
+@log_method_call
 def get_file_content(request: FileContentRequest):
     logger.debug("get_file_content endpoint started")
     """
@@ -125,6 +130,7 @@ def get_file_content(request: FileContentRequest):
 
 
 @router.post("/folder-counts", response_model=FolderFileCountResponse)
+@log_method_call
 def get_folder_file_counts(request: FolderFileCountRequest):
     """
     Get file counts for subdirectories.
@@ -147,6 +153,7 @@ def get_folder_file_counts(request: FolderFileCountRequest):
 
 
 @router.get("/top-folders", response_model=TopFoldersResponse)
+@log_method_call
 def get_top_folders():
     """
     Get top-level folders from the configured CODE_PATH.
@@ -174,6 +181,7 @@ def get_top_folders():
 
 
 @router.get("/read/{file_path:path}", response_model=FileReadResponse)
+@log_method_call
 def read_single_file(file_path: str):
     """
     Read content from a single file for editing.
@@ -251,6 +259,7 @@ def read_single_file(file_path: str):
 
 
 @router.post("/save", response_model=FileSaveResponse)
+@log_method_call
 def save_file(request: FileSaveRequest):
     """
     Save content to a file.
@@ -322,6 +331,7 @@ def save_file(request: FileSaveRequest):
 
 
 @router.post("/create", response_model=FileCreateResponse)
+@log_method_call
 def create_new_file(request: FileCreateRequest):
     """
     Create a new file with optional initial content.
@@ -400,6 +410,7 @@ def create_new_file(request: FileCreateRequest):
 
 
 @router.get("/")
+@log_method_call
 def get_files(directory: str = None, recursive: bool = True):
     """
     Get files from a directory for frontend compatibility.
@@ -540,6 +551,7 @@ def get_files(directory: str = None, recursive: bool = True):
 
 
 @router.post("/upload", response_model=FileUploadResponse)
+@log_method_call
 def upload_files(request: FileUploadRequest):
     """
     Upload files directly to the server, bypassing the local file system.
@@ -656,6 +668,7 @@ def upload_files(request: FileUploadRequest):
 
 
 @router.get("/uploaded")
+@log_method_call
 def get_uploaded_files():
     """
     Get list of uploaded files that can be used as context.

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
 from app.services.documentation_service import documentation_service, DocumentationRequest
+from common.logging_decorator import log_method_call
 from fastapi.responses import StreamingResponse
 import io
 
@@ -16,6 +17,7 @@ class GenerateDocumentationRequest(BaseModel):
     target_audience: str = "developers"
 
 @router.post("/generate")
+@log_method_call
 async def generate_documentation(request: GenerateDocumentationRequest):
     """
     Generate documentation for a list of files.
@@ -35,6 +37,7 @@ async def generate_documentation(request: GenerateDocumentationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download/{session_guid}")
+@log_method_call
 async def download_documentation(session_guid: str):
     """
     Download the documentation as a zip file.

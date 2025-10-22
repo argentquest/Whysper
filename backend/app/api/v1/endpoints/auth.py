@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from common.logging_decorator import log_method_call
 from pydantic import BaseModel
 import os
 
@@ -8,6 +9,7 @@ class VerifyAccessKeyRequest(BaseModel):
     access_key: str
 
 @router.post("/verify")
+@log_method_call
 async def verify_access_key(request: VerifyAccessKeyRequest):
     """
     Verify the access key.

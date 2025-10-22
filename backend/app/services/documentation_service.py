@@ -22,6 +22,7 @@ from common.logger import get_logger
 from common.ai import create_ai_processor
 from app.services.file_service import file_service
 from security_utils import SecurityUtils
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
@@ -78,6 +79,7 @@ class DocumentationService:
     generation.
     """
     
+    @log_method_call
     def __init__(self):
         self.logger = get_logger(f"{__name__}.DocumentationService")
         self.supported_languages = {
@@ -98,6 +100,7 @@ class DocumentationService:
         self.ai_processor = None
         self.cache = {}
     
+    @log_method_call
     def _initialize_ai_processor(self):
         """Initialize AI processor with current settings"""
         try:
@@ -114,6 +117,7 @@ class DocumentationService:
         except Exception as e:
             self.logger.error(f"Failed to initialize AI processor: {e}")
     
+    @log_method_call
     def analyze_code_structure(self, file_paths: List[str]) -> List[CodeStructure]:
         """
         Analyze the structure of the provided code files.
@@ -159,6 +163,7 @@ class DocumentationService:
         self.logger.info(f"Successfully analyzed {len(structures)} files")
         return structures
     
+    @log_method_call
     def _detect_language(self, file_path: str) -> str:
         """Detect programming language from file extension"""
         extension = Path(file_path).suffix.lower()
@@ -182,6 +187,7 @@ class DocumentationService:
         
         return language_map.get(extension, 'unknown')
     
+    @log_method_call
     def _analyze_python(self, file_path: str, content: str) -> CodeStructure:
         """Analyze Python code structure"""
         try:
@@ -207,6 +213,7 @@ class DocumentationService:
             self.logger.error(f"Syntax error in Python file {file_path}: {e}")
             return CodeStructure(file_path=file_path, language='python')
     
+    @log_method_call
     def _extract_python_imports(self, tree: ast.AST) -> List[str]:
         """Extract import statements from Python AST"""
         imports = []
@@ -222,6 +229,7 @@ class DocumentationService:
         
         return imports
     
+    @log_method_call
     def _extract_python_classes(self, tree: ast.AST) -> List[Dict[str, Any]]:
         """Extract class definitions from Python AST"""
         classes = []
@@ -269,6 +277,7 @@ class DocumentationService:
         
         return classes
     
+    @log_method_call
     def _extract_python_functions(self, tree: ast.AST) -> List[Dict[str, Any]]:
         """Extract function definitions from Python AST"""
         functions = []
@@ -298,6 +307,7 @@ class DocumentationService:
         
         return functions
     
+    @log_method_call
     def _extract_python_variables(self, tree: ast.AST) -> List[Dict[str, Any]]:
         """Extract variable assignments from Python AST"""
         variables = []
@@ -314,6 +324,7 @@ class DocumentationService:
         
         return variables
     
+    @log_method_call
     def _extract_python_constants(self, tree: ast.AST) -> List[Dict[str, Any]]:
         """Extract constant assignments from Python AST"""
         constants = []
@@ -330,6 +341,7 @@ class DocumentationService:
         
         return constants
     
+    @log_method_call
     def _extract_python_docstrings(self, tree: ast.AST) -> List[Dict[str, Any]]:
         """Extract docstrings from Python AST"""
         docstrings = []
@@ -346,6 +358,7 @@ class DocumentationService:
         
         return docstrings
     
+    @log_method_call
     def _extract_python_comments(self, content: str) -> List[Dict[str, Any]]:
         """Extract comments from Python code"""
         comments = []
@@ -362,6 +375,7 @@ class DocumentationService:
         
         return comments
     
+    @log_method_call
     def _analyze_python_relationships(self, tree: ast.AST) -> Dict[str, List[str]]:
         """Analyze relationships between Python code elements"""
         relationships = {
@@ -389,6 +403,7 @@ class DocumentationService:
         
         return relationships
     
+    @log_method_call
     def _calculate_python_complexity(self, tree: ast.AST) -> Dict[str, Any]:
         """Calculate complexity metrics for Python code"""
         metrics = {
@@ -412,6 +427,7 @@ class DocumentationService:
         
         return metrics
     
+    @log_method_call
     def _analyze_javascript(self, file_path: str, content: str) -> CodeStructure:
         """Analyze JavaScript code structure"""
         structure = CodeStructure(
@@ -430,6 +446,7 @@ class DocumentationService:
         
         return structure
     
+    @log_method_call
     def _extract_js_imports(self, content: str) -> List[str]:
         """Extract import statements from JavaScript code"""
         imports = []
@@ -446,6 +463,7 @@ class DocumentationService:
         
         return imports
     
+    @log_method_call
     def _extract_js_classes(self, content: str) -> List[Dict[str, Any]]:
         """Extract class definitions from JavaScript code"""
         classes = []
@@ -494,6 +512,7 @@ class DocumentationService:
         
         return classes
     
+    @log_method_call
     def _extract_js_functions(self, content: str) -> List[Dict[str, Any]]:
         """Extract function definitions from JavaScript code"""
         functions = []
@@ -520,6 +539,7 @@ class DocumentationService:
         
         return functions
     
+    @log_method_call
     def _extract_js_variables(self, content: str) -> List[Dict[str, Any]]:
         """Extract variable declarations from JavaScript code"""
         variables = []
@@ -536,6 +556,7 @@ class DocumentationService:
         
         return variables
     
+    @log_method_call
     def _extract_js_constants(self, content: str) -> List[Dict[str, Any]]:
         """Extract constant declarations from JavaScript code"""
         constants = []
@@ -552,6 +573,7 @@ class DocumentationService:
         
         return constants
     
+    @log_method_call
     def _extract_js_docstrings(self, content: str) -> List[Dict[str, Any]]:
         """Extract JSDoc comments from JavaScript code"""
         docstrings = []
@@ -572,6 +594,7 @@ class DocumentationService:
         
         return docstrings
     
+    @log_method_call
     def _extract_js_comments(self, content: str) -> List[Dict[str, Any]]:
         """Extract comments from JavaScript code"""
         comments = []
@@ -588,6 +611,7 @@ class DocumentationService:
         
         return comments
     
+    @log_method_call
     def _analyze_js_relationships(self, content: str) -> Dict[str, List[str]]:
         """Analyze relationships between JavaScript code elements"""
         relationships = {
@@ -605,6 +629,7 @@ class DocumentationService:
         
         return relationships
     
+    @log_method_call
     def _calculate_js_complexity(self, content: str) -> Dict[str, Any]:
         """Calculate complexity metrics for JavaScript code"""
         lines = content.split('\n')
@@ -634,6 +659,7 @@ class DocumentationService:
         
         return metrics
     
+    @log_method_call
     def _analyze_typescript(self, file_path: str, content: str) -> CodeStructure:
         """Analyze TypeScript code structure"""
         # For now, use JavaScript analysis with TypeScript extensions
@@ -646,6 +672,7 @@ class DocumentationService:
         
         return structure
     
+    @log_method_call
     def _extract_ts_interfaces(self, content: str) -> List[Dict[str, Any]]:
         """Extract interface definitions from TypeScript code"""
         interfaces = []
@@ -664,6 +691,7 @@ class DocumentationService:
         
         return interfaces
     
+    @log_method_call
     def _extract_ts_types(self, content: str) -> List[Dict[str, Any]]:
         """Extract type definitions from TypeScript code"""
         types = []
@@ -682,6 +710,7 @@ class DocumentationService:
         
         return types
     
+    @log_method_call
     def _analyze_java(self, file_path: str, content: str) -> CodeStructure:
         """Analyze Java code structure"""
         structure = CodeStructure(
@@ -700,6 +729,7 @@ class DocumentationService:
         
         return structure
     
+    @log_method_call
     def _extract_java_imports(self, content: str) -> List[str]:
         """Extract import statements from Java code"""
         imports = []
@@ -711,6 +741,7 @@ class DocumentationService:
         
         return imports
     
+    @log_method_call
     def _extract_java_classes(self, content: str) -> List[Dict[str, Any]]:
         """Extract class definitions from Java code"""
         classes = []
@@ -731,6 +762,7 @@ class DocumentationService:
         
         return classes
     
+    @log_method_call
     def _extract_java_methods(self, content: str) -> List[Dict[str, Any]]:
         """Extract method definitions from Java code"""
         methods = []
@@ -751,6 +783,7 @@ class DocumentationService:
         
         return methods
     
+    @log_method_call
     def _extract_java_variables(self, content: str) -> List[Dict[str, Any]]:
         """Extract variable declarations from Java code"""
         variables = []
@@ -771,6 +804,7 @@ class DocumentationService:
         
         return variables
     
+    @log_method_call
     def _extract_java_constants(self, content: str) -> List[Dict[str, Any]]:
         """Extract constant declarations from Java code"""
         constants = []
@@ -786,6 +820,7 @@ class DocumentationService:
         
         return constants
     
+    @log_method_call
     def _extract_java_docstrings(self, content: str) -> List[Dict[str, Any]]:
         """Extract Javadoc comments from Java code"""
         docstrings = []
@@ -806,6 +841,7 @@ class DocumentationService:
         
         return docstrings
     
+    @log_method_call
     def _extract_java_comments(self, content: str) -> List[Dict[str, Any]]:
         """Extract comments from Java code"""
         comments = []
@@ -822,6 +858,7 @@ class DocumentationService:
         
         return comments
     
+    @log_method_call
     def _analyze_java_relationships(self, content: str) -> Dict[str, List[str]]:
         """Analyze relationships between Java code elements"""
         relationships = {
@@ -847,6 +884,7 @@ class DocumentationService:
         
         return relationships
     
+    @log_method_call
     def _calculate_java_complexity(self, content: str) -> Dict[str, Any]:
         """Calculate complexity metrics for Java code"""
         lines = content.split('\n')
@@ -876,6 +914,7 @@ class DocumentationService:
         
         return metrics
     
+    @log_method_call
     def _analyze_go(self, file_path: str, content: str) -> CodeStructure:
         """Analyze Go code structure"""
         structure = CodeStructure(
@@ -894,6 +933,7 @@ class DocumentationService:
         
         return structure
     
+    @log_method_call
     def _extract_go_imports(self, content: str) -> List[str]:
         """Extract import statements from Go code"""
         imports = []
@@ -914,6 +954,7 @@ class DocumentationService:
         
         return imports
     
+    @log_method_call
     def _extract_go_functions(self, content: str) -> List[Dict[str, Any]]:
         """Extract function definitions from Go code"""
         functions = []
@@ -929,6 +970,7 @@ class DocumentationService:
         
         return functions
     
+    @log_method_call
     def _extract_go_variables(self, content: str) -> List[Dict[str, Any]]:
         """Extract variable declarations from Go code"""
         variables = []
@@ -954,6 +996,7 @@ class DocumentationService:
         
         return variables
     
+    @log_method_call
     def _extract_go_constants(self, content: str) -> List[Dict[str, Any]]:
         """Extract constant declarations from Go code"""
         constants = []
@@ -969,6 +1012,7 @@ class DocumentationService:
         
         return constants
     
+    @log_method_call
     def _extract_go_docstrings(self, content: str) -> List[Dict[str, Any]]:
         """Extract docstrings from Go code"""
         docstrings = []
@@ -986,6 +1030,7 @@ class DocumentationService:
         
         return docstrings
     
+    @log_method_call
     def _extract_go_comments(self, content: str) -> List[Dict[str, Any]]:
         """Extract comments from Go code"""
         comments = []
@@ -1002,6 +1047,7 @@ class DocumentationService:
         
         return comments
     
+    @log_method_call
     def _analyze_go_relationships(self, content: str) -> Dict[str, List[str]]:
         """Analyze relationships between Go code elements"""
         relationships = {
@@ -1012,6 +1058,7 @@ class DocumentationService:
         
         return relationships
     
+    @log_method_call
     def _calculate_go_complexity(self, content: str) -> Dict[str, Any]:
         """Calculate complexity metrics for Go code"""
         lines = content.split('\n')
@@ -1041,6 +1088,7 @@ class DocumentationService:
         
         return metrics
     
+    @log_method_call
     def _analyze_rust(self, file_path: str, content: str) -> CodeStructure:
         """Analyze Rust code structure"""
         structure = CodeStructure(
@@ -1059,6 +1107,7 @@ class DocumentationService:
         
         return structure
     
+    @log_method_call
     def _extract_rust_imports(self, content: str) -> List[str]:
         """Extract import statements from Rust code"""
         imports = []
@@ -1070,6 +1119,7 @@ class DocumentationService:
         
         return imports
     
+    @log_method_call
     def _extract_rust_structs(self, content: str) -> List[Dict[str, Any]]:
         """Extract struct definitions from Rust code"""
         structs = []
@@ -1085,6 +1135,7 @@ class DocumentationService:
         
         return structs
     
+    @log_method_call
     def _extract_rust_functions(self, content: str) -> List[Dict[str, Any]]:
         """Extract function definitions from Rust code"""
         functions = []
@@ -1100,6 +1151,7 @@ class DocumentationService:
         
         return functions
     
+    @log_method_call
     def _extract_rust_variables(self, content: str) -> List[Dict[str, Any]]:
         """Extract variable declarations from Rust code"""
         variables = []
@@ -1115,6 +1167,7 @@ class DocumentationService:
         
         return variables
     
+    @log_method_call
     def _extract_rust_constants(self, content: str) -> List[Dict[str, Any]]:
         """Extract constant declarations from Rust code"""
         constants = []
@@ -1130,6 +1183,7 @@ class DocumentationService:
         
         return constants
     
+    @log_method_call
     def _extract_rust_docstrings(self, content: str) -> List[Dict[str, Any]]:
         """Extract docstrings from Rust code"""
         docstrings = []
@@ -1147,6 +1201,7 @@ class DocumentationService:
         
         return docstrings
     
+    @log_method_call
     def _extract_rust_comments(self, content: str) -> List[Dict[str, Any]]:
         """Extract comments from Rust code"""
         comments = []
@@ -1163,6 +1218,7 @@ class DocumentationService:
         
         return comments
     
+    @log_method_call
     def _analyze_rust_relationships(self, content: str) -> Dict[str, List[str]]:
         """Analyze relationships between Rust code elements"""
         relationships = {
@@ -1173,6 +1229,7 @@ class DocumentationService:
         
         return relationships
     
+    @log_method_call
     def _calculate_rust_complexity(self, content: str) -> Dict[str, Any]:
         """Calculate complexity metrics for Rust code"""
         lines = content.split('\n')

@@ -8,6 +8,7 @@ from fastapi.responses import Response, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
+from common.logging_decorator import log_method_call
 import os
 from datetime import datetime
 from pathlib import Path
@@ -80,6 +81,7 @@ class MermaidInfoResponse(BaseModel):
 
 
 # Helper function to safely log Mermaid code
+@log_method_call
 def safe_log_mermaid_code(code: str, max_length: int = 200):
     """Safely log Mermaid code without exposing sensitive data"""
     if len(code) <= max_length:
@@ -90,6 +92,7 @@ def safe_log_mermaid_code(code: str, max_length: int = 200):
 
 
 @router.post("/render", response_model=MermaidRenderResponse)
+@log_method_call
 async def render_mermaid(
     request: MermaidRenderRequest,
     background_tasks: BackgroundTasks,
@@ -177,6 +180,7 @@ async def render_mermaid(
 
 
 @router.post("/validate", response_model=MermaidValidationResponse)
+@log_method_call
 async def validate_mermaid(
     request: MermaidValidationRequest,
     mermaid_service: MermaidRenderService = Depends(get_mermaid_service)
@@ -232,6 +236,7 @@ async def validate_mermaid(
 
 
 @router.get("/info", response_model=MermaidInfoResponse)
+@log_method_call
 async def get_mermaid_info(mermaid_service: MermaidRenderService = Depends(get_mermaid_service)):
     """
     Get information about the Mermaid CLI installation
@@ -250,6 +255,7 @@ async def get_mermaid_info(mermaid_service: MermaidRenderService = Depends(get_m
 
 
 @router.get("/health")
+@log_method_call
 async def mermaid_health_check(mermaid_service: MermaidRenderService = Depends(get_mermaid_service)):
     """
     Health check endpoint for Mermaid rendering service
@@ -274,6 +280,7 @@ async def mermaid_health_check(mermaid_service: MermaidRenderService = Depends(g
 
 
 @router.get("/download/{filename}")
+@log_method_call
 async def download_mermaid_diagram(filename: str):
     """
     Download a pre-rendered Mermaid diagram file

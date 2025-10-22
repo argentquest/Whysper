@@ -7,6 +7,7 @@ from typing import Dict, Tuple, List, Any, Optional
 
 from common.env_manager import env_manager
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 from security_utils import SecurityUtils
 from .theme_service import theme_manager
 
@@ -19,6 +20,7 @@ class SettingsService:
     agent prompts, and subagent commands for the web backend.
     """
 
+    @log_method_call
     def get_settings(self) -> Dict[str, Any]:
         env_vars = env_manager.load_env_file()
         masked = {
@@ -38,6 +40,7 @@ class SettingsService:
             "timeout": frontend_timeout,  # Add timeout to settings response
         }
 
+    @log_method_call
     def _parse_yaml_frontmatter(self, content: str) -> Optional[Dict[str, Any]]:
         """Parse YAML frontmatter from markdown content."""
         if not content.startswith('---'):
@@ -71,6 +74,7 @@ class SettingsService:
         except Exception:
             return None
 
+    @log_method_call
     def get_agent_prompts(self) -> List[Dict[str, str]]:
         """Load available agent prompts from the prompts/coding/agent directory."""
         try:
@@ -118,6 +122,7 @@ class SettingsService:
             logger.error(f"Error loading agent prompts: {e}")
             return []
 
+    @log_method_call
     def get_subagent_commands(self) -> List[Dict[str, str]]:
         """Load subagent commands from the prompts/coding/subagent/master.json file."""
         try:
@@ -135,6 +140,7 @@ class SettingsService:
             logger.error(f"Error loading subagent commands: {e}")
             return []
 
+    @log_method_call
     def get_agent_prompt_content(self, filename: str) -> str:
         """Load the content of a specific agent prompt file."""
         try:
@@ -152,6 +158,7 @@ class SettingsService:
             logger.error(f"Error loading agent prompt content: {e}")
             return ""
 
+    @log_method_call
     def update_env(self, changes: Dict[str, str]) -> Dict[str, Any]:
         """
         Update multiple environment variables and persist changes.
@@ -184,6 +191,7 @@ class SettingsService:
             "errors": errors
         }
 
+    @log_method_call
     def set_theme(self, theme_name: str) -> Tuple[bool, str]:
         success = theme_manager.switch_theme(theme_name)
         if success:
@@ -191,6 +199,7 @@ class SettingsService:
             return True, theme_name
         return False, theme_manager.current_theme_name
 
+    @log_method_call
     def toggle_theme(self) -> Tuple[str, str]:
         """
         Toggle the current application theme between light and dark mode.

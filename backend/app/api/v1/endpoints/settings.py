@@ -15,6 +15,7 @@ from schemas import (
     ThemeSetRequest,
 )
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -25,6 +26,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 @router.get("/")
+@log_method_call
 def get_settings() -> Dict[str, Any]:
     """
     Retrieve current application settings and configuration.
@@ -55,6 +57,7 @@ def get_settings() -> Dict[str, Any]:
 
 
 @router.get("/agent-prompts/{filename}")
+@log_method_call
 def get_agent_prompt(filename: str) -> Dict[str, str]:
     """
     Retrieve the content of a specific agent prompt file.
@@ -96,6 +99,7 @@ def get_agent_prompt(filename: str) -> Dict[str, str]:
 
 
 @router.put("/env")
+@log_method_call
 def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
     """
     Update environment variables and application configuration.
@@ -145,6 +149,7 @@ def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 @router.put("/theme", response_model=ThemeToggleResponse)
+@log_method_call
 def set_theme(request: ThemeSetRequest):
     """
     Set the application theme to a specific value.
@@ -183,6 +188,7 @@ def set_theme(request: ThemeSetRequest):
 
 
 @router.post("/theme/toggle", response_model=ThemeToggleResponse)
+@log_method_call
 def toggle_theme():
     """
     Toggle between light and dark themes.
@@ -216,6 +222,7 @@ def toggle_theme():
 # ---------------------------------------------------------------------------
 
 @router.get("/agents")
+@log_method_call
 def list_agents() -> List[Dict[str, Any]]:
     """List all available agent prompts."""
     logger.debug("list_agents endpoint called")
@@ -225,6 +232,7 @@ def list_agents() -> List[Dict[str, Any]]:
 
 
 @router.get("/subagents")
+@log_method_call
 def list_subagents() -> List[Dict[str, Any]]:
     """List all available subagent commands."""
     logger.debug("list_subagents endpoint called")
@@ -234,6 +242,7 @@ def list_subagents() -> List[Dict[str, Any]]:
 
 
 @router.post("/restart")
+@log_method_call
 def restart_server() -> Dict[str, Any]:
     """
     Restart the backend server.

@@ -10,6 +10,7 @@ from typing import Dict
 from fastapi import APIRouter
 from app.core.config import settings
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 import sys
 import platform
 from datetime import datetime
@@ -19,6 +20,7 @@ router = APIRouter()
 
 
 @router.get("/")
+@log_method_call
 def root() -> Dict[str, str]:
     logger.debug("root endpoint started")
     """Root endpoint with API information."""
@@ -33,6 +35,7 @@ def root() -> Dict[str, str]:
 
 
 @router.get("/health")
+@log_method_call
 def health_check() -> Dict[str, str]:
     logger.debug("health_check endpoint started")
     """
@@ -52,6 +55,7 @@ def health_check() -> Dict[str, str]:
 
 
 @router.get("/version")
+@log_method_call
 def get_version() -> Dict[str, str]:
     """Get API version information."""
     return {

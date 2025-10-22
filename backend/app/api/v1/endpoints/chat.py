@@ -41,6 +41,7 @@ from app.services.history_service import history_service  # History service
 from app.utils import session_summary_model
 from common.logger import get_logger
 from common.log_broadcaster import log_broadcaster  # Log broadcasting
+from common.logging_decorator import log_method_call
 from schemas import (
     AskQuestionRequest,        # Chat message request schema
     AskQuestionResponse,       # Chat message response schema
@@ -72,6 +73,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+@log_method_call
 def _conversation_state_response(session) -> ConversationCreateResponse:
     """
     Create a standardized conversation state response for new sessions.
@@ -103,12 +105,14 @@ def _conversation_state_response(session) -> ConversationCreateResponse:
 
 
 @router.post("/test")
+@log_method_call
 def test_endpoint():
     """Simple test endpoint"""
     return {"status": "ok", "message": "Test endpoint working"}
 
 
 @router.post("/test-new")
+@log_method_call
 def test_new_endpoint():
     """New test endpoint to verify server reload"""
     return {
@@ -119,6 +123,7 @@ def test_new_endpoint():
 
 
 @router.get("/debug-env")
+@log_method_call
 def debug_env():
     """Debug environment loading"""
     from common.env_manager import env_manager
@@ -133,6 +138,7 @@ def debug_env():
 
 
 @router.get("/logs/stream")
+@log_method_call
 async def stream_logs(session_id: str = None):
     """
     Stream real-time INFO-level logs via Server-Sent Events (SSE)
@@ -195,6 +201,7 @@ async def stream_logs(session_id: str = None):
 
 
 @router.post("/stream")
+@log_method_call
 async def send_chat_message_stream(request: dict):
     """
     Send chat message to AI and stream progress updates via Server-Sent Events (SSE)
@@ -360,6 +367,7 @@ async def send_chat_message_stream(request: dict):
 
 
 @router.post("/")
+@log_method_call
 def send_chat_message(request: dict):
     """Send chat message to AI and return response (legacy non-streaming endpoint)"""
     logger.info("🚀 CHAT ENDPOINT CALLED")
@@ -582,6 +590,7 @@ def send_chat_message(request: dict):
 
 
 @router.post("/conversations", response_model=ConversationCreateResponse)
+@log_method_call
 def create_conversation(request: ConversationCreateRequest):
     logger.debug("create_conversation endpoint started")
     """Create a new conversation session."""
@@ -614,9 +623,10 @@ def create_conversation(request: ConversationCreateRequest):
     return _conversation_state_response(session)
 
 
-@router.get(
-    "/conversations/{conversation_id}/summary", response_model=ConversationSummaryModel
-)
+@router.get("/conversations/{conversation_id}/summary", response_model=ConversationSummaryModel)
+
+
+@log_method_call
 def get_conversation_summary(conversation_id: str):
     """Get conversation summary."""
     logger.debug(
@@ -631,9 +641,10 @@ def get_conversation_summary(conversation_id: str):
     return session_summary_model(session)
 
 
-@router.put(
-    "/conversations/{conversation_id}/model", response_model=ConversationCreateResponse
-)
+@router.put("/conversations/{conversation_id}/model", response_model=ConversationCreateResponse)
+
+
+@log_method_call
 def update_model(conversation_id: str, request: UpdateModelRequest):
     logger.debug(
         f"update_model endpoint started for conversation_id: {conversation_id}"
@@ -653,6 +664,7 @@ def update_model(conversation_id: str, request: UpdateModelRequest):
     "/conversations/{conversation_id}/api-key",
     response_model=ConversationCreateResponse,
 )
+@log_method_call
 def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
     """Update the API key for a conversation."""
     logger.debug(
@@ -668,9 +680,10 @@ def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
     return _conversation_state_response(session)
 
 
-@router.get(
-    "/conversations/{conversation_id}/export", response_model=ExportConversationResponse
-)
+@router.get("/conversations/{conversation_id}/export", response_model=ExportConversationResponse)
+
+
+@log_method_call
 def export_conversation(conversation_id: str):
     """Export conversation data."""
     logger.debug(
@@ -687,6 +700,7 @@ def export_conversation(conversation_id: str):
 
 
 @router.post("/conversations/import", response_model=ConversationCreateResponse)
+@log_method_call
 def import_conversation(request: ImportConversationRequest):
     """Import conversation data."""
     logger.debug("import_conversation endpoint started")
@@ -718,6 +732,7 @@ def import_conversation(request: ImportConversationRequest):
 
 
 @router.get("/conversations/history")
+@log_method_call
 def list_conversation_histories():
     """List all conversation history files."""
     logger.debug("list_conversation_histories endpoint called")
@@ -732,6 +747,7 @@ def list_conversation_histories():
 
 
 @router.get("/conversations/{conversation_id}/history")
+@log_method_call
 def get_conversation_history(conversation_id: str):
     """Get conversation history for a specific conversation."""
     logger.debug(f"get_conversation_history endpoint called for: {conversation_id}")
@@ -747,6 +763,7 @@ def get_conversation_history(conversation_id: str):
 
 
 @router.delete("/conversations/{conversation_id}/history")
+@log_method_call
 def delete_conversation_history(conversation_id: str):
     """Delete conversation history for a specific conversation."""
     logger.debug(f"delete_conversation_history endpoint called for: {conversation_id}")
@@ -769,6 +786,7 @@ def delete_conversation_history(conversation_id: str):
 
 
 @router.post("/conversations/{conversation_id}/clear")
+@log_method_call
 def clear_conversation(conversation_id: str):
     """Clear conversation history for a specific conversation."""
     logger.debug(f"clear_conversation endpoint called for: {conversation_id}")
@@ -799,6 +817,7 @@ def clear_conversation(conversation_id: str):
 
 
 @router.get("/conversations/{conversation_id}/files")
+@log_method_call
 def get_conversation_files(conversation_id: str):
     """Get the list of context files selected for a conversation session."""
     logger.debug(f"get_conversation_files endpoint called for: {conversation_id}")

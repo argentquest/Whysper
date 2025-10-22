@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Literal, Optional
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -26,6 +27,7 @@ class DiagramEventRequest(BaseModel):
 
 
 @router.post("/log-diagram-event")
+@log_method_call
 async def log_diagram_event(event: DiagramEventRequest):
     """
     Log diagram detection and rendering events from frontend
@@ -93,6 +95,7 @@ async def log_diagram_event(event: DiagramEventRequest):
 
 
 @router.get("/health")
+@log_method_call
 async def health_check():
     """Health check endpoint for diagram event logging service"""
     return {"status": "healthy", "service": "diagram_events"}

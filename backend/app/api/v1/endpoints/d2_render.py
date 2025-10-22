@@ -8,6 +8,7 @@ from fastapi.responses import Response, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
+from common.logging_decorator import log_method_call
 import asyncio
 import os
 from datetime import datetime
@@ -92,6 +93,7 @@ class D2InfoResponse(BaseModel):
 
 
 # Helper function to safely log D2 code
+@log_method_call
 def safe_log_d2_code(code: str, max_length: int = 200):
     """Safely log D2 code without exposing sensitive data"""
     if len(code) <= max_length:
@@ -102,6 +104,7 @@ def safe_log_d2_code(code: str, max_length: int = 200):
 
 
 @router.post("/render", response_model=D2RenderResponse)
+@log_method_call
 async def render_d2(
     request: D2RenderRequest,
     background_tasks: BackgroundTasks,
@@ -181,6 +184,7 @@ async def render_d2(
 
 
 @router.post("/validate", response_model=D2ValidationResponse)
+@log_method_call
 async def validate_d2(
     request: D2ValidationRequest, d2_service: D2RenderService = Depends(get_d2_service)
 ):
@@ -215,6 +219,7 @@ async def validate_d2(
 
 
 @router.post("/render/batch", response_model=D2BatchRenderResponse)
+@log_method_call
 async def render_d2_batch(
     request: D2BatchRenderRequest, d2_service: D2RenderService = Depends(get_d2_service)
 ):
@@ -296,6 +301,7 @@ async def render_d2_batch(
 
 
 @router.get("/info", response_model=D2InfoResponse)
+@log_method_call
 async def get_d2_info(d2_service: D2RenderService = Depends(get_d2_service)):
     """
     Get information about the D2 CLI installation
@@ -314,6 +320,7 @@ async def get_d2_info(d2_service: D2RenderService = Depends(get_d2_service)):
 
 
 @router.get("/health")
+@log_method_call
 async def d2_health_check(d2_service: D2RenderService = Depends(get_d2_service)):
     """
     Health check endpoint for D2 rendering service
@@ -338,6 +345,7 @@ async def d2_health_check(d2_service: D2RenderService = Depends(get_d2_service))
 
 
 @router.get("/download/{filename}")
+@log_method_call
 async def download_d2_svg(filename: str):
     """
     Download a pre-rendered D2 SVG file

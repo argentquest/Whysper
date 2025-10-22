@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -75,6 +76,7 @@ class DocumentationExportResponse(BaseModel):
 
 
 @router.post("/generate", response_model=DocumentationGenerateResponse)
+@log_method_call
 def generate_documentation(request: DocumentationGenerateRequest):
     """
     Generate documentation for selected files.
@@ -131,6 +133,7 @@ def generate_documentation(request: DocumentationGenerateRequest):
 
 
 @router.post("/export", response_model=DocumentationExportResponse)
+@log_method_call
 def export_documentation(request: DocumentationExportRequest):
     """
     Export generated documentation to various formats.
@@ -185,6 +188,7 @@ def export_documentation(request: DocumentationExportRequest):
 
 
 @router.get("/export/formats")
+@log_method_call
 def get_export_formats():
     """
     Get available export formats.
@@ -220,6 +224,7 @@ def get_export_formats():
 
 
 @router.post("/api-docs", response_model=DocumentationGenerateResponse)
+@log_method_call
 def generate_api_docs(request: Dict[str, Any]):
     """
     Generate API documentation from code signatures.
@@ -276,6 +281,7 @@ def generate_api_docs(request: Dict[str, Any]):
 
 
 @router.post("/readme", response_model=DocumentationGenerateResponse)
+@log_method_call
 def generate_readme(request: Dict[str, Any]):
     """
     Generate project README file.
@@ -332,6 +338,7 @@ def generate_readme(request: Dict[str, Any]):
 
 
 @router.get("/templates", response_model=DocumentationTemplatesResponse)
+@log_method_call
 def get_documentation_templates():
     """
     Get available documentation templates.
@@ -376,6 +383,7 @@ def get_documentation_templates():
 
 
 @router.get("/health")
+@log_method_call
 def health_check():
     """
     Health check endpoint for documentation service.

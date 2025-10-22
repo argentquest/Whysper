@@ -27,6 +27,7 @@ sys.path.insert(0, "../..")
 
 from mvp_diagram_generator.renderer_v2 import render_diagram as render_diagram_impl
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 from security_utils import SecurityUtils
 
 logger = get_logger(__name__)
@@ -67,6 +68,7 @@ mcp_router = APIRouter(prefix="/mcp", tags=["MCP"])
 
 
 @mcp_server.list_tools()
+@log_method_call
 async def list_tools() -> List[Tool]:
     """List available MCP tools."""
     return [
@@ -143,6 +145,7 @@ async def list_tools() -> List[Tool]:
 
 
 @mcp_server.call_tool()
+@log_method_call
 async def call_tool(name: str, arguments: Any) -> List[TextContent]:
     """Handle MCP tool calls."""
     try:
@@ -165,6 +168,7 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
         )]
 
 
+@log_method_call
 async def handle_generate_diagram(arguments: dict) -> List[TextContent]:
     """Generate diagram code from a prompt."""
     prompt = arguments.get("prompt")
@@ -209,6 +213,7 @@ System_1 -> System_2"""
     )]
 
 
+@log_method_call
 async def handle_render_diagram(arguments: dict) -> List[TextContent]:
     """Render diagram code to an image."""
     code = arguments.get("code")
@@ -248,6 +253,7 @@ async def handle_render_diagram(arguments: dict) -> List[TextContent]:
     )]
 
 
+@log_method_call
 async def handle_generate_and_render(arguments: dict) -> List[TextContent]:
     """Generate and render a diagram in one step."""
     prompt = arguments.get("prompt")
@@ -292,6 +298,7 @@ async def handle_generate_and_render(arguments: dict) -> List[TextContent]:
 
 # FastAPI endpoint wrappers for MCP tools
 @mcp_router.post("/tools/generate_diagram", response_model=ToolResponse)
+@log_method_call
 async def api_generate_diagram(request: GenerateDiagramRequest):
     """FastAPI endpoint for generate_diagram tool."""
     try:
@@ -306,6 +313,7 @@ async def api_generate_diagram(request: GenerateDiagramRequest):
 
 
 @mcp_router.post("/tools/render_diagram", response_model=ToolResponse)
+@log_method_call
 async def api_render_diagram(request: RenderDiagramRequest):
     """FastAPI endpoint for render_diagram tool."""
     try:
@@ -321,6 +329,7 @@ async def api_render_diagram(request: RenderDiagramRequest):
 
 
 @mcp_router.post("/tools/generate_and_render", response_model=ToolResponse)
+@log_method_call
 async def api_generate_and_render(request: GenerateAndRenderRequest):
     """FastAPI endpoint for generate_and_render tool."""
     try:
@@ -336,6 +345,7 @@ async def api_generate_and_render(request: GenerateAndRenderRequest):
 
 
 @mcp_router.get("/tools")
+@log_method_call
 async def api_list_tools():
     """List available MCP tools."""
     tools = await list_tools()
@@ -343,6 +353,7 @@ async def api_list_tools():
 
 
 @mcp_router.post("/call_tool")
+@log_method_call
 async def api_call_tool(request: ToolRequest):
     """Generic MCP tool call endpoint."""
     try:
@@ -361,6 +372,7 @@ async def api_call_tool(request: ToolRequest):
 
 # WebSocket endpoint for real-time MCP communication
 @mcp_router.websocket("/ws")
+@log_method_call
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for MCP protocol communication."""
     await websocket.accept()
@@ -407,11 +419,13 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close()
 
 
+@log_method_call
 def get_mcp_router() -> APIRouter:
     """Get the MCP router for mounting in FastAPI app."""
     return mcp_router
 
 
+@log_method_call
 def get_mcp_server() -> Server:
     """Get the MCP server instance."""
     return mcp_server

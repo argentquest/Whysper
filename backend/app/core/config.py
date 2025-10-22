@@ -23,8 +23,10 @@ except ImportError:
     # Fallback for older pydantic versions (Pydantic v1)
     from pydantic import BaseSettings
 from common.env_manager import env_manager
+from common.logging_decorator import log_method_call
 
 
+@log_method_call
 def load_env_defaults() -> Dict[str, Any]:
     """
     Load environment defaults from configuration files.
@@ -165,6 +167,7 @@ class Settings(BaseSettings):
     ]
     frontend_url: Optional[str] = Field(default=None, env="FRONTEND_URL")
 
+    @log_method_call
     def __init__(self, **values: Any):
         super().__init__(**values)
         if self.frontend_url and self.frontend_url not in self.cors_origins:
@@ -273,6 +276,7 @@ class Settings(BaseSettings):
     )
     
     @property
+    @log_method_call
     def models(self) -> List[str]:
         """
         Get the list of available AI models from environment or defaults.
@@ -333,6 +337,7 @@ class Settings(BaseSettings):
 # This ensures consistent configuration access across all modules
 settings = Settings()
 
+@log_method_call
 def get_settings():
     return settings
 

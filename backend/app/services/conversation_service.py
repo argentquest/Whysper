@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from common.ai import create_ai_processor
 from common.lazy_file_scanner import LazyCodebaseScanner
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 from common.models import AppState, ConversationMessage
 from pattern_matcher import pattern_matcher
 # from common.system_message_manager import system_message_manager  # Legacy - now using agent prompts
@@ -92,6 +93,7 @@ class ConversationSession:
     selected_files: List[str] = field(default_factory=list)
     logger = get_logger("conversation")
 
+    @log_method_call
     def __post_init__(self) -> None:
         """
         Initialize conversation session after dataclass creation.
@@ -131,6 +133,7 @@ class ConversationSession:
     # Session setup helpers
     # ---------------------------------------------------------------------
 
+    @log_method_call
     def set_api_key(self, api_key: str) -> None:
         """
         Update the API key for this conversation session.
@@ -150,6 +153,7 @@ class ConversationSession:
         self.ai_processor.set_api_key(self.app_state.api_key)
         logger.debug(f"API key updated for session {self.session_id}")
 
+    @log_method_call
     def set_model(self, model: str) -> None:
         """
         Update the AI model for this conversation session.
@@ -187,6 +191,7 @@ class ConversationSession:
         )
         logger.info(f"Model changed to '{model}' for session {self.session_id}")
 
+    @log_method_call
     def set_provider(self, provider: str) -> None:
         """
         Update the AI provider for this conversation session.
@@ -214,6 +219,7 @@ class ConversationSession:
         else:
             logger.debug(f"Provider update skipped - same or empty provider: '{provider}'")
 
+    @log_method_call
     def update_available_models(self, models: List[str]) -> None:
         """
         Update the list of available AI models for this session.
@@ -243,6 +249,7 @@ class ConversationSession:
     # ------------------------------------------------------------------
     # Directory and file handling
     # ------------------------------------------------------------------
+    @log_method_call
     def set_directory(self, directory: str) -> Tuple[bool, str, List[str]]:
         """
         Validate and scan a directory for this conversation session.
@@ -303,6 +310,7 @@ class ConversationSession:
 
         return True, "Directory scanned successfully", files
 
+    @log_method_call
     def update_selected_files(
         self,
         selected_files: Optional[List[str]] = None,
@@ -350,6 +358,7 @@ class ConversationSession:
         )
         logger.info(f"Updated file selection for session {self.session_id}: {len(unique_files)} selected files")
 
+    @log_method_call
     def add_file(self, file_path: str, make_persistent: bool = False) -> None:
         """
         Add a single file to the current selection.
@@ -405,6 +414,7 @@ class ConversationSession:
             },
         )
 
+    @log_method_call
     def clear_files(self) -> None:
         """
         Clear all selected and persistent files for this conversation session.
@@ -439,6 +449,7 @@ class ConversationSession:
     # ------------------------------------------------------------------
     # Conversation operations
     # ------------------------------------------------------------------
+    @log_method_call
     def ask_question(self, question: str, agent_prompt: str = None, context_files: List[str] = None) -> Dict[str, Any]:
         """
         Process a user question and generate an AI response.
@@ -617,6 +628,7 @@ class ConversationSession:
 
         return response_data
 
+    @log_method_call
     def run_system_prompt(self, agent_prompt: str = None) -> Dict[str, Any]:
         """
         Execute the active system prompt for initial codebase analysis.
@@ -733,6 +745,7 @@ class ConversationSession:
 
         return response_data
 
+    @log_method_call
     def clear_conversation(self) -> None:
         """
         Clear all conversation history and start fresh.
@@ -758,6 +771,7 @@ class ConversationSession:
     # ------------------------------------------------------------------
     # Introspection helpers
     # ------------------------------------------------------------------
+    @log_method_call
     def get_summary(self) -> ConversationSummary:
         history = [message.to_dict() for message in self.app_state.conversation_history]
         question_history = [
@@ -786,6 +800,7 @@ class ConversationSession:
     # ------------------------------------------------------------------
     # Internal helpers mirroring Tkinter implementation
     # ------------------------------------------------------------------
+    @log_method_call
     def _is_tool_command(self, question: str) -> bool:
         try:
             env_vars = env_manager.load_env_file()
@@ -794,6 +809,7 @@ class ConversationSession:
         except Exception:
             return False
 
+    @log_method_call
     def _get_codebase_content(self, is_first_message: bool, needs_codebase_context: bool) -> str:
         logger.info(f"🔄 GETTING CODEBASE CONTENT - first_message: {is_first_message}, needs_context: {needs_codebase_context}")
         logger.info(f"📊 Current selected files count: {len(self.selected_files)}")
@@ -831,6 +847,7 @@ class ConversationSession:
 
         return ""
 
+    @log_method_call
     def _load_files(self, files: List[str]) -> str:
         logger.info(f"📚 LOADING FILES - {len(files)} files")
         logger.info(f"📋 Files to load: {files}")
@@ -854,6 +871,7 @@ class ConversationSession:
             logger.error(f"❌ EXCEPTION in _load_files: {str(e)}")
             raise
 
+    @log_method_call
     def _process_with_ai(self, question: str, codebase_content: str) -> str:
         conversation_for_api = []
         for message in self.app_state.conversation_history[:-1]:
@@ -869,6 +887,7 @@ class ConversationSession:
             temperature=self.app_state.temperature,
         )
 
+    @log_method_call
     def _validate_and_fix_d2_diagrams(self, response_text: str, original_question: str, max_retries: int = 8) -> str:
         """
         Automatically validate D2 diagrams in the response and retry with error feedback if invalid.
@@ -1012,6 +1031,7 @@ class ConversationSession:
             # Return original response if validation fails
             return response_text
 
+    @log_method_call
     def _validate_and_fix_mermaid_diagrams(self, response_text: str, original_question: str, max_retries: int = 5) -> str:
         """
         Automatically validate Mermaid diagrams in the response and retry with error feedback if invalid.
@@ -1143,6 +1163,7 @@ class ConversationSession:
             # Return original response if validation fails
             return response_text
 
+    @log_method_call
     def _pre_render_d2_diagrams(self, response_text: str) -> str:
         """
         Pre-render validated D2 diagrams to SVG and embed them in the response.
@@ -1247,6 +1268,7 @@ class ConversationSession:
             logger.error(f"Error pre-rendering D2 diagrams: {str(e)}")
             return response_text
 
+    @log_method_call
     def _inject_or_update_system_message(self, codebase_content: str, agent_prompt: str = None) -> None:
         """
         Inject or update the system message with current context.
@@ -1296,6 +1318,7 @@ class ConversationSession:
             )
             logger.debug("Inserted new system message with current context")
 
+    @log_method_call
     def _update_conversation_history(
         self, response_text: str, is_first_message: bool, codebase_content: str, agent_prompt: str = None
     ) -> None:
@@ -1307,6 +1330,7 @@ class ConversationSession:
             ConversationMessage(role="assistant", content=response_text)
         )
 
+    @log_method_call
     def _format_agent_prompt(self, agent_prompt: str, codebase_content: str) -> str:
         """
         Format agent prompt with codebase content.
@@ -1349,6 +1373,7 @@ class ConversationSession:
             
         return markdown_instruction + formatted_prompt
 
+    @log_method_call
     def _update_system_prompt_history(self, response_text: str) -> None:
         self.app_state.conversation_history.append(
             ConversationMessage(role="user", content="[System Prompt Executed]")
@@ -1357,6 +1382,7 @@ class ConversationSession:
             ConversationMessage(role="assistant", content=response_text)
         )
 
+    @log_method_call
     def _get_last_token_usage(self) -> dict:
         """
         Retrieves detailed token usage information from the last AI request.
@@ -1393,6 +1419,7 @@ class ConversationSession:
             "cached_tokens": 0
         }
 
+    @log_method_call
     def _detect_diagram_request(self, question: str) -> Optional[str]:
         """
         Detect if the user is requesting a diagram and return the appropriate agent prompt.
@@ -1439,6 +1466,7 @@ class ConversationManager:
         self._sessions: Dict[str, ConversationSession] = {}
         self._logger = get_logger("conversation_manager")
 
+    @log_method_call
     def create_session(
         self,
         api_key: str,
@@ -1474,15 +1502,18 @@ class ConversationManager:
         logger.info("Session created", extra={"session_id": session_id})
         return session
 
+    @log_method_call
     def get_session(self, session_id: str) -> ConversationSession:
         if session_id not in self._sessions:
             raise KeyError(f"Conversation {session_id} not found")
         return self._sessions[session_id]
 
+    @log_method_call
     def list_sessions(self) -> List[ConversationSession]:
         """Return all active conversation sessions."""
         return list(self._sessions.values())
 
+    @log_method_call
     def drop_session(self, session_id: str) -> None:
         if session_id in self._sessions:
             self._logger.info("Conversation session removed", extra={"session_id": session_id})

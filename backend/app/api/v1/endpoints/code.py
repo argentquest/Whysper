@@ -12,12 +12,14 @@ from app.utils.code_extraction import (
 )
 from app.services.conversation_service import conversation_manager
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
 @router.post("/extract")
+@log_method_call
 def extract_code_blocks(request: dict) -> Dict[str, Any]:
     logger.debug("extract_code_blocks endpoint started")
     """

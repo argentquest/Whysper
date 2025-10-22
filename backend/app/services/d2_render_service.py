@@ -9,6 +9,7 @@ import tempfile
 import uuid
 from typing import Tuple, Optional, Dict, Any
 import logging
+from common.logging_decorator import log_method_call
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ class D2RenderService:
     # Maximum D2 code length (500KB should be more than enough for any diagram)
     MAX_D2_CODE_LENGTH = 500 * 1024  # 500KB
 
+    @log_method_call
     def __init__(self):
         self.d2_executable = self._find_d2_executable()
         if not self.d2_executable:
@@ -27,6 +29,7 @@ class D2RenderService:
                 "D2 CLI not found. Please install D2 from https://d2lang.com/"
             )
 
+    @log_method_call
     def _find_d2_executable(self) -> Optional[str]:
         """Find the D2 executable using environment variable or known locations"""
         from common.env_manager import env_manager
@@ -92,6 +95,7 @@ class D2RenderService:
 
         return None
 
+    @log_method_call
     def validate_d2_code(self, d2_code: str) -> Tuple[bool, str]:
         """
         Validate D2 code using the CLI
@@ -165,6 +169,7 @@ class D2RenderService:
             except Exception:
                 pass
 
+    @log_method_call
     def render_d2_to_svg(
         self, d2_code: str, output_dir: Optional[str] = None
     ) -> Tuple[bool, str, Optional[str]]:
@@ -267,6 +272,7 @@ class D2RenderService:
             except Exception:
                 pass
 
+    @log_method_call
     def render_d2_with_metadata(
         self, d2_code: str, metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -320,6 +326,7 @@ class D2RenderService:
 
         return result
 
+    @log_method_call
     def get_d2_info(self) -> Dict[str, Any]:
         """Get information about the D2 CLI installation"""
         try:
@@ -349,6 +356,7 @@ class D2RenderService:
 _d2_service = None
 
 
+@log_method_call
 def get_d2_service() -> D2RenderService:
     """Get the singleton D2 service instance"""
     global _d2_service
