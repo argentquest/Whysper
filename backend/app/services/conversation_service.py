@@ -91,6 +91,8 @@ class ConversationSession:
     codebase_scanner: LazyCodebaseScanner = field(default_factory=LazyCodebaseScanner)
     selected_directory: str = ""
     selected_files: List[str] = field(default_factory=list)
+    # Track the last context files to detect changes
+    last_context_files: List[str] = field(default_factory=list)
     logger = get_logger("conversation")
 
     @log_method_call
@@ -438,6 +440,7 @@ class ConversationSession:
         # Clear selections
         self.selected_files = []
         self.app_state.set_persistent_files([])
+        self.last_context_files = []
 
         # Log the operation
         self.logger.debug(
@@ -482,7 +485,20 @@ class ConversationSession:
         logger.debug(f"Processing question for session {self.session_id}")
 
         if context_files is not None:
-            self.update_selected_files(context_files)
+            # Check if context files have actually changed
+            context_files_changed = (
+                len(context_files) != len(self.last_context_files) or
+                set(context_files) != set(self.last_context_files)
+            )
+            
+            if context_files_changed:
+                logger.info(f"🔄 Context files changed - updating from {len(self.last_context_files)} to {len(context_files)} files")
+                logger.info(f"📋 Previous context: {self.last_context_files}")
+                logger.info(f"📋 New context: {context_files}")
+                self.update_selected_files(context_files)
+                self.last_context_files = context_files.copy()
+            else:
+                logger.info(f"✅ Context files unchanged - keeping current selection of {len(self.selected_files)} files")
 
         # Input validation
         if not question.strip():
@@ -530,6 +546,11 @@ class ConversationSession:
         has_selected_files = len(self.selected_files) > 0
         needs_codebase_context = is_first_message or self._is_tool_command(question) or has_selected_files
         logger.info(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message}, has_files={has_selected_files}, file_count={len(self.selected_files)})")
+        
+        # Log context file update information
+        if context_files is not None:
+            logger.info(f"🔄 Context files updated this turn: {len(context_files)} files")
+            logger.info(f"📋 Updated context files: {context_files}")
         # Auto-detect diagram requests and use appropriate agent prompt
         if not agent_prompt:
             agent_prompt = self._detect_diagram_request(question)
@@ -819,33 +840,39 @@ class ConversationSession:
             logger.info("❌ No codebase context needed, returning empty")
             return ""
 
-        if is_first_message:
-            if self.selected_files:
-                logger.info(f"🚀 FIRST MESSAGE - Loading {len(self.selected_files)} files")
-                self.app_state.set_persistent_files(self.selected_files)
-                
-                logger.info(f"📖 Calling _load_files with: {self.selected_files}")
-                content = self._load_files(self.selected_files)
-                logger.info(f"📄 LOADED CONTENT - {len(content)} characters")
-                
-                if content:
-                    logger.info(f"✅ SUCCESS - Content loaded, preview: {content[:200]}...")
-                else:
-                    logger.error(f"❌ FAILED - No content loaded from files!")
-                
-                return content
-            else:
-                logger.warning("⚠️ First message but NO SELECTED FILES")
-            return ""
-
-        persistent_files = self.app_state.get_persistent_files()
-        if persistent_files:
-            return self._load_files(persistent_files)
-
+        # Handle context for ANY message (first or subsequent)
         if self.selected_files:
-            return self._load_files(self.selected_files)
-
-        return ""
+            logger.info(f"📁 LOADING CONTEXT FILES - {len(self.selected_files)} files")
+            
+            # For first message, make files persistent
+            if is_first_message:
+                logger.info(f"🚀 FIRST MESSAGE - Making {len(self.selected_files)} files persistent")
+                self.app_state.set_persistent_files(self.selected_files)
+            
+            logger.info(f"📖 Calling _load_files with: {self.selected_files}")
+            content = self._load_files(self.selected_files)
+            logger.info(f"📄 LOADED CONTENT - {len(content)} characters")
+            
+            if content:
+                logger.info(f"✅ SUCCESS - Content loaded, preview: {content[:200]}...")
+            else:
+                logger.error(f"❌ FAILED - No content loaded from files!")
+            
+            return content
+        else:
+            # No selected files, check for persistent files (for subsequent messages)
+            if not is_first_message:
+                persistent_files = self.app_state.get_persistent_files()
+                if persistent_files:
+                    logger.info(f"🔄 Using persistent files: {len(persistent_files)} files")
+                    return self._load_files(persistent_files)
+            
+            if is_first_message:
+                logger.warning("⚠️ First message but NO SELECTED FILES")
+            else:
+                logger.warning("⚠️ No selected files or persistent files available")
+            
+            return ""
 
     @log_method_call
     def _load_files(self, files: List[str]) -> str:
@@ -874,9 +901,25 @@ class ConversationSession:
     @log_method_call
     def _process_with_ai(self, question: str, codebase_content: str) -> str:
         conversation_for_api = []
-        for message in self.app_state.conversation_history[:-1]:
-            if message.role != "system":
+        
+        # Check if we have a system message in the conversation history
+        has_system_message = (
+            len(self.app_state.conversation_history) > 0 and
+            self.app_state.conversation_history[0].role == "system"
+        )
+        
+        if has_system_message:
+            # Include the system message that was already injected with agent prompt
+            conversation_for_api.append(self.app_state.conversation_history[0].to_dict())
+            
+            # Add all other messages except the last one (current user message)
+            for message in self.app_state.conversation_history[1:-1]:
                 conversation_for_api.append(message.to_dict())
+        else:
+            # Fallback: exclude system messages (shouldn't happen with proper flow)
+            for message in self.app_state.conversation_history[:-1]:
+                if message.role != "system":
+                    conversation_for_api.append(message.to_dict())
 
         return self.ai_processor.process_question(
             question=question,

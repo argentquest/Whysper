@@ -179,10 +179,14 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     const newSelected = new Set(selectedFiles);
     if (checked) {
       newSelected.add(filePath);
+      console.log('🔍 File selected:', filePath);
     } else {
       newSelected.delete(filePath);
+      console.log('🔍 File deselected:', filePath);
     }
     setSelectedFiles(newSelected);
+    console.log('🔍 Total selected files count:', newSelected.size);
+    console.log('🔍 Selected files paths:', Array.from(newSelected));
   };
 
   const handleSelectAll = () => {
@@ -217,6 +221,13 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     // Combine regular files and uploaded files
     const allFiles = [...files, ...uploadedFiles];
     const selectedFileItems = allFiles.filter(file => selectedFiles.has(file.path));
+    
+    // Debug logging to track the issue
+    console.log('🔍 ContextModal handleApply debug:');
+    console.log('🔍 Total files available:', allFiles.length);
+    console.log('🔍 Selected files paths:', Array.from(selectedFiles));
+    console.log('🔍 Selected file items:', selectedFileItems.map(f => ({ path: f.path, name: f.name })));
+    
     onApply(selectedFileItems);
     onCancel();
   };

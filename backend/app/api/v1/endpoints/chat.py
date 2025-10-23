@@ -264,6 +264,10 @@ async def send_chat_message_stream(request: dict):
                 yield f"event: progress\ndata: {json.dumps({'stage': 'files', 'message': f'Adding {len(context_files)} context files...'})}\n\n"
                 for file_path in context_files:
                     session.add_file(file_path)
+                
+                # Initialize context tracking for the session
+                session.last_context_files = context_files.copy()
+                logger.info(f"📝 STREAM: Initialized context tracking with {len(context_files)} files", extra={'session_id': conversation_id})
 
             # Update session configuration
             if settings.get("api_key"):
@@ -287,7 +291,9 @@ async def send_chat_message_stream(request: dict):
 
             # Attach callback to session (we'll need to modify ConversationSession to support this)
             # For now, process the question normally
-            result = session.ask_question(message, agent_prompt=agent_prompt)
+            # Pass context_files to ask_question to ensure context can be updated at any turn
+            result = session.ask_question(message, agent_prompt=agent_prompt, context_files=context_files)
+            logger.info(f"📤 STREAM: Sent context files to ask_question: {len(context_files) if context_files else 0} files", extra={'session_id': conversation_id})
 
             # Send any D2-related progress events
             if "d2" in message.lower() or "diagram" in message.lower():
@@ -439,15 +445,20 @@ def send_chat_message(request: dict):
                 except Exception as e:
                     logger.error(f"❌ Failed to add file {file_path}: {str(e)}")
 
+            # Initialize context tracking for the session
+            session.last_context_files = context_files.copy()
             logger.info(
                 f"📊 SESSION SUMMARY - Total selected files: {len(session.selected_files)}",
                 extra={'session_id': conversation_id}
             )
             logger.info(f"📋 Final selected files list: {session.selected_files}", extra={'session_id': conversation_id})
+            logger.info(f"📝 Initialized context tracking with {len(context_files)} files", extra={'session_id': conversation_id})
         else:
             logger.warning(
                 "⚠️ NO CONTEXT FILES PROVIDED - proceeding without file context"
             )
+            # Initialize empty context tracking
+            session.last_context_files = []
 
         # Update session configuration if provided
         if settings.get("api_key"):
@@ -469,7 +480,9 @@ def send_chat_message(request: dict):
         if agent_prompt:
             logger.debug(f"Using agent prompt: {agent_prompt[:100]}...")
 
+        # Pass context_files to ask_question to ensure context can be updated at any turn
         result = session.ask_question(message, agent_prompt=agent_prompt, context_files=context_files)
+        logger.info(f"📤 Sent context files to ask_question: {len(context_files) if context_files else 0} files", extra={'session_id': conversation_id})
 
         # Convert result to frontend-compatible format
         import time

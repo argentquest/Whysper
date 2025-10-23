@@ -92,7 +92,6 @@ Use standard D2 shapes (e.g., rectangle, square, circle, cylinder, person) and p
 d2 
 
 direction: right
-spacing: 48
 
 ## Naming & Labels:
 IDs: Use kebab-case or snake_case (stable, machine-readable).

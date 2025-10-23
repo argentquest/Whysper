@@ -196,19 +196,29 @@ class BaseAIProvider(ABC):
             # Create user message
             user_message = {"role": "user", "content": question}
             
+            # Check if system message is already provided in conversation history
+            has_system_message = (
+                len(conversation_history) > 0 and
+                conversation_history[0].get("role") == "system"
+            )
+            
             # Determine if this is the first message in conversation
             is_first_message = len(conversation_history) == 0
             
             # Include codebase context if this is first message OR if codebase_content is provided (tool commands)
             if is_first_message or (codebase_content and codebase_content.strip()):
-                # Include system message with codebase content
-                system_message = self.create_system_message(codebase_content)
-                if is_first_message:
-                    # First message: just system + user message
-                    messages = [system_message, user_message]
+                if not has_system_message:
+                    # Create system message only if not already provided
+                    system_message = self.create_system_message(codebase_content)
+                    if is_first_message:
+                        # First message: just system + user message
+                        messages = [system_message, user_message]
+                    else:
+                        # Tool command: system + conversation history + user message
+                        messages = [system_message] + conversation_history + [user_message]
                 else:
-                    # Tool command: system + conversation history + user message
-                    messages = [system_message] + conversation_history + [user_message]
+                    # System message already provided, use as-is
+                    messages = conversation_history + [user_message]
             else:
                 # Follow-up messages: use existing conversation without recreating system message
                 # The conversation_history should already include the original system message
