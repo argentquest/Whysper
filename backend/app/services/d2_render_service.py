@@ -46,7 +46,7 @@ class D2RenderService:
             # Verify the configured path works
             try:
                 result = subprocess.run(
-                    [d2_path, "--version"], capture_output=True, text=True, timeout=60
+                    [d2_path, "--version"], capture_output=True, text=True, timeout=120
                 )
                 if result.returncode == 0:
                     logger.info(f"Found D2 executable at: {d2_path} (from environment)")
@@ -80,7 +80,7 @@ class D2RenderService:
         for path in possible_paths:
             try:
                 result = subprocess.run(
-                    [path, "--version"], capture_output=True, text=True, timeout=60
+                    [path, "--version"], capture_output=True, text=True, timeout=120
                 )
                 if result.returncode == 0:
                     logger.info(f"Found D2 executable at: {path}")
@@ -132,7 +132,7 @@ class D2RenderService:
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=10,
+                timeout=120,
             )
 
             # Log validation success with output info
@@ -218,7 +218,7 @@ class D2RenderService:
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=30,
+                timeout=120,
             )
 
             # Log rendering success
@@ -334,7 +334,7 @@ class D2RenderService:
                 [self.d2_executable, "--version"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=120,
             )
 
             return {

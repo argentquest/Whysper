@@ -14,7 +14,7 @@ def check_d2_cli():
             capture_output=True,
             text=True,
             check=True,
-            timeout=5
+            timeout=120
         )
         print("✅ D2 CLI is installed!")
         print(f"Version: {result.stdout.strip()}")

@@ -243,7 +243,7 @@ result = subprocess.run(
     capture_output=True,
     text=True,
     check=True,
-    timeout=30,  # ← Change this number (seconds)
+    timeout=120,  # ← Change this number (seconds)
     shell=True
 )
 ```

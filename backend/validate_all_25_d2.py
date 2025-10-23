@@ -39,7 +39,7 @@ def validate_d2_with_cli(d2_code: str) -> Tuple[bool, str]:
             capture_output=True,
             text=True,
             check=True,
-            timeout=10
+            timeout=120
         )
         
         return (True, "D2 Syntax is Valid.")

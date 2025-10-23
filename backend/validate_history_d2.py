@@ -100,7 +100,7 @@ def main():
     
     # Check D2 CLI availability
     try:
-        result = subprocess.run(['d2', '--version'], capture_output=True, text=True, check=True, timeout=5)
+        result = subprocess.run(['d2', '--version'], capture_output=True, text=True, check=True, timeout=120)
         print(f"\n[D2 CLI] Version: {result.stdout.strip()}")
     except Exception as e:
         print(f"\n[ERROR] D2 CLI not available: {e}")

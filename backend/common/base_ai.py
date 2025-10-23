@@ -49,13 +49,14 @@ from app.core.config import settings
 class AIProviderConfig:
     """Base configuration class for AI providers."""
     
-    def __init__(self, name: str, api_url: str, supports_tokens: bool = True):
+    def __init__(self, name: str, api_url: str, supports_tokens: bool = True, verify_ssl: bool = True):
         self.name = name
         self.api_url = api_url
         self.supports_tokens = supports_tokens
         self.headers = {"Content-Type": "application/json"}
         self.auth_header = "Authorization"
         self.auth_format = "Bearer {api_key}"
+        self.verify_ssl = verify_ssl
 
 
 class BaseAIProvider(ABC):

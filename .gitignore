@@ -167,3 +167,4 @@ frontend/src/utils/nul
 supportingfiles/
 backend/logs/
 .env
+nul

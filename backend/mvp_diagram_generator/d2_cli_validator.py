@@ -123,7 +123,7 @@ def is_d2_cli_available(d2_executable: str = None) -> bool:
             capture_output=True,
             text=True,
             check=True,
-            timeout=5
+            timeout=120
         )
         logger.debug(f"D2 CLI version: {result.stdout.strip()}")
         return True

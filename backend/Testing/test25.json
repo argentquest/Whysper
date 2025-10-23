@@ -1,0 +1,229 @@
+{
+  "d2_capability_tests": [
+    {
+      "id": 1,
+      "name": "Basic Hierarchy and Flow",
+      "description": "Generate a **D2 diagram** showing a simple system where a User accesses a Web Server, which then connects to two separate Database clusters, 'Primary' and 'Backup'. Place the two databases inside a container labeled 'Data Tier'.",
+      "tests": [
+        "Hierarchy/Containment",
+        "Labeled Relationships"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Layout and Missing Connector Type",
+      "description": "Generate a **D2 diagram** of a flow where 'API Gateway' forwards requests to a 'Microservice A' or 'Microservice B'. Show a relationship between Microservice B and a 'Shared Cache'. The whole flow should be displayed horizontally. (Testing Rule 2 Veto: What kind of connection should I use between the Microservices and the Shared Cache?)",
+      "tests": [
+        "Ambiguity Handling (Rule 2)",
+        "Layout Attribute (Horizontal)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Complex Attributes and Styling",
+      "description": "Generate a **D2 diagram**. Define three components: 'Frontend', 'Backend', and 'Auth Service'. Make 'Auth Service' a circle shape with a blue fill. Show 'Frontend' connecting to 'Backend' and 'Backend' connecting to 'Auth Service' with a label 'Token Check'.",
+      "tests": [
+        "Attributes/Styling (Shape, Fill)",
+        "Object Definition"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Ambiguous Naming and External Entity",
+      "description": "Generate a **D2 diagram** modeling a high-level system where 'User' interacts with the main 'App', and the 'App' needs to access a 'Storage'. (Testing Rule 2 Veto: Should the 'App' and 'Storage' be in the same container, or should I represent 'Storage' as an external cloud icon?)",
+      "tests": [
+        "Ambiguity Handling (Rule 2)",
+        "Inference/Default Shape"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Multi-Dimensional Containment and Relationship",
+      "description": "Generate a **D2 diagram** with two main containers, 'Development' and 'Production'. Inside 'Development', put a 'Test Server' that connects directly to a 'Database Instance' located inside the 'Production' container. Label the connection 'Deployment Pipeline'.",
+      "tests": [
+        "Nested Containers",
+        "Cross-Container Relationships"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Sequence-like Flow",
+      "description": "Generate a **D2 sequence-like flow** for a user logging in: User -> Browser -> API Gateway -> Authentication Service.",
+      "tests": [
+        "Sequential Flow Representation",
+        "Arrow Syntax"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Flowchart Decision Node",
+      "description": "Generate a **D2 flowchart** starting with 'Start Process'. Use a diamond shape for the decision 'Is Data Valid?'. If true, go to 'Save Data'. If false, go to 'Send Error Alert'.",
+      "tests": [
+        "Decision Shape (diamond/rhombus)",
+        "Conditional Flow Logic"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Inheritance/Class Structure",
+      "description": "Generate a **D2 diagram** modeling a simple class structure: 'Dog' and 'Cat' inherit from 'Animal'. The 'Dog' class has a method `bark()`. Use the D2 class shape.",
+      "tests": [
+        "Class Shape Usage",
+        "Inheritance/Subtype Representation"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "C4: System Context Diagram (C1)",
+      "description": "Generate a **D2 diagram** (C4 Context Level) showing the 'Payment Processing System' that interacts with the 'Customer' and an external 'Bank API'. Show the 'Customer' using the system.",
+      "tests": [
+        "C4 Level Boundary Representation",
+        "External Entity Representation"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "C4: Container Diagram (C2) Focus",
+      "description": "Generate a **D2 diagram** (C4 Container Level) showing the 'Customer Portal'. Decompose it to include a 'Web Application' (Node.js), a 'Mobile App', and a 'PostgreSQL Database'. Show relationships.",
+      "tests": [
+        "Container Decomposition",
+        "Technology Annotation"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "C4: Component Diagram (C3) Focus",
+      "description": "Generate a **D2 diagram** (C4 Component Level) showing the internal components of a 'Web Application'. Include 'Authentication Service', 'Payment Gateway Adapter', and 'API Controller'. Show the 'API Controller' using the other two services.",
+      "tests": [
+        "Component Level Detail",
+        "Internal Component Flow"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "C4: Flow and Technology (C2)",
+      "description": "Generate a **D2 diagram** (C4 Container Level). Show a 'User' accessing a 'Load Balancer' over HTTPS. The 'Load Balancer' distributes traffic to three 'Application Servers'. These read from 'Redis Cache' and write to a 'SQL Database'.",
+      "tests": [
+        "Explicit Protocol on Edges",
+        "Complex Data Flow"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Testing Edge Labels and Protocols",
+      "description": "Generate a **D2 diagram** showing 'Microservice A' sending an event to a 'Message Queue' which is then consumed by 'Microservice B'. Label the first edge 'Publish (AMQP)' and the second 'Consume (AMQP)'.",
+      "tests": [
+        "Specific Edge Labels",
+        "Protocol Annotation"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Object Styling (Background Color)",
+      "description": "Generate a **D2 diagram** showing three processes: 'Process Init', 'Process Run', and 'Process End'. Make 'Process Run' have a green background fill.",
+      "tests": [
+        "Styling/Fill Attribute",
+        "Simple Sequence Flow"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Directional Layout Change",
+      "description": "Generate a **D2 diagram** showing data flowing from 'Source' to 'Transform' to 'Target'. Set the diagram direction to flow vertically (down).",
+      "tests": [
+        "Vertical Layout (`direction: down`)",
+        "Three-Step Flow"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Cross-System Labeled Edge",
+      "description": "Generate a **D2 diagram** showing an 'Internal System' interacting with a separate 'External API'. Label the relationship 'Retrieves User Data'. Use an arrow in both directions.",
+      "tests": [
+        "Bi-directional Relationship (`<->`)",
+        "Labeled Relationship"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Container Labeling and Grouping",
+      "description": "Generate a **D2 diagram**. Create a container labeled 'Database Cluster'. Inside, define 'Primary DB' and 'Replica DB'. Show a connection from 'Primary DB' to 'Replica DB' labeled 'Replication'.",
+      "tests": [
+        "Container Naming",
+        "Internal Container Relationship"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Shape Customization",
+      "description": "Generate a **D2 diagram** defining a 'Queue' and a 'Listener'. Set the 'Queue' shape to 'cylinder' and the 'Listener' shape to 'person'. Show the 'Listener' reading from 'Queue'.",
+      "tests": [
+        "Shape Attribute Usage (Cylinder/Person)",
+        "Relationship Definition"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Sub-Object Naming (Dots)",
+      "description": "Generate a **D2 diagram** showing how a 'User.Profile' connects to 'User.Preferences'. Both should be contained within a parent object labeled 'Customer Data'.",
+      "tests": [
+        "Sub-Object (Dot) Syntax",
+        "Deep Naming"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Testing Simple Naming Conventions",
+      "description": "Generate a **D2 diagram** modeling two components, 'data-service' and 'auth-module'. Show 'data-service' requesting data from 'auth-module'. Ensure the IDs use kebab-case.",
+      "tests": [
+        "ID Naming Convention (kebab-case)",
+        "Basic Relationship"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "C4: Ambiguous C4 Level",
+      "description": "Model the 'Order Service' system. It interacts with an 'Inventory' system and a 'Shipping' system. It also sends 'Alerts'. (Testing Rule 2 Veto: What C4 level do you want to model: Context, Container, or Component?)",
+      "tests": [
+        "Ambiguity Handling (C4 Level Veto)",
+        "System Relationships"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "C4: Container Decomposition of Frontend",
+      "description": "Generate a **D2 diagram** (C4 Container Level). Decompose the 'Frontend' container into 'React UI' (code) and 'NGINX Proxy' (software). Show the 'User' interacting with the proxy.",
+      "tests": [
+        "C2: Container Decomposition",
+        "Explicit Technology Labels"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "C4: External System Boundary",
+      "description": "Generate a **D2 diagram** (C4 Context Level) focusing on the boundary of the 'Customer CRM'. Show the 'Sales Team' interacting with it, and the CRM connecting to an external 'Legacy Database' (external system).",
+      "tests": [
+        "C1: External System Definition",
+        "System Boundary Labeling"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "C4: Component Flow with Databases",
+      "description": "Generate a **D2 diagram** (C4 Component Level) detailing the 'Data Service'. Show 'Read Handler' and 'Write Handler' components. Both components access a single 'Database Repository'.",
+      "tests": [
+        "C3: Component Flow Logic",
+        "Internal Component Relationship"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Testing Complex Container Nesting",
+      "description": "Generate a **D2 diagram**. Create a container 'Region A'. Inside 'Region A', place 'VPC A'. Inside 'VPC A', place a 'Web Server' and 'App Server'. Show a connection from 'Web Server' to 'App Server'.",
+      "tests": [
+        "Deep Container Nesting",
+        "Internal Relationship"
+      ]
+    }
+  ]
+}

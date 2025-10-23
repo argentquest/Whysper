@@ -43,7 +43,7 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
             capture_output=True,
             text=True,
             check=True,  # Raise an error if the return code is non-zero
-            timeout=30,  # Increased timeout for mmdc (can be slow on first run)
+            timeout=120,  # Increased timeout for mmdc (can be slow on first run)
             shell=True  # Use shell on Windows to find .cmd files
         )
 
@@ -143,7 +143,7 @@ def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
             capture_output=True,
             text=True,
             check=True,
-            timeout=5,
+            timeout=120,
             shell=True  # Use shell on Windows to find .cmd files
         )
         logger.debug(f"Mermaid CLI version: {result.stdout.strip()}")
@@ -258,7 +258,7 @@ def validate_mermaid_and_render(
             capture_output=True,
             text=True,
             check=True,
-            timeout=15,
+            timeout=120,
             shell=True  # Use shell on Windows to find .cmd files
         )
 

@@ -163,6 +163,8 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
                 conversation_history=conversation_history,
                 codebase_content="",
                 model=settings.default_model,
+                max_tokens=settings.max_tokens,
+                temperature=settings.temperature
             )
             
             logger.info(f"DEBUG: AI response received, length: {len(full_response)}")
