@@ -109,13 +109,33 @@ class DocumentationService:
             api_key = env_config.get("api_key", "")
             provider = env_config.get("provider", "openrouter")
             
+            # Also try to get API key from settings directly as fallback
+            if not api_key:
+                try:
+                    from app.core.config import settings
+                    api_key = settings.api_key
+                    if not api_key:
+                        # Try environment variable directly
+                        api_key = os.getenv("API_KEY", "")
+                except Exception:
+                    pass
+            
             if api_key:
                 self.ai_processor = create_ai_processor(api_key=api_key, provider=provider)
-                self.logger.info("AI processor initialized for documentation generation")
+                self.logger.info(f"AI processor initialized for documentation generation with provider: {provider}")
+                
+                # Validate the API key
+                if not self.ai_processor.validate_api_key():
+                    self.logger.error("API key validation failed, documentation generation will be limited")
+                    self.ai_processor = None
+                else:
+                    self.logger.info("API key validation successful")
             else:
-                self.logger.warning("API key not configured, documentation generation will be limited")
+                self.logger.error("API key not configured in environment or settings, documentation generation will be limited")
+                self.ai_processor = None
         except Exception as e:
             self.logger.error(f"Failed to initialize AI processor: {e}")
+            self.ai_processor = None
     
     @log_method_call
     def analyze_code_structure(self, file_paths: List[str]) -> List[CodeStructure]:
@@ -131,8 +151,10 @@ class DocumentationService:
         self.logger.info(f"Analyzing code structure for {len(file_paths)} files")
         
         structures = []
-        env_vars = env_manager.load_env_file()
-        code_path = env_vars.get("CODE_PATH", os.getcwd())
+        # Use the project root directory as code path
+        # Get the backend directory and then go up to project root
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        code_path = os.path.dirname(backend_dir)  # This should be the project root
         
         for file_path in file_paths:
             try:
@@ -140,11 +162,16 @@ class DocumentationService:
                 language = self._detect_language(file_path)
                 
                 if language in self.supported_languages:
-                    # Read file content
+                    # First try to resolve the path as-is (might already be absolute or relative to project root)
                     safe_path = SecurityUtils.safe_path_resolve(code_path, file_path)
+                    if not safe_path:
+                        # If that fails, try resolving from current working directory
+                        safe_path = SecurityUtils.safe_path_resolve(os.getcwd(), file_path)
+                    
                     if not safe_path:
                         self.logger.error(f"Path resolution failed for {file_path}")
                         continue
+                        
                     content = file_service.read_file(safe_path)
                     
                     # Analyze based on language
@@ -1614,17 +1641,26 @@ class DocumentationService:
     def _load_agent_prompt(self) -> str:
         """Load documentation generator agent prompt"""
         try:
-            prompt_path = os.path.join(
-                os.path.dirname(__file__), 
-                "../../../prompts/coding/agent/documentation-generator.md"
-            )
+            # Get project root directory
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            project_root = os.path.dirname(backend_dir)
             
-            if os.path.exists(prompt_path):
-                with open(prompt_path, 'r', encoding='utf-8') as f:
-                    return f.read()
-            else:
-                self.logger.warning(f"Documentation agent prompt not found at {prompt_path}")
-                return self._get_default_agent_prompt()
+            # Try multiple possible prompt locations
+            prompt_paths = [
+                os.path.join(project_root, "prompts", "coding", "agent", "documentation-generator.md"),
+                os.path.join(project_root, "prompts", "documentation-generator.md"),
+                os.path.join(project_root, "prompts", "coding", "documentation-generator.md"),
+            ]
+            
+            for prompt_path in prompt_paths:
+                if os.path.exists(prompt_path):
+                    with open(prompt_path, 'r', encoding='utf-8') as f:
+                        return f.read()
+            
+            # If none found, log all attempted paths
+            paths_str = ", ".join(prompt_paths)
+            self.logger.warning(f"Documentation agent prompt not found at any of: {paths_str}")
+            return self._get_default_agent_prompt()
                 
         except Exception as e:
             self.logger.error(f"Error loading agent prompt: {e}")

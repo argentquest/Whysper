@@ -59,11 +59,13 @@ class StructuredFormatter(logging.Formatter):
         # Add extra fields
         for key, value in record.__dict__.items():
             if key not in log_data and not key.startswith('_'):
-                if key not in ['name', 'msg', 'args', 'levelname', 'levelno', 
-                              'pathname', 'filename', 'module', 'exc_info', 'exc_text',
-                              'stack_info', 'lineno', 'funcName', 'created', 'msecs',
-                              'relativeCreated', 'thread', 'threadName', 'processName',
-                              'process', 'message', 'context']:
+                if key not in [
+                    'name', 'msg', 'args', 'levelname', 'levelno',
+                    'pathname', 'filename', 'module', 'exc_info', 'exc_text',
+                    'stack_info', 'lineno', 'funcName', 'created', 'msecs',
+                    'relativeCreated', 'thread', 'threadName', 'processName',
+                    'process', 'message', 'context'
+                ]:
                     log_data["extra"] = log_data.get("extra", {})
                     log_data["extra"][key] = value
         
@@ -79,7 +81,7 @@ class ConsoleFormatter(logging.Formatter):
         'INFO': '\033[32m',     # Green
         'WARNING': '\033[33m',  # Yellow
         'ERROR': '\033[31m',    # Red
-        'CRITICAL': '\033[35m', # Magenta
+        'CRITICAL': '\033[35m',  # Magenta
         'RESET': '\033[0m'      # Reset
     }
     
@@ -93,10 +95,15 @@ class ConsoleFormatter(logging.Formatter):
             color = reset = ''
         
         # Format timestamp
-        timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.fromtimestamp(
+            record.created
+        ).strftime('%Y-%m-%d %H:%M:%S')
         
         # Build base message
-        base_msg = f"{color}[{timestamp}] {record.levelname:8} {record.name:15} | {record.getMessage()}{reset}"
+        base_msg = (
+            f"{color}[{timestamp}] {record.levelname:8} "
+            f"{record.name:15} | {record.getMessage()}{reset}"
+        )
         
         # Add context information if present
         if hasattr(record, 'context') and record.context:
@@ -203,9 +210,22 @@ class CodeChatLogger:
     
     def _log_with_context(self, level: int, message: str, **kwargs):
         """Log message with current context."""
+        # Extract special logging parameters that shouldn't be in extra
+        log_params = {}
+        for param in ['exc_info', 'stack_info', 'extra']:
+            if param in kwargs:
+                log_params[param] = kwargs.pop(param)
+        
+        # Create extra dict with remaining kwargs and context
         extra = kwargs.copy()
         extra['context'] = self.context
-        self.logger.log(level, message, extra=extra)
+        
+        # Merge any extra dict from kwargs
+        if 'extra' in log_params:
+            extra.update(log_params.pop('extra'))
+        
+        # Log with both extra and special parameters
+        self.logger.log(level, message, extra=extra, **log_params)
     
     def debug(self, message: str, **kwargs):
         """Log debug message."""
@@ -240,7 +260,10 @@ class CodeChatLogger:
         extra['performance'] = True
         extra['duration_ms'] = round(duration * 1000, 2)
         extra['operation'] = operation
-        self.info(f"Performance: {operation} completed in {duration:.3f}s", **extra)
+        self.info(
+            f"Performance: {operation} completed in {duration:.3f}s",
+            **extra
+        )
     
     def audit(self, action: str, resource: str, **kwargs):
         """Log audit trail information."""
@@ -279,7 +302,10 @@ class LoggerContextManager:
             request_id=self.logger.context.request_id,
             file_path=self.logger.context.file_path,
             line_number=self.logger.context.line_number,
-            additional_data=self.logger.context.additional_data.copy() if self.logger.context.additional_data else None
+            additional_data=(
+                self.logger.context.additional_data.copy()
+                if self.logger.context.additional_data else None
+            )
         )
         
         # Set new context
@@ -326,7 +352,9 @@ def log_performance(operation_name: str = None):
                 return result
             except Exception as e:
                 duration = (datetime.now() - start_time).total_seconds()
-                app_logger.performance(f"{op_name} (failed)", duration, error=str(e))
+                app_logger.performance(
+                    f"{op_name} (failed)", duration, error=str(e)
+                )
                 raise
         return wrapper
     return decorator
@@ -342,7 +370,10 @@ def configure_logging():
         
         # Update console handler level
         for handler in app_logger.logger.handlers:
-            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.handlers.RotatingFileHandler):
+            if (
+                isinstance(handler, logging.StreamHandler) and
+                not isinstance(handler, logging.handlers.RotatingFileHandler)
+            ):
                 handler.setLevel(getattr(logging, log_level))
     
     # Set log directory from environment
