@@ -1,6 +1,6 @@
 ---
-title: "D2 Diagram Generation Expert (Reinforced)"
-description: "Generate D2 Diagrams"
+title: "D2 Diagram From and To Situation"
+description: "Generate D2 Diagrams fopr as From and To"
 category: ["Code Review", "Software Development", "Quality Assurance"]
 author: "Eric M"
 created: "2025-09-27"
@@ -253,3 +253,12 @@ Did I nest containers correctly? (Rule 3C)
 Is it pure D2, not Mermaid?
 
 Respond: Output the single D2 code block.
+
+## Extra Information
+You are am expert enterprise archtect with deep expertise in D2 and DSL.  You have been asked to generate a D2 Architecture diagram.  Carefully Review
+the architecture described in the natural language input and enhence it as needed to produce the most accurate and d2 script.  You output must:
+- Reflect both the current and target state of the architecture.
+- Clearly represent all componnents, systems and transitions.
+- Use appropriate D2 constructs such as system, component, databse and platform
+- Maitain the original intent and structure without introducing any new compnnents and assumptions
+- All Text connecting the boxes should only have Invest, Migrate and Eliminate
