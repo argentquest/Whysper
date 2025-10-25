@@ -263,17 +263,22 @@ function App() {
     }
   }, []);
 
-  const loadAgentPrompts = useCallback(async () => {
+  const loadAgentPrompts = useCallback(async (): Promise<string | undefined> => {
     try {
       const response = await ApiService.getAgents();
       if (response.success && response.data) {
         setAgentPrompts(response.data);
+        // Assuming the first agent in the list is the default
+        if (response.data.length > 0) {
+          return response.data[0].title; // Return the title of the default agent
+        }
       } else {
         console.warn('Could not load agent prompts:', response.error);
       }
     } catch (error) {
       console.warn('Could not load agent prompts:', error);
     }
+    return undefined;
   }, []);
 
   const loadSubagentCommands = useCallback(async () => {
@@ -351,39 +356,36 @@ function App() {
     setConversations({});
     setTabs([]);
     
-
-    // Create the initial tab for the first conversation
-    const initialTab: Tab = {
-      id: 'tab-1',                    // Unique tab identifier
-      conversationId: 'conv-1',       // Associated conversation ID
-      title: 'Chat 1',               // Display name in tab bar
-      isActive: true,                 // This tab is currently active
-      isDirty: false,                 // No unsaved changes yet
-      type: 'chat',                   // This is a chat tab
-    };
-
-    // Create the initial empty conversation
-    const initialConversation: Conversation = {
-      id: 'conv-1',                          // Unique conversation identifier
-      title: 'New Conversation',            // Display title
-      messages: [],                          // Start with empty message history
-      createdAt: new Date().toISOString(),  // Creation timestamp
-      updatedAt: new Date().toISOString(),  // Last update timestamp
-    };
-
-    // Set up initial application state
-    setTabs([initialTab]);
-    setActiveTabId(initialTab.id);
-    setConversations({ [initialConversation.id]: initialConversation });
-
     // Load user settings from backend (API keys, preferences, etc.)
     const initializeApp = async () => {
       await loadSettings();
-      await loadAgentPrompts();
+      const defaultAgentTitle = await loadAgentPrompts(); // Get default agent title
       await loadSubagentCommands();
-      // Note: Don't load conversation files on initial mount
-      // The backend session doesn't exist yet, so there are no files to load
-      // Files will be loaded when user switches tabs or after first message
+
+      // Create initial conversation and tab (like app initialization)
+      const initialTabId = `tab-${Date.now()}`;
+      const initialConversationId = `conv-${Date.now()}`;
+
+      const initialTab: Tab = {
+        id: initialTabId,
+        conversationId: initialConversationId,
+        title: defaultAgentTitle ? defaultAgentTitle.substring(0, 50) : 'Chat 1', // Use default agent title or fallback
+        isActive: true,
+        isDirty: false,
+        type: 'chat',
+      };
+
+      const initialConversation: Conversation = {
+        id: initialConversationId,
+        title: defaultAgentTitle ? defaultAgentTitle.substring(0, 50) : 'New Conversation', // Use default agent title or fallback
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setTabs([initialTab]);
+      setConversations({ [initialConversationId]: initialConversation });
+      setActiveTabId(initialTabId);
     };
 
     initializeApp();
@@ -427,12 +429,16 @@ function App() {
       timestamp: new Date().toISOString(),
     };
 
+    console.info('👤 Created user message:', userMessage);
+
     // Update conversation with user message
     const updatedConversation = {
       ...conversation,
       messages: [...conversation.messages, userMessage],
       updatedAt: new Date().toISOString(),
     };
+
+    console.info('📝 Updated conversation with user message:', updatedConversation.messages.length, 'total messages');
 
     setConversations(prev => ({
       ...prev,
@@ -485,8 +491,10 @@ function App() {
 
       if (response.success && response.data) {
         const assistantMessage = response.data.message;
-        console.log('📨 Received assistant message:', assistantMessage);
-        
+        console.info('📨 Received assistant message:', assistantMessage);
+        console.info('📨 Message content length:', assistantMessage.content?.length);
+        console.info('📨 Message content preview:', assistantMessage.content?.substring(0, 200));
+
         // Update conversation with assistant response
         const finalConversation = {
           ...updatedConversation,
@@ -494,7 +502,8 @@ function App() {
           updatedAt: new Date().toISOString(),
         };
 
-        console.log('💬 Final conversation state:', finalConversation);
+        console.info('💬 Final conversation state:', finalConversation);
+        console.info('💬 Total messages in conversation:', finalConversation.messages.length);
         setConversations(prev => ({
           ...prev,
           [conversation.id]: finalConversation,
@@ -558,6 +567,7 @@ function App() {
   };
 
   const handleSystemChange = async (systemType: string) => {
+    console.info('🔄 Agent changed to:', systemType);
     setActiveAgentName(systemType);
 
     // Find the agent prompt for this system type
@@ -568,11 +578,21 @@ function App() {
         // Load the actual prompt content from the backend
         const response = await ApiService.getAgentPrompt(agentPrompt.filename);
         if (response.success && response.data) {
+          const newSystemPrompt = response.data?.content || '';
+          console.info('✅ Loaded agent prompt:', agentPrompt.title);
+          console.info('📝 System prompt preview:', newSystemPrompt.substring(0, 200) + '...');
+
           setSettings(prev => ({
             ...prev,
-            systemPrompt: response.data?.content || '',
+            systemPrompt: newSystemPrompt,
           }));
-          message.success(`System changed to: ${agentPrompt.title}`);
+
+          message.success(`Agent changed to: ${agentPrompt.title} - New conversation started`);
+
+          // Create a new tab with empty message history for the new agent
+          handleNewTab(agentPrompt.title.substring(0, 50));
+
+          console.info('🆕 Created new conversation with agent:', agentPrompt.title);
         } else {
           message.error('Failed to load agent prompt');
         }
@@ -582,11 +602,16 @@ function App() {
       }
     } else {
       // Fallback to hardcoded prompts
+      const fallbackPrompt = getSystemPromptByType(systemType);
+      console.info('⚠️ Using fallback system prompt for:', systemType);
+
       setSettings(prev => ({
         ...prev,
-        systemPrompt: getSystemPromptByType(systemType),
+        systemPrompt: fallbackPrompt,
       }));
-      message.success(`System changed to: ${systemType}`);
+
+      message.success(`Agent changed to: ${systemType} - New conversation started`);
+      handleNewTab(systemType.substring(0, 50));
     }
   };
 
@@ -822,7 +847,7 @@ function App() {
     }
   };
 
-  const handleNewTab = () => {
+  const handleNewTab = (title?: string) => {
     const newTabId = `tab-${Date.now()}`;
     const newConversationId = `conv-${Date.now()}`;
 
@@ -830,10 +855,14 @@ function App() {
     // Note: Context files (selectedFiles) persist across tabs - only cleared on "New Session"
     setExtractedCodeBlocks([]);
 
+    // Use provided title or generate default
+    const tabTitle = title || `Chat ${tabs.length + 1}`;
+    const conversationTitle = title || 'New Conversation';
+
     const newTab: Tab = {
       id: newTabId,
       conversationId: newConversationId,
-      title: `Chat ${tabs.length + 1}`,
+      title: tabTitle,
       isActive: true,
       isDirty: false,
       type: 'chat',
@@ -841,7 +870,7 @@ function App() {
 
     const newConversation: Conversation = {
       id: newConversationId,
-      title: 'New Conversation',
+      title: conversationTitle,
       messages: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

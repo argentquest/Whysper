@@ -994,13 +994,33 @@ class ConversationSession:
                 error_summary = "\n\n".join(validation_errors)
                 correction_prompt = (
                     f"FIX THESE D2 SYNTAX ERRORS:\n\n{error_summary}\n\n"
-                    f"RULES:\n"
-                    f"- Databases: shape: cylinder\n"
-                    f"- Web/Apps: shape: rectangle\n"
-                    f"- Users: shape: person\n"
-                    f"- Cloud: shape: cloud\n"
-                    f"- Strings: Always close quotes\n\n"
-                    f"Return ONLY the corrected ```d2 code block. Keep it SIMPLE and COMPLETE."
+                    f"CRITICAL: D2 ONLY supports these shape values:\n"
+                    f"- rectangle (default - most common, use for components, services, apps)\n"
+                    f"- square\n"
+                    f"- circle\n"
+                    f"- oval\n"
+                    f"- diamond\n"
+                    f"- parallelogram\n"
+                    f"- hexagon\n"
+                    f"- cylinder (for databases)\n"
+                    f"- cloud (for cloud services)\n"
+                    f"- queue (for message queues)\n"
+                    f"- package (for modules/packages)\n"
+                    f"- step (for process steps)\n"
+                    f"- callout (for notes/comments)\n"
+                    f"- stored_data (for data storage)\n"
+                    f"- person (for users/actors)\n"
+                    f"- document (for documents)\n"
+                    f"- page (for pages)\n\n"
+                    f"INVALID shapes that DO NOT exist in D2:\n"
+                    f"- component (use 'rectangle' instead)\n"
+                    f"- system (use 'rectangle' instead)\n"
+                    f"- platform (use 'rectangle' instead)\n"
+                    f"- database (use 'cylinder' instead)\n"
+                    f"- service (use 'rectangle' instead)\n"
+                    f"- api (use 'rectangle' instead)\n\n"
+                    f"IMPORTANT: Replace ALL invalid shapes with valid ones from the list above.\n"
+                    f"Return ONLY the corrected ```d2 code block with NO explanations."
                 )
 
                 # Send correction request to AI
@@ -1279,12 +1299,63 @@ class ConversationSession:
                         f'</div>\n'
                     )
 
+                    # Generate unique ID for this diagram
+                    diagram_id = f"d2-diagram-{diagram_count}"
+
+                    # Zoom controls with inline JavaScript
+                    zoom_controls = (
+                        f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">\n'
+                        f'  <button onclick="'
+                        f"var svg = document.getElementById('{diagram_id}'); "
+                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
+                        f"var currentScale = parseFloat(svg.getAttribute('data-zoom') || '0.6'); "
+                        f"var newScale = Math.min(currentScale + 0.1, 2.0); "
+                        f"svg.setAttribute('data-zoom', newScale); "
+                        f"svg.style.transform = 'scale(' + newScale + ')'; "
+                        f"svg.style.transformOrigin = 'top left'; "
+                        f"label.textContent = Math.round(newScale * 100) + '%';"
+                        f'" style="padding: 6px 12px; background-color: #667eea; color: white; border: none; '
+                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🔍 Zoom In</button>\n'
+                        f'  <button onclick="'
+                        f"var svg = document.getElementById('{diagram_id}'); "
+                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
+                        f"var currentScale = parseFloat(svg.getAttribute('data-zoom') || '0.6'); "
+                        f"var newScale = Math.max(currentScale - 0.1, 0.2); "
+                        f"svg.setAttribute('data-zoom', newScale); "
+                        f"svg.style.transform = 'scale(' + newScale + ')'; "
+                        f"svg.style.transformOrigin = 'top left'; "
+                        f"label.textContent = Math.round(newScale * 100) + '%';"
+                        f'" style="padding: 6px 12px; background-color: #667eea; color: white; border: none; '
+                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🔍 Zoom Out</button>\n'
+                        f'  <button onclick="'
+                        f"var svg = document.getElementById('{diagram_id}'); "
+                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
+                        f"svg.setAttribute('data-zoom', '0.6'); "
+                        f"svg.style.transform = 'scale(0.6)'; "
+                        f"svg.style.transformOrigin = 'top left'; "
+                        f"label.textContent = '60%';"
+                        f'" style="padding: 6px 12px; background-color: #94a3b8; color: white; border: none; '
+                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">↺ Reset</button>\n'
+                        f'  <span style="font-size: 12px; color: #64748b; margin-left: 8px; font-weight: 500;" id="{diagram_id}-zoom-label">60%</span>\n'
+                        f'</div>\n'
+                    )
+
+                    # Wrap SVG with zoom container and default 60% scale
+                    svg_with_zoom = (
+                        f'<div style="overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; '
+                        f'padding: 16px; background-color: #f8fafc; max-width: 100%;">\n'
+                        f'  <div id="{diagram_id}" data-zoom="0.6" style="transform: scale(0.6); transform-origin: top left; '
+                        f'transition: transform 0.2s ease;">\n'
+                        f'    {svg_content}\n'
+                        f'  </div>\n'
+                        f'</div>\n'
+                    )
+
                     return (
                         f'<div class="d2-diagram-container" style="margin: 16px 0;">\n'
                         f'{status_badge}'
-                        f'  <div class="d2-rendered-diagram">\n'
-                        f'    {svg_content}\n'
-                        f'  </div>\n'
+                        f'{zoom_controls}'
+                        f'{svg_with_zoom}'
                         f'{download_link}'
                         f'  <details style="margin-top: 8px;">\n'
                         f'    <summary style="cursor: pointer; padding: 8px 12px; background-color: #f1f5f9; '
@@ -1550,6 +1621,46 @@ class ConversationManager:
         if session_id not in self._sessions:
             raise KeyError(f"Conversation {session_id} not found")
         return self._sessions[session_id]
+
+    @log_method_call
+    def get_or_create_session(
+        self,
+        session_id: str,
+        api_key: str,
+        provider: str,
+        models: List[str],
+        default_model: Optional[str] = None,
+        access_key: Optional[str] = None,
+    ) -> Tuple[ConversationSession, bool]:
+        """
+        Get existing session or create a new one if it doesn't exist.
+        
+        Returns:
+            Tuple[ConversationSession, bool]: (session, was_created)
+                - session: The conversation session (existing or new)
+                - was_created: True if a new session was created, False if existing
+        """
+        if session_id in self._sessions:
+            self._logger.debug(
+                "Retrieved existing session",
+                extra={"session_id": session_id},
+            )
+            return self._sessions[session_id], False
+        
+        # Create new session
+        self._logger.info(
+            "Creating new conversation session",
+            extra={"session_id": session_id, "provider": provider},
+        )
+        session = self.create_session(
+            api_key=api_key,
+            provider=provider,
+            models=models,
+            default_model=default_model,
+            session_id=session_id,
+            access_key=access_key,
+        )
+        return session, True
 
     @log_method_call
     def list_sessions(self) -> List[ConversationSession]:

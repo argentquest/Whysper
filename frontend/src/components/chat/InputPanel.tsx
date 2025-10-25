@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Select, Tooltip, message as antMessage } from 'antd';
+import { Button, Select, Tooltip, message as antMessage, Checkbox } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
@@ -36,6 +36,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 }) => {
   const [message, setMessage] = useState('');
   const [lastSentMessage, setLastSentMessage] = useState<string>('');
+  const [showSubagentText, setShowSubagentText] = useState<boolean>(false); // Checkbox: when unchecked, send command separately (hidden)
+  const [userMessage, setUserMessage] = useState<string>(''); // Store user's actual message separately from subagent text
 
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedCommand, setSelectedCommand] = useState<string>('');
@@ -45,13 +47,19 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   // Refs to store current values for key binding
   const messageRef = useRef(message);
+  const userMessageRef = useRef(userMessage);
   const loadingRef = useRef(loading);
   const selectedCommandRef = useRef(selectedCommand);
+  const showSubagentTextRef = useRef(showSubagentText);
 
   // Update refs when values change
   useEffect(() => {
     messageRef.current = message;
   }, [message]);
+
+  useEffect(() => {
+    userMessageRef.current = userMessage;
+  }, [userMessage]);
 
   useEffect(() => {
     loadingRef.current = loading;
@@ -60,6 +68,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   useEffect(() => {
     selectedCommandRef.current = selectedCommand;
   }, [selectedCommand]);
+
+  useEffect(() => {
+    showSubagentTextRef.current = showSubagentText;
+  }, [showSubagentText]);
 
   // Handle editor mount
   const handleEditorDidMount = (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
@@ -71,15 +83,30 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       label: 'Submit Message',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => {
-        const currentMessage = messageRef.current;
+        // Use refs to get current values (avoid stale closure)
+        const currentMessage = messageRef.current.trim();
+        const currentUserMessage = userMessageRef.current.trim();
+        const currentShowSubagent = showSubagentTextRef.current;
+        const currentSelectedCommand = selectedCommandRef.current;
         const currentLoading = loadingRef.current;
-        const currentCommand = selectedCommandRef.current;
 
-        if (currentMessage.trim() && !currentLoading) {
-          const messageToSend = currentMessage.trim();
+        if (currentMessage && !currentLoading) {
+          let messageToSend = currentMessage;
+          let commandToSend = '';
+
+          // Checkbox logic:
+          // - Unchecked: Send user message only, pass subagent command separately (hidden from UI)
+          // - Checked: Send full message including subagent text (visible in UI)
+          if (!currentShowSubagent && currentSelectedCommand) {
+            // Checkbox unchecked: send user message only, command goes separately
+            messageToSend = currentUserMessage || currentMessage;
+            commandToSend = currentSelectedCommand;
+          }
+
           setLastSentMessage(messageToSend);
-          onSendMessage(messageToSend, currentCommand);
+          onSendMessage(messageToSend, commandToSend);
           setMessage('');
+          setUserMessage('');
           setSelectedCategory('');
           setSelectedCommand('');
         }
@@ -105,10 +132,23 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   const handleSend = () => {
     if (message.trim() && !loading) {
-      const messageToSend = message.trim();
+      let messageToSend = message.trim();
+      let commandToSend = '';
+
+      // Checkbox logic:
+      // - Unchecked: Send user message only, pass subagent command separately (hidden from UI)
+      // - Checked: Send full message including subagent text (visible in UI)
+      if (!showSubagentText && selectedCommand) {
+        // Checkbox unchecked: send user message only, command goes separately
+        messageToSend = userMessage.trim();
+        commandToSend = selectedCommand;
+      }
+      // If checkbox is checked, messageToSend already includes subagent text
+
       setLastSentMessage(messageToSend);
-      onSendMessage(messageToSend, selectedCommand);
+      onSendMessage(messageToSend, commandToSend);
       setMessage('');
+      setUserMessage('');
       setSelectedCategory('');
       setSelectedCommand('');
     }
@@ -128,19 +168,86 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   const handleClear = () => {
     setMessage('');
+    setUserMessage('');
     setSelectedCategory('');
     setSelectedCommand('');
+    setShowSubagentText(false);
     onClear();
   };
 
   const injectSubagentCommand = (subcommand: string) => {
-    const newMessage = message ? `${message}\n\n${subcommand}` : subcommand;
+    // When injecting, add subcommand to current message
+    const newMessage = userMessage ? `${userMessage}\n\n${subcommand}` : subcommand;
     setMessage(newMessage);
+    setUserMessage(userMessage); // Keep user message separate
+
+    // Auto-check the checkbox when injecting a command to show it
+    handleCheckboxChange(true);
 
     // Focus editor after inserting command
     setTimeout(() => {
       editorRef.current?.focus();
     }, 0);
+  };
+
+  // Get the current subagent command text if one is selected
+  const getCurrentSubagentText = () => {
+    if (!selectedCommand) return '';
+    const command = subagentsForCategory.find(cmd => cmd.title === selectedCommand);
+    return command ? command.subcommand : '';
+  };
+
+  // Handle checkbox changes - update message to show/hide subagent text
+  const handleCheckboxChange = (checked: boolean) => {
+    setShowSubagentText(checked);
+
+    if (checked && selectedCommand) {
+      // Checkbox checked: show subagent text in editor
+      const subagentText = getCurrentSubagentText();
+      if (subagentText) {
+        const newMessage = userMessage ? `${userMessage}\n\n${subagentText}` : subagentText;
+        setMessage(newMessage);
+      }
+    } else {
+      // Checkbox unchecked: hide subagent text, show only user message
+      setMessage(userMessage);
+    }
+  };
+
+  // Handle command selection changes
+  useEffect(() => {
+    if (showSubagentText && selectedCommand) {
+      // If checkbox is checked and command is selected, update message to include subagent text
+      const subagentText = getCurrentSubagentText();
+      if (subagentText) {
+        const newMessage = userMessage ? `${userMessage}\n\n${subagentText}` : subagentText;
+        setMessage(newMessage);
+      }
+    } else if (!showSubagentText) {
+      // Otherwise, show only user message
+      setMessage(userMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCommand, showSubagentText]); // Intentionally excluding userMessage to avoid loops
+
+  // Handle editor changes - update userMessage state
+  const handleEditorChange = (value: string | undefined) => {
+    const newValue = value || '';
+    setMessage(newValue);
+
+    // If checkbox is unchecked, this is the user's actual message
+    if (!showSubagentText) {
+      setUserMessage(newValue);
+    } else {
+      // If checkbox is checked, extract user message (everything before subagent text)
+      const subagentText = getCurrentSubagentText();
+      if (subagentText && newValue.includes(subagentText)) {
+        const parts = newValue.split(subagentText);
+        setUserMessage(parts[0].trim());
+      } else {
+        setUserMessage(newValue);
+      }
+    }
   };
 
   const handleReduceHeight = () => {
@@ -218,6 +325,15 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             Inject
           </Button>
 
+          {/* Show Subagent Text Checkbox */}
+          <Checkbox
+            checked={showSubagentText}
+            onChange={(e) => handleCheckboxChange(e.target.checked)}
+            className="ml-4"
+          >
+            Show Subagent Text
+          </Checkbox>
+
           <div className="flex-1" />
 
           {/* Submit, Copy, and Clear Buttons */}
@@ -278,7 +394,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               height={`${currentHeight}px`}
               defaultLanguage="markdown"
               value={message}
-              onChange={(value) => setMessage(value || '')}
+              onChange={handleEditorChange}
               onMount={handleEditorDidMount}
               theme="light"
               options={{

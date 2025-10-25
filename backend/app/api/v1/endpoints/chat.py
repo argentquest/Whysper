@@ -246,18 +246,18 @@ async def send_chat_message_stream(request: dict):
                 return
 
             # Get or create session
-            try:
-                session = conversation_manager.get_session(conversation_id)
+            session, was_created = conversation_manager.get_or_create_session(
+                session_id=conversation_id,
+                api_key=api_key,
+                provider=provider,
+                models=models_list,
+                default_model=model,
+            )
+            
+            if was_created:
+                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': f'Successfully created new session: {conversation_id}'})}\n\n"
+            else:
                 yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': 'Retrieved existing session'})}\n\n"
-            except KeyError:
-                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': 'Creating new session...'})}\n\n"
-                session = conversation_manager.create_session(
-                    api_key=api_key,
-                    provider=provider,
-                    models=models_list,
-                    default_model=model,
-                    session_id=conversation_id,
-                )
 
             # Add context files
             if context_files:
@@ -409,25 +409,23 @@ def send_chat_message(request: dict):
             )
 
         # Get or create conversation session
-        try:
-            session = conversation_manager.get_session(conversation_id)
+        access_key = settings.get("access_key")
+        if not access_key or access_key != env_config.get("access_key"):
+            raise HTTPException(status_code=401, detail="Invalid access key")
+
+        session, was_created = conversation_manager.get_or_create_session(
+            session_id=conversation_id,
+            api_key=api_key,
+            provider=provider,
+            models=models_list,
+            default_model=model,
+            access_key=access_key,
+        )
+        
+        if was_created:
+            logger.info(f"Successfully created new session: {conversation_id}", extra={'session_id': conversation_id})
+        else:
             logger.debug(f"Retrieved existing session: {conversation_id}")
-        except KeyError:
-            # Create new session if it doesn't exist
-            logger.info(f"Creating new conversation session: {conversation_id}", extra={'session_id': conversation_id})
-
-            access_key = settings.get("access_key")
-            if not access_key or access_key != env_config.get("access_key"):
-                raise HTTPException(status_code=401, detail="Invalid access key")
-
-            session = conversation_manager.create_session(
-                api_key=api_key,
-                provider=provider,
-                models=models_list,
-                default_model=model,
-                session_id=conversation_id,
-                access_key=access_key,
-            )
 
         # Add context files IMMEDIATELY after session creation/retrieval
         if context_files:

@@ -259,9 +259,21 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
 
 
 const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
+  // Check if diagrams are already pre-rendered by backend
+  // Backend wraps pre-rendered diagrams in specific container classes
+  const hasPreRenderedD2 = htmlContent.includes('class="d2-diagram-container"') ||
+                           htmlContent.includes('class="d2-rendered-diagram"');
+  const hasPreRenderedMermaid = htmlContent.includes('class="mermaid-diagram-container"') ||
+                                htmlContent.includes('class="mermaid-rendered-diagram"');
+
+  if (hasPreRenderedD2 || hasPreRenderedMermaid) {
+    console.info('🎯 [CHAT VIEW] Detected backend pre-rendered diagrams - displaying directly without re-rendering');
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: htmlContent }} />];
+  }
+
   // Use enhanced detection for mixed HTML content
   const { originalHtml, diagrams } = processMixedHtmlContent(htmlContent);
-  
+
   // If no diagrams detected, return original HTML
   if (diagrams.length === 0) {
     return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />];
@@ -1358,6 +1370,13 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.info('💬 [ChatView] Messages updated:', messages.length);
+    console.info('💬 [ChatView] Messages:', messages.map(m => ({
+      id: m.id,
+      role: m.role,
+      contentLength: m.content?.length,
+      contentPreview: m.content?.substring(0, 100)
+    })));
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
