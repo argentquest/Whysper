@@ -34,6 +34,7 @@ import {
   processMixedHtmlContent
 } from '../../utils/mermaidUtils';
 import { useTheme } from '../../themes';
+import { BrandColors } from 'branding';
 
 
 // Function to print the visual output of a message element
@@ -788,9 +789,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Fullscreen Header */}
         <div
           style={{
-            background: message.role === 'user' 
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-              : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: message.role === 'user'
+              ? BrandColors.gradients.primary
+              : BrandColors.gradients.secondary,
             padding: '12px 14px 10px 14px',
             borderRadius: '20px 20px 0 0',
             marginBottom: '0',
@@ -1001,14 +1002,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     em: (props) => <em style={{ color: '#374151' }} {...props} />,
                     blockquote: (props) => (
-                      <blockquote 
-                        style={{ 
+                      <blockquote
+                        style={{
                           color: '#6b7280',
-                          borderLeft: '4px solid #667eea',
+                          borderLeft: `4px solid ${BrandColors.primary}`,
                           paddingLeft: '16px',
                           fontStyle: 'italic'
-                        }} 
-                        {...props} 
+                        }}
+                        {...props}
                       />
                     ),
                     ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
@@ -1028,7 +1029,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   type="link"
                   onClick={() => setShowFullContent(!showFullContent)}
                   size="small"
-                  style={{ color: '#667eea' }}
+                  style={{ color: BrandColors.primary }}
                 >
                   {showFullContent ? 'Show Less' : 'Show More'}
                 </Button>
@@ -1057,8 +1058,8 @@ const MessageItem: React.FC<MessageItemProps> = ({
             ? '20px 20px 4px 20px'
             : '20px 20px 20px 4px',
           boxShadow: message.role === 'user'
-            ? '0 8px 24px rgba(102, 126, 234, 0.25)'
-            : '0 8px 24px rgba(240, 147, 251, 0.25)',
+            ? `0 8px 24px ${BrandColors.primary}40`
+            : `0 8px 24px ${BrandColors.secondary}40`,
           overflow: 'hidden',
           width: '100%',
           background: 'transparent',
@@ -1076,14 +1077,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
         }}
       >
         {/* Gradient Header */}
-        <div 
+        <div
           style={{
-            background: message.role === 'user' 
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-              : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: message.role === 'user'
+              ? BrandColors.gradients.primary
+              : BrandColors.gradients.secondary,
             padding: '12px 14px 10px 14px',
-            borderRadius: message.role === 'user' 
-              ? '20px 20px 0 0' 
+            borderRadius: message.role === 'user'
+              ? '20px 20px 0 0'
               : '20px 20px 0 0',
           }}
         >
@@ -1313,14 +1314,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                       em: (props) => <em style={{ color: '#374151' }} {...props} />,
                       blockquote: (props) => (
-                        <blockquote 
-                          style={{ 
+                        <blockquote
+                          style={{
                             color: '#6b7280',
-                            borderLeft: '4px solid #667eea',
+                            borderLeft: `4px solid ${BrandColors.primary}`,
                             paddingLeft: '16px',
                             fontStyle: 'italic'
-                          }} 
-                          {...props} 
+                          }}
+                          {...props}
                         />
                       ),
                       ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
@@ -1340,7 +1341,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     type="link"
                     onClick={() => setShowFullContent(!showFullContent)}
                     size="small"
-                    style={{ color: '#667eea' }}
+                    style={{ color: BrandColors.primary }}
                   >
                     {showFullContent ? 'Show Less' : 'Show More'}
                   </Button>
@@ -1426,7 +1427,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
         ))}
         
         {loading && (
-          <div 
+          <div
             className="mb-6 w-full"
             style={{ paddingRight: '0' }}
           >
@@ -1435,7 +1436,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               style={{
                 border: 'none',
                 borderRadius: '20px 20px 20px 4px',
-                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.15)',
+                boxShadow: `0 8px 24px ${BrandColors.secondary}40`,
                 overflow: 'hidden',
                 width: '100%',
                 background: 'transparent',
@@ -1443,7 +1444,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               styles={{
                 body: {
                   padding: '14px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: BrandColors.gradients.primary,
                   color: 'white',
                   borderRadius: '20px 20px 20px 4px',
                 }

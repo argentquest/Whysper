@@ -10,6 +10,7 @@ import {
   ApiOutlined,
   HistoryOutlined,
 } from '@ant-design/icons';
+import { BrandColors } from 'branding';
 
 const { Text } = Typography;
 
@@ -209,11 +210,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   );
 
   return (
-    <div 
-      className="h-10 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between text-xs"
+    <div
+      className="h-10 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between text-xs"
       style={{
+        backgroundColor: BrandColors.tertiary,
         boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.04)',
-        borderTop: '1px solid #f0f0f0'
+        borderTop: `1px solid ${BrandColors.tertiary}`
       }}
     >
       {/* Left Section - Status */}

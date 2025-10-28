@@ -19,6 +19,7 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
+import { BrandColors, Brand } from 'branding';
 
 const { Header: AntHeader } = Layout;
 const { Title, Text } = Typography;
@@ -72,23 +73,46 @@ export const Header: React.FC<HeaderProps> = ({
     ? agentPrompts.map(prompt => prompt.name)
     : ['default', 'coding', 'documentation', 'refactoring', 'debugging'];
 
+  // Utility function to lighten a hex color by a percentage
+  const lightenColor = (hex: string, percent: number): string => {
+    // Remove # if present
+    const color = hex.replace('#', '');
+
+    // Parse RGB values
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
+
+    // Lighten by moving towards white (255)
+    const lighten = (value: number) => Math.round(value + (255 - value) * (percent / 100));
+
+    const newR = lighten(r);
+    const newG = lighten(g);
+    const newB = lighten(b);
+
+    // Convert back to hex
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  };
+
+  const headerBg = lightenColor(BrandColors.primary, 60);
+
 
 
   return (
-    <AntHeader 
+    <AntHeader
       className="!px-8 !h-20 flex items-center justify-between border-b"
       style={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        borderColor: '#e2e8f0',
+        background: headerBg,
+        borderColor: headerBg,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
     >
       {/* Left Section - Branding */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
-          <div 
+          <div
             style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: BrandColors.gradients.header,
               borderRadius: '12px',
               padding: '8px',
               display: 'flex',
@@ -96,17 +120,17 @@ export const Header: React.FC<HeaderProps> = ({
               justifyContent: 'center',
               width: '48px',
               height: '48px',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+              boxShadow: `0 4px 12px ${BrandColors.primary}40`,
             }}
           >
-            <span style={{ fontSize: '24px' }}>🧠</span>
+            <span style={{ fontSize: '24px' }}>{Brand.logo.emoji}</span>
           </div>
           <div>
-            <Title level={3} className="!mb-0" style={{ color: '#1e293b', fontWeight: 700 }}>
-              Whysper
+            <Title level={3} className="!mb-0" style={{ color: BrandColors.text.primary, fontWeight: 700 }}>
+              {Brand.name}
             </Title>
-            <Text style={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>
-              AI Code Assistant
+            <Text style={{ color: BrandColors.text.secondary, fontSize: '12px', fontWeight: 500 }}>
+              {Brand.tagline}
             </Text>
           </div>
         </div>
@@ -238,11 +262,11 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onSetContext}
               size="large"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: BrandColors.gradients.primary,
                 border: 'none',
                 borderRadius: '12px',
                 fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+                boxShadow: `0 4px 12px ${BrandColors.primary}40`,
                 padding: '0 20px',
                 height: '44px',
               }}
@@ -259,11 +283,11 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onNewSession}
               size="large"
               style={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                background: `linear-gradient(135deg, ${BrandColors.primary} 0%, #a61828 100%)`,
                 border: 'none',
                 borderRadius: '12px',
                 fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                boxShadow: `0 4px 12px ${BrandColors.primary}40`,
                 padding: '0 20px',
                 height: '44px',
               }}
@@ -279,13 +303,14 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onGenerateDocumentation}
               size="large"
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: `linear-gradient(135deg, ${BrandColors.secondary} 0%, #e6b800 100%)`,
                 border: 'none',
                 borderRadius: '12px',
                 fontWeight: 600,
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                boxShadow: `0 4px 12px ${BrandColors.secondary}40`,
                 padding: '0 20px',
                 height: '44px',
+                color: '#1e293b',
               }}
             >
               Generate Docs
@@ -302,14 +327,14 @@ export const Header: React.FC<HeaderProps> = ({
                 fontWeight: 500,
                 height: '44px',
                 padding: '0 20px',
-                borderColor: '#e2e8f0',
-                color: '#64748b',
+                borderColor: BrandColors.neutral.gray5,
+                color: BrandColors.text.secondary,
               }}
             >
               New Chat
             </Button>
           </Tooltip>
-          
+
           <Tooltip title="Edit File">
             <Button
               icon={<EditOutlined />}
@@ -320,8 +345,8 @@ export const Header: React.FC<HeaderProps> = ({
                 fontWeight: 500,
                 height: '44px',
                 padding: '0 20px',
-                borderColor: '#e2e8f0',
-                color: '#64748b',
+                borderColor: BrandColors.neutral.gray5,
+                color: BrandColors.text.secondary,
               }}
             >
               Edit File
@@ -405,7 +430,7 @@ export const Header: React.FC<HeaderProps> = ({
                 size="large"
                 style={{
                   borderRadius: '10px',
-                  color: '#64748b',
+                  color: BrandColors.text.secondary,
                   width: '44px',
                   height: '44px',
                 }}

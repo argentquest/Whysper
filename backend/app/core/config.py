@@ -99,7 +99,8 @@ def load_env_defaults() -> Dict[str, Any]:
         
         # Frontend configuration
         "frontend_timeout": int(env_data.get("FRONT_END_TIMEOUT", "120")),
-        
+        "active_brand": env_data.get("ACTIVE_BRAND", "WF"),
+
         # Provider-specific configuration
         "openrouter_api_url": env_data.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions"),
         "openrouter_http_referer": env_data.get("OPENROUTER_HTTP_REFERER", "https://github.com/yourusername/code-chat-ai"),
@@ -249,6 +250,11 @@ class Settings(BaseSettings):
     frontend_timeout: int = Field(
         default=120,
         description="Frontend timeout in seconds for API requests"
+    )
+    active_brand: str = Field(
+        default="WF",
+        env="ACTIVE_BRAND",
+        description="Active brand for frontend (e.g., WF for Wells Fargo)"
     )
     openrouter_api_url: str = Field(
         default="https://openrouter.ai/api/v1/chat/completions",

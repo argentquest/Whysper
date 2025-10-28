@@ -31,6 +31,9 @@ class SettingsService:
         # Get frontend timeout (default to 120 seconds if not set)
         frontend_timeout = int(env_vars.get("FRONT_END_TIMEOUT", "120"))
 
+        # Get active brand (default to WF if not set)
+        active_brand = env_vars.get("ACTIVE_BRAND", "WF")
+
         return {
             "values": env_vars,
             "masked": masked,
@@ -38,6 +41,7 @@ class SettingsService:
             "theme": theme_manager.current_theme_name,
             "availableThemes": theme_manager.get_available_themes(),
             "timeout": frontend_timeout,  # Add timeout to settings response
+            "activeBrand": active_brand,  # Active brand for frontend branding
         }
 
     @log_method_call

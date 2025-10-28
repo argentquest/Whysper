@@ -1,4 +1,5 @@
 import { theme } from 'antd';
+import { DefaultLightTheme, DefaultDarkTheme, BrandColors } from 'branding';
 
 // Base theme configuration
 const baseTheme = {
@@ -21,30 +22,15 @@ const baseTheme = {
 
 // Theme definitions with Pro-inspired designs
 export const themes = {
-  // Default Ant Design themes
+  // Default Branded Themes (dynamically loaded from branding folder)
   light: {
     name: 'Light',
     algorithm: theme.defaultAlgorithm,
     token: {
-      ...baseTheme.token,
-      colorPrimary: '#1890ff',
-      colorSuccess: '#52c41a',
-      colorWarning: '#faad14',
-      colorError: '#ff4d4f',
-      colorInfo: '#1890ff',
+      ...DefaultLightTheme.token,
     },
     components: {
-      ...baseTheme.components,
-      Layout: {
-        bodyBg: '#ffffff',
-        siderBg: '#ffffff',
-        headerBg: '#ffffff',
-      },
-      Menu: {
-        itemBg: 'transparent',
-        itemSelectedBg: '#e6f7ff',
-        itemHoverBg: '#f5f5f5',
-      },
+      ...DefaultLightTheme.components,
     },
   },
 
@@ -52,36 +38,21 @@ export const themes = {
     name: 'Dark',
     algorithm: theme.darkAlgorithm,
     token: {
-      ...baseTheme.token,
-      colorPrimary: '#1890ff',
-      colorSuccess: '#52c41a',
-      colorWarning: '#faad14',
-      colorError: '#ff4d4f',
-      colorInfo: '#1890ff',
+      ...DefaultDarkTheme.token,
     },
     components: {
-      ...baseTheme.components,
-      Layout: {
-        bodyBg: '#141414',
-        siderBg: '#1f1f1f',
-        headerBg: '#1f1f1f',
-      },
-      Menu: {
-        itemBg: 'transparent',
-        itemSelectedBg: '#111b26',
-        itemHoverBg: '#262626',
-      },
+      ...DefaultDarkTheme.components,
     },
   },
 
-  // Pro-inspired themes
+  // Pro-inspired themes (Branded variant)
   proBlue: {
-    name: 'Pro Blue',
+    name: 'Pro',
     algorithm: theme.defaultAlgorithm,
     token: {
       borderRadius: 12,
       wireframe: false,
-      colorPrimary: '#667eea',
+      colorPrimary: BrandColors.primary,
       colorSuccess: '#10b981',
       colorWarning: '#f59e0b',
       colorError: '#ef4444',
@@ -148,8 +119,8 @@ export const themes = {
         borderRadius: 8,
         cardBg: '#ffffff',
         itemColor: '#64748b',
-        itemSelectedColor: '#667eea',
-        itemHoverColor: '#667eea',
+        itemSelectedColor: BrandColors.primary,
+        itemHoverColor: BrandColors.primary,
       },
     },
   },
@@ -265,11 +236,11 @@ export const themes = {
     algorithm: theme.defaultAlgorithm,
     token: {
       ...baseTheme.token,
-      colorPrimary: '#f5222d',
+      colorPrimary: BrandColors.primary,
       colorSuccess: '#52c41a',
-      colorWarning: '#faad14',
-      colorError: '#ff4d4f',
-      colorInfo: '#f5222d',
+      colorWarning: BrandColors.secondary,
+      colorError: BrandColors.primary,
+      colorInfo: BrandColors.primary,
     },
     components: {
       ...baseTheme.components,
@@ -313,21 +284,21 @@ export const themes = {
     },
   },
 
-  // Modern gradient theme with beautiful backgrounds
+  // Modern gradient theme with brand colors
   modernGradient: {
     name: 'Modern Gradient',
     algorithm: theme.defaultAlgorithm,
     token: {
       borderRadius: 16,
       wireframe: false,
-      colorPrimary: '#6366f1',
+      colorPrimary: BrandColors.primary,
       colorSuccess: '#10b981',
       colorWarning: '#f59e0b',
       colorError: '#ef4444',
       colorInfo: '#6366f1',
       colorBgContainer: '#ffffff',
       colorBgElevated: '#ffffff',
-      colorBgLayout: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      colorBgLayout: BrandColors.gradients.primary,
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
       fontSize: 14,
       lineHeight: 1.6,
@@ -347,8 +318,8 @@ export const themes = {
       },
       Menu: {
         itemBg: 'transparent',
-        itemSelectedBg: 'rgba(99, 102, 241, 0.1)',
-        itemHoverBg: 'rgba(99, 102, 241, 0.05)',
+        itemSelectedBg: 'rgba(179, 30, 48, 0.1)',
+        itemHoverBg: 'rgba(179, 30, 48, 0.05)',
         itemBorderRadius: 12,
       },
       Button: {
@@ -390,9 +361,9 @@ export const themes = {
         borderRadius: 12,
         cardBg: 'rgba(255, 255, 255, 0.95)',
         itemColor: '#64748b',
-        itemSelectedColor: '#6366f1',
-        itemHoverColor: '#6366f1',
-        inkBarColor: '#6366f1',
+        itemSelectedColor: BrandColors.primary,
+        itemHoverColor: BrandColors.primary,
+        inkBarColor: BrandColors.primary,
       },
     },
   },
@@ -404,7 +375,7 @@ export const themes = {
     token: {
       borderRadius: 16,
       wireframe: false,
-      colorPrimary: '#818cf8',
+      colorPrimary: BrandColors.secondary,
       colorSuccess: '#34d399',
       colorWarning: '#fbbf24',
       colorError: '#f87171',
@@ -431,8 +402,8 @@ export const themes = {
       },
       Menu: {
         itemBg: 'transparent',
-        itemSelectedBg: 'rgba(129, 140, 248, 0.2)',
-        itemHoverBg: 'rgba(129, 140, 248, 0.1)',
+        itemSelectedBg: 'rgba(255, 204, 2, 0.2)',
+        itemHoverBg: 'rgba(255, 204, 2, 0.1)',
         itemBorderRadius: 12,
       },
       Button: {
@@ -472,9 +443,9 @@ export const themes = {
         borderRadius: 12,
         cardBg: 'rgba(30, 41, 59, 0.95)',
         itemColor: '#94a3b8',
-        itemSelectedColor: '#818cf8',
-        itemHoverColor: '#818cf8',
-        inkBarColor: '#818cf8',
+        itemSelectedColor: BrandColors.secondary,
+        itemHoverColor: BrandColors.secondary,
+        inkBarColor: BrandColors.secondary,
       },
     },
   },

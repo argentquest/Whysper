@@ -5,3 +5,9 @@
 # Change this to match your backend API_PORT setting in backend/.env
 # Default: 8001
 VITE_BACKEND_PORT=8003
+
+# Active Brand Configuration
+# Set to the folder name in frontend/branding/ to use for branding
+# Options: WF (Wells Fargo), or create your own brand folder
+# Default: WF
+VITE_BRAND=WF
