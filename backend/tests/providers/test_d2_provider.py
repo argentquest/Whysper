@@ -3,6 +3,13 @@ Tests for D2 diagram provider rendering.
 """
 
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# Import from root conftest
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from conftest import save_svg_artifact
 
 
 class TestD2RenderingBasic:
@@ -27,6 +34,9 @@ class TestD2RenderingBasic:
         assert "provider_id" in data
         assert data["provider_id"] == "d2v1"
 
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_simple_diagram", "d2", data["content"], data["provider_id"])
+
     def test_render_complex_diagram(self, client, d2_code_complex):
         """Test rendering a complex D2 diagram with styling."""
         payload = {
@@ -41,6 +51,9 @@ class TestD2RenderingBasic:
         data = response.json()
         assert data["success"] is True
         assert "<svg" in data["content"]
+
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_complex_diagram", "d2", data["content"], data["provider_id"])
 
     def test_render_with_auto_fix(self, client, d2_code_simple):
         """Test rendering with auto-fix enabled."""
@@ -57,6 +70,9 @@ class TestD2RenderingBasic:
         data = response.json()
         assert data["success"] is True
 
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_with_auto_fix", "d2", data["content"], data["provider_id"])
+
     def test_render_response_format(self, client, d2_code_simple):
         """Test that response has all required fields."""
         payload = {
@@ -72,6 +88,9 @@ class TestD2RenderingBasic:
         assert "success" in data
         assert "content" in data
         assert "provider_id" in data
+
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_response_format", "d2", data["content"], data["provider_id"])
         assert "metadata" in data
         assert "render_time" in data["metadata"]
 

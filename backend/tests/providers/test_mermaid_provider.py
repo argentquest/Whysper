@@ -3,6 +3,13 @@ Tests for Mermaid diagram provider rendering.
 """
 
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# Import from root conftest
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from conftest import save_svg_artifact
 
 
 class TestMermaidRenderingBasic:
@@ -27,6 +34,9 @@ class TestMermaidRenderingBasic:
         assert "provider_id" in data
         assert data["provider_id"] == "mermaidv1"
 
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_simple_flowchart", "mermaid", data["content"], data["provider_id"])
+
     def test_render_complex_flowchart(self, client, mermaid_code_complex):
         """Test rendering a complex flowchart."""
         payload = {
@@ -41,6 +51,9 @@ class TestMermaidRenderingBasic:
         data = response.json()
         assert data["success"] is True
         assert "<svg" in data["content"]
+
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_complex_flowchart", "mermaid", data["content"], data["provider_id"])
 
     def test_render_with_auto_fix(self, client, mermaid_code_simple):
         """Test rendering with auto-fix enabled."""
@@ -57,6 +70,9 @@ class TestMermaidRenderingBasic:
         data = response.json()
         assert data["success"] is True
 
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_with_auto_fix", "mermaid", data["content"], data["provider_id"])
+
     def test_render_response_format(self, client, mermaid_code_simple):
         """Test that response has all required fields."""
         payload = {
@@ -72,6 +88,9 @@ class TestMermaidRenderingBasic:
         assert "success" in data
         assert "content" in data
         assert "provider_id" in data
+
+        # Save SVG artifact for inspection
+        save_svg_artifact("test_render_response_format", "mermaid", data["content"], data["provider_id"])
         assert "metadata" in data
         assert "render_time" in data["metadata"]
 

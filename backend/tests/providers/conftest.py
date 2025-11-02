@@ -6,15 +6,43 @@ import sys
 import os
 import pytest
 from fastapi.testclient import TestClient
+from pathlib import Path
 
 # Import app - paths are already set up by root conftest.py
 from app.main import app
+
+
+# Create output directory for test artifacts
+ARTIFACTS_DIR = Path(__file__).parent.parent / "providers_test_artifacts"
+ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture
 def client():
     """FastAPI test client."""
     return TestClient(app)
+
+
+@pytest.fixture
+def svg_output_dir():
+    """Directory for storing generated SVG files during tests."""
+    return ARTIFACTS_DIR
+
+
+def save_svg_artifact(test_name: str, diagram_type: str, content: str, provider_id: str):
+    """Save SVG content to file for inspection."""
+    if not content or "<svg" not in content:
+        return None
+
+    filename = f"{test_name}_{diagram_type}_{provider_id}.svg"
+    filepath = ARTIFACTS_DIR / filename
+
+    try:
+        filepath.write_text(content)
+        return str(filepath)
+    except Exception as e:
+        print(f"Warning: Could not save SVG artifact: {e}")
+        return None
 
 
 @pytest.fixture
