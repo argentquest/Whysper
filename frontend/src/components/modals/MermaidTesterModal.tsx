@@ -23,7 +23,8 @@ interface ValidationResult {
 
 interface RenderResult {
   success: boolean;
-  svg_content: string | null;
+  content: string | null;
+  svg_content?: string | null; // Legacy support
   validation: {
     is_valid: boolean;
     error: string | null;
@@ -34,6 +35,7 @@ interface RenderResult {
     timestamp: string;
   };
   error: string | null;
+  output_format: string;
 }
 
 const TEST_CASES = {
@@ -126,9 +128,9 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
 
   const checkServerStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8003/api/v1/mermaid/health');
+      const response = await fetch('http://localhost:8003/api/v1/diagrams/v2/health');
       const data = await response.json();
-      setServerStatus({ status: data.status, available: data.mermaid_available });
+      setServerStatus({ status: data.status, available: data.available_providers > 0 });
     } catch (error) {
       setServerStatus({ status: 'offline', available: false });
     }
@@ -152,10 +154,15 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
     setValidationResult(null);
 
     try {
-      const response = await fetch('http://localhost:8003/api/v1/mermaid/validate', {
+      const response = await fetch('http://localhost:8003/api/v1/diagrams/v2/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: mermaidCode, auto_fix: autoFix }),
+        body: JSON.stringify({
+          code: mermaidCode,
+          diagram_type: 'mermaid',
+          auto_fix: autoFix,
+          use_llm: false
+        }),
       });
 
       const data: ValidationResult = await response.json();
@@ -184,12 +191,12 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
     setRenderResult(null);
 
     try {
-      const response = await fetch('http://localhost:8003/api/v1/mermaid/render', {
+      const response = await fetch('http://localhost:8003/api/v1/diagrams/v2/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: mermaidCode,
-          return_svg: true,
+          diagram_type: 'mermaid',
           output_format: 'svg',
         }),
       });
@@ -392,9 +399,9 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
                 overflow: 'auto',
               }}
             >
-              {renderResult?.success && renderResult.svg_content ? (
+              {renderResult?.success && (renderResult.content || renderResult.svg_content) ? (
                 <div
-                  dangerouslySetInnerHTML={{ __html: renderResult.svg_content }}
+                  dangerouslySetInnerHTML={{ __html: renderResult.content || renderResult.svg_content || '' }}
                   style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 />
               ) : renderResult?.error ? (

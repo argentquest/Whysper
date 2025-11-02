@@ -1,13 +1,13 @@
 /**
- * D2 Diagram Component using Backend API
- * Renders D2 diagrams using the backend CLI service instead of client-side JavaScript
+ * D2 Diagram Component using Backend Provider Service
+ * Renders D2 diagrams using the unified diagram provider service
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Space, Tag, Spin, Alert, Collapse, Typography } from 'antd';
+import { Card, Button, Space, Tag, Spin, Alert, Collapse, Typography, message as antMessage } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import d2Api from '../../services/d2Api';
-import type { D2RenderResponse } from '../../services/d2Api';
+import diagramProviderService from '../../services/diagramProviderService';
+import type { DiagramRenderResponse, ProviderInfo } from '../../services/diagramProviderService';
 
 const { Text } = Typography;
 const { Panel } = Collapse;
@@ -29,9 +29,24 @@ export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [renderResult, setRenderResult] = useState<D2RenderResponse | null>(null);
+  const [renderResult, setRenderResult] = useState<DiagramRenderResponse | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
+  const [providerInfo, setProviderInfo] = useState<ProviderInfo | null>(null);
+
+  // Get provider info on mount
+  useEffect(() => {
+    const fetchProviderInfo = async () => {
+      try {
+        const info = await diagramProviderService.getProviderInfo('d2');
+        setProviderInfo(info);
+        console.log('🎯 [D2 DIAGRAM] Provider info loaded:', info.provider_name);
+      } catch (err) {
+        console.warn('🎯 [D2 DIAGRAM] Failed to get provider info:', err);
+      }
+    };
+    fetchProviderInfo();
+  }, []);
 
   useEffect(() => {
     if (code) {
@@ -56,54 +71,79 @@ export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
 
   const renderDiagram = async () => {
     if (!code || !containerRef.current) {
-      console.log('[D2 BACKEND] Skipping render - no container or code');
+      console.log('🎯 [D2 DIAGRAM] Skipping render - no container or code');
       return;
     }
 
-    console.log('[D2 BACKEND] Starting D2 diagram render via backend API');
+    console.log('🎯 [D2 DIAGRAM] Starting D2 diagram render via provider service', {
+      codeLength: code.length,
+      provider: providerInfo?.provider_id || 'd2v1'
+    });
+
     setIsLoading(true);
     setError('');
     setRenderResult(null);
 
     try {
-      // Basic check first - backend handles actual validation
-      const basicCheck = d2Api.basicCheck(code);
-      if (!basicCheck.isValid) {
-        const errorMsg = `Basic check failed:\n${basicCheck.errors.join('\n')}`;
-        console.warn('[D2 BACKEND] Basic check failed:', basicCheck.errors);
-        setError(errorMsg);
-        setIsLoading(false);
-        if (onRenderComplete) onRenderComplete(false);
-        return;
-      }
+      // Validate using provider service (with auto-fix)
+      console.log('🎯 [D2 DIAGRAM] Validating D2 code via provider...');
+      const validationResponse = await diagramProviderService.validate({
+        code,
+        diagram_type: 'd2',
+        auto_fix: true
+      });
 
-      // Render via backend API
-      const result = await d2Api.quickRender(code);
+      console.log('🎯 [D2 DIAGRAM] Validation result:', {
+        is_valid: validationResponse.is_valid,
+        auto_fixed: validationResponse.auto_fixed,
+        llm_corrected: validationResponse.llm_corrected
+      });
+
+      // Use fixed code if available, otherwise use original
+      const codeToRender = validationResponse.fixed_code || code;
+
+      // Render using backend provider
+      console.log('🎯 [D2 DIAGRAM] Rendering via backend provider...');
+      const result = await diagramProviderService.render({
+        code: codeToRender,
+        diagram_type: 'd2',
+        output_format: 'svg'
+      });
+
       setRenderResult(result);
 
-      if (result.success && result.svg_content) {
-        setSvg(result.svg_content);
-        
+      if (result.success && result.content) {
+        setSvg(result.content);
+
         // Insert SVG into DOM
         if (containerRef.current) {
-          containerRef.current.innerHTML = result.svg_content;
+          containerRef.current.innerHTML = result.content;
         }
-        
-        console.log('[D2 BACKEND] SVG rendered successfully via backend', {
+
+        console.log('🎯 [D2 DIAGRAM] SVG rendered successfully via provider', {
+          provider: result.metadata.provider_id,
           renderTime: result.metadata.render_time,
-          codeLength: result.metadata.code_length
+          svgLength: result.content.length
         });
-        
-        if (onRenderComplete) onRenderComplete(true, result.svg_content);
+
+        // Show notification if auto-fixed
+        if (validationResponse.auto_fixed) {
+          antMessage.success(
+            `D2 diagram rendered successfully (${validationResponse.correction_method})`,
+            4
+          );
+        }
+
+        if (onRenderComplete) onRenderComplete(true, result.content);
       } else {
         const errorMsg = result.error || 'Unknown error occurred during rendering';
         setError(errorMsg);
-        console.error('[D2 BACKEND] Backend rendering failed:', errorMsg);
+        console.error('🎯 [D2 DIAGRAM] Provider rendering failed:', errorMsg);
         if (onRenderComplete) onRenderComplete(false);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to render D2 diagram via backend';
-      console.error('[D2 BACKEND] Rendering error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to render D2 diagram';
+      console.error('🎯 [D2 DIAGRAM] Rendering error:', err);
       setError(errorMessage);
       if (onRenderComplete) onRenderComplete(false);
     } finally {
@@ -114,13 +154,10 @@ export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
   const handleCopySVG = async () => {
     try {
       await navigator.clipboard.writeText(svg);
-      // Use Ant Design message instead of window.alert
-      const { message } = await import('antd');
-      message.success('SVG copied to clipboard');
+      antMessage.success('SVG copied to clipboard');
     } catch (err) {
       console.error('Failed to copy SVG:', err);
-      const { message } = await import('antd');
-      message.error('Failed to copy SVG');
+      antMessage.error('Failed to copy SVG');
     }
   };
 
@@ -168,15 +205,15 @@ export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
       title={
         <Space>
           {title}
-          {renderResult?.validation.is_valid && (
-            <Tag color="green" icon={<CheckCircleOutlined />}>
-              Valid D2
-            </Tag>
-          )}
-          {renderResult?.metadata.render_time && (
-            <Tag color="blue">
-              {renderResult.metadata.render_time.toFixed(2)}s
-            </Tag>
+          {renderResult && renderResult.success && (
+            <>
+              <Tag color="green" icon={<CheckCircleOutlined />}>
+                {renderResult.metadata.provider_name}
+              </Tag>
+              <Tag color="blue">
+                {renderResult.metadata.render_time?.toFixed(0)}ms
+              </Tag>
+            </>
           )}
         </Space>
       }

@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
-import { Card, Button, Space, message as antMessage, Tooltip } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { Card, Button, Space, message as antMessage, Tooltip, Tag } from 'antd';
+import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { ApiService } from '../../services/api';
 import { validateAndCorrectMermaidSyntax, looksLikeValidMermaid } from '../../utils/mermaidSyntaxValidator';
+import diagramProviderService from '../../services/diagramProviderService';
+import type { ProviderInfo, DiagramRenderResponse } from '../../services/diagramProviderService';
 
 interface MermaidDiagramProps {
   code: string;
@@ -41,6 +43,22 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
   const [pan, setPan] = useState({ x: 0, y: 0 }); // Pan position
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  const [providerInfo, setProviderInfo] = useState<ProviderInfo | null>(null);
+  const [renderResult, setRenderResult] = useState<DiagramRenderResponse | null>(null);
+
+  // Get provider info on mount
+  useEffect(() => {
+    const fetchProviderInfo = async () => {
+      try {
+        const info = await diagramProviderService.getProviderInfo('mermaid');
+        setProviderInfo(info);
+        console.log('🎨 [MERMAID DIAGRAM] Provider info loaded:', info.provider_name);
+      } catch (err) {
+        console.warn('🎨 [MERMAID DIAGRAM] Failed to get provider info:', err);
+      }
+    };
+    fetchProviderInfo();
+  }, []);
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -49,129 +67,105 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
         return;
       }
 
-      console.log('🎨 [MERMAID DIAGRAM] Starting Mermaid diagram render', {
+      console.log('🎨 [MERMAID DIAGRAM] Starting Mermaid diagram render via provider', {
         codeLength: code.length,
         codePreview: code.substring(0, 50) + '...',
-        hasContainer: !!containerRef.current
+        provider: providerInfo?.provider_id || 'mermaidv1'
       });
+
       // Log render start to backend
       ApiService.logDiagramEvent({
         event_type: 'render_start',
         diagram_type: 'mermaid',
         code_length: code.length,
-        code_preview: code.substring(0, 100)
+        code_preview: code.substring(0, 100),
+        provider: providerInfo?.provider_id || 'mermaidv1'
       });
+
       setIsRendering(true);
       setError(null);
 
       try {
-        // Validate and correct Mermaid syntax
-        console.log('🔧 [MERMAID DIAGRAM] Validating and correcting Mermaid syntax...');
-        const validation = validateAndCorrectMermaidSyntax(code);
-        setValidationResult(validation);
-        
-        if (!validation.isValid) {
-          console.warn('⚠️ [MERMAID DIAGRAM] Syntax validation failed, but attempting to render with corrections');
-          console.warn('⚠️ [MERMAID DIAGRAM] Validation errors:', validation.errors);
-        }
-        
-        if (validation.corrections.length > 0) {
-          console.log('✅ [MERMAID DIAGRAM] Applied syntax corrections:', validation.corrections);
-        }
-        
-        if (validation.warnings.length > 0) {
-          console.log('⚠️ [MERMAID DIAGRAM] Potential issues:', validation.warnings);
-        }
-        
-        const codeToRender = validation.correctedCode;
-        
-        // Quick validation to check if the corrected code looks reasonable
-        if (!looksLikeValidMermaid(codeToRender)) {
-          throw new Error(
-            `Mermaid syntax validation failed. The code appears to be invalid Mermaid syntax.\n\n` +
-            `Validation errors:\n${validation.errors.join('\n')}\n\n` +
-            `Corrections attempted:\n${validation.corrections.join('\n')}\n\n` +
-            `Please check the Mermaid code and ensure it follows proper Mermaid syntax.`
-          );
-        }
+        // Validate using provider service (with auto-fix)
+        console.log('🔧 [MERMAID DIAGRAM] Validating via provider service...');
+        const validationResponse = await diagramProviderService.validate({
+          code,
+          diagram_type: 'mermaid',
+          auto_fix: true
+        });
 
-        // Pre-validate: Use Mermaid's parse function to check if the syntax is valid
-        // This prevents rendering invalid diagrams that would throw errors
+        console.log('🎨 [MERMAID DIAGRAM] Validation result:', {
+          is_valid: validationResponse.is_valid,
+          auto_fixed: validationResponse.auto_fixed,
+          llm_corrected: validationResponse.llm_corrected
+        });
+
+        // Use fixed code if available, otherwise use original
+        const codeToRender = validationResponse.fixed_code || code;
+
+        // Still do client-side parse check as fallback
         try {
           await mermaid.parse(codeToRender);
-          setIsValid(true); // Mark as valid
-          console.log('🎨 [MERMAID DIAGRAM] Syntax validation passed');
+          setIsValid(true);
+          console.log('🎨 [MERMAID DIAGRAM] Client-side parse validation passed');
         } catch (parseError) {
-          // If parse fails, this is not valid Mermaid syntax - fail silently
-          console.warn('⚠️ [MERMAID DIAGRAM] Parse failed (invalid syntax, skipping render):', parseError);
-          console.error('🔍 [MERMAID DEBUG] Parse error details:', {
-            error: parseError,
-            errorMessage: parseError instanceof Error ? parseError.message : 'Unknown error',
-            originalCode: code,
-            correctedCode: codeToRender,
-            corrections: validation.corrections,
-            validationErrors: validation.errors,
-            codeLines: codeToRender.split('\n').map((line, idx) => `${idx + 1}: ${line}`)
-          });
-          setIsValid(false); // Mark as invalid
-          setIsRendering(false);
-          return; // Don't render, don't show error - just skip it
+          // If client-side parse fails, still try with backend rendering
+          console.warn('⚠️ [MERMAID DIAGRAM] Client-side parse failed, attempting backend render:', parseError);
         }
 
-        // Generate unique ID for this diagram
-        const id = `mermaid-${Math.random().toString(36).substring(2, 11)}`;
-        console.log('🎨 [MERMAID DIAGRAM] Rendering with ID:', id);
-
-        // Render the diagram (only if parse succeeded)
-        const { svg } = await mermaid.render(id, codeToRender);
-        console.log('🎨 [MERMAID DIAGRAM] SVG rendered successfully', {
-          svgLength: svg.length
-        });
-
-        // Store SVG content for export
-        setSvgContent(svg);
-
-
-
-        // Show notification if corrections were applied
-        if (validation.corrections.length > 0) {
-          antMessage.success(
-            `Mermaid diagram rendered successfully with ${validation.corrections.length} syntax correction(s)`,
-            4
-          );
-        }
-
-        // Show warnings if any
-        if (validation.warnings.length > 0) {
-          console.warn('⚠️ [MERMAID DIAGRAM] Rendering completed with warnings:', validation.warnings);
-        }
-
-        // Log render success to backend
-        ApiService.logDiagramEvent({
-          event_type: 'render_success',
+        // Render using backend provider (which will use mermaid.js CLI or similar)
+        console.log('🎨 [MERMAID DIAGRAM] Rendering via backend provider...');
+        const renderResponse = await diagramProviderService.render({
+          code: codeToRender,
           diagram_type: 'mermaid',
-          code_length: code.length,
-          detection_method: `syntax_validation_fix`
+          output_format: 'svg'
         });
+
+        setRenderResult(renderResponse);
+
+        if (renderResponse.success && renderResponse.content) {
+          setSvgContent(renderResponse.content);
+          setIsValid(true);
+
+          console.log('🎨 [MERMAID DIAGRAM] SVG rendered successfully via provider', {
+            provider: renderResponse.metadata.provider_id,
+            renderTime: renderResponse.metadata.render_time,
+            svgLength: renderResponse.content.length
+          });
+
+          // Show notification if auto-fixed
+          if (validationResponse.auto_fixed) {
+            antMessage.success(
+              `Mermaid diagram rendered successfully (${validationResponse.correction_method})`,
+              4
+            );
+          }
+
+          // Log render success to backend
+          ApiService.logDiagramEvent({
+            event_type: 'render_success',
+            diagram_type: 'mermaid',
+            code_length: code.length,
+            provider: renderResponse.metadata.provider_id,
+            render_time: renderResponse.metadata.render_time
+          });
+        } else {
+          const errorMsg = renderResponse.error || 'Rendering failed';
+          setError(errorMsg);
+          setIsValid(false);
+
+          ApiService.logDiagramEvent({
+            event_type: 'render_error',
+            diagram_type: 'mermaid',
+            error_message: errorMsg,
+            code_length: code.length
+          });
+        }
       } catch (err) {
         let errorMessage = err instanceof Error ? err.message : 'Failed to render diagram';
 
-        // Provide more helpful error messages
-        if (errorMessage.includes('Parse error') || errorMessage.includes('syntax')) {
-          errorMessage = `Mermaid syntax error: ${errorMessage}\n\n` +
-            `Common issues:\n` +
-            `- Missing diagram type declaration (e.g., "graph TD", "sequenceDiagram")\n` +
-            `- Incorrect arrow syntax (check Mermaid documentation)\n` +
-            `- Invalid node definitions or labels\n` +
-            `- Missing quotes around special characters\n\n` +
-            `Please check the Mermaid code below for these issues.`;
-        } else if (errorMessage.includes('Lexical error')) {
-          errorMessage = `Mermaid lexical error: ${errorMessage}\n\n` +
-            `This usually means there are unexpected characters in your diagram code. ` +
-            `Check for typos or invalid syntax.`;
-        }
-
         setError(errorMessage);
+        setIsValid(false);
         console.error('❌ [MERMAID DIAGRAM] Rendering error:', err);
 
         // Log render error to backend
@@ -213,14 +207,13 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
 
   const handleCopy = async () => {
     try {
-      const codeToCopy = validationResult?.correctedCode || code;
+      // Try to copy the fixed/rendered code if available
+      const codeToCopy = renderResult?.metadata?.code_length
+        ? svgContent || code
+        : code;
       await navigator.clipboard.writeText(codeToCopy);
-      
-      if (validationResult && validationResult.corrections.length > 0) {
-        antMessage.success(`Mermaid diagram code copied to clipboard (${validationResult.corrections.length} corrections applied)`);
-      } else {
-        antMessage.success('Mermaid diagram code copied to clipboard');
-      }
+
+      antMessage.success('Mermaid diagram code copied to clipboard');
     } catch (err) {
       antMessage.error('Failed to copy code');
     }
@@ -338,7 +331,21 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
 
   return (
     <Card
-      title={title || 'Mermaid Diagram'}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>{title || 'Mermaid Diagram'}</span>
+          {renderResult && (
+            <>
+              <Tag icon={<CheckCircleOutlined />} color="green">
+                {renderResult.metadata.provider_name}
+              </Tag>
+              <Tag>
+                {renderResult.metadata.render_time?.toFixed(0)}ms
+              </Tag>
+            </>
+          )}
+        </div>
+      }
       size="small"
       style={{ marginTop: 16 }}
       extra={
