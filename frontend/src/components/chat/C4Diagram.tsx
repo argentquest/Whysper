@@ -3,7 +3,7 @@ import { Card, Button, Space, message as antMessage, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, CodeOutlined } from '@ant-design/icons';
 import { ApiService } from '../../services/api';
 import { convertC4ToD2, simpleC4ToD2, extractC4Level } from '../../utils/c4ToD2';
-import d2Api from '../../services/d2Api';
+import diagramProviderService from '../../services/diagramProviderService';
 
 /**
  * C4 Diagram Component
@@ -101,23 +101,29 @@ export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
           );
         }
 
-        // Render D2 code using backend API (server-side rendering via D2 CLI)
-        console.log('🏗️ [C4 DIAGRAM] Sending D2 code to backend for rendering...');
+        // Render D2 code using new provider service
+        console.log('🏗️ [C4 DIAGRAM] Sending D2 code to backend for rendering via provider service...');
 
         let svg: string;
         try {
-          const renderResponse = await d2Api.renderD2({ code: convertedD2 });
+          const renderResponse = await diagramProviderService.render({
+            code: convertedD2,
+            diagram_type: 'd2',
+            output_format: 'svg'
+          });
 
-          if (!renderResponse.success || !renderResponse.svg_content) {
+          if (!renderResponse.success || !renderResponse.content) {
             throw new Error(
               renderResponse.error ||
               'Backend D2 rendering failed - no SVG content returned'
             );
           }
 
-          svg = renderResponse.svg_content;
-          console.log('🏗️ [C4 DIAGRAM] Backend rendering successful', {
-            svgLength: svg.length
+          svg = renderResponse.content;
+          console.log('🏗️ [C4 DIAGRAM] Backend rendering successful via D2 provider', {
+            svgLength: svg.length,
+            provider: renderResponse.provider_id,
+            renderTime: renderResponse.metadata.render_time
           });
         } catch (renderError) {
           throw new Error(

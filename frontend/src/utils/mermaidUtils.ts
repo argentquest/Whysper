@@ -139,27 +139,6 @@ export const prepareMermaidCode = (code: string): string => {
 };
 
 /**
- * Validate if a string contains valid Mermaid diagram syntax
- * Performs basic validation before attempting to render
- */
-export const isValidMermaidDiagram = (code: string): boolean => {
-  if (!code || typeof code !== 'string') {
-    return false;
-  }
-
-  const trimmed = code.trim();
-
-  // Must have content
-  if (trimmed.length === 0) {
-    return false;
-  }
-
-  // Should start with a Mermaid keyword or contain one near the beginning
-  const firstLines = trimmed.split('\n').slice(0, 3).join('\n');
-  return isMermaidSyntax(firstLines);
-};
-
-/**
  * Get the diagram type from Mermaid code
  * Returns the detected diagram type or 'unknown'
  */
@@ -267,26 +246,6 @@ export const prepareD2Code = (code: string): string => {
   prepared = textarea.value;
 
   return prepared;
-};
-
-/**
- * Validate if a string contains valid D2 diagram syntax
- * Performs basic validation before attempting to render
- */
-export const isValidD2Diagram = (code: string): boolean => {
-  if (!code || typeof code !== 'string') {
-    return false;
-  }
-
-  const trimmed = code.trim();
-
-  // Must have content
-  if (trimmed.length === 0) {
-    return false;
-  }
-
-  // Should contain D2 syntax patterns
-  return isD2Syntax(trimmed);
 };
 
 // ============================================================================
@@ -510,13 +469,13 @@ export const extractDiagramCandidates = (htmlContent: string): Array<{
     // Look for paragraph content that might be diagram code
     if (text.trim().length > 20) { // Reasonable minimum length
       let type: 'mermaid' | 'd2' | 'unknown' = 'unknown';
-      
-      if (isMermaidSyntaxLenient(text)) {
+
+      if (isMermaidSyntax(text)) {
         type = 'mermaid';
-      } else if (isD2SyntaxLenient(text)) {
+      } else if (isD2Syntax(text)) {
         type = 'd2';
       }
-      
+
       if (type !== 'unknown') {
         candidates.push({
           code: decodeMermaidCode(text),
@@ -528,145 +487,6 @@ export const extractDiagramCandidates = (htmlContent: string): Array<{
   });
 
   return candidates;
-};
-
-/**
- * Very lenient Mermaid syntax detection for plain text content
- * Catches more potential diagrams with lower confidence threshold
- *
- * IMPORTANT: This uses stricter patterns than before to avoid false positives
- * Only triggers when there's strong evidence of diagram syntax
- */
-export const isMermaidSyntaxLenient = (code: string): boolean => {
-  if (!code || typeof code !== 'string') {
-    return false;
-  }
-
-  const text = code.trim();
-  const textLower = text.toLowerCase();
-
-  // FIRST: Check for explicit Mermaid keywords (highest confidence)
-  // These are very specific and unlikely to appear in regular text
-  const hasExplicitKeyword = MERMAID_KEYWORDS.some(keyword => {
-    const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'i');
-    return regex.test(textLower);
-  });
-
-  if (hasExplicitKeyword) {
-    return true; // If we find an explicit keyword, it's very likely a diagram
-  }
-
-  // SECOND: Check for strict Mermaid-specific patterns
-  // These patterns are unique to Mermaid and unlikely to appear in prose
-  const strictPatterns = [
-    // Mermaid arrow syntax (specific formats)
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*-->\s*[a-zA-Z_][a-zA-Z0-9_]*\s*$/m,  // a --> b (on its own line)
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*->>?\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:/m, // sequence diagram: a ->> b:
-
-    // State diagram markers
-    /\[\*\]\s*-->/,   // [*] --> (state start)
-    /-->\s*\[\*\]/,   // --> [*] (state end)
-
-    // Subgraph syntax
-    /subgraph\s+["']?[\w\s]+["']?\s*$/m,
-
-    // Participant declarations (sequence diagrams)
-    /^\s*participant\s+[a-zA-Z_]/m,
-
-    // Class diagram syntax
-    /^\s*class\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\{/m,
-
-    // Graph direction declarations
-    /^\s*graph\s+(TD|TB|BT|RL|LR)\s*$/m,
-    /^\s*flowchart\s+(TD|TB|BT|RL|LR)\s*$/m,
-
-    // Multiple Mermaid arrows on separate lines (strong indicator)
-    /-->\s*$.*\n.*-->\s*$/ms,
-  ];
-
-  // Count strict pattern matches
-  const strictMatches = strictPatterns.filter(pattern => pattern.test(text));
-
-  // Need at least 2 strict pattern matches, OR
-  // 1 strict match + multiple lines that look like diagram syntax
-  if (strictMatches.length >= 2) {
-    return true;
-  }
-
-  if (strictMatches.length === 1) {
-    // Check if we have multiple lines with arrow-like patterns
-    const lines = text.split('\n').filter(line => line.trim().length > 0);
-    const arrowLines = lines.filter(line =>
-      /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*(-->|->|---|==|\.\.)/m.test(line)
-    );
-
-    // If we have 1 strict match and multiple arrow lines, likely a diagram
-    if (arrowLines.length >= 2) {
-      return true;
-    }
-  }
-
-  // Default: not confident this is a Mermaid diagram
-  return false;
-};
-
-/**
- * Very lenient D2 syntax detection for plain text content
- * Catches more potential diagrams with lower confidence threshold
- *
- * IMPORTANT: This uses stricter patterns than before to avoid false positives
- * Only triggers when there's strong evidence of D2 diagram syntax
- */
-export const isD2SyntaxLenient = (code: string): boolean => {
-  if (!code || typeof code !== 'string') {
-    return false;
-  }
-
-  const text = code.trim();
-
-  // FIRST: Check for strict D2-specific patterns
-  // These patterns are unique to D2 and unlikely to appear in prose
-  const strictPatterns = [
-    // D2 arrow connections (on their own lines)
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*-+>\s*[a-zA-Z_][a-zA-Z0-9_]*\s*$/m,
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*<-+>\s*[a-zA-Z_][a-zA-Z0-9_]*\s*$/m,
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*<-+\s*[a-zA-Z_][a-zA-Z0-9_]*\s*$/m,
-
-    // D2 property assignments (must be on own line)
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\.shape\s*:\s*/m,
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\.style\./m,
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\.label\s*:\s*/m,
-
-    // D2 blocks
-    /^\s*layers\s*\{/m,
-    /^\s*scenarios\s*\{/m,
-    /^\s*direction\s*:\s*(up|down|right|left)/m,
-
-    // D2 labeled elements (specific format)
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*["'][^"']+["']\s*$/m,
-  ];
-
-  // Count strict pattern matches
-  const strictMatches = strictPatterns.filter(pattern => pattern.test(text));
-
-  // Need at least 2 strict pattern matches for confidence
-  if (strictMatches.length >= 2) {
-    return true;
-  }
-
-  // Alternative: Check for multiple D2 arrows on separate lines (strong indicator)
-  const lines = text.split('\n').filter(line => line.trim().length > 0);
-  const arrowLines = lines.filter(line =>
-    /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*(-+>|<-+>|<-+)\s*[a-zA-Z_][a-zA-Z0-9_]*/.test(line)
-  );
-
-  // If we have multiple arrow lines, likely a D2 diagram
-  if (arrowLines.length >= 3) {
-    return true;
-  }
-
-  // Default: not confident this is a D2 diagram
-  return false;
 };
 
 /**

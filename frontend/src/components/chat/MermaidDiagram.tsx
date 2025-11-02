@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import mermaid from 'mermaid';
 import { Card, Button, Space, message as antMessage, Tooltip, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { ApiService } from '../../services/api';
-import { validateAndCorrectMermaidSyntax, looksLikeValidMermaid } from '../../utils/mermaidSyntaxValidator';
 import diagramProviderService from '../../services/diagramProviderService';
 import type { ProviderInfo, DiagramRenderResponse } from '../../services/diagramProviderService';
 
@@ -11,25 +9,6 @@ interface MermaidDiagramProps {
   code: string;
   title?: string;
 }
-
-// Initialize mermaid with configuration
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-  fontFamily: 'Arial, sans-serif',
-  flowchart: {
-    useMaxWidth: true,
-    htmlLabels: true,
-    curve: 'basis',
-  },
-  sequence: {
-    useMaxWidth: true,
-  },
-  gantt: {
-    useMaxWidth: true,
-  },
-});
 
 export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,17 +82,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
         // Use fixed code if available, otherwise use original
         const codeToRender = validationResponse.fixed_code || code;
 
-        // Still do client-side parse check as fallback
-        try {
-          await mermaid.parse(codeToRender);
-          setIsValid(true);
-          console.log('🎨 [MERMAID DIAGRAM] Client-side parse validation passed');
-        } catch (parseError) {
-          // If client-side parse fails, still try with backend rendering
-          console.warn('⚠️ [MERMAID DIAGRAM] Client-side parse failed, attempting backend render:', parseError);
-        }
-
-        // Render using backend provider (which will use mermaid.js CLI or similar)
+        // Render using backend provider
         console.log('🎨 [MERMAID DIAGRAM] Rendering via backend provider...');
         const renderResponse = await diagramProviderService.render({
           code: codeToRender,

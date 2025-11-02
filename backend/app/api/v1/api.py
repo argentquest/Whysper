@@ -16,10 +16,14 @@ Router Organization:
 - /code: Code extraction and language detection
 - /files: File upload, download, and management
 - /settings: User preferences and configuration
+- /diagrams/v2: Unified diagram provider API (Mermaid, D2, PlantUML, etc.)
+- /diagrams: MVP diagram generator endpoints
+- /documentation: Documentation generation
+- /auth: Authentication endpoints
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, diagram_events, d2_render, mermaid_render, documentation, auth, diagram_provider
+    chat, code, files, settings, system, documentation, auth, diagram_provider
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -80,38 +84,11 @@ api_router.include_router(
     tags=["diagrams-v2", "providers"],
 )
 
-# ==================== Diagram Events Endpoints (Legacy) ====================
-# Diagram detection and rendering event logging from frontend
-# Available at: /api/v1/diagrams/* (log-diagram-event, health)
-api_router.include_router(
-    diagram_events.router,
-    prefix="/diagrams",  # URL prefix for diagram event operations
-    tags=["diagrams"],
-)
-
 # ==================== MVP Diagram Generator Endpoints ====================
 api_router.include_router(
     diagram_generator_api.router,
     prefix="/diagrams",
     tags=["diagrams"],
-)
-
-# ==================== D2 Rendering Endpoints ====================
-# D2 diagram rendering using CLI
-# Available at: /api/v1/d2/* (render, validate, batch, info, health)
-api_router.include_router(
-    d2_render.router,
-    prefix="/d2",
-    tags=["d2"],
-)
-
-# ==================== Mermaid Rendering Endpoints ====================
-# Mermaid diagram rendering using CLI (mmdc)
-# Available at: /api/v1/mermaid/* (render, validate, info, health)
-api_router.include_router(
-    mermaid_render.router,
-    prefix="/mermaid",
-    tags=["mermaid"],
 )
 
 # ==================== Documentation Generator Endpoints ====================
