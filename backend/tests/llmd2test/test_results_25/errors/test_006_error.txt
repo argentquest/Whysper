@@ -1,0 +1,6 @@
+Test ID: 6
+Test Name: Sequence-like Flow
+Description: Generate a **D2 sequence-like flow** for a user logging in: User -> Browser -> API Gateway -> Authentication Service.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

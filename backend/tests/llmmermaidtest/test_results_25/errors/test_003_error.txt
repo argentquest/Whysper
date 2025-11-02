@@ -1,0 +1,6 @@
+Test ID: 3
+Test Name: Class Diagram
+Description: Generate a **Mermaid class diagram** with three classes: 'Frontend', 'Backend', and 'AuthService'. Show relationships and methods.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

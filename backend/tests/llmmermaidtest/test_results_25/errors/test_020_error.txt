@@ -1,0 +1,6 @@
+Test ID: 20
+Test Name: Multi-level Class Hierarchy
+Description: Generate a **Mermaid class diagram** showing inheritance: Animal (base) → Dog and Cat (derived) with methods and properties.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

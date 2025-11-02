@@ -1,0 +1,6 @@
+Test ID: 24
+Test Name: C4: Component Flow with Databases
+Description: Generate a **D2 diagram** (C4 Component Level) detailing the 'Data Service'. Show 'Read Handler' and 'Write Handler' components. Both components access a single 'Database Repository'.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

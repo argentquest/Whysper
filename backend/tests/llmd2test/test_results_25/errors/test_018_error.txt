@@ -1,0 +1,6 @@
+Test ID: 18
+Test Name: Shape Customization
+Description: Generate a **D2 diagram** defining a 'Queue' and a 'Listener'. Set the 'Queue' shape to 'cylinder' and the 'Listener' shape to 'person'. Show the 'Listener' reading from 'Queue'.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

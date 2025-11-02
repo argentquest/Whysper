@@ -82,6 +82,36 @@ class DiagramValidationResponse(BaseModel):
     provider_id: str = Field(..., description="Provider that handled validation")
 
 
+class DiagramGenerationRequest(BaseModel):
+    """Request model for LLM-based diagram generation"""
+
+    prompt: str = Field(..., description="Natural language description of diagram to generate", min_length=1)
+    diagram_type: str = Field(..., description="Diagram type (mermaid, d2, etc.)")
+    system_prompt: Optional[str] = Field(None, description="Optional system prompt override")
+    output_format: str = Field("svg", description="Output format: 'svg', 'png', or native")
+    provider_id: Optional[str] = Field(None, description="Specific provider ID (optional)")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "prompt": "Create a simple architecture showing frontend connecting to backend",
+                "diagram_type": "mermaid",
+                "output_format": "svg"
+            }
+        }
+
+
+class DiagramGenerationResponse(BaseModel):
+    """Response model for diagram generation"""
+
+    success: bool = Field(..., description="Whether generation was successful")
+    content: Optional[str] = Field(None, description="Rendered diagram content (base64 encoded SVG)")
+    diagram_code: Optional[str] = Field(None, description="Generated diagram code")
+    output_format: str = Field(..., description="Output format used")
+    error: Optional[str] = Field(None, description="Error message if failed")
+    provider_id: str = Field(..., description="Provider that handled the request")
+
+
 class ProviderInfoResponse(BaseModel):
     """Response model for provider information"""
 

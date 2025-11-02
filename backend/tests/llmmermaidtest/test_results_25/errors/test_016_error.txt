@@ -1,0 +1,6 @@
+Test ID: 16
+Test Name: Architecture Flowchart
+Description: Generate a **Mermaid flowchart** showing system architecture: Frontend → API Gateway → Microservices → Database with proper styling.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

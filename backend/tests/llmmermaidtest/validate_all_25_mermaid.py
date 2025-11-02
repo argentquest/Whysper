@@ -1,5 +1,5 @@
 """
-Validate all 25 D2 tests using the Renderer Provider Endpoint
+Validate all 25 Mermaid tests using the Renderer Provider Endpoint
 This script will:
 1. Load each test case from test.json
 2. Call the renderer endpoint with the test description
@@ -14,7 +14,7 @@ import requests
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
 
-def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "d2") -> Tuple[bool, str, str]:
+def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "mermaid") -> Tuple[bool, str, str]:
     """
     Generate and render diagram using the MVP Diagram Generation Endpoint
     The endpoint handles: LLM generation, validation, and SVG rendering
@@ -93,7 +93,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str) ->
         "svg_file": ""
     }
 
-    print(f"  Rendering diagram via provider endpoint...")
+    print(f"  Rendering diagram via LLM generation endpoint...")
 
     # Use test description as prompt (system prompt is auto-loaded by endpoint)
     prompt = test_case["description"]
@@ -102,7 +102,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str) ->
     success, svg_or_error, validation_error = generate_diagram_with_llm(
         prompt,
         test_case["id"],
-        "d2"
+        "mermaid"
     )
 
     if not success:
@@ -134,7 +134,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str) ->
 
     # Check validation result
     result["is_valid"] = True  # Provider endpoint validates before returning
-    result["validation_error"] = validation_error if validation_error else "D2 Syntax is Valid"
+    result["validation_error"] = validation_error if validation_error else "Mermaid Syntax is Valid"
 
     print(f"  [PASS] Diagram rendered successfully")
 
@@ -172,7 +172,7 @@ def main():
             test_label = "50"
         else:
             print(f"ERROR: Invalid argument '{sys.argv[1]}'. Use '25' or '50'")
-            print("Usage: python validate_all_25_d2.py [25|50]")
+            print("Usage: python validate_all_25_mermaid.py [25|50]")
             return
     else:
         # Default to test25.json if no argument provided
@@ -183,7 +183,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     test_file_path = os.path.join(script_dir, test_file)
 
-    print(f"D2 Provider Renderer - Processing test{test_label} tests")
+    print(f"Mermaid Provider Renderer - Processing test{test_label} tests")
     print("=" * 60)
 
     # Check backend availability
@@ -217,7 +217,7 @@ def main():
 
     # Process all tests
     results: List[Dict[str, Any]] = []
-    test_cases = test_data["d2_capability_tests"]
+    test_cases = test_data["mermaid_capability_tests"]
     # Note: system_prompt is stored in JSON but auto-loaded by the LLM endpoint
 
     print(f"\nProcessing {len(test_cases)} tests...")
@@ -277,7 +277,7 @@ def main():
                     print(f"    Error file: {result['error_file']}")
 
     print("\n" + "=" * 60)
-    print("D2 VALIDATION COMPLETE")
+    print("MERMAID VALIDATION COMPLETE")
     print("=" * 60)
 
 if __name__ == "__main__":

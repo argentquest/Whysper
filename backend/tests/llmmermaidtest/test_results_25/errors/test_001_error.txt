@@ -1,0 +1,6 @@
+Test ID: 1
+Test Name: Basic Flowchart
+Description: Generate a **Mermaid diagram** showing a simple flowchart where a User accesses a Web Server, which then connects to two separate Database clusters, 'Primary' and 'Backup'.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

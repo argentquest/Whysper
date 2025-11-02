@@ -1,0 +1,6 @@
+Test ID: 24
+Test Name: Event-Driven Architecture
+Description: Generate a **Mermaid flowchart** showing event-driven architecture: Event Producer → Event Bus → Event Consumers with multiple handlers.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

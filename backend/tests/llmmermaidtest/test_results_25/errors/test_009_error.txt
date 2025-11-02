@@ -1,0 +1,6 @@
+Test ID: 9
+Test Name: Git Graph
+Description: Generate a **Mermaid git graph** showing a simple branching model with main branch and a feature branch that merges back.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

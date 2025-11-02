@@ -1,0 +1,6 @@
+Test ID: 12
+Test Name: Swimlane Flowchart
+Description: Generate a **Mermaid flowchart** with multiple swimlanes showing: User Lane, System Lane, and Database Lane with their respective processes.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

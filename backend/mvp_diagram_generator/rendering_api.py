@@ -22,6 +22,7 @@ Architecture:
 6. Returns structured response with metadata
 """
 
+import os
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
@@ -125,6 +126,8 @@ async def generate_diagram(
             conversation_history=conversation_history,
             codebase_content="",
             model=settings.default_model,
+            max_tokens=4096,
+            temperature=0.1,
         )
 
         # 4. Extract and validate the diagram

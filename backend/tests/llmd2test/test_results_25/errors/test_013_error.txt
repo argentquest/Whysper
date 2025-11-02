@@ -1,0 +1,6 @@
+Test ID: 13
+Test Name: Testing Edge Labels and Protocols
+Description: Generate a **D2 diagram** showing 'Microservice A' sending an event to a 'Message Queue' which is then consumed by 'Microservice B'. Label the first edge 'Publish (AMQP)' and the second 'Consume (AMQP)'.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

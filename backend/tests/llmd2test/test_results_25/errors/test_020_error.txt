@@ -1,0 +1,6 @@
+Test ID: 20
+Test Name: Testing Simple Naming Conventions
+Description: Generate a **D2 diagram** modeling two components, 'data-service' and 'auth-module'. Show 'data-service' requesting data from 'auth-module'. Ensure the IDs use kebab-case.
+
+Validation Error:
+Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte
