@@ -19,7 +19,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, diagram_events, d2_render, mermaid_render, documentation, auth
+    chat, code, files, settings, system, diagram_events, d2_render, mermaid_render, documentation, auth, diagram_provider
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -71,7 +71,16 @@ api_router.include_router(
     tags=["system"]
 )
 
-# ==================== Diagram Events Endpoints ====================
+# ==================== NEW: Unified Diagram Provider Endpoints ====================
+# Modern provider-based diagram system (Mermaid, D2, PlantUML, etc.)
+# Available at: /api/v1/diagrams/v2/* (render, validate, providers)
+api_router.include_router(
+    diagram_provider.router,
+    prefix="/diagrams/v2",  # v2 to avoid conflict with existing
+    tags=["diagrams-v2", "providers"],
+)
+
+# ==================== Diagram Events Endpoints (Legacy) ====================
 # Diagram detection and rendering event logging from frontend
 # Available at: /api/v1/diagrams/* (log-diagram-event, health)
 api_router.include_router(

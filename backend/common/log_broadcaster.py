@@ -178,4 +178,4 @@ def setup_log_broadcasting():
     sse_handler.setFormatter(formatter)
 
     root_logger.addHandler(sse_handler)
-    print("📡 [LOG BROADCASTER] Initialized - broadcasting INFO logs to SSE clients")
+    print("[LOG BROADCASTER] Initialized - broadcasting INFO logs to SSE clients")

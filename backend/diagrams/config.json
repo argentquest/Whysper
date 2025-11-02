@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "description": "Default configuration for all diagram providers. Provider-specific config.json files can override these defaults.",
+
+  "defaults": {
+    "llm_correction": {
+      "enabled": true,
+      "max_retries": 3,
+      "temperature": 0.3,
+      "max_tokens": 4000,
+      "model_override": null
+    },
+
+    "pattern_correction": {
+      "enabled": true
+    },
+
+    "correction_strategy": "pattern_then_llm",
+
+    "user_correction": {
+      "enabled": true,
+      "session_timeout_seconds": 300
+    },
+
+    "validation": {
+      "timeout_seconds": 120,
+      "max_code_length_bytes": 512000
+    },
+
+    "rendering": {
+      "timeout_seconds": 120,
+      "default_output_format": "svg"
+    },
+
+    "batch": {
+      "enabled": false,
+      "max_items": 50
+    }
+  },
+
+  "global_settings": {
+    "session_cleanup_interval_seconds": 300,
+    "max_concurrent_renders": 10,
+    "enable_metrics": true,
+    "enable_debug_logging": false
+  }
+}

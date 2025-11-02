@@ -1,0 +1,39 @@
+{
+  "provider_id": "mermaidv1",
+  "provider_name": "Mermaid CLI Renderer v1",
+  "description": "Mermaid diagram renderer using mmdc CLI tool",
+
+  "diagram_type": "mermaid",
+  "supported_output_formats": ["mermaid", "svg", "png"],
+
+  "overrides": {
+    "llm_correction": {
+      "max_retries": 5,
+      "temperature": 0.2
+    },
+
+    "validation": {
+      "timeout_seconds": 180
+    }
+  },
+
+  "custom": {
+    "executable_name": "mmdc",
+    "executable_path": null,
+    "auto_detect_executable": true,
+    "supported_diagram_types": [
+      "flowchart",
+      "sequenceDiagram",
+      "classDiagram",
+      "stateDiagram",
+      "stateDiagram-v2",
+      "erDiagram",
+      "gantt",
+      "pie",
+      "journey",
+      "gitGraph",
+      "mindmap",
+      "timeline"
+    ]
+  }
+}
