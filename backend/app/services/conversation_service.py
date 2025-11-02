@@ -933,453 +933,109 @@ class ConversationSession:
     @log_method_call
     def _validate_and_fix_d2_diagrams(self, response_text: str, original_question: str, max_retries: int = 8) -> str:
         """
-        Automatically validate D2 diagrams in the response and retry with error feedback if invalid.
+        D2 diagram validation is now delegated to the backend provider service.
+        This method is kept for compatibility but only logs the response as-is.
 
         Args:
             response_text: The AI's response containing potential D2 diagrams
             original_question: The original user question
-            max_retries: Maximum number of retry attempts (default: 2)
+            max_retries: Maximum number of retry attempts (kept for signature compatibility)
 
         Returns:
-            Corrected response text with valid D2 diagrams
+            Response text unchanged - validation/rendering now happens in frontend via diagramProviderService
         """
         import re
-        from app.services.d2_render_service import get_d2_service
 
-        # Check if response contains D2 code blocks
-        # Match ```d2 with optional whitespace before newline or content
+        # Check if response contains D2 code blocks for logging purposes
         d2_pattern = r'```d2\s*\n?(.*?)```'
         d2_matches = re.findall(d2_pattern, response_text, re.DOTALL)
 
         if not d2_matches:
-            logger.debug("No D2 diagrams found in response, skipping validation")
+            logger.debug("No D2 diagrams found in response")
             return response_text
 
-        logger.info(f"🔍 [D2 PROGRESS] Found {len(d2_matches)} D2 diagram(s) - validating syntax...")
+        logger.info(f"📊 [D2 DIAGRAMS] Found {len(d2_matches)} D2 diagram(s) in response")
+        logger.info(f"📊 [D2 DIAGRAMS] Validation will be handled by frontend diagramProviderService (/api/v1/diagrams/v2/validate)")
 
         try:
-            d2_service = get_d2_service()
-            retry_count = 0
-            current_response = response_text
-
-            while retry_count < max_retries:
-                all_valid = True
-                validation_errors = []
-
-                logger.debug(f"Validation attempt {retry_count + 1}/{max_retries}")
-
-                # Validate each D2 diagram
-                for i, d2_code in enumerate(re.findall(d2_pattern, current_response, re.DOTALL)):
-                    is_valid, error_msg = d2_service.validate_d2_code(d2_code)
-
-                    if not is_valid:
-                        all_valid = False
-                        validation_errors.append(f"D2 Diagram #{i+1} Error:\n{error_msg}")
-                        logger.warning(f"D2 diagram #{i+1} validation failed: {error_msg[:200]}")
-
-                if all_valid:
-                    logger.info("✅ [D2 PROGRESS] All D2 diagrams validated successfully!")
-                    logger.info("🎨 [D2 PROGRESS] Rendering diagrams to SVG...")
-
-                    # Pre-render all D2 diagrams to SVG to avoid frontend re-extraction corruption
-                    current_response = self._pre_render_d2_diagrams(current_response)
-
-                    logger.info("✅ [D2 PROGRESS] D2 diagrams rendered and ready for display!")
-                    return current_response
-
-                # If validation failed, send errors back to AI for correction
-                retry_count += 1
-                logger.info(f"🔧 [D2 PROGRESS] Validation errors found - requesting AI auto-fix (attempt {retry_count}/{max_retries})...")
-
-                error_summary = "\n\n".join(validation_errors)
-                correction_prompt = (
-                    f"FIX THESE D2 SYNTAX ERRORS:\n\n{error_summary}\n\n"
-                    f"CRITICAL: D2 ONLY supports these shape values:\n"
-                    f"- rectangle (default - most common, use for components, services, apps)\n"
-                    f"- square\n"
-                    f"- circle\n"
-                    f"- oval\n"
-                    f"- diamond\n"
-                    f"- parallelogram\n"
-                    f"- hexagon\n"
-                    f"- cylinder (for databases)\n"
-                    f"- cloud (for cloud services)\n"
-                    f"- queue (for message queues)\n"
-                    f"- package (for modules/packages)\n"
-                    f"- step (for process steps)\n"
-                    f"- callout (for notes/comments)\n"
-                    f"- stored_data (for data storage)\n"
-                    f"- person (for users/actors)\n"
-                    f"- document (for documents)\n"
-                    f"- page (for pages)\n\n"
-                    f"INVALID shapes that DO NOT exist in D2:\n"
-                    f"- component (use 'rectangle' instead)\n"
-                    f"- system (use 'rectangle' instead)\n"
-                    f"- platform (use 'rectangle' instead)\n"
-                    f"- database (use 'cylinder' instead)\n"
-                    f"- service (use 'rectangle' instead)\n"
-                    f"- api (use 'rectangle' instead)\n\n"
-                    f"IMPORTANT: Replace ALL invalid shapes with valid ones from the list above.\n"
-                    f"Return ONLY the corrected ```d2 code block with NO explanations."
-                )
-
-                # Send correction request to AI
-                conversation_for_api = []
-                for message in self.app_state.conversation_history[:-1]:
-                    if message.role != "system":
-                        conversation_for_api.append(message.to_dict())
-
-                corrected_response = self.ai_processor.process_question(
-                    question=correction_prompt,
-                    conversation_history=conversation_for_api,
-                    codebase_content="",
-                    model=self.app_state.selected_model,
-                    max_tokens=self.app_state.max_tokens,
-                    temperature=self.app_state.temperature,
-                )
-
-                logger.info(f"✅ [D2 PROGRESS] Received corrected D2 code ({len(corrected_response)} chars) - re-validating...")
-
-                # Check if response looks truncated (ends abruptly without closing backticks)
-                if corrected_response.count('```d2') > corrected_response.count('```\n') and corrected_response.count('```d2') > corrected_response.count('```'):
-                    logger.warning(f"⚠️  Corrected response may be TRUNCATED! Model: {self.app_state.selected_model}")
-                    logger.warning(f"⚠️  Try switching to a model that doesn't truncate (e.g., qwen/qwen3-coder-30b-a3b-instruct or anthropic/claude-4.5-sonnet)")
-
-                current_response = corrected_response
-
-            # If we exhausted retries, include validation errors in the response
-            logger.warning(f"D2 validation failed after {max_retries} retries")
-
-            # Create error report section
-            error_report = "\n\n---\n\n"
-            error_report += "## ⚠️ D2 Diagram Validation Failed\n\n"
-            error_report += f"The D2 diagram could not be validated after {max_retries} auto-fix attempts.\n\n"
-            error_report += "**Validation Errors:**\n\n"
-
-            for error in validation_errors:
-                error_report += f"```\n{error}\n```\n\n"
-
-            error_report += "**Common fixes:**\n"
-            error_report += "- Use `shape: cylinder` for databases\n"
-            error_report += "- Use `shape: rectangle` for web/app components\n"
-            error_report += "- Use `shape: person` for users\n"
-            error_report += "- Use `shape: cloud` for cloud services\n"
-            error_report += "- Ensure all strings are properly quoted\n"
-            error_report += "- Check for syntax errors in relationships (use `->` or `--`)\n\n"
-
-            error_report += "**D2 Code (Failed Validation):**\n\n"
-
-            # Extract the D2 code that failed
-            failed_d2_matches = re.findall(d2_pattern, current_response, re.DOTALL)
-            if failed_d2_matches:
-                for i, d2_code in enumerate(failed_d2_matches):
-                    error_report += f"```d2\n{d2_code}\n```\n\n"
-
-            # Try to pre-render anyway (might partially work)
-            logger.warning(f"Attempting pre-render despite validation errors...")
-            try:
-                current_response = self._pre_render_d2_diagrams(current_response)
-                error_report += "*Note: Pre-rendering was attempted but may have failed. Check the output above.*\n\n"
-            except Exception as e:
-                logger.error(f"Pre-render also failed: {str(e)}")
-                error_report += f"*Pre-rendering failed: {str(e)}*\n\n"
-
-            # Append error report to response
-            current_response += error_report
-
-            return current_response
+            # Simply return the response as-is
+            # The frontend will validate and render via the backend provider system
+            logger.info(f"✅ [D2 DIAGRAMS] Response ready for frontend processing")
+            return response_text
 
         except Exception as e:
-            logger.error(f"Error during D2 validation/fix: {str(e)}")
-            # Return original response if validation fails
+            logger.error(f"Error in _validate_and_fix_d2_diagrams: {str(e)}")
+            # Return original response if anything fails
             return response_text
 
     @log_method_call
     def _validate_and_fix_mermaid_diagrams(self, response_text: str, original_question: str, max_retries: int = 5) -> str:
         """
-        Automatically validate Mermaid diagrams in the response and retry with error feedback if invalid.
+        Mermaid diagram validation is now delegated to the backend provider service.
+
+        This method now simply identifies Mermaid diagrams in the response and logs them,
+        allowing the frontend diagramProviderService to handle validation via the v2 API.
 
         Args:
             response_text: The AI's response containing potential Mermaid diagrams
-            original_question: The original user question
-            max_retries: Maximum number of retry attempts (default: 5)
+            original_question: The original user question (unused - kept for compatibility)
+            max_retries: Maximum number of retry attempts (unused - kept for compatibility)
 
         Returns:
-            Corrected response text with valid Mermaid diagrams
+            Response text unchanged - frontend will handle validation
         """
         import re
-        from app.services.mermaid_render_service import get_mermaid_service
 
         # Check if response contains Mermaid code blocks
-        # Match ```mermaid with optional whitespace before newline or content
         mermaid_pattern = r'```mermaid\s*\n?(.*?)```'
         mermaid_matches = re.findall(mermaid_pattern, response_text, re.DOTALL)
 
         if not mermaid_matches:
-            logger.debug("No Mermaid diagrams found in response, skipping validation")
+            logger.debug("No Mermaid diagrams found in response")
             return response_text
 
-        logger.info(f"🔍 [MERMAID PROGRESS] Found {len(mermaid_matches)} Mermaid diagram(s) - validating syntax...")
+        logger.info(f"🎨 [MERMAID DIAGRAMS] Found {len(mermaid_matches)} Mermaid diagram(s) in response")
+        logger.info(f"🎨 [MERMAID DIAGRAMS] Validation will be handled by frontend diagramProviderService")
 
         try:
-            mermaid_service = get_mermaid_service()
-            retry_count = 0
-            current_response = response_text
-
-            while retry_count < max_retries:
-                all_valid = True
-                validation_errors = []
-
-                logger.debug(f"[MERMAID PROGRESS] Validation attempt {retry_count + 1}/{max_retries}")
-
-                # Validate each Mermaid diagram
-                for i, mermaid_code in enumerate(re.findall(mermaid_pattern, current_response, re.DOTALL)):
-                    is_valid, error_msg = mermaid_service.validate_mermaid_code(mermaid_code)
-
-                    if not is_valid:
-                        all_valid = False
-                        validation_errors.append(f"Mermaid Diagram #{i+1} Error:\n{error_msg}")
-                        logger.warning(f"[MERMAID PROGRESS] Diagram #{i+1} validation failed: {error_msg[:200]}")
-
-                if all_valid:
-                    logger.info("✅ [MERMAID PROGRESS] All Mermaid diagrams validated successfully!")
-                    return current_response
-
-                # If validation failed, send errors back to AI for correction
-                retry_count += 1
-                logger.info(f"🔧 [MERMAID PROGRESS] Validation errors found - requesting AI auto-fix (attempt {retry_count}/{max_retries})...")
-
-                error_summary = "\n\n".join(validation_errors)
-                correction_prompt = (
-                    f"FIX THESE MERMAID SYNTAX ERRORS:\n\n{error_summary}\n\n"
-                    f"RULES:\n"
-                    f"- Always start with diagram type (flowchart TD, sequenceDiagram, etc.)\n"
-                    f"- Use proper arrow syntax with spaces: A --> B (not A-->B)\n"
-                    f"- Quote labels with special characters: A[\"My Node\"]\n"
-                    f"- Do NOT use reserved keywords as node IDs (end, start, subgraph, etc.)\n"
-                    f"- Close all subgraphs with 'end'\n"
-                    f"- For sequence diagrams, use: participant, -->>, -->>  \n\n"
-                    f"Return ONLY the corrected ```mermaid code block. Keep it SIMPLE and COMPLETE."
-                )
-
-                # Send correction request to AI
-                conversation_for_api = []
-                for message in self.app_state.conversation_history[:-1]:
-                    if message.role != "system":
-                        conversation_for_api.append(message.to_dict())
-
-                corrected_response = self.ai_processor.process_question(
-                    question=correction_prompt,
-                    conversation_history=conversation_for_api,
-                    codebase_content="",
-                    model=self.app_state.selected_model,
-                    max_tokens=self.app_state.max_tokens,
-                    temperature=self.app_state.temperature,
-                )
-
-                logger.info(f"✅ [MERMAID PROGRESS] Received corrected Mermaid code ({len(corrected_response)} chars) - re-validating...")
-
-                # Check if response looks truncated
-                if corrected_response.count('```mermaid') > corrected_response.count('```\n'):
-                    logger.warning(f"⚠️  Corrected response may be TRUNCATED! Model: {self.app_state.selected_model}")
-                    logger.warning(f"⚠️  Try switching to a model that doesn't truncate")
-
-                current_response = corrected_response
-
-            # If we exhausted retries, include validation errors in the response
-            logger.warning(f"[MERMAID PROGRESS] ❌ Validation failed after {max_retries} retries")
-
-            # Create error report section
-            error_report = "\n\n---\n\n"
-            error_report += "## ⚠️ Mermaid Diagram Validation Failed\n\n"
-            error_report += f"The Mermaid diagram could not be validated after {max_retries} auto-fix attempts.\n\n"
-            error_report += "**Validation Errors:**\n\n"
-
-            for error in validation_errors:
-                error_report += f"```\n{error}\n```\n\n"
-
-            error_report += "**Common fixes:**\n"
-            error_report += "- Always include diagram type: `flowchart TD`, `sequenceDiagram`, etc.\n"
-            error_report += "- Use proper spacing: `A --> B` not `A-->B`\n"
-            error_report += "- Quote labels with spaces: `A[\"My Label\"]`\n"
-            error_report += "- Avoid reserved words as node IDs: `end`, `start`, `subgraph`\n"
-            error_report += "- Close subgraphs with `end`\n"
-            error_report += "- Check arrow syntax for diagram type\n\n"
-
-            error_report += "**Mermaid Code (Failed Validation):**\n\n"
-
-            # Extract the Mermaid code that failed
-            failed_mermaid_matches = re.findall(mermaid_pattern, current_response, re.DOTALL)
-            if failed_mermaid_matches:
-                for i, mermaid_code in enumerate(failed_mermaid_matches):
-                    error_report += f"```mermaid\n{mermaid_code}\n```\n\n"
-
-            error_report += "*Note: The diagram above may contain errors and might not render properly.*\n\n"
-
-            # Append error report to response
-            current_response += error_report
-
-            return current_response
-
+            logger.info(f"✅ [MERMAID DIAGRAMS] Response ready for frontend processing")
+            return response_text
         except Exception as e:
-            logger.error(f"[MERMAID PROGRESS] Error during validation/fix: {str(e)}", exc_info=True)
-            # Return original response if validation fails
+            logger.error(f"Error in _validate_and_fix_mermaid_diagrams: {str(e)}")
             return response_text
 
     @log_method_call
     def _pre_render_d2_diagrams(self, response_text: str) -> str:
         """
-        Pre-render validated D2 diagrams to SVG and embed them in the response.
-        This prevents frontend re-extraction corruption.
+        D2 diagram rendering is now delegated to the frontend provider service.
+
+        This method now simply identifies D2 diagrams in the response and logs them,
+        allowing the frontend diagramProviderService to handle rendering via the v2 API.
 
         Args:
-            response_text: Response containing validated D2 diagrams
+            response_text: Response containing D2 diagrams
 
         Returns:
-            Response with D2 diagrams replaced by rendered SVG
+            Response text unchanged - frontend will handle rendering
         """
         import re
-        import os
-        import hashlib
-        from datetime import datetime
-        from app.services.d2_render_service import get_d2_service
 
         # Match ```d2 with optional whitespace before newline or content
         d2_pattern = r'```d2\s*\n?(.*?)```'
+        d2_matches = re.findall(d2_pattern, response_text, re.DOTALL)
+
+        if not d2_matches:
+            logger.debug("No D2 diagrams found in response")
+            return response_text
+
+        logger.info(f"🎯 [D2 DIAGRAMS] Found {len(d2_matches)} D2 diagram(s) in response")
+        logger.info(f"🎯 [D2 DIAGRAMS] Rendering will be handled by frontend diagramProviderService")
 
         try:
-            d2_service = get_d2_service()
-
-            # Create directory for saved SVG files
-            svg_dir = os.path.join("backend", "static", "d2_diagrams")
-            os.makedirs(svg_dir, exist_ok=True)
-
-            diagram_count = 0
-
-            def render_d2_block(match):
-                nonlocal diagram_count
-                diagram_count += 1
-
-                d2_code = match.group(1)
-                logger.info(f"Pre-rendering D2 diagram #{diagram_count} ({len(d2_code)} chars)")
-
-                # Render to SVG
-                success, error_msg, svg_content = d2_service.render_d2_to_svg(d2_code)
-
-                if success and svg_content:
-                    # Generate unique filename based on content hash and timestamp
-                    content_hash = hashlib.md5(d2_code.encode()).hexdigest()[:8]
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"d2_diagram_{timestamp}_{content_hash}.svg"
-                    filepath = os.path.join(svg_dir, filename)
-
-                    # Save SVG to file
-                    try:
-                        with open(filepath, 'w', encoding='utf-8') as f:
-                            f.write(svg_content)
-                        logger.info(f"Saved D2 diagram to: {filepath}")
-
-                        # Create download URL
-                        download_url = f"/api/v1/d2/download/{filename}"
-                    except Exception as e:
-                        logger.error(f"Failed to save SVG file: {str(e)}")
-                        download_url = None
-
-                    # Replace D2 code block with rendered SVG
-                    # Keep the original D2 code in a collapsed HTML details section
-                    download_link = f'<p style="margin-top: 8px; margin-bottom: 8px;"><a href="{download_url}" download="{filename}" style="display: inline-block; padding: 8px 16px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500;">⬇️ Download SVG</a></p>\n' if download_url else ''
-
-                    # Add status badge showing rendering was successful
-                    status_badge = (
-                        f'<div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; '
-                        f'background: linear-gradient(135deg, #10b981 0%, #059669 100%); '
-                        f'border-radius: 6px; margin-bottom: 12px; font-size: 12px; font-weight: 500; color: white;">\n'
-                        f'  <span style="font-size: 14px;">✅</span>\n'
-                        f'  <span>D2 Diagram Rendered Successfully</span>\n'
-                        f'</div>\n'
-                    )
-
-                    # Generate unique ID for this diagram
-                    diagram_id = f"d2-diagram-{diagram_count}"
-
-                    # Zoom controls with inline JavaScript
-                    zoom_controls = (
-                        f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">\n'
-                        f'  <button onclick="'
-                        f"var svg = document.getElementById('{diagram_id}'); "
-                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
-                        f"var currentScale = parseFloat(svg.getAttribute('data-zoom') || '0.6'); "
-                        f"var newScale = Math.min(currentScale + 0.1, 2.0); "
-                        f"svg.setAttribute('data-zoom', newScale); "
-                        f"svg.style.transform = 'scale(' + newScale + ')'; "
-                        f"svg.style.transformOrigin = 'top left'; "
-                        f"label.textContent = Math.round(newScale * 100) + '%';"
-                        f'" style="padding: 6px 12px; background-color: #667eea; color: white; border: none; '
-                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🔍 Zoom In</button>\n'
-                        f'  <button onclick="'
-                        f"var svg = document.getElementById('{diagram_id}'); "
-                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
-                        f"var currentScale = parseFloat(svg.getAttribute('data-zoom') || '0.6'); "
-                        f"var newScale = Math.max(currentScale - 0.1, 0.2); "
-                        f"svg.setAttribute('data-zoom', newScale); "
-                        f"svg.style.transform = 'scale(' + newScale + ')'; "
-                        f"svg.style.transformOrigin = 'top left'; "
-                        f"label.textContent = Math.round(newScale * 100) + '%';"
-                        f'" style="padding: 6px 12px; background-color: #667eea; color: white; border: none; '
-                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🔍 Zoom Out</button>\n'
-                        f'  <button onclick="'
-                        f"var svg = document.getElementById('{diagram_id}'); "
-                        f"var label = document.getElementById('{diagram_id}-zoom-label'); "
-                        f"svg.setAttribute('data-zoom', '0.6'); "
-                        f"svg.style.transform = 'scale(0.6)'; "
-                        f"svg.style.transformOrigin = 'top left'; "
-                        f"label.textContent = '60%';"
-                        f'" style="padding: 6px 12px; background-color: #94a3b8; color: white; border: none; '
-                        f'border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">↺ Reset</button>\n'
-                        f'  <span style="font-size: 12px; color: #64748b; margin-left: 8px; font-weight: 500;" id="{diagram_id}-zoom-label">60%</span>\n'
-                        f'</div>\n'
-                    )
-
-                    # Wrap SVG with zoom container and default 60% scale
-                    svg_with_zoom = (
-                        f'<div style="overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; '
-                        f'padding: 16px; background-color: #f8fafc; max-width: 100%;">\n'
-                        f'  <div id="{diagram_id}" data-zoom="0.6" style="transform: scale(0.6); transform-origin: top left; '
-                        f'transition: transform 0.2s ease;">\n'
-                        f'    {svg_content}\n'
-                        f'  </div>\n'
-                        f'</div>\n'
-                    )
-
-                    return (
-                        f'<div class="d2-diagram-container" style="margin: 16px 0;">\n'
-                        f'{status_badge}'
-                        f'{zoom_controls}'
-                        f'{svg_with_zoom}'
-                        f'{download_link}'
-                        f'  <details style="margin-top: 8px;">\n'
-                        f'    <summary style="cursor: pointer; padding: 8px 12px; background-color: #f1f5f9; '
-                        f'border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 500; '
-                        f'color: #475569; user-select: none;">📝 View D2 Source Code (click to expand/copy)</summary>\n'
-                        f'    <pre style="background-color: #1e293b; color: #e2e8f0; padding: 16px; '
-                        f'border-radius: 0 0 6px 6px; border: 1px solid #cbd5e1; border-top: none; '
-                        f'overflow-x: auto; font-size: 13px; line-height: 1.2; margin-top: 0;"><code>{d2_code}</code></pre>\n'
-                        f'  </details>\n'
-                        f'</div>\n'
-                    )
-                else:
-                    logger.warning(f"Failed to pre-render D2: {error_msg}")
-                    # Keep original D2 code block
-                    return match.group(0)
-
-            # Replace all D2 blocks with rendered versions
-            rendered_response = re.sub(d2_pattern, render_d2_block, response_text, flags=re.DOTALL)
-
-            logger.info("D2 diagrams pre-rendered successfully")
-            return rendered_response
-
+            logger.info(f"✅ [D2 DIAGRAMS] Response ready for frontend processing")
+            return response_text
         except Exception as e:
-            logger.error(f"Error pre-rendering D2 diagrams: {str(e)}")
+            logger.error(f"Error in _pre_render_d2_diagrams: {str(e)}")
             return response_text
 
     @log_method_call
