@@ -23,7 +23,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, documentation, auth, diagram_provider
+    chat, code, files, settings, system, documentation, auth, diagram_provider, diagram_events
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -73,6 +73,14 @@ api_router.include_router(
     system.router,
     prefix="/system",
     tags=["system"]
+)
+
+# ==================== Diagram Event Logging Endpoints ====================
+# Simple event logging for diagram operations (debugging and analytics)
+api_router.include_router(
+    diagram_events.router,
+    prefix="/diagrams",
+    tags=["diagrams", "logging"],
 )
 
 # ==================== NEW: Unified Diagram Provider Endpoints ====================
