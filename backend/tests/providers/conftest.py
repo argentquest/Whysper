@@ -1,0 +1,104 @@
+"""
+Pytest fixtures for provider rendering tests.
+"""
+
+import sys
+import os
+import pytest
+from fastapi.testclient import TestClient
+
+# Import app - paths are already set up by root conftest.py
+from app.main import app
+
+
+@pytest.fixture
+def client():
+    """FastAPI test client."""
+    return TestClient(app)
+
+
+@pytest.fixture
+def mermaid_code_simple():
+    """Simple Mermaid flowchart."""
+    return """flowchart TD
+    A[Start] --> B[Process]
+    B --> C{Decision}
+    C -->|Yes| D[End]
+    C -->|No| B"""
+
+
+@pytest.fixture
+def mermaid_code_complex():
+    """Complex Mermaid diagram with multiple features."""
+    return """flowchart LR
+    A[User] --> B[API]
+    B --> C[Database]
+    B --> D[Cache]
+    C --> E[Storage]
+    D --> E
+    E --> F[Response]
+    F --> A"""
+
+
+@pytest.fixture
+def d2_code_simple():
+    """Simple D2 diagram."""
+    return """A -> B -> C
+    B -> D
+    D -> E"""
+
+
+@pytest.fixture
+def d2_code_complex():
+    """Complex D2 diagram with styling and attributes."""
+    return """
+    Web Server: {
+      shape: rectangle
+      label: Web Server
+    }
+
+    Database: {
+      shape: cylinder
+      label: PostgreSQL DB
+    }
+
+    Cache: {
+      shape: rectangle
+      label: Redis Cache
+    }
+
+    Web Server -> Database: query
+    Web Server -> Cache: get/set
+    Database -> Cache: invalidate
+    """
+
+
+@pytest.fixture
+def c4_code_simple():
+    """Simple C4 diagram."""
+    return """
+    Person(user, "User", "A user of the system")
+    System(sys, "Software System", "The software system")
+
+    Rel(user, sys, "Uses")
+    """
+
+
+@pytest.fixture
+def invalid_mermaid():
+    """Invalid Mermaid code."""
+    return """flowchart TD
+    A --> B
+    B --> C
+    D --> E
+    missing connection"""
+
+
+@pytest.fixture
+def invalid_d2():
+    """Invalid D2 code."""
+    return """
+    A -> B -> C
+    D -> -> E
+    F: shape invalid_shape
+    """
