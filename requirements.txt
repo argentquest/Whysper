@@ -14,3 +14,21 @@ anthropic
 flake8
 fastmcp
 mcp
+
+# Test Dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+fastapi[all]>=0.100.0
+
+# Mocking and test utilities
+responses>=0.23.0
+freezegun>=1.2.0
+
+# Test reporting
+pytest-html>=3.1.0
+pytest-xdist>=3.0.0
+
+# Optional: for testing mermaid rendering
+cairosvg>=2.7.0
