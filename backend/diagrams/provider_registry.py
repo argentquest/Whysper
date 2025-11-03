@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Type
 import importlib
 import logging
+import json
 
 from .base_diagram import BaseDiagramProvider
 from .models import ProviderMetadata
@@ -101,6 +102,8 @@ class ProviderRegistry:
         - d2v1 -> d2_renderer
         - mermaid-playwright -> mermaid_renderer
         - plantumlv1 -> plantuml_renderer
+        - krokid2 -> kroki_renderer
+        - krokistructurizr -> kroki_renderer
         """
         base_name = provider_id.lower()
 
@@ -111,7 +114,10 @@ class ProviderRegistry:
         base_name = base_name.replace('-', '_')
 
         # Map to renderer module name
-        if 'mermaid' in base_name:
+        # Check for kroki-based providers first (they have precedence)
+        if 'kroki' in base_name:
+            return 'kroki_renderer'
+        elif 'mermaid' in base_name:
             return 'mermaid_renderer'
         elif 'd2' in base_name:
             return 'd2_renderer'
@@ -119,18 +125,32 @@ class ProviderRegistry:
             return 'plantuml_renderer'
         elif 'c4' in base_name:
             return 'c4_renderer'
+        elif 'structurizr' in base_name:
+            return 'kroki_renderer'
         else:
             return 'renderer'
 
     def _find_provider_class(self, module) -> Optional[Type[BaseDiagramProvider]]:
-        """Find the provider class in the module"""
+        """Find the provider class in the module
+
+        Prioritizes concrete subclasses over base classes.
+        This ensures KrokiD2Provider is used instead of KrokiBaseProvider, etc.
+        """
+        from .kroki_base import KrokiBaseProvider
+
+        candidate = None
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
             if (isinstance(attr, type) and
                 issubclass(attr, BaseDiagramProvider) and
                 attr != BaseDiagramProvider):
-                return attr
-        return None
+                # Skip abstract/base Kroki classes
+                if attr == KrokiBaseProvider:
+                    continue
+                # Prefer concrete classes
+                if candidate is None or issubclass(attr, candidate):
+                    candidate = attr
+        return candidate
 
     def register(self, provider: BaseDiagramProvider):
         """
@@ -217,7 +237,7 @@ class ProviderRegistry:
     def get_default_provider(self, diagram_type: str) -> Optional[BaseDiagramProvider]:
         """
         Get the default provider for a diagram type.
-        Currently returns the first available provider.
+        Uses preferences from root config.json, falls back to v1 providers, then first available.
 
         Args:
             diagram_type: Diagram type
@@ -226,14 +246,36 @@ class ProviderRegistry:
             Default provider or None
         """
         providers = self.find_by_diagram_type(diagram_type)
-        if providers:
-            # Prefer v1 providers
-            for p in providers:
-                if 'v1' in p.provider_id.lower():
-                    return p
-            # Fall back to first available
-            return providers[0]
-        return None
+        if not providers:
+            return None
+
+        # STEP 1: Check root config for provider preferences
+        try:
+            config_file = self.diagrams_root / "config.json"
+            if config_file.exists():
+                with open(config_file, 'r') as f:
+                    root_config = json.load(f)
+                    preferences = root_config.get('provider_preferences', {})
+                    preferred_provider_id = preferences.get(diagram_type.lower())
+
+                    if preferred_provider_id:
+                        for p in providers:
+                            if p.provider_id == preferred_provider_id:
+                                logger.debug(f"Using configured preference for {diagram_type}: {preferred_provider_id}")
+                                return p
+                        logger.warning(f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
+        except Exception as e:
+            logger.debug(f"Could not load provider preferences from config: {e}")
+
+        # STEP 2: Prefer v1 providers (fallback)
+        for p in providers:
+            if 'v1' in p.provider_id.lower():
+                logger.debug(f"Using v1 provider for {diagram_type}: {p.provider_id}")
+                return p
+
+        # STEP 3: Use first available (final fallback)
+        logger.debug(f"Using first available provider for {diagram_type}: {providers[0].provider_id}")
+        return providers[0]
 
     def reload_provider(self, provider_id: str) -> bool:
         """

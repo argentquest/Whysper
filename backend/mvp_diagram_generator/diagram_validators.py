@@ -164,27 +164,40 @@ def is_valid_d2_diagram(code: str) -> bool:
 def is_valid_c4_diagram(code: str) -> bool:
     """
     Validate if a string contains valid C4 diagram syntax.
-    
-    This function checks if the given code contains C4 model keywords,
-    which indicate the presence of C4 architectural diagrams.
-    
+
+    This function checks if the given code contains C4 PlantUML functions
+    or C4 model keywords, which indicate the presence of C4 architectural diagrams.
+
     Args:
         code (str): The diagram code to validate
-        
+
     Returns:
         bool: True if valid C4 syntax is detected, False otherwise
-        
+
     Note:
-        - Searches the entire code for C4 keywords
-        - C4 diagrams typically start with C4Context, C4Container, etc.
+        - Checks for C4 keywords (C4Context, C4Container, etc.)
+        - Also checks for PlantUML C4 functions (Person, System, Container, Component, Rel)
         - Does not validate the complete C4 syntax structure
     """
     # Input validation
     if not code or not isinstance(code, str):
         return False
 
-    # Search entire code for C4 keywords
-    return any(
+    # Check for C4 keywords
+    if any(
         re.search(rf"\b{keyword}\b", code)
         for keyword in C4_KEYWORDS
+    ):
+        return True
+
+    # Also accept PlantUML C4 functions as valid C4 code
+    c4_functions = [
+        "Person", "System", "Container", "Component",
+        "Rel", "RelU", "RelBack", "RelLeft", "RelRight", "RelUp", "RelDown",
+        "System_Boundary", "Container_Boundary", "Component_Boundary"
+    ]
+
+    return any(
+        re.search(rf"\b{func}\s*\(", code)
+        for func in c4_functions
     )
