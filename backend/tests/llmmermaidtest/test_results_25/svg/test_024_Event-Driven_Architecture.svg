@@ -1,0 +1,45 @@
+<svg width="3000" height="1100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="200.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="250.0" y="555">Handler5</text>
+    <rect class="node" x="450.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="500.0" y="555">Handler3</text>
+    <rect class="node" x="700.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="750.0" y="555">Consumer3</text>
+    <rect class="node" x="950.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1000.0" y="555">Handler2</text>
+    <rect class="node" x="1200.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1250.0" y="555">Handler4</text>
+    <rect class="node" x="1450.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1500.0" y="555">Handler6</text>
+    <rect class="node" x="1700.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1750.0" y="555">Consumer2</text>
+    <rect class="node" x="1950.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="2000.0" y="555">Bus</text>
+    <rect class="node" x="2200.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="2250.0" y="555">Producer[Event Producer]</text>
+    <rect class="node" x="2450.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="2500.0" y="555">Consumer1</text>
+    <rect class="node" x="2700.0" y="525" width="100" height="50" rx="5"/>
+    <text class="node-text" x="2750.0" y="555">Handler1</text>
+    <line class="edge" x1="2250.0" y1="575" x2="1950.0" y2="525"/>
+    <line class="edge" x1="2000.0" y1="575" x2="2450.0" y2="525"/>
+    <line class="edge" x1="2000.0" y1="575" x2="1700.0" y2="525"/>
+    <line class="edge" x1="2000.0" y1="575" x2="700.0" y2="525"/>
+    <line class="edge" x1="2500.0" y1="575" x2="2700.0" y2="525"/>
+    <line class="edge" x1="1750.0" y1="575" x2="950.0" y2="525"/>
+    <line class="edge" x1="750.0" y1="575" x2="450.0" y2="525"/>
+    <line class="edge" x1="2500.0" y1="575" x2="1200.0" y2="525"/>
+    <line class="edge" x1="1750.0" y1="575" x2="200.0" y2="525"/>
+    <line class="edge" x1="750.0" y1="575" x2="1450.0" y2="525"/>
+</svg>

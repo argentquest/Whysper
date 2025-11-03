@@ -1,0 +1,32 @@
+<svg width="2100" height="800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="250.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="300.0" y="405">Service3</text>
+    <rect class="node" x="550.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="600.0" y="405">API</text>
+    <rect class="node" x="850.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="900.0" y="405">DB</text>
+    <rect class="node" x="1150.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1200.0" y="405">Frontend</text>
+    <rect class="node" x="1450.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1500.0" y="405">Service1</text>
+    <rect class="node" x="1750.0" y="375" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1800.0" y="405">Service2</text>
+    <line class="edge" x1="1200.0" y1="425" x2="550.0" y2="375"/>
+    <line class="edge" x1="600.0" y1="425" x2="1450.0" y2="375"/>
+    <line class="edge" x1="600.0" y1="425" x2="1750.0" y2="375"/>
+    <line class="edge" x1="600.0" y1="425" x2="250.0" y2="375"/>
+    <line class="edge" x1="1500.0" y1="425" x2="850.0" y2="375"/>
+    <line class="edge" x1="1800.0" y1="425" x2="850.0" y2="375"/>
+    <line class="edge" x1="300.0" y1="425" x2="850.0" y2="375"/>
+</svg>

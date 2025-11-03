@@ -1,0 +1,262 @@
+{
+  "timestamp": "2025-11-03T10:07:43.224162",
+  "summary": {
+    "total_tests": 25,
+    "tests_with_svg": 25,
+    "tests_valid": 25,
+    "tests_invalid": 0,
+    "success_rate": 100.0
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "test_name": "System Context: Basic Architecture",
+      "description": "Generate a **C4 System Context diagram** for a simple system where a User accesses a Web Server System, which then connects to Primary Database and Backup Database systems.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_001_System_Context__Basic_Architecture.svg"
+    },
+    {
+      "test_id": 2,
+      "test_name": "System Context: Multi-path Routing",
+      "description": "Generate a **C4 System Context diagram** where an API Gateway System forwards requests to Microservice A System or Microservice B System. Show relationship with Shared Cache System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_002_System_Context__Multi-path_Routing.svg"
+    },
+    {
+      "test_id": 3,
+      "test_name": "Container Level: Frontend Decomposition",
+      "description": "Generate a **C4 Container diagram** for a system with Frontend Container (React), Backend Container (Node.js), and Auth Service Container (Python).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_003_Container_Level__Frontend_Decomposition.svg"
+    },
+    {
+      "test_id": 4,
+      "test_name": "System Context: External Integration",
+      "description": "Generate a **C4 System Context diagram** showing Customer (person) interacting with App System, which accesses Cloud Storage external System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_004_System_Context__External_Integration.svg"
+    },
+    {
+      "test_id": 5,
+      "test_name": "System Context: Environment Separation",
+      "description": "Generate a **C4 System Context diagram** showing Development environment with Test Server System and Production environment with Database System, with deployment relationship.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_005_System_Context__Environment_Separation.svg"
+    },
+    {
+      "test_id": 6,
+      "test_name": "System Context: User Login Flow",
+      "description": "Generate a **C4 System Context diagram** for user authentication: User (person) -> Web Browser System -> API Gateway System -> Authentication Service System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_006_System_Context__User_Login_Flow.svg"
+    },
+    {
+      "test_id": 7,
+      "test_name": "System Context: Routing Decision",
+      "description": "Generate a **C4 System Context diagram** with Start System, Router System as decision point, leading to Path A System or Path B System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_007_System_Context__Routing_Decision.svg"
+    },
+    {
+      "test_id": 8,
+      "test_name": "Component Level: Service Architecture",
+      "description": "Generate a **C4 Component diagram** for Backend Container showing Authentication Handler Component, Payment Handler Component, and Logger Component with relationships.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_008_Component_Level__Service_Architecture.svg"
+    },
+    {
+      "test_id": 9,
+      "test_name": "System Context: Payment System",
+      "description": "Generate a **C4 System Context diagram** for payment processing: Customer (person) -> Payment Portal System -> Banking System (external).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_009_System_Context__Payment_System.svg"
+    },
+    {
+      "test_id": 10,
+      "test_name": "Container Level: Customer Portal",
+      "description": "Generate a **C4 Container diagram** for Customer Portal System with Web Application Container (React), Mobile App Container (Flutter), and Database Container (PostgreSQL).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_010_Container_Level__Customer_Portal.svg"
+    },
+    {
+      "test_id": 11,
+      "test_name": "Component Level: Microservice Internal Structure",
+      "description": "Generate a **C4 Component diagram** for Microservice API Container with Request Handler Component, Business Logic Component, and Data Access Component.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_011_Component_Level__Microservice_Internal_Structure.svg"
+    },
+    {
+      "test_id": 12,
+      "test_name": "System Context: Load Balancing",
+      "description": "Generate a **C4 System Context diagram** showing User (person) -> Load Balancer System -> multiple Application Server Systems, connected to Database System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_012_System_Context__Load_Balancing.svg"
+    },
+    {
+      "test_id": 13,
+      "test_name": "System Context: Event-Driven",
+      "description": "Generate a **C4 System Context diagram** with Service A System and Service B System connected through Message Queue System with publish/subscribe pattern.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_013_System_Context__Event-Driven.svg"
+    },
+    {
+      "test_id": 14,
+      "test_name": "Container Level: Full Stack",
+      "description": "Generate a **C4 Container diagram** for application with Web App Container (React), API Server Container (Node.js), Cache Container (Redis), and Database Container (PostgreSQL).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_014_Container_Level__Full_Stack.svg"
+    },
+    {
+      "test_id": 15,
+      "test_name": "System Context: Data Pipeline",
+      "description": "Generate a **C4 System Context diagram** for data flow: Data Source System -> Transformation System -> Data Warehouse System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_015_System_Context__Data_Pipeline.svg"
+    },
+    {
+      "test_id": 16,
+      "test_name": "System Context: Bidirectional System Integration",
+      "description": "Generate a **C4 System Context diagram** showing Internal System and External API System with bidirectional relationship for data sync.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_016_System_Context__Bidirectional_System_Integration.svg"
+    },
+    {
+      "test_id": 17,
+      "test_name": "System Context: Database Cluster",
+      "description": "Generate a **C4 System Context diagram** with Database Cluster System showing Primary DB and Replica DB systems with replication.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_017_System_Context__Database_Cluster.svg"
+    },
+    {
+      "test_id": 18,
+      "test_name": "System Context: Queue and Processor",
+      "description": "Generate a **C4 System Context diagram** with Message Queue System and Message Processor System, showing processor consuming from queue.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_018_System_Context__Queue_and_Processor.svg"
+    },
+    {
+      "test_id": 19,
+      "test_name": "Container Level: Layered Application",
+      "description": "Generate a **C4 Container diagram** with Presentation Container (Web UI), Business Logic Container (API), and Data Access Container (Database).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_019_Container_Level__Layered_Application.svg"
+    },
+    {
+      "test_id": 20,
+      "test_name": "System Context: Named Services",
+      "description": "Generate a **C4 System Context diagram** with data-service System and auth-module System showing authentication relationship.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_020_System_Context__Named_Services.svg"
+    },
+    {
+      "test_id": 21,
+      "test_name": "System Context: Complex Service Mesh",
+      "description": "Generate a **C4 System Context diagram** where Order Service System interacts with Inventory Service, Shipping Service, and Monitoring System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_021_System_Context__Complex_Service_Mesh.svg"
+    },
+    {
+      "test_id": 22,
+      "test_name": "Container Level: Frontend Deployment",
+      "description": "Generate a **C4 Container diagram** for Frontend System with React Application Container and NGINX Proxy Container.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_022_Container_Level__Frontend_Deployment.svg"
+    },
+    {
+      "test_id": 23,
+      "test_name": "System Context: Legacy Integration",
+      "description": "Generate a **C4 System Context diagram** for Customer CRM System with Sales Team (person) and Legacy Database external System connection.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_023_System_Context__Legacy_Integration.svg"
+    },
+    {
+      "test_id": 24,
+      "test_name": "Component Level: Data Service",
+      "description": "Generate a **C4 Component diagram** for Data Service Container with Read Handler Component, Write Handler Component, and Database Repository Component.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_024_Component_Level__Data_Service.svg"
+    },
+    {
+      "test_id": 25,
+      "test_name": "System Context: Cloud Infrastructure",
+      "description": "Generate a **C4 System Context diagram** showing AWS Region System containing VPC System containing Web Server System and App Server System.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "C4 Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_025_System_Context__Cloud_Infrastructure.svg"
+    }
+  ]
+}

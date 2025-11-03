@@ -1,0 +1,63 @@
+<svg width="2000" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #f3e5f5; stroke: #4a148c; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="100" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="150" y="105">user</text>
+    <rect class="node" x="250" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="300" y="105">loadbalancer: "HTTPS" {</text>
+    <line class="edge" x1="200" y1="100" x2="250" y2="100"/>
+    <rect class="node" x="250" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="300" y="105">loadbalancer</text>
+    <rect class="node" x="400" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="450" y="105">app-server-1: "HTTP/HTTPS" {</text>
+    <line class="edge" x1="350" y1="100" x2="400" y2="100"/>
+    <rect class="node" x="400" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="450" y="105">loadbalancer</text>
+    <rect class="node" x="550" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="600" y="105">app-server-2: "HTTP/HTTPS" {</text>
+    <line class="edge" x1="500" y1="100" x2="550" y2="100"/>
+    <rect class="node" x="550" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="600" y="105">loadbalancer</text>
+    <rect class="node" x="700" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="750" y="105">app-server-3: "HTTP/HTTPS" {</text>
+    <line class="edge" x1="650" y1="100" x2="700" y2="100"/>
+    <rect class="node" x="700" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="750" y="105">app-server-1</text>
+    <rect class="node" x="850" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="900" y="105">redis: "Read/Write" {</text>
+    <line class="edge" x1="800" y1="100" x2="850" y2="100"/>
+    <rect class="node" x="850" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="900" y="105">app-server-2</text>
+    <rect class="node" x="1000" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1050" y="105">redis: "Read/Write" {</text>
+    <line class="edge" x1="950" y1="100" x2="1000" y2="100"/>
+    <rect class="node" x="1000" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1050" y="105">app-server-3</text>
+    <rect class="node" x="1150" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1200" y="105">redis: "Read/Write" {</text>
+    <line class="edge" x1="1100" y1="100" x2="1150" y2="100"/>
+    <rect class="node" x="1150" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1200" y="105">app-server-1</text>
+    <rect class="node" x="1300" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1350" y="105">database: "Write" {</text>
+    <line class="edge" x1="1250" y1="100" x2="1300" y2="100"/>
+    <rect class="node" x="1300" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1350" y="105">app-server-2</text>
+    <rect class="node" x="1450" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1500" y="105">database: "Write" {</text>
+    <line class="edge" x1="1400" y1="100" x2="1450" y2="100"/>
+    <rect class="node" x="1450" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1500" y="105">app-server-3</text>
+    <rect class="node" x="1600" y="75" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1650" y="105">database: "Write" {</text>
+    <line class="edge" x1="1550" y1="100" x2="1600" y2="100"/>
+</svg>

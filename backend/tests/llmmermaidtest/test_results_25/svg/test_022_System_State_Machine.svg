@@ -1,0 +1,39 @@
+<svg width="1800" height="700" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="113.63636363636363" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="163.63636363636363" y="355"></text>
+    <rect class="node" x="277.27272727272725" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="327.27272727272725" y="355">Running</text>
+    <rect class="node" x="440.9090909090909" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="490.9090909090909" y="355">Running: Resume requested</text>
+    <rect class="node" x="604.5454545454545" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="654.5454545454545" y="355">Running: System starts</text>
+    <rect class="node" x="768.1818181818181" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="818.1818181818181" y="355">Stopped: Stop requested</text>
+    <rect class="node" x="931.8181818181818" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="981.8181818181818" y="355">[*]</text>
+    <rect class="node" x="1095.4545454545455" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1145.4545454545455" y="355">Paused: Pause requested</text>
+    <rect class="node" x="1259.090909090909" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1309.090909090909" y="355">Paused</text>
+    <rect class="node" x="1422.7272727272725" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1472.7272727272725" y="355">Stopped</text>
+    <rect class="node" x="1586.3636363636363" y="325" width="100" height="50" rx="5"/>
+    <text class="node-text" x="1636.3636363636363" y="355">Initialized</text>
+    <line class="edge" x1="981.8181818181818" y1="375" x2="1586.3636363636363" y2="325"/>
+    <line class="edge" x1="1636.3636363636363" y1="375" x2="604.5454545454545" y2="325"/>
+    <line class="edge" x1="327.27272727272725" y1="375" x2="1095.4545454545455" y2="325"/>
+    <line class="edge" x1="1309.090909090909" y1="375" x2="440.9090909090909" y2="325"/>
+    <line class="edge" x1="327.27272727272725" y1="375" x2="768.1818181818181" y2="325"/>
+    <line class="edge" x1="1472.7272727272725" y1="375" x2="113.63636363636363" y2="325"/>
+</svg>

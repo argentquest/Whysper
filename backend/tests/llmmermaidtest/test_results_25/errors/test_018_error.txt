@@ -1,6 +1,0 @@
-Test ID: 18
-Test Name: Authentication Flow
-Description: Generate a **Mermaid flowchart** showing an authentication process: Login → Verify Credentials → Issue Token → Access Protected Resource.
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

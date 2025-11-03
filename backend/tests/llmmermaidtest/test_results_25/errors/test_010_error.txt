@@ -3,4 +3,4 @@ Test Name: User Journey
 Description: Generate a **Mermaid user journey** showing a customer's experience: 'Homepage' → 'Product Search' → 'Add to Cart' → 'Checkout'.
 
 Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte
+Network request failed: Expecting value: line 309 column 1 (char 1694)

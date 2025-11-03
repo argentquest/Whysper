@@ -1,6 +1,0 @@
-Test ID: 25
-Test Name: Microservices Communication
-Description: Generate a **Mermaid sequence diagram** showing microservices communication: Service A calls Service B, which calls Service C, with responses back through the chain.
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

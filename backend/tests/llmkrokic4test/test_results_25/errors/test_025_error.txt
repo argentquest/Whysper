@@ -1,0 +1,6 @@
+Test ID: 25
+Test Name: System Context: Cloud Infrastructure
+Description: Generate a **C4 System Context diagram** showing AWS Region System containing VPC System containing Web Server System and App Server System.
+
+Validation Error:
+mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.

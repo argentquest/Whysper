@@ -1,6 +1,0 @@
-Test ID: 10
-Test Name: C4: Container Diagram (C2) Focus
-Description: Generate a **D2 diagram** (C4 Container Level) showing the 'Customer Portal'. Decompose it to include a 'Web Application' (Node.js), a 'Mobile App', and a 'PostgreSQL Database'. Show relationships.
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

@@ -1,0 +1,6 @@
+Test ID: 9
+Test Name: System Context: Payment System
+Description: Generate a **C4 System Context diagram** for payment processing: Customer (person) -> Payment Portal System -> Banking System (external).
+
+Validation Error:
+mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.

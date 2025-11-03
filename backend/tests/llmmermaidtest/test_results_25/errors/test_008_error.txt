@@ -1,6 +1,0 @@
-Test ID: 8
-Test Name: Bar Chart
-Description: Generate a **Mermaid bar chart** displaying API response times for different endpoints: 'GET Users' (100ms), 'POST Create' (200ms), 'PUT Update' (150ms).
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

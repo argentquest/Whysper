@@ -1,0 +1,6 @@
+Test ID: 15
+Test Name: System Context: Data Pipeline
+Description: Generate a **C4 System Context diagram** for data flow: Data Source System -> Transformation System -> Data Warehouse System.
+
+Validation Error:
+mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.

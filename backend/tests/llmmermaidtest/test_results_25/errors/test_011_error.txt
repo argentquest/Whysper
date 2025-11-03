@@ -1,6 +1,0 @@
-Test ID: 11
-Test Name: Complex Flowchart
-Description: Generate a **Mermaid flowchart** with decision nodes. Start → Check Data Validity (diamond) → If valid: Save Data, If invalid: Show Error.
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

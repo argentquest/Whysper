@@ -13,16 +13,16 @@
     <rect class="node" x="100" y="75" width="100" height="50" rx="5"/>
     <text class="node-text" x="150" y="105">user</text>
     <rect class="node" x="250" y="75" width="100" height="50" rx="5"/>
-    <text class="node-text" x="300" y="105">web-server: "Access"</text>
+    <text class="node-text" x="300" y="105">web-server: "HTTP/HTTPS"</text>
     <line class="edge" x1="200" y1="100" x2="250" y2="100"/>
     <rect class="node" x="250" y="75" width="100" height="50" rx="5"/>
     <text class="node-text" x="300" y="105">web-server</text>
     <rect class="node" x="400" y="75" width="100" height="50" rx="5"/>
-    <text class="node-text" x="450" y="105">primary-db: "Query"</text>
+    <text class="node-text" x="450" y="105">data-tier.primary-db: "Query"</text>
     <line class="edge" x1="350" y1="100" x2="400" y2="100"/>
     <rect class="node" x="400" y="75" width="100" height="50" rx="5"/>
     <text class="node-text" x="450" y="105">web-server</text>
     <rect class="node" x="550" y="75" width="100" height="50" rx="5"/>
-    <text class="node-text" x="600" y="105">backup-db: "Replicate"</text>
+    <text class="node-text" x="600" y="105">data-tier.backup-db: "Replicate"</text>
     <line class="edge" x1="500" y1="100" x2="550" y2="100"/>
 </svg>

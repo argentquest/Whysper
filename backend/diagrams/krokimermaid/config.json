@@ -1,0 +1,30 @@
+{
+  "provider_id": "krokimermaid",
+  "provider_name": "Kroki Mermaid Renderer",
+  "description": "Mermaid diagrams via Kroki service at http://localhost:8000",
+
+  "diagram_type": "mermaid",
+  "supported_output_formats": ["svg", "png"],
+
+  "overrides": {
+    "llm_correction": {
+      "max_retries": 5,
+      "max_tokens": 4000
+    },
+
+    "validation": {
+      "timeout_seconds": 30
+    },
+
+    "rendering": {
+      "timeout_seconds": 30
+    }
+  },
+
+  "custom": {
+    "server_url": "http://localhost:8000",
+    "diagram_endpoint": "mermaid",
+    "timeout_seconds": 30,
+    "max_retries": 3
+  }
+}

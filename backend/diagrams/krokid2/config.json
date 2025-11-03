@@ -1,0 +1,30 @@
+{
+  "provider_id": "krokid2",
+  "provider_name": "Kroki D2 Renderer",
+  "description": "D2 diagrams via Kroki service at http://localhost:8000",
+
+  "diagram_type": "d2",
+  "supported_output_formats": ["svg", "png"],
+
+  "overrides": {
+    "llm_correction": {
+      "max_retries": 5,
+      "max_tokens": 6000
+    },
+
+    "validation": {
+      "timeout_seconds": 30
+    },
+
+    "rendering": {
+      "timeout_seconds": 30
+    }
+  },
+
+  "custom": {
+    "server_url": "http://localhost:8000",
+    "diagram_endpoint": "d2",
+    "timeout_seconds": 30,
+    "max_retries": 3
+  }
+}

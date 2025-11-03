@@ -1,0 +1,28 @@
+<svg width="900" height="400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="78.57142857142858" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="128.57142857142858" y="205">Shipping</text>
+    <rect class="node" x="207.14285714285717" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="257.14285714285717" y="205">Inventory</text>
+    <rect class="node" x="335.7142857142858" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="385.7142857142858" y="205">Monitoring</text>
+    <rect class="node" x="464.28571428571433" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="514.2857142857143" y="205">>OrderService: Shipment Created</text>
+    <rect class="node" x="592.8571428571429" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="642.8571428571429" y="205">>OrderService: Alert Acknowledged</text>
+    <rect class="node" x="721.4285714285716" y="175" width="100" height="50" rx="5"/>
+    <text class="node-text" x="771.4285714285716" y="205">>OrderService: Stock Availability</text>
+    <line class="edge" x1="257.14285714285717" y1="225" x2="721.4285714285716" y2="175"/>
+    <line class="edge" x1="128.57142857142858" y1="225" x2="464.28571428571433" y2="175"/>
+    <line class="edge" x1="385.7142857142858" y1="225" x2="592.8571428571429" y2="175"/>
+</svg>

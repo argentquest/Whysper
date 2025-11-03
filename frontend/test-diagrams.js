@@ -63,9 +63,16 @@ console.log('%c--- TEST 2: Provider Information ---', 'color: #1890ff; font-weig
     assert(d2Info.available === true, 'D2 provider is available');
     console.log(`  Provider: ${d2Info.provider_name}`);
     console.log(`  Capabilities: ${d2Info.capabilities.join(', ')}\n`);
+
+    console.log('Fetching Structurizr provider info...');
+    const structurizrInfo = await diagramProviderService.getProviderInfo('structurizr');
+    assert(structurizrInfo.provider_id === 'krokistructurizr', 'Structurizr provider_id is krokistructurizr');
+    assert(structurizrInfo.diagram_type === 'structurizr', 'Structurizr diagram_type is correct');
+    console.log(`  Provider: ${structurizrInfo.provider_name}`);
+    console.log(`  Capabilities: ${structurizrInfo.capabilities.join(', ')}\n`);
   } catch (err) {
     console.error(`❌ Provider info error: ${err.message}\n`);
-    results.failed += 2;
+    results.failed += 3;
   }
 
   // Test 3: List Providers
@@ -78,8 +85,10 @@ console.log('%c--- TEST 2: Provider Information ---', 'color: #1890ff; font-weig
 
     const mermaidProviders = list.providers.filter(p => p.diagram_type === 'mermaid');
     const d2Providers = list.providers.filter(p => p.diagram_type === 'd2');
+    const structurizrProviders = list.providers.filter(p => p.diagram_type === 'structurizr');
     assert(mermaidProviders.length > 0, 'Mermaid provider registered');
     assert(d2Providers.length > 0, 'D2 provider registered');
+    assert(structurizrProviders.length > 0, 'Structurizr provider registered');
 
     console.log(`  Total: ${list.total_providers}, Available: ${list.available_providers}\n`);
   } catch (err) {
@@ -158,6 +167,36 @@ frontend -> backend`;
     results.failed += 2;
   }
 
+  // Test 6.5: Validate Structurizr Code
+  console.log('%c--- TEST 6.5: Structurizr Validation ---', 'color: #1890ff; font-weight: bold;');
+  try {
+    const structurizrCode = `workspace {
+  model {
+    user = person "User"
+    softwareSystem = softwareSystem "Software System"
+    user -> softwareSystem "Uses"
+  }
+  views {
+    systemContext softwareSystem {
+      user -> softwareSystem
+    }
+  }
+}`;
+
+    console.log('Validating valid Structurizr code...');
+    const validResult = await diagramProviderService.validate({
+      code: structurizrCode,
+      diagram_type: 'structurizr',
+      auto_fix: true
+    });
+    assert(validResult.is_valid === true, 'Valid Structurizr code passes validation');
+    assert(validResult.provider_id === 'krokistructurizr', 'Validation uses krokistructurizr provider');
+    console.log('  ✅ Structurizr validation working\n');
+  } catch (err) {
+    console.error(`❌ Structurizr validation error: ${err.message}\n`);
+    results.failed += 2;
+  }
+
   // Test 7: Render Mermaid Diagram
   console.log('%c--- TEST 7: Mermaid Rendering ---', 'color: #1890ff; font-weight: bold;');
   try {
@@ -220,6 +259,48 @@ web -> user: "HTTP Response"`;
     console.log(`  Total time: ${renderTime.toFixed(2)}ms\n`);
   } catch (err) {
     console.error(`❌ D2 rendering error: ${err.message}\n`);
+    results.failed += 4;
+  }
+
+  // Test 8.5: Render Structurizr Diagram
+  console.log('%c--- TEST 8.5: Structurizr Rendering ---', 'color: #1890ff; font-weight: bold;');
+  try {
+    const structurizrCode = `workspace {
+  model {
+    user = person "User"
+    webapp = softwareSystem "Web Application" {
+      frontend = container "Frontend"
+      backend = container "Backend API"
+    }
+    user -> webapp.frontend "Uses"
+    webapp.frontend -> webapp.backend "API calls"
+  }
+  views {
+    systemContext webapp {
+      user -> webapp
+    }
+    container webapp {
+      user -> frontend
+      frontend -> backend
+    }
+  }
+}`;
+
+    console.log('Rendering Structurizr diagram...');
+    const startTime = performance.now();
+    const result = await diagramProviderService.render({
+      code: structurizrCode,
+      diagram_type: 'structurizr',
+      output_format: 'svg'
+    });
+    const renderTime = performance.now() - startTime;
+
+    assert(result.success === true, 'Structurizr rendering successful');
+    assert(result.content && result.content.length > 0, `SVG rendered (${result.content.length} bytes)`);
+    assert(result.metadata.provider_id === 'krokistructurizr', 'Rendered by krokistructurizr');
+    console.log(`  Total time: ${renderTime.toFixed(2)}ms\n`);
+  } catch (err) {
+    console.error(`❌ Structurizr rendering error: ${err.message}\n`);
     results.failed += 4;
   }
 

@@ -43,5 +43,14 @@
     "max_concurrent_renders": 10,
     "enable_metrics": true,
     "enable_debug_logging": false
+  },
+
+  "provider_preferences": {
+    "description": "Specify the default provider for each diagram type when multiple providers are available",
+    "d2": "d2v1",
+    "mermaid": "mermaidv1",
+    "structurizr": "krokistructurizr",
+    "plantuml": "krokiplantuml",
+    "c4": "krokic4"
   }
 }

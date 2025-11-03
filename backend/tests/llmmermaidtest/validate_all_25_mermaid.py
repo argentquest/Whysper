@@ -123,7 +123,24 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str) ->
     os.makedirs(os.path.dirname(svg_path), exist_ok=True)
 
     try:
-        with open(svg_path, 'w') as f:
+        # Handle different SVG content types (string, bytes, gzip, base64)
+        if isinstance(svg_content, bytes):
+            # Check if it's gzip-compressed
+            if svg_content[:2] == b'\x1f\x8b':  # gzip magic number
+                import gzip
+                svg_content = gzip.decompress(svg_content).decode('utf-8')
+            else:
+                # Try to decode as UTF-8
+                try:
+                    svg_content = svg_content.decode('utf-8')
+                except UnicodeDecodeError:
+                    # If UTF-8 fails, try latin-1 as fallback
+                    svg_content = svg_content.decode('latin-1', errors='replace')
+        elif isinstance(svg_content, str):
+            # Already a string, ensure it's valid UTF-8
+            svg_content = svg_content.encode('utf-8', errors='replace').decode('utf-8')
+
+        with open(svg_path, 'w', encoding='utf-8') as f:
             f.write(svg_content)
         result["has_svg"] = True
         result["svg_file"] = svg_filename

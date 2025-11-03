@@ -1,45 +1,39 @@
 """
-Browserless Diagram Renderer - Version 2 - WINDOWS FIXED
+Mermaid CLI Renderer - Version 2 (Updated)
 
-This version includes the Windows event loop policy fix at the module level
-to ensure it's applied before any Playwright operations.
+This version uses ONLY Mermaid CLI (mmdc) for all rendering.
+No fallbacks, no Playwright, pure Mermaid CLI approach.
+
+This is the most reliable and stable approach for Windows environments.
 """
 
-import asyncio
-import base64
-import urllib.parse
-import os
-import sys
+import subprocess
 import tempfile
-import platform
-
-# Fix Windows asyncio issue AT MODULE LEVEL BEFORE ANY OTHER IMPORTS
-if platform.system() == "Windows":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-from playwright.async_api import async_playwright
+import base64
+from pathlib import Path
 from common.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Mermaid CLI executable name
+MMDC_EXECUTABLE = "mmdc"
+MMDC_TIMEOUT = 120  # seconds
 
-async def render_diagram(
+
+def render_diagram(
     diagram_code: str,
     diagram_type: str,
     output_format: str = "svg",
-    frontend_url: str = "http://localhost:5173",
-    timeout: int = 30000
+    **kwargs
 ) -> str:
     """
-    Render a diagram using Playwright with Windows compatibility fixes.
-    Includes multiple fallback strategies for different environments.
+    Render a diagram using Mermaid CLI (mmdc) only.
 
     Args:
-        diagram_code: The diagram source code (Mermaid, D2, or C4)
+        diagram_code: The diagram source code
         diagram_type: Type of diagram ('mermaid', 'd2', or 'c4')
         output_format: Output format ('svg' or 'png')
-        frontend_url: Base URL of the frontend (default: http://localhost:5173)
-        timeout: Timeout in milliseconds (default: 30000)
+        **kwargs: Additional arguments (ignored, for compatibility)
 
     Returns:
         str: Rendered diagram (SVG string or base64-encoded PNG)
@@ -47,49 +41,155 @@ async def render_diagram(
     Raises:
         Exception: If rendering fails
     """
-    logger.info(f"Rendering {diagram_type} diagram to {output_format}")
-    logger.debug(f"Platform: {platform.system()}")
-    logger.debug(f"Event loop policy: {type(asyncio.get_event_loop_policy())}")
+    logger.info(f"Rendering {diagram_type} diagram to {output_format} using Mermaid CLI")
 
-    # URL-encode the diagram code
-    encoded_code = urllib.parse.quote(diagram_code)
+    # Validate output format
+    if output_format not in ("svg", "png"):
+        raise ValueError(f"Unsupported output format: {output_format}")
 
-    # Try multiple rendering strategies - skip Playwright on Windows due to subprocess issues
-    if platform.system() == "Windows":
-        logger.info("Windows detected: skipping Playwright strategy due to subprocess limitations")
-        strategies = [
-            ("Static HTML with JS Libraries", render_with_static_html),
-            ("Pure Python SVG Generation", render_with_python_svg)
-        ]
-    else:
-        strategies = [
-            ("Playwright Browser", render_with_playwright),
-            ("Static HTML with JS Libraries", render_with_static_html),
-            ("Pure Python SVG Generation", render_with_python_svg)
-        ]
+    # Normalize diagram code to Mermaid syntax
+    if diagram_type in ("d2", "c4"):
+        logger.info(f"Converting {diagram_type} to Mermaid syntax")
+        diagram_code = convert_to_mermaid(diagram_code, diagram_type)
+    elif diagram_type != "mermaid":
+        raise ValueError(f"Unsupported diagram type: {diagram_type}")
 
-    for strategy_name, strategy_func in strategies:
+    # Render using Mermaid CLI
+    return render_with_mmdc(diagram_code, output_format)
+
+
+def convert_to_mermaid(diagram_code: str, diagram_type: str) -> str:
+    """
+    Convert D2 or C4 diagrams to Mermaid syntax.
+
+    For now, returns the code as-is. In production, this would:
+    - Parse D2 syntax and convert to Mermaid flowchart
+    - Parse C4 syntax and convert to Mermaid diagram
+
+    Args:
+        diagram_code: The diagram code
+        diagram_type: 'd2' or 'c4'
+
+    Returns:
+        str: Mermaid-compatible diagram code
+    """
+    logger.debug(f"Converting {diagram_type} to Mermaid (currently returns as-is)")
+    # TODO: Implement actual D2->Mermaid and C4->Mermaid conversion
+    # For now, assume input is already valid Mermaid or compatible
+    return diagram_code
+
+
+def render_with_mmdc(diagram_code: str, output_format: str) -> str:
+    """
+    Render using Mermaid CLI (mmdc) executable.
+
+    Args:
+        diagram_code: The Mermaid diagram code
+        output_format: 'svg' or 'png'
+
+    Returns:
+        str: SVG string or base64-encoded PNG
+
+    Raises:
+        Exception: If mmdc is not available or rendering fails
+    """
+
+    # Check if mmdc is available
+    if not is_mmdc_available():
+        raise Exception(
+            "Mermaid CLI (mmdc) is not available on this system. "
+            "Please install with: npm install -g @mermaid-js/mermaid-cli"
+        )
+
+    # Create temporary files
+    with tempfile.TemporaryDirectory() as tmpdir:
+        input_file = Path(tmpdir) / "diagram.mmd"
+        output_file = Path(tmpdir) / f"diagram.{output_format}"
+
         try:
-            logger.info(f"Attempting rendering with strategy: {strategy_name}")
-            result = await strategy_func(
-                diagram_code, diagram_type, output_format, 
-                frontend_url, encoded_code, timeout
+            # Write diagram code to input file
+            input_file.write_text(diagram_code, encoding="utf-8")
+            logger.debug(f"Wrote diagram to: {input_file}")
+
+            # Run mmdc command
+            cmd = [
+                MMDC_EXECUTABLE,
+                "-i", str(input_file),
+                "-o", str(output_file),
+                "-f", output_format.upper(),  # mmdc expects SVG or PNG
+            ]
+
+            logger.debug(f"Running command: {' '.join(cmd)}")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=MMDC_TIMEOUT,
+                shell=True  # Use shell on Windows to find .cmd files
             )
-            logger.info(f"✅ Successfully rendered with {strategy_name}")
-            return result
+
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                raise Exception(f"mmdc rendering failed: {error_msg}")
+
+            logger.debug(f"mmdc completed successfully")
+
+            # Read output file
+            if not output_file.exists():
+                raise Exception(f"Output file not created: {output_file}")
+
+            output_data = output_file.read_bytes()
+
+            # Return based on format
+            if output_format == "svg":
+                # Return SVG as string
+                return output_data.decode("utf-8")
+            elif output_format == "png":
+                # Return PNG as base64
+                return base64.b64encode(output_data).decode("utf-8")
+
+        except subprocess.TimeoutExpired:
+            raise Exception(f"mmdc timed out after {MMDC_TIMEOUT} seconds")
         except Exception as e:
-            logger.warning(f"❌ Strategy {strategy_name} failed: {str(e)}")
-            continue
+            logger.error(f"Error rendering diagram: {str(e)}")
+            raise
 
-    # All strategies failed
-    raise Exception(f"All rendering strategies failed for {diagram_type} diagram")
 
+def is_mmdc_available() -> bool:
+    """
+    Check if Mermaid CLI (mmdc) is available on the system.
+
+    Returns:
+        bool: True if mmdc is available, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            [MMDC_EXECUTABLE, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            shell=True  # Use shell on Windows
+        )
+        available = result.returncode == 0
+        if available:
+            logger.debug(f"mmdc is available: {result.stdout.strip()}")
+        else:
+            logger.warning(f"mmdc check failed: {result.stderr}")
+        return available
+    except Exception as e:
+        logger.warning(f"Could not check mmdc availability: {str(e)}")
+        return False
+
+
+# DEPRECATED: Keeping old functions below for reference only
+# These are no longer used - renderer now uses Mermaid CLI exclusively
 
 async def render_with_playwright(
     diagram_code: str, diagram_type: str, output_format: str,
     frontend_url: str, encoded_code: str, timeout: int
 ) -> str:
-    """Render using Playwright browser with Windows fixes."""
+    """DEPRECATED: Render using Playwright browser with Windows fixes."""
     
     browser = None
     try:

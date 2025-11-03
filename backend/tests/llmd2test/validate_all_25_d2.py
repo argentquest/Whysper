@@ -58,17 +58,34 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "d2
         # Decode base64 to get SVG content (or use directly if already SVG)
         try:
             import base64
+            import gzip
+
             # Check if image_data is base64 string or already decoded
             if isinstance(image_data, str):
                 # Try to decode as base64 first
                 try:
-                    svg_content = base64.b64decode(image_data).decode('utf-8')
+                    decoded_bytes = base64.b64decode(image_data)
+                    # Check if it's gzip-compressed
+                    if decoded_bytes[:2] == b'\x1f\x8b':  # gzip magic number
+                        svg_content = gzip.decompress(decoded_bytes).decode('utf-8')
+                    else:
+                        svg_content = decoded_bytes.decode('utf-8')
                 except:
                     # If that fails, assume it's already SVG text
                     svg_content = image_data
             else:
                 # Binary data, decode it
-                svg_content = image_data.decode('utf-8') if isinstance(image_data, bytes) else str(image_data)
+                if isinstance(image_data, bytes):
+                    # Check if it's gzip-compressed
+                    if image_data[:2] == b'\x1f\x8b':
+                        svg_content = gzip.decompress(image_data).decode('utf-8')
+                    else:
+                        try:
+                            svg_content = image_data.decode('utf-8')
+                        except UnicodeDecodeError:
+                            svg_content = image_data.decode('latin-1', errors='replace')
+                else:
+                    svg_content = str(image_data)
 
             if '<svg' not in svg_content:
                 return (False, "Generated content is not valid SVG", "Invalid SVG")
@@ -123,7 +140,24 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str) ->
     os.makedirs(os.path.dirname(svg_path), exist_ok=True)
 
     try:
-        with open(svg_path, 'w') as f:
+        # Handle different SVG content types (string, bytes, gzip, base64)
+        if isinstance(svg_content, bytes):
+            # Check if it's gzip-compressed
+            if svg_content[:2] == b'\x1f\x8b':  # gzip magic number
+                import gzip
+                svg_content = gzip.decompress(svg_content).decode('utf-8')
+            else:
+                # Try to decode as UTF-8
+                try:
+                    svg_content = svg_content.decode('utf-8')
+                except UnicodeDecodeError:
+                    # If UTF-8 fails, try latin-1 as fallback
+                    svg_content = svg_content.decode('latin-1', errors='replace')
+        elif isinstance(svg_content, str):
+            # Already a string, ensure it's valid UTF-8
+            svg_content = svg_content.encode('utf-8', errors='replace').decode('utf-8')
+
+        with open(svg_path, 'w', encoding='utf-8') as f:
             f.write(svg_content)
         result["has_svg"] = True
         result["svg_file"] = svg_filename

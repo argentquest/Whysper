@@ -1,6 +1,0 @@
-Test ID: 5
-Test Name: ER Diagram
-Description: Generate a **Mermaid ER diagram** with two main entities: 'User' and 'Product'. Show the relationship between them (User purchases Product).
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

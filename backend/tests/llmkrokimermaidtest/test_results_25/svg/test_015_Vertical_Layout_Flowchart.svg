@@ -1,0 +1,21 @@
+<svg width="600" height="300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+         refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+    <style>
+        .node { fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }
+        .node-text { font-family: Arial; font-size: 14px; text-anchor: middle; }
+        .edge { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <rect class="node" x="100.0" y="125" width="100" height="50" rx="5"/>
+    <text class="node-text" x="150.0" y="155">Target</text>
+    <rect class="node" x="250.0" y="125" width="100" height="50" rx="5"/>
+    <text class="node-text" x="300.0" y="155">Transform</text>
+    <rect class="node" x="400.0" y="125" width="100" height="50" rx="5"/>
+    <text class="node-text" x="450.0" y="155">Source</text>
+    <line class="edge" x1="450.0" y1="175" x2="250.0" y2="125"/>
+    <line class="edge" x1="300.0" y1="175" x2="100.0" y2="125"/>
+</svg>

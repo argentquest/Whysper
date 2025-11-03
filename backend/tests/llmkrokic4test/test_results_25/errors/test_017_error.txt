@@ -1,0 +1,6 @@
+Test ID: 17
+Test Name: System Context: Database Cluster
+Description: Generate a **C4 System Context diagram** with Database Cluster System showing Primary DB and Replica DB systems with replication.
+
+Validation Error:
+mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.

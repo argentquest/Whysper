@@ -1,6 +1,0 @@
-Test ID: 14
-Test Name: Object Styling (Background Color)
-Description: Generate a **D2 diagram** showing three processes: 'Process Init', 'Process Run', and 'Process End'. Make 'Process Run' have a green background fill.
-
-Validation Error:
-Failed to decode SVG: 'utf-8' codec can't decode byte 0xb2 in position 0: invalid start byte

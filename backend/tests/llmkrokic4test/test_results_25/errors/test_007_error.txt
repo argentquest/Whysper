@@ -1,0 +1,6 @@
+Test ID: 7
+Test Name: System Context: Routing Decision
+Description: Generate a **C4 System Context diagram** with Start System, Router System as decision point, leading to Path A System or Path B System.
+
+Validation Error:
+mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.

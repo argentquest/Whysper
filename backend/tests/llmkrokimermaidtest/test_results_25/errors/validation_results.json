@@ -1,0 +1,262 @@
+{
+  "timestamp": "2025-11-02T20:41:51.097288",
+  "summary": {
+    "total_tests": 25,
+    "tests_with_svg": 24,
+    "tests_valid": 24,
+    "tests_invalid": 1,
+    "success_rate": 96.0
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "test_name": "Basic Flowchart with Hierarchy",
+      "description": "Generate a **Mermaid flowchart** showing a simple system where a User accesses a Web Server, which then connects to two separate Database clusters, 'Primary' and 'Backup'. Use a subgraph to group the databases as 'Data Tier'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_001_Basic_Flowchart_with_Hierarchy.svg"
+    },
+    {
+      "test_id": 2,
+      "test_name": "Flowchart with Multiple Paths",
+      "description": "Generate a **Mermaid flowchart** where 'API Gateway' forwards requests to 'Microservice A' or 'Microservice B'. Show a relationship between Microservice B and a 'Shared Cache'. The flow should display left to right.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_002_Flowchart_with_Multiple_Paths.svg"
+    },
+    {
+      "test_id": 3,
+      "test_name": "Flowchart with Different Shapes",
+      "description": "Generate a **Mermaid flowchart**. Define three components: 'Frontend', 'Backend', and 'Auth Service'. Use a diamond shape for 'Auth Service'. Show 'Frontend' connecting to 'Backend' and 'Backend' connecting to 'Auth Service' with a label 'Token Check'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_003_Flowchart_with_Different_Shapes.svg"
+    },
+    {
+      "test_id": 4,
+      "test_name": "External Entity Representation",
+      "description": "Generate a **Mermaid flowchart** modeling a system where 'User' interacts with the main 'App', and the 'App' needs to access a 'Storage' cloud service. Use appropriate shapes to differentiate.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_004_External_Entity_Representation.svg"
+    },
+    {
+      "test_id": 5,
+      "test_name": "Nested Subgraphs",
+      "description": "Generate a **Mermaid flowchart** with two subgraphs, 'Development' and 'Production'. Inside 'Development', put a 'Test Server' that connects directly to a 'Database Instance' located inside the 'Production' subgraph. Label the connection 'Deployment Pipeline'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_005_Nested_Subgraphs.svg"
+    },
+    {
+      "test_id": 6,
+      "test_name": "Sequential Flow",
+      "description": "Generate a **Mermaid flowchart** for a user login flow: User -> Browser -> API Gateway -> Authentication Service.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_006_Sequential_Flow.svg"
+    },
+    {
+      "test_id": 7,
+      "test_name": "Decision Diamond",
+      "description": "Generate a **Mermaid flowchart** starting with 'Start Process'. Use a diamond shape for the decision 'Is Data Valid?'. If true, go to 'Save Data'. If false, go to 'Send Error Alert'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_007_Decision_Diamond.svg"
+    },
+    {
+      "test_id": 8,
+      "test_name": "Class Diagram with Inheritance",
+      "description": "Generate a **Mermaid class diagram** modeling a simple class structure: 'Dog' and 'Cat' inherit from 'Animal'. The 'Dog' class has a method `bark()`. Show inheritance relationships.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_008_Class_Diagram_with_Inheritance.svg"
+    },
+    {
+      "test_id": 9,
+      "test_name": "Sequence Diagram: System Context",
+      "description": "Generate a **Mermaid sequence diagram** showing the 'Payment Processing System' that interacts with the 'Customer' and an external 'Bank API'. Show the 'Customer' sending a payment request.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_009_Sequence_Diagram__System_Context.svg"
+    },
+    {
+      "test_id": 10,
+      "test_name": "Sequence Diagram: Multi-Step Flow",
+      "description": "Generate a **Mermaid sequence diagram** showing the 'Customer Portal'. Show interactions between 'Customer', 'Web Application' (Node.js), and 'PostgreSQL Database'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_010_Sequence_Diagram__Multi-Step_Flow.svg"
+    },
+    {
+      "test_id": 11,
+      "test_name": "State Diagram",
+      "description": "Generate a **Mermaid state diagram** showing the lifecycle of a 'Web Application'. States include 'Idle', 'Processing', 'Error', and 'Success'. Show transitions between these states.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_011_State_Diagram.svg"
+    },
+    {
+      "test_id": 12,
+      "test_name": "Complex Flow with Subgraphs",
+      "description": "Generate a **Mermaid flowchart**. Show a 'User' accessing a 'Load Balancer' over HTTPS. The 'Load Balancer' distributes traffic to three 'Application Servers'. These read from 'Redis Cache' and write to 'SQL Database'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_012_Complex_Flow_with_Subgraphs.svg"
+    },
+    {
+      "test_id": 13,
+      "test_name": "Message Queue Flow",
+      "description": "Generate a **Mermaid flowchart** showing 'Microservice A' sending an event to a 'Message Queue' which is then consumed by 'Microservice B'. Label the first path 'Publish (AMQP)' and the second 'Consume (AMQP)'.",
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "Could not generate a valid diagram from the AI response.",
+      "error_file": "test_013_error.txt",
+      "svg_file": ""
+    },
+    {
+      "test_id": 14,
+      "test_name": "Process States",
+      "description": "Generate a **Mermaid flowchart** showing three processes: 'Process Init', 'Process Run', and 'Process End'. Emphasize 'Process Run' as the main processing step.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_014_Process_States.svg"
+    },
+    {
+      "test_id": 15,
+      "test_name": "Vertical Layout Flowchart",
+      "description": "Generate a **Mermaid flowchart** showing data flowing from 'Source' to 'Transform' to 'Target'. Set the diagram direction to flow vertically (top-down).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_015_Vertical_Layout_Flowchart.svg"
+    },
+    {
+      "test_id": 16,
+      "test_name": "Bi-directional Communication",
+      "description": "Generate a **Mermaid sequence diagram** showing an 'Internal System' communicating with a separate 'External API'. Show bidirectional interactions with labels.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_016_Bi-directional_Communication.svg"
+    },
+    {
+      "test_id": 17,
+      "test_name": "Grouped Components",
+      "description": "Generate a **Mermaid flowchart**. Create a subgraph labeled 'Database Cluster'. Inside, define 'Primary DB' and 'Replica DB'. Show a connection from 'Primary DB' to 'Replica DB' labeled 'Replication'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_017_Grouped_Components.svg"
+    },
+    {
+      "test_id": 18,
+      "test_name": "Different Node Types",
+      "description": "Generate a **Mermaid flowchart** defining a 'Queue' (rectangle) and a 'Listener' (circle). Show the 'Listener' reading from 'Queue'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_018_Different_Node_Types.svg"
+    },
+    {
+      "test_id": 19,
+      "test_name": "Gantt Chart: Project Timeline",
+      "description": "Generate a **Mermaid Gantt chart** showing a project timeline with 'Design' (1 week), 'Development' (2 weeks), 'Testing' (1 week), and 'Deployment' (3 days).",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_019_Gantt_Chart__Project_Timeline.svg"
+    },
+    {
+      "test_id": 20,
+      "test_name": "Named Workflow",
+      "description": "Generate a **Mermaid flowchart** modeling two components, 'data-service' and 'auth-module'. Show 'data-service' requesting authentication from 'auth-module'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_020_Named_Workflow.svg"
+    },
+    {
+      "test_id": 21,
+      "test_name": "System Interactions",
+      "description": "Model a workflow where 'Order Service' system interacts with 'Inventory' system and 'Shipping' system. It also sends alerts to a monitoring system.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_021_System_Interactions.svg"
+    },
+    {
+      "test_id": 22,
+      "test_name": "Container Architecture",
+      "description": "Generate a **Mermaid flowchart** decomposing 'Frontend' container into 'React UI' (code) and 'NGINX Proxy' (software). Show 'User' interacting with the proxy.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_022_Container_Architecture.svg"
+    },
+    {
+      "test_id": 23,
+      "test_name": "System Boundaries",
+      "description": "Generate a **Mermaid flowchart** showing the boundary of the 'Customer CRM'. Show 'Sales Team' interacting with it, and the CRM connecting to an external 'Legacy Database'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_023_System_Boundaries.svg"
+    },
+    {
+      "test_id": 24,
+      "test_name": "Component Interaction",
+      "description": "Generate a **Mermaid flowchart** detailing the 'Data Service'. Show 'Read Handler' and 'Write Handler' components accessing a 'Database Repository'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_024_Component_Interaction.svg"
+    },
+    {
+      "test_id": 25,
+      "test_name": "Complex Nesting",
+      "description": "Generate a **Mermaid flowchart**. Create a subgraph 'Region A'. Inside it, place 'VPC A'. Inside 'VPC A', place 'Web Server' and 'App Server'. Show a connection from 'Web Server' to 'App Server'.",
+      "has_svg": true,
+      "is_valid": true,
+      "validation_error": "Mermaid Syntax is Valid",
+      "error_file": "",
+      "svg_file": "test_025_Complex_Nesting.svg"
+    }
+  ]
+}

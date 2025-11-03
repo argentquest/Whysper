@@ -1,0 +1,30 @@
+{
+  "provider_id": "krokistructurizr",
+  "provider_name": "Kroki Structurizr Renderer",
+  "description": "Structurizr diagrams via Kroki service at http://localhost:8000",
+
+  "diagram_type": "structurizr",
+  "supported_output_formats": ["svg", "png"],
+
+  "overrides": {
+    "llm_correction": {
+      "max_retries": 5,
+      "max_tokens": 6000
+    },
+
+    "validation": {
+      "timeout_seconds": 30
+    },
+
+    "rendering": {
+      "timeout_seconds": 30
+    }
+  },
+
+  "custom": {
+    "server_url": "http://localhost:8000",
+    "diagram_endpoint": "structurizr",
+    "timeout_seconds": 30,
+    "max_retries": 3
+  }
+}
