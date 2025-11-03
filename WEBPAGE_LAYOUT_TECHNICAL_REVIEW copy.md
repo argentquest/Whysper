@@ -26,7 +26,7 @@ This document identifies technical questions, ambiguities, and areas requiring d
 #### 1.2 Navigation Menu Structure
 - **Q4:** The navigation shows "Home >> Current Home" - is this breadcrumb-style or literal menu items?
   - Current: Ambiguous
-  - **RESOLVED:** Display labels only (not interactive breadcrumbs)
+  - Clarification needed: Just menu labels?
 
 - **Q5:** Should "Architecture Gen Studio > New Page" open in:
   - Same tab? No
@@ -81,7 +81,7 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 2.2 Monaco Prompt Editor
 - **Q12:** Should the prompt editor have:
-  - Syntax highlighting? **RESOLVED:** Based on diagram type from selected tab
+  - Syntax highlighting? If Possible
   - Auto-complete suggestions? No
   - Prompt templates/snippets? Use the field called Template for SubAgent
   - Character count limit? None
@@ -170,15 +170,14 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 3.4 Download/Export
 - **Q26:** What export formats should be supported?
-  - SVG? Yes
-  - PNG? No
-  - PDF? **RESOLVED:** Yes
-  - Code export (D2, Mermaid text)? Yes with proper extensions
+  - Just SVG? Yes
+  - PNG, PDF? No
+  - Code export (D2, Mermaid text)? yes with proper extensions
   - Current State: Only "SVG file" mentioned
 
 - **Q27:** What resolution/quality for non-SVG exports?
-  - DPI for PNG? Not applicable
-  - Paper size for PDF? **RESOLVED:** Standard 8.5" x 11"
+  - DPI for PNG? not applicable
+  - Paper size for PDF? standard 8 by 11
 
 #### 3.5 Minimize/Maximize Buttons
 - **Q28:** What does minimize do?
@@ -215,10 +214,7 @@ This document identifies technical questions, ambiguities, and areas requiring d
   - Code folding? No
   - Search/replace? Yes
   - Git diff view? No
-  - Minimap? **RESOLVED:** Yes
-  - Bracket matching/highlighting? **RESOLVED:** Yes
-  - Auto-indentation? **RESOLVED:** Yes
-  - Current State: Specified
+  - Current State: Not specified
 
 - **Q33:** Should code changes auto-save or require explicit save?
   - Impact on user experience Require Explicit Save
@@ -267,9 +263,9 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 4.5 Code Auto-fix Feature
 - **Q41:** The specification mentions "3-tier validation" with auto-fix
-  - Is this visible to user in UI? **RESOLVED:** Yes, visible in SSE messages showing retry attempts
-  - Should there be a dedicated "Auto-fix" button? No
-  - Current State: Visible through SSE footer messages
+  - Is this visible to user in UI? It works with allowing three trips to the llm with error info
+  - Should there be a dedicated "Auto-fix" button? no
+  - Current State: Mentioned in backend but not in UI spec
 
 ---
 
@@ -307,9 +303,9 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 5.3 Column 3: Links
 - **Q47:** Where should About/Help links navigate?
-  - About: **RESOLVED:** New tab (external URL)
-  - Help: **RESOLVED:** New tab to documentation (no chat support, no FAQ)
-  - Current State: Specified
+  - About: Modal dialog? New page? External URL? Yes
+  - Help: Documentation? Yes Chat support? No FAQ? No
+  - Current State: Not specified
 
 ---
 
@@ -369,14 +365,15 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 7.2 Agent System Integration
 - **Q55:** How are agents loaded?
-  - **RESOLVED:** From backend via API (YAML files stored in prompts folder on backend)
-  - Loaded at startup and provided by backend
-  - Current State: Specified
+  - From YAML files at startup? Yes
+  - From API endpoint?
+  - Cached with refresh mechanism?
+  - Current State: Not specified
 
 - **Q56:** Can agents be updated at runtime?
-  - Require page reload? No
-  - Dynamic update? No
-  - Current State: Backend serves agents, frontend caches
+  - Require page reload? no
+  - Dynamic update? no
+  - Current State: Not addressed
 
 #### 7.3 API Integration
 - **Q57:** What's the request/response flow for diagram generation?
@@ -398,25 +395,27 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 8.1 Column Resizing
 - **Q59:** What are minimum/maximum widths for columns?
-  - **RESOLVED:** Each column minimum 1/3 of available space, can expand up to remaining space
-  - Constraint: At least one column must have minimum 1/3 width
-  - Current State: Specified
+  - Absolute pixels? 1/3 of the screen width 
+  - Percentages?
+  - Should there be smart defaults? No
+  - Current State: Not specified
 
 - **Q60:** Should column widths persist?
   - localStorage? Yes
   - Session only? No
   - Per-agent preference? No
-  - Current State: Persisted to localStorage
+  - Current State: Not addressed
 
 #### 8.2 Collapse Behavior
 - **Q61:** When column is collapsed, where does content go?
-  - **RESOLVED:** Hidden but accessible via header button toggle (just a button, not a sidebar)
-  - Column content completely hidden when collapsed
-  - Current State: Specified
+  - Completely hidden? No
+  - Hidden but accessible via toggle? Yes
+  - Moved to sidebar? Yes
+  - Current State: "Collapsible" but implementation unclear
 
 - **Q62:** Can all 3 columns be collapsed simultaneously?
-  - **RESOLVED:** No, at least one column must remain open (safety constraint)
-  - Current State: Specified
+  - No? Yes? Restrict at least 1 must be open? No, but ensure at least one column remains open
+  - Current State: Not specified
 
 ---
 
@@ -479,10 +478,11 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 #### 11.1 Theme Colors in Components
 - **Q69:** How should the 11 theme variants affect this page specifically?
-  - **RESOLVED:** Use theme colors as defined in .env file
-  - All components (tabs, buttons, editor) follow theme automatically
-  - No hardcoded theme selection
-  - Current State: Theme-driven from .env
+  - Tab colors? TBD
+  - Button colors? TBD
+  - Editor theme (dark/light)? TBD
+  - Monaco editor theme auto-switch? TBF
+  - Current State: Not specified
 
 #### 11.2 Monaco Editor Theme
 - **Q70:** Should Monaco editor theme:
@@ -498,21 +498,20 @@ This document identifies technical questions, ambiguities, and areas requiring d
 ### Questions & Clarifications Needed
 
 #### 12.1 AgentOption Structure
-- **Q71:** **RESOLVED** - Exact JSON schema for AgentOption:
+- **Q71:** Exact JSON schema for AgentOption:
 ```json
 {
-  "id": "string",
-  "agentId": "string",
-  "name": "string",
-  "description": "string",
-  "template": "string",
-  "validationRules": "string[]",
-  "outputFormat": "string",
-  "enabled": "boolean"
+  id: string,
+  agentId: string,
+  name: string,
+  description: string,
+  inputTemplate?: string,
+  validationRules?: string[],
+  outputFormat?: string,
+  // Other fields?
 }
 ```
-- Storage: `/prompts/SubAgent/*.json` (one file per agent option)
-- Current State: Fully defined
+- Current State: Not defined
 
 #### 12.2 Message Extension
 - **Q72:** When adding `provider` to Message.metadata:
@@ -522,21 +521,17 @@ This document identifies technical questions, ambiguities, and areas requiring d
   - Current State: Just "provider field" mentioned 
 
 #### 12.3 Diagram Response Format
-- **Q73:** **RESOLVED** - What does the API return for `/diagrams/v2/render`?
+- **Q73:** What does the API return for `/diagrams/v2/render`?
 ```json
 {
-  "svg": "string",
-  "provider": "string",
-  "code": "string",
-  "metadata": {
-    "provider": "string",
-    "generationParameters": "object"
-  },
-  "status": "string",
-  "timestamp": "string"
+  svg: string,
+  provider: string,
+  code: string,
+  metadata: { ... },
+  // Other fields?
 }
 ```
-- Current State: Fully defined
+- Current State: Not specified
 
 ---
 
@@ -609,29 +604,31 @@ This document identifies technical questions, ambiguities, and areas requiring d
 
 ---
 
-## SUMMARY OF CRITICAL GAPS - ALL RESOLVED ✅
+## SUMMARY OF CRITICAL GAPS
 
-### Top Priority Questions (ALL RESOLVED):
+### Top Priority Questions (Must Clarify Before Development):
 
-1. ✅ **Q15** - AgentOption JSON structure: Fully defined with 8 fields
-2. ✅ **Q34** - Exact validation rules: Syntax + Schema validation via backend
-3. ✅ **Q53** - Standalone vs integrated: Separate route, independent page
-4. ✅ **Q55** - Agent loading: Backend API with YAML files in prompts folder
-5. ✅ **Q71** - AgentOption data type: Complete schema defined
-6. ✅ **Q73** - API response format: SVG + metadata structure defined
-7. ✅ **Q4** - Navigation breadcrumbs: Display labels only (non-interactive)
+1. **Q15** - AgentOption JSON structure (blocks backend work)
+2. **Q34** - Exact validation rules (blocks validation logic)
+3. **Q54** - Is this standalone or integrated with chat? (blocks architecture)
+4. **Q55** - How agents are loaded at runtime (blocks agent system)
+5. **Q71** - Exact data types for all API responses
+6. **Q73** - API response format for diagram render endpoint
+7. **Q53** - UI hierarchy and page structure clarity
 
-### High Priority Questions (ALL RESOLVED):
+### High Priority Questions (Should Clarify):
 
-8. ✅ **Q9** - SubAgent display: Simple list items, no icons
-9. ✅ **Q22** - Diagram rendering: SVG from backend provider
-10. ✅ **Q31** - Monaco editor language: Auto-detect based on diagram type tab
-11. ✅ **Q42** - Status indicator: Processing state + last operation + system health
-12. ✅ **Q48** - State management: Props-based, no Context API needed
+8. **Q9** - SubAgent display format
+9. **Q22** - Diagram rendering engine details
+10. **Q31** - Monaco editor language detection
+11. **Q42** - Status indicator definition
+12. **Q48** - State management architecture
 
-### All Other Questions: RESOLVED ✅
+### Medium Priority Questions (Nice to Have):
 
-All 81 clarification questions have been fully answered and documented.
+- Q1-Q8: UX refinements
+- Q24-Q29: Feature specifics
+- Q59-Q62: Resizing behavior details
 
 ---
 
