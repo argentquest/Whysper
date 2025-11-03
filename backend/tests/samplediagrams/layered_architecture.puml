@@ -1,0 +1,13 @@
+@startuml
+package "Presentation Layer" {
+  [UI]
+}
+package "Business Layer" {
+  [Business Logic]
+}
+package "Data Layer" {
+  [Database Access]
+}
+[UI] --> [Business Logic]
+[Business Logic] --> [Database Access]
+@enduml

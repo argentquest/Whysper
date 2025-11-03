@@ -1,0 +1,25 @@
+title: D2 Flowchart Example
+direction: right
+
+user: User {
+  icon: https://icons.terrastruct.com/essentials%2F340%20Man.svg
+}
+
+api: API Server {
+  shape: rectangle
+}
+
+database: Database {
+  shape: cylinder
+}
+
+cache: Redis Cache {
+  shape: rectangle
+}
+
+user -> api: HTTP Request
+api -> cache: Check Cache
+cache -> api: Cache Hit/Miss
+api -> database: Query Data
+database -> api: Return Data
+api -> user: JSON Response

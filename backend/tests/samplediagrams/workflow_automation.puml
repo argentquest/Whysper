@@ -1,0 +1,9 @@
+@startuml
+start
+:Receive Request;
+:Validate Input;
+:Process Request;
+:Generate Output;
+:Send Notification;
+stop
+@enduml

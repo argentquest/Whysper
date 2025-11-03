@@ -1,0 +1,7 @@
+@startuml
+actor Customer
+database CRM
+Customer --> CRM : Submit Inquiry
+CRM --> Customer : Provide Response
+CRM --> Sales : Forward Lead
+@enduml

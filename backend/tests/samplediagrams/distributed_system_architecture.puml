@@ -1,0 +1,8 @@
+@startuml
+node "Client"
+node "Server A"
+node "Server B"
+Client --> Server A
+Client --> Server B
+Server A --> Server B
+@enduml

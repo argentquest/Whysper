@@ -1,0 +1,10 @@
+@startuml
+start
+:Initiate Project;
+:Plan Tasks;
+:Assign Resources;
+:Execute Tasks;
+:Monitor Progress;
+:Close Project;
+stop
+@enduml

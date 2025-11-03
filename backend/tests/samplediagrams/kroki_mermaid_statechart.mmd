@@ -1,0 +1,14 @@
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Connecting: connect()
+    Connecting --> Connected: connection_ok()
+    Connecting --> Error: connection_error()
+    Connected --> Authenticated: authenticate()
+    Connected --> Error: auth_timeout()
+    Authenticated --> Ready: init_complete()
+    Authenticated --> Error: init_error()
+    Ready --> Idle: disconnect()
+    Error --> Idle: reset()
+    Ready --> Transmitting: send_data()
+    Transmitting --> Ready: transmission_complete()
+    Transmitting --> Error: transmission_error()

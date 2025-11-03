@@ -1,0 +1,20 @@
+@startuml SaaS Authentication Flow
+actor User as user
+participant "Web Browser" as browser
+participant "API Gateway" as gateway
+participant "Auth Service" as auth
+participant "Database" as db
+participant "JWT Service" as jwt
+
+user -> browser: Enter credentials
+browser -> gateway: POST /login
+gateway -> auth: Validate credentials
+auth -> db: Query user
+db -> auth: User data
+auth -> jwt: Generate token
+jwt -> auth: JWT token
+auth -> gateway: Authentication success
+gateway -> browser: Return token + user data
+browser -> user: Login successful
+
+@enduml

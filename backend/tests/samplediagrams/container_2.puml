@@ -1,0 +1,12 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+Person(customer, "Customer")
+System_Boundary(ecommerce, "E-Commerce System") {
+  Container(frontend, "Frontend", "React", "Displays products")
+  Container(backend, "Backend", "Node.js", "Processes orders")
+  Container(database, "Database", "PostgreSQL", "Stores order data")
+}
+Rel(customer, frontend, "Browses and orders")
+Rel(frontend, backend, "Sends order data")
+Rel(backend, database, "Stores order")
+@enduml

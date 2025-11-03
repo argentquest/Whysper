@@ -1,0 +1,15 @@
+@startuml
+node "Power Plant" {
+  [Generator]
+}
+node "Substation" {
+  [Transformer]
+}
+node "Consumers" {
+  [Homes]
+  [Businesses]
+}
+[Generator] --> [Transformer]
+[Transformer] --> [Homes]
+[Transformer] --> [Businesses]
+@enduml

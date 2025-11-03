@@ -1,0 +1,11 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+Person(user, "User")
+Container(app, "App", "Kotlin")
+Container_Db(db, "Database", "Firebase")
+Component(auth, "Auth", "Firebase Auth", "Handles login")
+Component(data, "Data Sync", "Firebase SDK", "Syncs data")
+Rel(user, auth, "Logs in")
+Rel(auth, data, "Grants access")
+Rel(data, db, "Syncs")
+@enduml

@@ -1,0 +1,13 @@
+@startuml
+package "User Service" {
+  [User Controller] --> [User Service]
+  [User Service] --> [User Repository]
+}
+
+package "Order Service" {
+  [Order Controller] --> [Order Service]
+  [Order Service] --> [Order Repository]
+}
+
+[User Service] --> [Order Service]
+@enduml

@@ -1,0 +1,38 @@
+classDiagram
+    class Animal {
+        String name
+        int age
+        speak()
+        move()
+    }
+
+    class Dog {
+        String breed
+        bark()
+    }
+
+    class Cat {
+        String color
+        meow()
+    }
+
+    class Vehicle {
+        String model
+        start()
+        stop()
+    }
+
+    class Car {
+        int doors
+        drive()
+    }
+
+    class Motorcycle {
+        boolean hasSidecar
+        wheelie()
+    }
+
+    Animal <|-- Dog
+    Animal <|-- Cat
+    Vehicle <|-- Car
+    Vehicle <|-- Motorcycle

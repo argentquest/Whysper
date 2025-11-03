@@ -1,0 +1,9 @@
+@startuml
+actor User
+queue "Event Queue"
+component "Producer"
+component "Consumer"
+User --> Producer : Trigger Event
+Producer --> "Event Queue"
+"Event Queue" --> Consumer : Deliver Event
+@enduml

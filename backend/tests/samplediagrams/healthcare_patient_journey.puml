@@ -1,0 +1,9 @@
+@startuml
+start
+:Patient Registration;
+:Consultation;
+:Diagnosis;
+:Treatment;
+:Follow-up;
+stop
+@enduml

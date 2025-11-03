@@ -1,0 +1,8 @@
+@startuml
+actor Student
+actor Instructor
+database LMS
+Student --> LMS : Access Courses
+Instructor --> LMS : Upload Content
+LMS --> Student : Deliver Content
+@enduml

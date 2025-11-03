@@ -1,0 +1,38 @@
+@startuml Microservices Architecture - C4 System Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Microservices Platform Architecture
+
+Person(user, "End User", "Uses the platform")
+Person(admin, "Platform Admin", "Manages platform")
+
+System_Boundary(platform, "Microservices Platform") {
+    System(gateway, "API Gateway", "Entry point for all requests")
+    System(auth, "Auth Service", "User authentication & JWT issuance")
+    System(user_svc, "User Service", "User profile management")
+    System(product_svc, "Product Service", "Product catalog management")
+    System(order_svc, "Order Service", "Order processing")
+    System(payment_svc, "Payment Service", "Payment processing")
+    System(notification_svc, "Notification Service", "Email & SMS notifications")
+    System(search_svc, "Search Service", "Full-text search with Elasticsearch")
+}
+
+System_Ext(stripe, "Stripe", "Payment processor")
+System_Ext(twilio, "Twilio", "SMS provider")
+System_Ext(sendgrid, "SendGrid", "Email provider")
+System_Ext(elasticsearch, "Elasticsearch", "Search engine")
+
+Rel(user, gateway, "Makes requests to")
+Rel(admin, gateway, "Manages platform via")
+Rel(gateway, auth, "Validates tokens with")
+Rel(gateway, user_svc, "Routes to")
+Rel(gateway, product_svc, "Routes to")
+Rel(gateway, order_svc, "Routes to")
+Rel(order_svc, payment_svc, "Initiates payments via")
+Rel(payment_svc, stripe, "Processes via")
+Rel(order_svc, notification_svc, "Triggers notifications")
+Rel(notification_svc, twilio, "Sends SMS via")
+Rel(notification_svc, sendgrid, "Sends emails via")
+Rel(product_svc, search_svc, "Indexes products in")
+
+@enduml

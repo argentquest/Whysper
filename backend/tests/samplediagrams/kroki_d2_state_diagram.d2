@@ -1,0 +1,51 @@
+title: Order Processing State Machine
+direction: down
+
+state_idle: Idle {
+  label: Order Idle
+  style: {
+    fill: "#f0f0f0"
+  }
+}
+
+state_pending: Pending {
+  label: Order Pending
+  style: {
+    fill: "#fff3cd"
+  }
+}
+
+state_processing: Processing {
+  label: Processing
+  style: {
+    fill: "#cfe2ff"
+  }
+}
+
+state_shipped: Shipped {
+  label: Shipped
+  style: {
+    fill: "#d1e7dd"
+  }
+}
+
+state_delivered: Delivered {
+  label: Delivered
+  style: {
+    fill: "#d1e7dd"
+  }
+}
+
+state_failed: Failed {
+  label: Failed
+  style: {
+    fill: "#f8d7da"
+  }
+}
+
+state_idle -> state_pending: Order Received
+state_pending -> state_processing: Start Processing
+state_processing -> state_shipped: Mark Shipped
+state_shipped -> state_delivered: Delivery Complete
+state_processing -> state_failed: Processing Error
+state_failed -> state_pending: Retry

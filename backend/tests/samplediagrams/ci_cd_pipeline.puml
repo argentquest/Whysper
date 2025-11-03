@@ -1,0 +1,10 @@
+@startuml
+start
+:Code Commit;
+:Build;
+:Test;
+:Deploy to Staging;
+:Approval;
+:Deploy to Production;
+stop
+@enduml

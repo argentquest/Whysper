@@ -1,0 +1,48 @@
+title: Network Architecture Diagram
+direction: right
+
+internet: Internet {
+  shape: cloud
+}
+
+firewall: Firewall {
+  shape: rectangle
+}
+
+lb: Load Balancer {
+  shape: rectangle
+}
+
+web1: Web Server 1 {
+  shape: rectangle
+}
+
+web2: Web Server 2 {
+  shape: rectangle
+}
+
+app_server: App Server {
+  shape: rectangle
+}
+
+database: Primary DB {
+  shape: cylinder
+}
+
+backup_db: Backup DB {
+  shape: cylinder
+}
+
+cache: Cache Layer {
+  shape: rectangle
+}
+
+internet -> firewall: Traffic
+firewall -> lb: Requests
+lb -> web1: Route
+lb -> web2: Route
+web1 -> app_server: Call
+web2 -> app_server: Call
+app_server -> cache: Query
+cache -> database: Miss
+database -> backup_db: Replication

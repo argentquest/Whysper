@@ -1,0 +1,10 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+System_Boundary(s1, "E-Commerce") {
+  Container(web, "Web App")
+  Container(payment, "Payment Gateway")
+}
+Person(customer, "Customer")
+Rel(customer, web, "Browses and buys")
+Rel(web, payment, "Processes payment")
+@enduml

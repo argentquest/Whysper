@@ -1,0 +1,11 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+Person(user, "User")
+Container(service, "Service", "Ruby")
+Container_Db(db, "Database", "PostgreSQL")
+Component(router, "Router", "Rails", "Routes requests")
+Component(model, "Model", "ActiveRecord", "Data model")
+Rel(user, router, "Sends requests")
+Rel(router, model, "Uses")
+Rel(model, db, "Reads/Writes")
+@enduml

@@ -1,0 +1,11 @@
+@startuml
+node "Core Network" {
+  [Router]
+  [Switch]
+}
+node "Access Network" {
+  [Base Station]
+}
+[Base Station] --> [Router]
+[Router] --> [Switch]
+@enduml

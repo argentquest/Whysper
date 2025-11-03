@@ -1,0 +1,13 @@
+@startuml
+node "Web Server" {
+  [Nginx]
+}
+node "Application Server" {
+  [Django App]
+}
+node "Database" {
+  [PostgreSQL]
+}
+[Nginx] --> [Django App]
+[Django App] --> [PostgreSQL]
+@enduml

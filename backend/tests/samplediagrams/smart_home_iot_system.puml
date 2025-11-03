@@ -1,0 +1,15 @@
+@startuml
+actor User
+node "Smart Hub" {
+  [Controller]
+}
+node "Devices" {
+  [Thermostat]
+  [Lights]
+  [Security Camera]
+}
+User --> [Controller]
+[Controller] --> [Thermostat]
+[Controller] --> [Lights]
+[Controller] --> [Security Camera]
+@enduml

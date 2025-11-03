@@ -1,0 +1,10 @@
+@startuml
+start
+:Check-in;
+:Security Check;
+:Boarding;
+:Takeoff;
+:Landing;
+:Disembark;
+stop
+@enduml
