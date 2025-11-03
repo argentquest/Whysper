@@ -1,0 +1,228 @@
+Mermaid Provider Renderer - Processing test25 tests
+============================================================
+
+[Backend] Status: healthy
+[Providers] Available: 7
+
+Loading tests from: C:\Code2025\Whysper\backend\tests\llmmermaidtest\test25.json
+
+Processing 25 tests...
+
+============================================================
+Test 1: Basic Flowchart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 2: Sequence Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 3: Class Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 4: State Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 5: ER Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 6: Gantt Chart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 7: Pie Chart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 8: Bar Chart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 9: Git Graph
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 10: User Journey
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 11: Complex Flowchart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 12: Swimlane Flowchart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 13: Mindmap Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 14: Timeline Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 15: Quadrant Chart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 16: Architecture Flowchart
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 17: API Request Sequence
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 18: Authentication Flow
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 19: Deployment Pipeline
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 20: Multi-level Class Hierarchy
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 21: Database Schema
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 22: System State Machine
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 23: Data Flow Diagram
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 24: Event-Driven Architecture
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 25: Microservices Communication
+============================================================
+  Rendering diagram via LLM generation endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+VALIDATION SUMMARY
+============================================================
+
+Total tests: 25
+Tests with SVG: 0
+Tests valid: 0
+Tests invalid: 25
+
+Success rate: 0.0%
+
+Detailed results saved to: C:\Code2025\Whysper\backend\tests\llmmermaidtest\test_results_25\errors\validation_results.json
+
+Failed tests (25):
+  - Test 1: Basic Flowchart
+    Error file: test_001_error.txt
+  - Test 2: Sequence Diagram
+    Error file: test_002_error.txt
+  - Test 3: Class Diagram
+    Error file: test_003_error.txt
+  - Test 4: State Diagram
+    Error file: test_004_error.txt
+  - Test 5: ER Diagram
+    Error file: test_005_error.txt
+  - Test 6: Gantt Chart
+    Error file: test_006_error.txt
+  - Test 7: Pie Chart
+    Error file: test_007_error.txt
+  - Test 8: Bar Chart
+    Error file: test_008_error.txt
+  - Test 9: Git Graph
+    Error file: test_009_error.txt
+  - Test 10: User Journey
+    Error file: test_010_error.txt
+  - Test 11: Complex Flowchart
+    Error file: test_011_error.txt
+  - Test 12: Swimlane Flowchart
+    Error file: test_012_error.txt
+  - Test 13: Mindmap Diagram
+    Error file: test_013_error.txt
+  - Test 14: Timeline Diagram
+    Error file: test_014_error.txt
+  - Test 15: Quadrant Chart
+    Error file: test_015_error.txt
+  - Test 16: Architecture Flowchart
+    Error file: test_016_error.txt
+  - Test 17: API Request Sequence
+    Error file: test_017_error.txt
+  - Test 18: Authentication Flow
+    Error file: test_018_error.txt
+  - Test 19: Deployment Pipeline
+    Error file: test_019_error.txt
+  - Test 20: Multi-level Class Hierarchy
+    Error file: test_020_error.txt
+  - Test 21: Database Schema
+    Error file: test_021_error.txt
+  - Test 22: System State Machine
+    Error file: test_022_error.txt
+  - Test 23: Data Flow Diagram
+    Error file: test_023_error.txt
+  - Test 24: Event-Driven Architecture
+    Error file: test_024_error.txt
+  - Test 25: Microservices Communication
+    Error file: test_025_error.txt
+
+============================================================
+MERMAID VALIDATION COMPLETE
+============================================================

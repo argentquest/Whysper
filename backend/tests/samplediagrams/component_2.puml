@@ -1,11 +1,22 @@
 @startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-Person(admin, "Admin")
-Container(api, "API Server", "Python", "REST API")
-Container_Db(db, "Database", "MongoDB")
-Component(auth, "Auth Module", "Flask", "Handles authentication")
-Component(data, "Data Module", "Flask", "Manages data")
-Rel(admin, auth, "Logs in")
-Rel(auth, data, "Grants access")
-Rel(data, db, "Reads/Writes")
+package "API Server" {
+  actor Admin
+  component Auth [
+    Auth Module
+    Flask
+  ]
+  component Data [
+    Data Module
+    Flask
+  ]
+}
+
+database MongoDB [
+  Database
+  MongoDB
+]
+
+Admin --> Auth : Logs in
+Auth --> Data : Grants access
+Data --> MongoDB : Reads/Writes
 @enduml

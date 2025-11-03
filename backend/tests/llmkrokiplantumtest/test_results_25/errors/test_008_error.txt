@@ -1,0 +1,6 @@
+Test ID: 8
+Test Name: Class Diagram: Inheritance Hierarchy
+Description: Generate a **PlantUML class diagram** with Animal parent class, and Dog and Cat subclasses. Dog has bark() method.
+
+Validation Error:
+OpenRouter API key is invalid or expired

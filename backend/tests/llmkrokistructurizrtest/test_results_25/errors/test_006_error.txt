@@ -1,0 +1,6 @@
+Test ID: 6
+Test Name: User Login Flow
+Description: Generate a **Structurizr system context diagram** for a user login flow involving 'User' (person), 'Web Browser' system, 'API Gateway' system, and 'Authentication Service' system.
+
+Validation Error:
+OpenRouter API key is invalid or expired

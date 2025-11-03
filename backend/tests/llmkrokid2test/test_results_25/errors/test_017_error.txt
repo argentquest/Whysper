@@ -1,0 +1,6 @@
+Test ID: 17
+Test Name: Container Labeling and Grouping
+Description: Generate a **D2 diagram**. Create a container labeled 'Database Cluster'. Inside, define 'Primary DB' and 'Replica DB'. Show a connection from 'Primary DB' to 'Replica DB' labeled 'Replication'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

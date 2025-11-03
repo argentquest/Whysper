@@ -1,0 +1,6 @@
+Test ID: 8
+Test Name: Inheritance/Class Structure
+Description: Generate a **D2 diagram** modeling a simple class structure: 'Dog' and 'Cat' inherit from 'Animal'. The 'Dog' class has a method `bark()`. Use the D2 class shape.
+
+Validation Error:
+OpenRouter API key is invalid or expired

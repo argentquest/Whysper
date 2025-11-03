@@ -1,0 +1,6 @@
+Test ID: 22
+Test Name: Frontend Deployment
+Description: Generate a **Structurizr container diagram** for 'Frontend' system decomposed into 'React Application' (code) and 'NGINX Server' (software) containers.
+
+Validation Error:
+OpenRouter API key is invalid or expired

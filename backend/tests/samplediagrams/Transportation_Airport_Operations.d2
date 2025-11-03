@@ -1,6 +1,28 @@
 // Sample D2 diagram for Transportation Airport Operations
-graph TD
-    A[Start] --> B[Process]
-    B --> C[Decision]
-    C -->|Yes| D[End]
-    C -->|No| B
+title: Transportation Airport Operations
+direction: down
+
+Start: {
+  label: Start
+  shape: oval
+}
+
+Process: {
+  label: Process
+  shape: rectangle
+}
+
+Decision: {
+  label: Decision
+  shape: diamond
+}
+
+End: {
+  label: End
+  shape: oval
+}
+
+Start -> Process
+Process -> Decision
+Decision -> End: Yes
+Decision -> Process: No

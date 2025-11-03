@@ -3,4 +3,4 @@ Test Name: System Context: User Login Flow
 Description: Generate a **C4 System Context diagram** for user authentication: User (person) -> Web Browser System -> API Gateway System -> Authentication Service System.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

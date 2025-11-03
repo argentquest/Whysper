@@ -1,0 +1,6 @@
+Test ID: 19
+Test Name: Use Case Diagram: Multi-Layer System
+Description: Generate a **PlantUML use case diagram** with User, App, and Database actors/systems at different layers.
+
+Validation Error:
+OpenRouter API key is invalid or expired

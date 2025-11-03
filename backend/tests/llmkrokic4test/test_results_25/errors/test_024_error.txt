@@ -3,4 +3,4 @@ Test Name: Component Level: Data Service
 Description: Generate a **C4 Component diagram** for Data Service Container with Read Handler Component, Write Handler Component, and Database Repository Component.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

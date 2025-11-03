@@ -1,102 +1,102 @@
 {
-  "timestamp": "2025-11-02T20:33:54.948969",
+  "timestamp": "2025-11-03T12:18:26.805873",
   "summary": {
     "total_tests": 25,
-    "tests_with_svg": 23,
-    "tests_valid": 23,
-    "tests_invalid": 2,
-    "success_rate": 92.0
+    "tests_with_svg": 0,
+    "tests_valid": 0,
+    "tests_invalid": 25,
+    "success_rate": 0.0
   },
   "results": [
     {
       "test_id": 1,
       "test_name": "Basic Flowchart",
       "description": "Generate a **Mermaid diagram** showing a simple flowchart where a User accesses a Web Server, which then connects to two separate Database clusters, 'Primary' and 'Backup'.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_001_Basic_Flowchart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_001_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 2,
       "test_name": "Sequence Diagram",
       "description": "Generate a **Mermaid sequence diagram** showing an API Gateway forwarding requests to Microservice A and Microservice B. Include a Shared Cache interaction.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_002_Sequence_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_002_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 3,
       "test_name": "Class Diagram",
       "description": "Generate a **Mermaid class diagram** with three classes: 'Frontend', 'Backend', and 'AuthService'. Show relationships and methods.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_003_Class_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_003_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 4,
       "test_name": "State Diagram",
       "description": "Generate a **Mermaid state diagram** modeling a high-level system where a User can be in states: 'Login', 'Active', or 'Logout'. Show transitions between states.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_004_State_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_004_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 5,
       "test_name": "ER Diagram",
       "description": "Generate a **Mermaid ER diagram** with two main entities: 'User' and 'Product'. Show the relationship between them (User purchases Product).",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_005_ER_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_005_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 6,
       "test_name": "Gantt Chart",
       "description": "Generate a **Mermaid Gantt chart** showing a project timeline with tasks: 'Design', 'Development', and 'Testing'. Set durations for each.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_006_Gantt_Chart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_006_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 7,
       "test_name": "Pie Chart",
       "description": "Generate a **Mermaid pie chart** showing system resource distribution: 'CPU' (40%), 'Memory' (35%), 'Storage' (25%).",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_007_Pie_Chart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_007_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 8,
       "test_name": "Bar Chart",
       "description": "Generate a **Mermaid bar chart** displaying API response times for different endpoints: 'GET Users' (100ms), 'POST Create' (200ms), 'PUT Update' (150ms).",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_008_Bar_Chart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_008_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 9,
       "test_name": "Git Graph",
       "description": "Generate a **Mermaid git graph** showing a simple branching model with main branch and a feature branch that merges back.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_009_Git_Graph.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_009_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 10,
@@ -104,7 +104,7 @@
       "description": "Generate a **Mermaid user journey** showing a customer's experience: 'Homepage' \u00e2\u2020\u2019 'Product Search' \u00e2\u2020\u2019 'Add to Cart' \u00e2\u2020\u2019 'Checkout'.",
       "has_svg": false,
       "is_valid": false,
-      "validation_error": "Network request failed: Expecting value: line 309 column 1 (char 1694)",
+      "validation_error": "OpenRouter API key is invalid or expired",
       "error_file": "test_010_error.txt",
       "svg_file": ""
     },
@@ -112,41 +112,41 @@
       "test_id": 11,
       "test_name": "Complex Flowchart",
       "description": "Generate a **Mermaid flowchart** with decision nodes. Start \u00e2\u2020\u2019 Check Data Validity (diamond) \u00e2\u2020\u2019 If valid: Save Data, If invalid: Show Error.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_011_Complex_Flowchart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_011_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 12,
       "test_name": "Swimlane Flowchart",
       "description": "Generate a **Mermaid flowchart** with multiple swimlanes showing: User Lane, System Lane, and Database Lane with their respective processes.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_012_Swimlane_Flowchart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_012_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 13,
       "test_name": "Mindmap Diagram",
       "description": "Generate a **Mermaid mindmap** centered on 'Software Development' with branches: 'Frontend', 'Backend', 'Testing', 'DevOps'.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_013_Mindmap_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_013_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 14,
       "test_name": "Timeline Diagram",
       "description": "Generate a **Mermaid timeline** showing project milestones: 'Q1: Planning' \u00e2\u2020\u2019 'Q2: Development' \u00e2\u2020\u2019 'Q3: Testing' \u00e2\u2020\u2019 'Q4: Release'.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_014_Timeline_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_014_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 15,
@@ -154,7 +154,7 @@
       "description": "Generate a **Mermaid quadrant chart** showing product features on Impact vs Effort axes with 'Quick Wins', 'Major Projects', 'Fill-ins', and 'Time Sinks'.",
       "has_svg": false,
       "is_valid": false,
-      "validation_error": "Could not generate a valid diagram from the AI response.",
+      "validation_error": "OpenRouter API key is invalid or expired",
       "error_file": "test_015_error.txt",
       "svg_file": ""
     },
@@ -162,101 +162,101 @@
       "test_id": 16,
       "test_name": "Architecture Flowchart",
       "description": "Generate a **Mermaid flowchart** showing system architecture: Frontend \u00e2\u2020\u2019 API Gateway \u00e2\u2020\u2019 Microservices \u00e2\u2020\u2019 Database with proper styling.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_016_Architecture_Flowchart.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_016_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 17,
       "test_name": "API Request Sequence",
       "description": "Generate a **Mermaid sequence diagram** showing an API request flow: Client \u00e2\u2020\u2019 API Server \u00e2\u2020\u2019 Database \u00e2\u2020\u2019 API Server \u00e2\u2020\u2019 Client with response labels.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_017_API_Request_Sequence.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_017_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 18,
       "test_name": "Authentication Flow",
       "description": "Generate a **Mermaid flowchart** showing an authentication process: Login \u00e2\u2020\u2019 Verify Credentials \u00e2\u2020\u2019 Issue Token \u00e2\u2020\u2019 Access Protected Resource.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_018_Authentication_Flow.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_018_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 19,
       "test_name": "Deployment Pipeline",
       "description": "Generate a **Mermaid flowchart** showing CI/CD deployment stages: Code Commit \u00e2\u2020\u2019 Build \u00e2\u2020\u2019 Test \u00e2\u2020\u2019 Deploy to Staging \u00e2\u2020\u2019 Deploy to Production.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_019_Deployment_Pipeline.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_019_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 20,
       "test_name": "Multi-level Class Hierarchy",
       "description": "Generate a **Mermaid class diagram** showing inheritance: Animal (base) \u00e2\u2020\u2019 Dog and Cat (derived) with methods and properties.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_020_Multi-level_Class_Hierarchy.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_020_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 21,
       "test_name": "Database Schema",
       "description": "Generate a **Mermaid ER diagram** for a simple e-commerce database with tables: Users, Products, Orders, and their relationships.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_021_Database_Schema.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_021_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 22,
       "test_name": "System State Machine",
       "description": "Generate a **Mermaid state diagram** showing a system's lifecycle: Initialized \u00e2\u2020\u2019 Running \u00e2\u2020\u2019 Paused \u00e2\u2020\u2019 Running \u00e2\u2020\u2019 Stopped.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_022_System_State_Machine.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_022_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 23,
       "test_name": "Data Flow Diagram",
       "description": "Generate a **Mermaid flowchart** showing data flow in a system: Input Data \u00e2\u2020\u2019 Process \u00e2\u2020\u2019 Validate \u00e2\u2020\u2019 Store \u00e2\u2020\u2019 Output Result.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_023_Data_Flow_Diagram.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_023_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 24,
       "test_name": "Event-Driven Architecture",
       "description": "Generate a **Mermaid flowchart** showing event-driven architecture: Event Producer \u00e2\u2020\u2019 Event Bus \u00e2\u2020\u2019 Event Consumers with multiple handlers.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_024_Event-Driven_Architecture.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_024_error.txt",
+      "svg_file": ""
     },
     {
       "test_id": 25,
       "test_name": "Microservices Communication",
       "description": "Generate a **Mermaid sequence diagram** showing microservices communication: Service A calls Service B, which calls Service C, with responses back through the chain.",
-      "has_svg": true,
-      "is_valid": true,
-      "validation_error": "Mermaid Syntax is Valid",
-      "error_file": "",
-      "svg_file": "test_025_Microservices_Communication.svg"
+      "has_svg": false,
+      "is_valid": false,
+      "validation_error": "OpenRouter API key is invalid or expired",
+      "error_file": "test_025_error.txt",
+      "svg_file": ""
     }
   ]
 }

@@ -3,4 +3,4 @@ Test Name: User Journey
 Description: Generate a **Mermaid user journey** showing a customer's experience: 'Homepage' → 'Product Search' → 'Add to Cart' → 'Checkout'.
 
 Validation Error:
-Network request failed: Expecting value: line 309 column 1 (char 1694)
+OpenRouter API key is invalid or expired

@@ -2,8 +2,8 @@ workspace {
   model {
     admin = person "Admin"
     system = softwareSystem "System B" {
-      container api "API Server"
-      container cache "Cache"
+      api = container "API Server"
+      cache = container "Cache"
       admin -> api "Manages"
       api -> cache "Stores data"
     }

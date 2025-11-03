@@ -1,0 +1,6 @@
+Test ID: 13
+Test Name: Testing Edge Labels and Protocols
+Description: Generate a **D2 diagram** showing 'Microservice A' sending an event to a 'Message Queue' which is then consumed by 'Microservice B'. Label the first edge 'Publish (AMQP)' and the second 'Consume (AMQP)'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

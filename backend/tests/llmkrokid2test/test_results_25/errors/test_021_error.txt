@@ -1,0 +1,6 @@
+Test ID: 21
+Test Name: C4: System Relationships
+Description: Model the 'Order Service' system. It interacts with an 'Inventory' system and a 'Shipping' system. It also sends 'Alerts' to a monitoring system.
+
+Validation Error:
+OpenRouter API key is invalid or expired

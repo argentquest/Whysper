@@ -1,0 +1,6 @@
+Test ID: 7
+Test Name: Decision Diamond
+Description: Generate a **Mermaid flowchart** starting with 'Start Process'. Use a diamond shape for the decision 'Is Data Valid?'. If true, go to 'Save Data'. If false, go to 'Send Error Alert'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

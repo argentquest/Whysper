@@ -1,11 +1,22 @@
 @startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-Person(user, "User")
-Container(service, "Service", "Node.js")
-Container_Db(db, "Database", "Redis")
-Component(handler, "Request Handler", "Express", "Handles requests")
-Component(cache, "Cache Manager", "Redis Client", "Manages cache")
-Rel(user, handler, "Sends requests")
-Rel(handler, cache, "Checks cache")
-Rel(cache, db, "Reads/Writes")
+package "Node.js Service" {
+  actor User
+  component Handler [
+    Request Handler
+    Express
+  ]
+  component Cache [
+    Cache Manager
+    Redis Client
+  ]
+}
+
+database Redis [
+  Database
+  Redis
+]
+
+User --> Handler : Sends requests
+Handler --> Cache : Checks cache
+Cache --> Redis : Reads/Writes
 @enduml

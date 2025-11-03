@@ -1,0 +1,6 @@
+Test ID: 21
+Test Name: Database Schema
+Description: Generate a **Mermaid ER diagram** for a simple e-commerce database with tables: Users, Products, Orders, and their relationships.
+
+Validation Error:
+OpenRouter API key is invalid or expired

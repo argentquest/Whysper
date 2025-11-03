@@ -1,0 +1,6 @@
+Test ID: 1
+Test Name: Class Diagram: Basic Hierarchy
+Description: Generate a **PlantUML class diagram** showing a User class accessing a WebServer class, which connects to two Database classes: Primary and Backup. Show inheritance and composition relationships.
+
+Validation Error:
+OpenRouter API key is invalid or expired

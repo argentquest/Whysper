@@ -3,4 +3,4 @@ Test Name: System Context: Environment Separation
 Description: Generate a **C4 System Context diagram** showing Development environment with Test Server System and Production environment with Database System, with deployment relationship.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

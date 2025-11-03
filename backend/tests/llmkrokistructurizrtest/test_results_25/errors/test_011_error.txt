@@ -1,0 +1,6 @@
+Test ID: 11
+Test Name: Microservices with Components
+Description: Generate a **Structurizr component diagram** showing the internal structure of a 'Microservice API' container with 'Request Handler', 'Business Logic', and 'Data Access' components.
+
+Validation Error:
+OpenRouter API key is invalid or expired

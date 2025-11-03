@@ -1,0 +1,228 @@
+Kroki PlantUML Provider Renderer - Processing test25 tests
+============================================================
+
+[Backend] Status: healthy
+[Providers] Available: 7
+
+Loading tests from: C:\Code2025\Whysper\backend\tests\llmkrokiplantumtest\test25.json
+
+Processing 25 tests...
+
+============================================================
+Test 1: Class Diagram: Basic Hierarchy
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 2: Class Diagram: Multiple Paths
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 3: Class Diagram: Component Interaction
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 4: Use Case Diagram: System Scope
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 5: Sequence Diagram: Multi-Step Flow
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 6: Sequence Diagram: Authentication Flow
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 7: Activity Diagram: Decision Flow
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 8: Class Diagram: Inheritance Hierarchy
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 9: Use Case Diagram: Payment System
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 10: Sequence Diagram: Multi-Container
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 11: Component Diagram: Service Components
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 12: Sequence Diagram: Load Balancer
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 13: Sequence Diagram: Message Queue Pattern
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 14: Activity Diagram: Process Steps
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 15: Activity Diagram: Vertical Flow
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 16: Sequence Diagram: Bidirectional
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 17: Component Diagram: Grouped Components
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 18: Class Diagram: Different Types
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 19: Use Case Diagram: Multi-Layer System
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 20: Class Diagram: Named Services
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 21: Use Case Diagram: Complex System
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 22: Component Diagram: Frontend Architecture
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 23: Sequence Diagram: System Boundary
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 24: Component Diagram: Data Service
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+Test 25: Deployment Diagram: Cloud Architecture
+============================================================
+  Rendering diagram via provider endpoint...
+  [FAIL] Rendering failed: OpenRouter API key is invalid or expired
+
+============================================================
+VALIDATION SUMMARY
+============================================================
+
+Total tests: 25
+Tests with SVG: 0
+Tests valid: 0
+Tests invalid: 25
+
+Success rate: 0.0%
+
+Detailed results saved to: C:\Code2025\Whysper\backend\tests\llmkrokiplantumtest\test_results_25\errors\validation_results.json
+
+Failed tests (25):
+  - Test 1: Class Diagram: Basic Hierarchy
+    Error file: test_001_error.txt
+  - Test 2: Class Diagram: Multiple Paths
+    Error file: test_002_error.txt
+  - Test 3: Class Diagram: Component Interaction
+    Error file: test_003_error.txt
+  - Test 4: Use Case Diagram: System Scope
+    Error file: test_004_error.txt
+  - Test 5: Sequence Diagram: Multi-Step Flow
+    Error file: test_005_error.txt
+  - Test 6: Sequence Diagram: Authentication Flow
+    Error file: test_006_error.txt
+  - Test 7: Activity Diagram: Decision Flow
+    Error file: test_007_error.txt
+  - Test 8: Class Diagram: Inheritance Hierarchy
+    Error file: test_008_error.txt
+  - Test 9: Use Case Diagram: Payment System
+    Error file: test_009_error.txt
+  - Test 10: Sequence Diagram: Multi-Container
+    Error file: test_010_error.txt
+  - Test 11: Component Diagram: Service Components
+    Error file: test_011_error.txt
+  - Test 12: Sequence Diagram: Load Balancer
+    Error file: test_012_error.txt
+  - Test 13: Sequence Diagram: Message Queue Pattern
+    Error file: test_013_error.txt
+  - Test 14: Activity Diagram: Process Steps
+    Error file: test_014_error.txt
+  - Test 15: Activity Diagram: Vertical Flow
+    Error file: test_015_error.txt
+  - Test 16: Sequence Diagram: Bidirectional
+    Error file: test_016_error.txt
+  - Test 17: Component Diagram: Grouped Components
+    Error file: test_017_error.txt
+  - Test 18: Class Diagram: Different Types
+    Error file: test_018_error.txt
+  - Test 19: Use Case Diagram: Multi-Layer System
+    Error file: test_019_error.txt
+  - Test 20: Class Diagram: Named Services
+    Error file: test_020_error.txt
+  - Test 21: Use Case Diagram: Complex System
+    Error file: test_021_error.txt
+  - Test 22: Component Diagram: Frontend Architecture
+    Error file: test_022_error.txt
+  - Test 23: Sequence Diagram: System Boundary
+    Error file: test_023_error.txt
+  - Test 24: Component Diagram: Data Service
+    Error file: test_024_error.txt
+  - Test 25: Deployment Diagram: Cloud Architecture
+    Error file: test_025_error.txt
+
+============================================================
+PLANTUML VALIDATION COMPLETE
+============================================================

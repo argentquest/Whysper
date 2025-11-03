@@ -1,0 +1,6 @@
+Test ID: 3
+Test Name: Class Diagram: Component Interaction
+Description: Generate a **PlantUML class diagram** with Frontend, Backend, and AuthService classes. Show Frontend inheriting from Component, Backend using AuthService.
+
+Validation Error:
+OpenRouter API key is invalid or expired

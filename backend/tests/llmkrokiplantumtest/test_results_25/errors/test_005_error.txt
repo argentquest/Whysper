@@ -1,0 +1,6 @@
+Test ID: 5
+Test Name: Sequence Diagram: Multi-Step Flow
+Description: Generate a **PlantUML sequence diagram** with Development and Production environments, showing message flow from TestServer to Database across environment boundary.
+
+Validation Error:
+OpenRouter API key is invalid or expired

@@ -2,9 +2,9 @@ workspace {
   model {
     visitor = person "Visitor"
     cms = softwareSystem "Content Management System" {
-      container site "Website"
-      container editor "Content Editor"
-      container storage "Storage"
+      site = container "Website"
+      editor = container "Content Editor"
+      storage = container "Storage"
       visitor -> site "Views"
       editor -> storage "Saves content"
     }

@@ -1,0 +1,6 @@
+Test ID: 22
+Test Name: Container Architecture
+Description: Generate a **Mermaid flowchart** decomposing 'Frontend' container into 'React UI' (code) and 'NGINX Proxy' (software). Show 'User' interacting with the proxy.
+
+Validation Error:
+OpenRouter API key is invalid or expired

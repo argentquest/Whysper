@@ -1,0 +1,6 @@
+Test ID: 17
+Test Name: API Request Sequence
+Description: Generate a **Mermaid sequence diagram** showing an API request flow: Client → API Server → Database → API Server → Client with response labels.
+
+Validation Error:
+OpenRouter API key is invalid or expired

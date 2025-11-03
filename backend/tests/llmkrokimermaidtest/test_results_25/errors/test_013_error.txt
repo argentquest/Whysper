@@ -3,4 +3,4 @@ Test Name: Message Queue Flow
 Description: Generate a **Mermaid flowchart** showing 'Microservice A' sending an event to a 'Message Queue' which is then consumed by 'Microservice B'. Label the first path 'Publish (AMQP)' and the second 'Consume (AMQP)'.
 
 Validation Error:
-Could not generate a valid diagram from the AI response.
+OpenRouter API key is invalid or expired

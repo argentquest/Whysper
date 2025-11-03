@@ -1,0 +1,6 @@
+Test ID: 17
+Test Name: Component Diagram: Grouped Components
+Description: Generate a **PlantUML component diagram** with Database Cluster package containing PrimaryDB and ReplicaDB components.
+
+Validation Error:
+OpenRouter API key is invalid or expired

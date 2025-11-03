@@ -3,4 +3,4 @@ Test Name: Container Level: Frontend Deployment
 Description: Generate a **C4 Container diagram** for Frontend System with React Application Container and NGINX Proxy Container.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

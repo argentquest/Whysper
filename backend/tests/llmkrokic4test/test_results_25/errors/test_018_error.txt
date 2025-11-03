@@ -3,4 +3,4 @@ Test Name: System Context: Queue and Processor
 Description: Generate a **C4 System Context diagram** with Message Queue System and Message Processor System, showing processor consuming from queue.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

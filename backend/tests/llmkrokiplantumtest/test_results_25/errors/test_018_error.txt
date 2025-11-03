@@ -1,0 +1,6 @@
+Test ID: 18
+Test Name: Class Diagram: Different Types
+Description: Generate a **PlantUML class diagram** with Queue and Listener classes, showing Listener using Queue.
+
+Validation Error:
+OpenRouter API key is invalid or expired

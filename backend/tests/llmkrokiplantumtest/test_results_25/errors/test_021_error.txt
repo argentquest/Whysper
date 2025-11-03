@@ -1,0 +1,6 @@
+Test ID: 21
+Test Name: Use Case Diagram: Complex System
+Description: Generate a **PlantUML use case diagram** with OrderService interacting with Inventory, Shipping, and Monitoring systems.
+
+Validation Error:
+OpenRouter API key is invalid or expired

@@ -1,0 +1,6 @@
+Test ID: 9
+Test Name: C4: System Context Diagram (C1)
+Description: Generate a **D2 diagram** (C4 Context Level) showing the 'Payment Processing System' that interacts with the 'Customer' and an external 'Bank API'. Show the 'Customer' using the system.
+
+Validation Error:
+OpenRouter API key is invalid or expired

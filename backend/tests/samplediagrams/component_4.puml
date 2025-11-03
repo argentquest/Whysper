@@ -1,11 +1,22 @@
 @startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-Person(user, "User")
-Container(service, "Service", "Ruby")
-Container_Db(db, "Database", "PostgreSQL")
-Component(router, "Router", "Rails", "Routes requests")
-Component(model, "Model", "ActiveRecord", "Data model")
-Rel(user, router, "Sends requests")
-Rel(router, model, "Uses")
-Rel(model, db, "Reads/Writes")
+package "Ruby on Rails Service" {
+  actor User
+  component Router [
+    Router
+    Rails
+  ]
+  component Model [
+    Model
+    ActiveRecord
+  ]
+}
+
+database PostgreSQL [
+  Database
+  PostgreSQL
+]
+
+User --> Router : Sends requests
+Router --> Model : Uses
+Model --> PostgreSQL : Reads/Writes
 @enduml

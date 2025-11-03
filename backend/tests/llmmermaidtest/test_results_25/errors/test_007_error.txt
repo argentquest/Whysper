@@ -1,0 +1,6 @@
+Test ID: 7
+Test Name: Pie Chart
+Description: Generate a **Mermaid pie chart** showing system resource distribution: 'CPU' (40%), 'Memory' (35%), 'Storage' (25%).
+
+Validation Error:
+OpenRouter API key is invalid or expired

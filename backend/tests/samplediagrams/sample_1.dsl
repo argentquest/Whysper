@@ -2,8 +2,8 @@ workspace {
   model {
     user = person "User"
     softwareSystem = softwareSystem "System A" {
-      container webapp "Web App"
-      container db "Database"
+      webapp = container "Web App"
+      db = container "Database"
       user -> webapp "Uses"
       webapp -> db "Reads/Writes"
     }

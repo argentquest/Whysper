@@ -1,0 +1,6 @@
+Test ID: 4
+Test Name: State Diagram
+Description: Generate a **Mermaid state diagram** modeling a high-level system where a User can be in states: 'Login', 'Active', or 'Logout'. Show transitions between states.
+
+Validation Error:
+OpenRouter API key is invalid or expired

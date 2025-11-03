@@ -1,0 +1,6 @@
+Test ID: 2
+Test Name: Sequence Diagram
+Description: Generate a **Mermaid sequence diagram** showing an API Gateway forwarding requests to Microservice A and Microservice B. Include a Shared Cache interaction.
+
+Validation Error:
+OpenRouter API key is invalid or expired

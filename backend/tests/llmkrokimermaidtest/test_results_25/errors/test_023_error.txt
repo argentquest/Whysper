@@ -1,0 +1,6 @@
+Test ID: 23
+Test Name: System Boundaries
+Description: Generate a **Mermaid flowchart** showing the boundary of the 'Customer CRM'. Show 'Sales Team' interacting with it, and the CRM connecting to an external 'Legacy Database'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

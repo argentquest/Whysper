@@ -2,9 +2,9 @@ workspace {
   model {
     customer = person "Customer"
     ecommerce = softwareSystem "E-Commerce Platform" {
-      container frontend "Frontend"
-      container backend "Backend"
-      container payment "Payment Gateway"
+      frontend = container "Frontend"
+      backend = container "Backend"
+      payment = container "Payment Gateway"
       customer -> frontend "Browses"
       frontend -> backend "Requests"
       backend -> payment "Processes payment"

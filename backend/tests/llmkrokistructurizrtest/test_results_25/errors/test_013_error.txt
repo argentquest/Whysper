@@ -1,0 +1,6 @@
+Test ID: 13
+Test Name: Event-Driven Architecture
+Description: Generate a **Structurizr system context diagram** with 'Service A' and 'Service B' systems connected through 'Message Queue' system with publish/subscribe relationships.
+
+Validation Error:
+OpenRouter API key is invalid or expired

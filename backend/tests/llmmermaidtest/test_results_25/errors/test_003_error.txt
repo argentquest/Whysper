@@ -1,0 +1,6 @@
+Test ID: 3
+Test Name: Class Diagram
+Description: Generate a **Mermaid class diagram** with three classes: 'Frontend', 'Backend', and 'AuthService'. Show relationships and methods.
+
+Validation Error:
+OpenRouter API key is invalid or expired

@@ -1,0 +1,6 @@
+Test ID: 22
+Test Name: Component Diagram: Frontend Architecture
+Description: Generate a **PlantUML component diagram** with Frontend system decomposed into ReactUI (code) and NGINXProxy (software) components.
+
+Validation Error:
+OpenRouter API key is invalid or expired

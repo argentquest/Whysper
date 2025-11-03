@@ -2,9 +2,9 @@ workspace {
   model {
     patient = person "Patient"
     healthSystem = softwareSystem "Healthcare System" {
-      container app "Mobile App"
-      container server "Backend Server"
-      container records "Medical Records DB"
+      app = container "Mobile App"
+      server = container "Backend Server"
+      records = container "Medical Records DB"
       patient -> app "Uses"
       app -> server "Communicates"
       server -> records "Accesses records"

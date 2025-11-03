@@ -1,0 +1,6 @@
+Test ID: 2
+Test Name: Layout and Missing Connector Type
+Description: Generate a **D2 diagram** of a flow where 'API Gateway' forwards requests to a 'Microservice A' or 'Microservice B'. Show a relationship between Microservice B and a 'Shared Cache'. The whole flow should be displayed horizontally.
+
+Validation Error:
+OpenRouter API key is invalid or expired

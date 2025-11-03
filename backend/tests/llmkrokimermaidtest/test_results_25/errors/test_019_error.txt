@@ -1,0 +1,6 @@
+Test ID: 19
+Test Name: Gantt Chart: Project Timeline
+Description: Generate a **Mermaid Gantt chart** showing a project timeline with 'Design' (1 week), 'Development' (2 weeks), 'Testing' (1 week), and 'Deployment' (3 days).
+
+Validation Error:
+OpenRouter API key is invalid or expired

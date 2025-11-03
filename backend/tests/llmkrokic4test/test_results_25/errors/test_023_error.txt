@@ -3,4 +3,4 @@ Test Name: System Context: Legacy Integration
 Description: Generate a **C4 System Context diagram** for Customer CRM System with Sales Team (person) and Legacy Database external System connection.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

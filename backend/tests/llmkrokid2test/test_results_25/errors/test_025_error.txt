@@ -1,0 +1,6 @@
+Test ID: 25
+Test Name: Testing Complex Container Nesting
+Description: Generate a **D2 diagram**. Create a container 'Region A'. Inside 'Region A', place 'VPC A'. Inside 'VPC A', place a 'Web Server' and 'App Server'. Show a connection from 'Web Server' to 'App Server'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

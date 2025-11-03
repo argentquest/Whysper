@@ -1,0 +1,6 @@
+Test ID: 15
+Test Name: Vertical Data Flow
+Description: Generate a **Structurizr system context diagram** showing data flowing from 'Data Source' system through 'Transformation' system to 'Data Warehouse' system vertically.
+
+Validation Error:
+OpenRouter API key is invalid or expired

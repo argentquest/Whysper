@@ -3,4 +3,4 @@ Test Name: System Context: Complex Service Mesh
 Description: Generate a **C4 System Context diagram** where Order Service System interacts with Inventory Service, Shipping Service, and Monitoring System.
 
 Validation Error:
-mmdc rendering failed: error: too many arguments. Expected 0 arguments but got 1.
+OpenRouter API key is invalid or expired

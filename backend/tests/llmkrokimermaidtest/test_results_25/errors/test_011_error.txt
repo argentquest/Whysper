@@ -1,0 +1,6 @@
+Test ID: 11
+Test Name: State Diagram
+Description: Generate a **Mermaid state diagram** showing the lifecycle of a 'Web Application'. States include 'Idle', 'Processing', 'Error', and 'Success'. Show transitions between these states.
+
+Validation Error:
+OpenRouter API key is invalid or expired

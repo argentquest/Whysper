@@ -1,8 +1,22 @@
 @startuml
-node "Client"
-node "Server A"
-node "Server B"
-Client --> Server A
-Client --> Server B
-Server A --> Server B
+title Distributed System Architecture
+
+package "Distributed System" {
+  node Client [
+    Client Node
+    Frontend
+  ]
+  node ServerA [
+    Server A
+    Primary Service
+  ]
+  node ServerB [
+    Server B
+    Backup Service
+  ]
+}
+
+Client --> ServerA : Requests
+Client --> ServerB : Fallback
+ServerA --> ServerB : Replication
 @enduml

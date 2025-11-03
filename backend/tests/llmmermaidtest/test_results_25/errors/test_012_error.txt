@@ -1,0 +1,6 @@
+Test ID: 12
+Test Name: Swimlane Flowchart
+Description: Generate a **Mermaid flowchart** with multiple swimlanes showing: User Lane, System Lane, and Database Lane with their respective processes.
+
+Validation Error:
+OpenRouter API key is invalid or expired

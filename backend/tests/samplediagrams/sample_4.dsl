@@ -2,8 +2,8 @@ workspace {
   model {
     employee = person "Employee"
     hrSystem = softwareSystem "HR System" {
-      container portal "Employee Portal"
-      container db "HR Database"
+      portal = container "Employee Portal"
+      db = container "HR Database"
       employee -> portal "Accesses"
       portal -> db "Queries"
     }

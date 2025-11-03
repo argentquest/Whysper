@@ -1,13 +1,27 @@
 @startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-Person(user, "User")
-Container(webApp, "Web App", "Java", "Handles requests")
-Container_Db(db, "Database", "MySQL")
-Component(controller, "Controller", "Spring MVC", "Handles HTTP requests")
-Component(service, "Service", "Spring Service", "Business logic")
-Component(repo, "Repository", "JPA", "Data access")
-Rel(user, controller, "Uses")
-Rel(controller, service, "Invokes")
-Rel(service, repo, "Uses")
-Rel(repo, db, "Reads/Writes")
+package "Web Application" {
+  actor User
+  component Controller [
+    Controller
+    Spring MVC
+  ]
+  component Service [
+    Service
+    Spring Service
+  ]
+  component Repository [
+    Repository
+    JPA
+  ]
+}
+
+database MySQL [
+  Database
+  MySQL
+]
+
+User --> Controller : Uses
+Controller --> Service : Invokes
+Service --> Repository : Uses
+Repository --> MySQL : Reads/Writes
 @enduml

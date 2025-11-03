@@ -1,0 +1,6 @@
+Test ID: 2
+Test Name: Class Diagram: Multiple Paths
+Description: Generate a **PlantUML class diagram** with an APIGateway class routing to MicroserviceA and MicroserviceB classes. Show relationships with SharedCache class.
+
+Validation Error:
+OpenRouter API key is invalid or expired

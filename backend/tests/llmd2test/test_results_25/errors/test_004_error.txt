@@ -1,0 +1,6 @@
+Test ID: 4
+Test Name: Ambiguous Naming and External Entity
+Description: Generate a **D2 diagram** modeling a high-level system where 'User' interacts with the main 'App', and the 'App' needs to access a 'Storage'. (Testing Rule 2 Veto: Should the 'App' and 'Storage' be in the same container, or should I represent 'Storage' as an external cloud icon?)
+
+Validation Error:
+OpenRouter API key is invalid or expired

@@ -1,0 +1,6 @@
+Test ID: 20
+Test Name: Class Diagram: Named Services
+Description: Generate a **PlantUML class diagram** with data_service and auth_module classes showing data_service using auth_module.
+
+Validation Error:
+OpenRouter API key is invalid or expired

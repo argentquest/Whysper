@@ -1,0 +1,6 @@
+Test ID: 10
+Test Name: Sequence Diagram: Multi-Container
+Description: Generate a **PlantUML sequence diagram** with Customer, WebApplication (Node.js), and PostgreSQL as participants with message flows.
+
+Validation Error:
+OpenRouter API key is invalid or expired

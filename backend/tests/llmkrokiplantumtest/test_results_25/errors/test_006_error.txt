@@ -1,0 +1,6 @@
+Test ID: 6
+Test Name: Sequence Diagram: Authentication Flow
+Description: Generate a **PlantUML sequence diagram** for user login: User -> Browser -> APIGateway -> AuthenticationService with message labels.
+
+Validation Error:
+OpenRouter API key is invalid or expired

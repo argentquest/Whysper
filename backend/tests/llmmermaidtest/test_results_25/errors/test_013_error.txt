@@ -1,0 +1,6 @@
+Test ID: 13
+Test Name: Mindmap Diagram
+Description: Generate a **Mermaid mindmap** centered on 'Software Development' with branches: 'Frontend', 'Backend', 'Testing', 'DevOps'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

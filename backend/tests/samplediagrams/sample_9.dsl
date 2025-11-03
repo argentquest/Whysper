@@ -2,9 +2,9 @@ workspace {
   model {
     gamer = person "Gamer"
     gamePlatform = softwareSystem "Gaming Platform" {
-      container launcher "Game Launcher"
-      container server "Game Server"
-      container stats "Statistics DB"
+      launcher = container "Game Launcher"
+      server = container "Game Server"
+      stats = container "Statistics DB"
       gamer -> launcher "Starts game"
       launcher -> server "Connects"
       server -> stats "Updates stats"

@@ -1,0 +1,6 @@
+Test ID: 1
+Test Name: Basic Hierarchy and Flow
+Description: Generate a **D2 diagram** showing a simple system where a User accesses a Web Server, which then connects to two separate Database clusters, 'Primary' and 'Backup'. Place the two databases inside a container labeled 'Data Tier'.
+
+Validation Error:
+OpenRouter API key is invalid or expired

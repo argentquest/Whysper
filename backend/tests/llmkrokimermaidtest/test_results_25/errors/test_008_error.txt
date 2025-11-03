@@ -1,0 +1,6 @@
+Test ID: 8
+Test Name: Class Diagram with Inheritance
+Description: Generate a **Mermaid class diagram** modeling a simple class structure: 'Dog' and 'Cat' inherit from 'Animal'. The 'Dog' class has a method `bark()`. Show inheritance relationships.
+
+Validation Error:
+OpenRouter API key is invalid or expired

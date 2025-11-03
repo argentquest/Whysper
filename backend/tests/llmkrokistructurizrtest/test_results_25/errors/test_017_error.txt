@@ -1,0 +1,6 @@
+Test ID: 17
+Test Name: Database Cluster
+Description: Generate a **Structurizr system context diagram** with 'Database Cluster' system containing 'Primary DB' and 'Replica DB' with replication relationship.
+
+Validation Error:
+OpenRouter API key is invalid or expired
