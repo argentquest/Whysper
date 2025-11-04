@@ -10,3 +10,6 @@ export { useLocalStorage } from './useLocalStorage';
 
 export { useAPIClient } from './useAPIClient';
 export type { UseAPIClientReturn } from './useAPIClient';
+
+export { useSSE } from './useSSE';
+export type { UseSSEReturn } from './useSSE';

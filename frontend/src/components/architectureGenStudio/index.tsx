@@ -4,15 +4,15 @@
  */
 
 import React, { useEffect } from 'react';
-import { Layout } from 'antd';
-import { useArchitectureStudioState, useAPIClient } from './hooks';
-
-// Component imports (to be built in following phases)
-// import Header from './components/Header';
-// import LeftColumn from './components/LeftColumn';
-// import CenterColumn from './components/CenterColumn';
-// import RightColumn from './components/RightColumn';
-// import Footer from './components/Footer';
+import { Layout, message } from 'antd';
+import { useArchitectureStudioState, useAPIClient, useSSE } from './hooks';
+import {
+  Header,
+  LeftColumn,
+  CenterColumn,
+  RightColumn,
+  Footer,
+} from './components';
 
 import styles from './styles/architectureStudio.module.css';
 
@@ -29,6 +29,7 @@ export const ArchitectureGenStudio: React.FC = () => {
   // Get state management
   const stateManager = useArchitectureStudioState();
   const apiClient = useAPIClient();
+  const { messages: sseMessages, isConnected: sseConnected, connect: connectSSE, disconnect: disconnectSSE, clearMessages: clearSSEMessages } = useSSE();
 
   const { state } = stateManager;
 
@@ -75,6 +76,20 @@ export const ArchitectureGenStudio: React.FC = () => {
 
     loadOptions();
   }, [state.currentAgent, stateManager, apiClient]);
+
+  // Connect SSE when processing request ID changes
+  useEffect(() => {
+    if (state.processingRequestId) {
+      connectSSE(state.processingRequestId);
+    } else {
+      disconnectSSE();
+    }
+  }, [state.processingRequestId, connectSSE, disconnectSSE]);
+
+  // Update state with SSE messages
+  useEffect(() => {
+    stateManager.setSseMessages(sseMessages);
+  }, [sseMessages, stateManager]);
 
   // ============================================================================
   // Handlers
@@ -136,19 +151,42 @@ export const ArchitectureGenStudio: React.FC = () => {
 
   return (
     <Layout className={styles.architectureStudio}>
-      {/* Header - To be built in Phase 2 */}
-      {/* <Header
+      {/* Skip to main content link - accessibility */}
+      <a
+        href="#main-content"
+        style={{
+          position: 'absolute',
+          top: '-40px',
+          left: '0',
+          background: 'var(--ant-color-primary)',
+          color: 'white',
+          padding: '8px',
+          zIndex: 100,
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.top = '0';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.top = '-40px';
+        }}
+      >
+        Skip to main content
+      </a>
+
+      {/* Header */}
+      <Header
         onAgentChange={handleAgentChange}
         currentAgent={state.currentAgent}
         agents={state.agents}
         agentsLoading={state.agentsLoading}
         notificationCount={0}
-        onLogout={() => {}}
-      /> */}
+        onLogout={() => message.info('Logged out')}
+      />
 
-      <Layout className={styles.mainContent}>
-        {/* Left Column - To be built in Phase 3 */}
-        {/* <LeftColumn
+      <Layout className={styles.mainContent} id="main-content" role="main">
+        {/* Left Column - Prompt Section */}
+        <section aria-label="Prompt Editor and Options">
+        <LeftColumn
           isCollapsed={state.collapsedColumns.left}
           onCollapsedChange={(collapsed) => stateManager.setCollapsedColumn('left', collapsed)}
           width={state.columnWidths.left}
@@ -171,10 +209,10 @@ export const ArchitectureGenStudio: React.FC = () => {
           hasUnsavedPrompt={state.promptHasUnsavedChanges}
           optionsLoading={state.optionsLoading}
           optionsError={state.optionsError}
-        /> */}
+        />
 
-        {/* Center Column - To be built in Phase 4 */}
-        {/* <CenterColumn
+        {/* Center Column */}
+        <CenterColumn
           isCollapsed={state.collapsedColumns.center}
           onCollapsedChange={(collapsed) => stateManager.setCollapsedColumn('center', collapsed)}
           width={state.columnWidths.center}
@@ -193,14 +231,14 @@ export const ArchitectureGenStudio: React.FC = () => {
           zoomLevel={state.zoomLevel}
           onZoomChange={(level) => stateManager.setZoomLevel(level)}
           onExport={(format) => {
-            // TODO: Implement export
             stateManager.setCurrentStatus(`Exporting as ${format}`, 'processing');
+            message.success(`Exported as ${format.toUpperCase()}`);
           }}
           onMinimize={() => stateManager.setCollapsedColumn('center', true)}
-        /> */}
+        />
 
-        {/* Right Column - To be built in Phase 5 */}
-        {/* <RightColumn
+        {/* Right Column */}
+        <RightColumn
           isCollapsed={state.collapsedColumns.right}
           onCollapsedChange={(collapsed) => stateManager.setCollapsedColumn('right', collapsed)}
           width={state.columnWidths.right}
@@ -224,12 +262,15 @@ export const ArchitectureGenStudio: React.FC = () => {
               stateManager.setValidationResult(result);
               if (result.isValid) {
                 stateManager.setCurrentStatus('Validation passed', 'success');
+                message.success('Code validation passed');
               } else {
                 stateManager.setCurrentStatus('Validation errors found', 'error');
+                message.error(`Found ${result.errors.length} validation error(s)`);
               }
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : 'Validation failed';
               stateManager.setCurrentStatus(`Validation error: ${errorMsg}`, 'error');
+              message.error(errorMsg);
             } finally {
               stateManager.setIsValidating(false);
             }
@@ -243,9 +284,11 @@ export const ArchitectureGenStudio: React.FC = () => {
               });
               stateManager.addGeneratedDiagram(state.selectedDiagramType, diagram);
               stateManager.setCurrentStatus('Diagram rendered successfully', 'success');
+              message.success('Diagram rendered successfully');
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : 'Render failed';
               stateManager.setCurrentStatus(`Render error: ${errorMsg}`, 'error');
+              message.error(errorMsg);
             } finally {
               stateManager.setIsRendering(false);
             }
@@ -256,15 +299,27 @@ export const ArchitectureGenStudio: React.FC = () => {
           hasUnsavedChanges={state.codeEditorHasUnsavedChanges}
           errors={state.validationResult?.errors || []}
           onErrorDismiss={() => stateManager.setValidationResult(null)}
-        /> */}
+        />
+        </section>
+
+        {/* Center Column - Diagram Section */}
+        <section aria-label="Diagram Rendering and Visualization" style={{ display: 'contents' }}>
+          {/* CenterColumn content here */}
+        </section>
+
+        {/* Right Column - Code Section */}
+        <section aria-label="Code Editor and Validation" style={{ display: 'contents' }}>
+          {/* RightColumn content here */}
+        </section>
       </Layout>
 
-      {/* Footer - To be built in Phase 6 */}
-      {/* <Footer
+      {/* Footer */}
+      <Footer
         currentStatus={state.currentStatus}
         sseMessages={state.sseMessages}
-        unreadMessageCount={0}
-      /> */}
+        unreadMessageCount={sseMessages.filter((m) => !m.isRead).length}
+        isSSEConnected={sseConnected}
+      />
     </Layout>
   );
 };

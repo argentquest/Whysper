@@ -75,13 +75,19 @@ export interface ValidationWarning {
 // SSE Message Types
 // ============================================================================
 
-export type SSEMessageType = 'info' | 'error' | 'progress' | 'retry' | 'success';
+export type SSEMessageType = 'info' | 'error' | 'progress' | 'retry' | 'success' | 'diagram';
 
 export interface SSEMessage {
   id: string;
-  timestamp: string;
+  timestamp: Date;
   type: SSEMessageType;
   message: string;
+  isRead?: boolean;
+  details?: {
+    svg?: string;
+    provider?: string;
+    metadata?: object;
+  };
 }
 
 // ============================================================================
@@ -234,6 +240,7 @@ export interface FooterProps {
   currentStatus: string;
   sseMessages: SSEMessage[];
   unreadMessageCount: number;
+  isSSEConnected?: boolean;
 }
 
 // ============================================================================
