@@ -3,7 +3,7 @@
  * Zoom in/out controls with keyboard support
  */
 
-import React, { useEffect } from 'antd';
+import React, { useEffect } from 'react';
 import { Button, Row, Col, Slider, InputNumber } from 'antd';
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons';
 

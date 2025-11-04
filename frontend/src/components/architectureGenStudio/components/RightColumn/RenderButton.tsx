@@ -3,7 +3,7 @@
  * Renders diagram from code
  */
 
-import React from 'antd';
+import React from 'react';
 import { Button, message } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { DiagramType } from '../../types';

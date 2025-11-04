@@ -3,7 +3,7 @@
  * Displays real-time SSE messages from backend
  */
 
-import React, { useEffect, useRef } from 'antd';
+import React, { useEffect, useRef } from 'react';
 import { Badge, Button, Space, Modal, Tag } from 'antd';
 import { BgColorsOutlined } from '@ant-design/icons';
 import { SSEMessage } from '../../types';

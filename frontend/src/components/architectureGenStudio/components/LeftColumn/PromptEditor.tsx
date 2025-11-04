@@ -3,7 +3,7 @@
  * Monaco editor for prompt input
  */
 
-import React, { useCallback } from 'antd';
+import React, { useCallback } from 'react';
 import { Input } from 'antd';
 
 interface PromptEditorProps {
