@@ -218,22 +218,19 @@ class SettingsService:
         env_manager.update_single_var("UI_THEME", new_theme)
         return new_theme, "Theme updated"
 
-
-settings_service = SettingsService()
-
     @log_method_call
     def get_architecture_agents(self) -> List[Dict[str, str]]:
         """Load only agents with 'architecture' in name or metadata."""
         try:
             all_agents = self.get_agent_prompts()
             architecture_agents = []
-            
+
             for agent in all_agents:
                 name = agent.get('name', '').lower()
                 title = agent.get('title', '').lower()
                 description = agent.get('description', '').lower()
                 category = agent.get('category', [])
-                
+
                 # Check if 'architecture' is in name, title, description, or category
                 has_architecture = (
                     'architecture' in name or
@@ -241,12 +238,15 @@ settings_service = SettingsService()
                     'architecture' in description or
                     any('architecture' in str(cat).lower() for cat in category)
                 )
-                
+
                 if has_architecture:
                     architecture_agents.append(agent)
-            
+
             return architecture_agents
-        
+
         except Exception as e:
             logger.error(f"Error loading architecture agents: {e}")
             return []
+
+
+settings_service = SettingsService()
