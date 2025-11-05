@@ -11,9 +11,11 @@
 }
 
 .mainContent {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
+  display: flex !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  height: auto !important;
 }
 
 /* Header */

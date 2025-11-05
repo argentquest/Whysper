@@ -183,9 +183,8 @@ export const ArchitectureGenStudio: React.FC = () => {
         onLogout={() => message.info('Logged out')}
       />
 
-      <Layout className={styles.mainContent} id="main-content" role="main">
+      <Layout className={styles.mainContent} id="main-content" role="main" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Left Column - Prompt Section */}
-        <section aria-label="Prompt Editor and Options">
         <LeftColumn
           isCollapsed={state.collapsedColumns.left}
           onCollapsedChange={(collapsed) => stateManager.setCollapsedColumn('left', collapsed)}
@@ -300,17 +299,6 @@ export const ArchitectureGenStudio: React.FC = () => {
           errors={state.validationResult?.errors || []}
           onErrorDismiss={() => stateManager.setValidationResult(null)}
         />
-        </section>
-
-        {/* Center Column - Diagram Section */}
-        <section aria-label="Diagram Rendering and Visualization" style={{ display: 'contents' }}>
-          {/* CenterColumn content here */}
-        </section>
-
-        {/* Right Column - Code Section */}
-        <section aria-label="Code Editor and Validation" style={{ display: 'contents' }}>
-          {/* RightColumn content here */}
-        </section>
       </Layout>
 
       {/* Footer */}
