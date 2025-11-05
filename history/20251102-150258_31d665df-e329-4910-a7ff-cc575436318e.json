@@ -1,0 +1,51 @@
+{
+  "conversation_guid": "31d665df-e329-4910-a7ff-cc575436318e",
+  "conversation_id": "conv-1762117371958",
+  "created_at": "2025-11-02T15:02:58.288824",
+  "last_updated": "2025-11-02T15:02:58.289823",
+  "message_count": 2,
+  "metadata": {
+    "provider": "openrouter",
+    "model": "qwen/qwen3-coder-30b-a3b-instruct",
+    "session_id": "conv-1762117371958",
+    "context_files_count": 0,
+    "has_agent_prompt": true
+  },
+  "messages": [
+    {
+      "id": "msg_1762117378_d1507353_user",
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2025-11-02 15:02:58",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "compact",
+          "provider": "openrouter",
+          "model": "qwen/qwen3-coder-30b-a3b-instruct",
+          "systemPrompt": "You are a helpful AI assistant specialized in code analysis and development.",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1762117378_4788117d",
+      "role": "assistant",
+      "content": "<p>Hello! How can I assist you today?</p>\n",
+      "timestamp": "2025-11-02 15:02:58",
+      "metadata": {
+        "model": "qwen/qwen3-coder-30b-a3b-instruct",
+        "provider": "openrouter",
+        "tokens": 299,
+        "inputTokens": 289,
+        "outputTokens": 10,
+        "cachedTokens": 0,
+        "elapsedTime": 0.5577759742736816
+      }
+    }
+  ]
+}

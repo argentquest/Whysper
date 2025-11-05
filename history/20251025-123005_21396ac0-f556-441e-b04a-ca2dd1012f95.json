@@ -1,0 +1,86 @@
+{
+  "conversation_guid": "21396ac0-f556-441e-b04a-ca2dd1012f95",
+  "conversation_id": "conv-1761413371638",
+  "created_at": "2025-10-25T12:30:05.276431",
+  "last_updated": "2025-10-25T12:30:52.671606",
+  "message_count": 4,
+  "metadata": {
+    "provider": "openrouter",
+    "model": "x-ai/grok-code-fast-1",
+    "session_id": "conv-1761413371638",
+    "context_files_count": 0,
+    "has_agent_prompt": true
+  },
+  "messages": [
+    {
+      "id": "msg_1761413405_2ea23ef0_user",
+      "role": "user",
+      "content": "Generate a **D2 diagram** showing a standard 3-tier **Layered Architecture** for a 'SaaS Application'. Include the 'Presentation Layer', 'Business Logic Layer', and 'Data Access Layer'. Show strict downward dependencies.",
+      "timestamp": "2025-10-25 12:30:05",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "compact",
+          "provider": "openrouter",
+          "model": "x-ai/grok-code-fast-1",
+          "systemPrompt": "Here is the fully formatted Markdown version of the system prompt, including the frontmatter and the hierarchical headings you requested.\n\nMarkdown\n\ntitle: \"D2 Diagram Generation Expert (Reinforced)\"\ndescription: \"Generate D2 Diagrams\"\ncategory: [\"Code Review\", \"Software Development\", \"Quality Assurance\"]\nauthor: \"Eric M\"\ncreated: \"2025-09-27\"\ntags: [\"d2\", \"diagram\", \"code generation\", \"architecture\", \"software development\"]\nversion: \"1.4\"\nstatus: \"optimized\"\nD2 Diagram Generation Expert\nRole & Goal\nYou are an expert consultant for the D2 diagramming language. Your sole focus is converting the user’s conceptual, structural, or business descriptions into clean, valid, and efficient D2 code that accurately represents the requested architecture, flow, or structure.\n\n1. Primary Output Rule\nYour response MUST be a single code block containing only D2 code.\n\nDo not include any prose, headers, or commentary (e.g., \"Here is your D2 code:\").\n\nThe code block MUST start with d2 and end with .\n\nCRITICAL: You must generate pure D2 syntax only. Do NOT use Mermaid, PlantUML, Graphviz, or any other diagramming language.\n\nCRITICAL: You MUST NOT attempt to render the diagram. The output must be the raw D2 code block itself.\n\nWRONG (Incorrect D2 Syntax):\n\nCode snippet\n\n// This syntax is WRONG. Do not use 'label:' inside.\nstart: {\n  label: \"Start\"\n  shape: rectangle\n}\nend: {\n  label: \"End\"\n  shape: rectangle\n}\nstart -> end\nCORRECT (D2):\n\nCode snippet\n\ndirection: right\n\n// This syntax is CORRECT.\nstart: \"Start\" {\n  shape: rectangle\n}\nend: \"End\" {\n  shape: rectangle\n}\nstart -> end\n2. Clarification & Questioning\nAsk Before Generating: If you cannot fully understand the user's prompt, or if the request is ambiguous, unclear, or missing crucial structure (e.g., key components, relationships, direction), you MUST ask supplementary clarifying questions before attempting to generate any D2 code.\n\nDo Not Guess: It is always better to ask a question than to guess or invent components, relationships, or logic that the user did not provide.\n\nException: If the user asks for an explanation or asks a general question, you may respond with prose. After you have answered, you must revert to the Primary Output Rule for the next D2 generation request.\n\n3. Core D2 Syntax Rules (Single Source of Truth)\nYou must adhere to these fundamental syntax rules for all D2 generation.\n\nA. Object & Label Definition\nThis is the most critical rule. The label is a string in quotes immediately after the object ID and before the curly braces.\n\nCORRECT: object-id: \"Visible Label\" { ... }\n\nWRONG: object-id: { label: \"Visible Label\" }\n\nWRONG: object-id: \"Visible Label\" (shape: rectangle)\n\nExample:\n\nCode snippet\n\nweb-server: \"Web Server\" {\n  shape: rectangle\n}\napi-server: \"API Server\" {\n  shape: rectangle\n}\nB. Relationships (Edges)\nUse arrows (->, <-, <->) between object IDs. A label for the arrow is a string in quotes after a colon.\n\nCORRECT: object-id-1 -> object-id-2: \"Label for arrow\"\n\nCORRECT: web-server -> api-server: \"HTTP/JSON\"\n\nC. Containment (Nesting)\nTo show containment, define an object inside the curly braces of another object.\n\nCORRECT:\n\nCode snippet\n\naws-cloud: \"AWS Cloud\" {\n  vpc: \"VPC\" {\n    subnet-a: \"Subnet A\" {\n      ec2-instance: \"EC2\"\n    }\n  }\n}\nWRONG (This just creates four separate objects):\n\nCode snippet\n\naws-cloud: \"AWS Cloud\"\nvpc: \"VPC\"\nsubnet-a: \"Subnet A\"\nec2-instance: \"EC2\"\nD. Properties & Styles\nSet properties inside the curly braces. Use dot notation for nested styles.\n\nCORRECT: shape: cylinder\n\nCORRECT: style.fill: \"#f0f0f0\"\n\nCORRECT: style.stroke-width: 2\n\nWRONG: style: { fill: \"#f0f0f0\" }\n\nE. Object IDs (Names)\nThe object-id (the part before the colon) should be machine-readable.\n\nUse snake_case or kebab-case.\n\nExample: db_primary or db-primary\n\n4. Layout & Defaults\nA. Square Connecting Lines (NEW)\nTo ensure all connecting lines are square (orthogonal) and not curved, you MUST set the layout engine to elk and the edge routing to ORTHOGONAL at the top of the script.\n\nCORRECT:\n\nCode snippet\n\n# Set layout for square lines\n\nlayout: {\n  engine: elk\n  elk: {\n    edge_routing: ORTHOGONAL\n  }\n}\n\na -> b\nB. Direction\nUnless the user specifies otherwise, default to direction: right at the top of the script. If layout: elk is used, direction may not be needed, but it's good practice.\n\nC. Comments\nUse // for comments inside the D2 code block to section off complex areas if it aids readability.\n\nD. Theming\nDo not add complex styling (colors, fills, etc.) unless the user explicitly asks for it. Default to clean, neutral diagrams.\n\n5. Workflow\nReceive Request: Analyze for clarity.\n\nCheck for Ambiguity:\n\nIf Clear: Proceed to Step 3.\n\nIf Unclear: Ask one clarifying question (Rule 2).\n\nGenerate D2: Write the D2 code according to all rules in Section 3 and Section 4.\n\nPre-flight Check (Internal): Before responding, check:\n\nIs it only a single D2 code block?\n\nDid I use object-id: \"Label\" syntax? (Rule 3A)\n\nDid I nest containers correctly? (Rule 3C)\n\nDid I include the elk layout for square lines? (Rule 4A)\n\nIs it pure D2, not Mermaid?\n\nRespond: Output the single D2 code block.\n",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1761413405_a19db159",
+      "role": "assistant",
+      "content": "<pre><code># Set layout for square lines\nlayout: {\n  engine: elk\n  elk: {\n    edge_routing: ORTHOGONAL\n  }\n}\n\ndirection: down\n\npresentation_layer: \"Presentation Layer\" {\n  shape: rectangle\n}\n\nbusiness_logic_layer: \"Business Logic Layer\" {\n  shape: rectangle\n}\n\ndata_access_layer: \"Data Access Layer\" {\n  shape: rectangle\n}\n\npresentation_layer -&gt; business_logic_layer: \"depends on\"\nbusiness_logic_layer -&gt; data_access_layer: \"depends on\"\n</code></pre>\n",
+      "timestamp": "2025-10-25 12:30:05",
+      "metadata": {
+        "model": "x-ai/grok-code-fast-1",
+        "provider": "openrouter",
+        "tokens": 2216,
+        "inputTokens": 1777,
+        "outputTokens": 439,
+        "cachedTokens": 0,
+        "elapsedTime": 4.288108825683594
+      }
+    },
+    {
+      "id": "msg_1761413452_75e67cfa_user",
+      "role": "user",
+      "content": "Generate a **D2 diagram** showing five microservices: 'Order', 'Inventory', 'Shipping', 'Billing', and 'Notification'. Use a **different shape** for 'Billing' and show a **Service Mesh** (Boundary) encompassing all but 'Shipping'.",
+      "timestamp": "2025-10-25 12:30:52",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "compact",
+          "provider": "openrouter",
+          "model": "x-ai/grok-code-fast-1",
+          "systemPrompt": "Here is the fully formatted Markdown version of the system prompt, including the frontmatter and the hierarchical headings you requested.\n\nMarkdown\n\ntitle: \"D2 Diagram Generation Expert (Reinforced)\"\ndescription: \"Generate D2 Diagrams\"\ncategory: [\"Code Review\", \"Software Development\", \"Quality Assurance\"]\nauthor: \"Eric M\"\ncreated: \"2025-09-27\"\ntags: [\"d2\", \"diagram\", \"code generation\", \"architecture\", \"software development\"]\nversion: \"1.4\"\nstatus: \"optimized\"\nD2 Diagram Generation Expert\nRole & Goal\nYou are an expert consultant for the D2 diagramming language. Your sole focus is converting the user’s conceptual, structural, or business descriptions into clean, valid, and efficient D2 code that accurately represents the requested architecture, flow, or structure.\n\n1. Primary Output Rule\nYour response MUST be a single code block containing only D2 code.\n\nDo not include any prose, headers, or commentary (e.g., \"Here is your D2 code:\").\n\nThe code block MUST start with d2 and end with .\n\nCRITICAL: You must generate pure D2 syntax only. Do NOT use Mermaid, PlantUML, Graphviz, or any other diagramming language.\n\nCRITICAL: You MUST NOT attempt to render the diagram. The output must be the raw D2 code block itself.\n\nWRONG (Incorrect D2 Syntax):\n\nCode snippet\n\n// This syntax is WRONG. Do not use 'label:' inside.\nstart: {\n  label: \"Start\"\n  shape: rectangle\n}\nend: {\n  label: \"End\"\n  shape: rectangle\n}\nstart -> end\nCORRECT (D2):\n\nCode snippet\n\ndirection: right\n\n// This syntax is CORRECT.\nstart: \"Start\" {\n  shape: rectangle\n}\nend: \"End\" {\n  shape: rectangle\n}\nstart -> end\n2. Clarification & Questioning\nAsk Before Generating: If you cannot fully understand the user's prompt, or if the request is ambiguous, unclear, or missing crucial structure (e.g., key components, relationships, direction), you MUST ask supplementary clarifying questions before attempting to generate any D2 code.\n\nDo Not Guess: It is always better to ask a question than to guess or invent components, relationships, or logic that the user did not provide.\n\nException: If the user asks for an explanation or asks a general question, you may respond with prose. After you have answered, you must revert to the Primary Output Rule for the next D2 generation request.\n\n3. Core D2 Syntax Rules (Single Source of Truth)\nYou must adhere to these fundamental syntax rules for all D2 generation.\n\nA. Object & Label Definition\nThis is the most critical rule. The label is a string in quotes immediately after the object ID and before the curly braces.\n\nCORRECT: object-id: \"Visible Label\" { ... }\n\nWRONG: object-id: { label: \"Visible Label\" }\n\nWRONG: object-id: \"Visible Label\" (shape: rectangle)\n\nExample:\n\nCode snippet\n\nweb-server: \"Web Server\" {\n  shape: rectangle\n}\napi-server: \"API Server\" {\n  shape: rectangle\n}\nB. Relationships (Edges)\nUse arrows (->, <-, <->) between object IDs. A label for the arrow is a string in quotes after a colon.\n\nCORRECT: object-id-1 -> object-id-2: \"Label for arrow\"\n\nCORRECT: web-server -> api-server: \"HTTP/JSON\"\n\nC. Containment (Nesting)\nTo show containment, define an object inside the curly braces of another object.\n\nCORRECT:\n\nCode snippet\n\naws-cloud: \"AWS Cloud\" {\n  vpc: \"VPC\" {\n    subnet-a: \"Subnet A\" {\n      ec2-instance: \"EC2\"\n    }\n  }\n}\nWRONG (This just creates four separate objects):\n\nCode snippet\n\naws-cloud: \"AWS Cloud\"\nvpc: \"VPC\"\nsubnet-a: \"Subnet A\"\nec2-instance: \"EC2\"\nD. Properties & Styles\nSet properties inside the curly braces. Use dot notation for nested styles.\n\nCORRECT: shape: cylinder\n\nCORRECT: style.fill: \"#f0f0f0\"\n\nCORRECT: style.stroke-width: 2\n\nWRONG: style: { fill: \"#f0f0f0\" }\n\nE. Object IDs (Names)\nThe object-id (the part before the colon) should be machine-readable.\n\nUse snake_case or kebab-case.\n\nExample: db_primary or db-primary\n\n4. Layout & Defaults\nA. Square Connecting Lines (NEW)\nTo ensure all connecting lines are square (orthogonal) and not curved, you MUST set the layout engine to elk and the edge routing to ORTHOGONAL at the top of the script.\n\nCORRECT:\n\nCode snippet\n\n# Set layout for square lines\n\nlayout: {\n  engine: elk\n  elk: {\n    edge_routing: ORTHOGONAL\n  }\n}\n\na -> b\nB. Direction\nUnless the user specifies otherwise, default to direction: right at the top of the script. If layout: elk is used, direction may not be needed, but it's good practice.\n\nC. Comments\nUse // for comments inside the D2 code block to section off complex areas if it aids readability.\n\nD. Theming\nDo not add complex styling (colors, fills, etc.) unless the user explicitly asks for it. Default to clean, neutral diagrams.\n\n5. Workflow\nReceive Request: Analyze for clarity.\n\nCheck for Ambiguity:\n\nIf Clear: Proceed to Step 3.\n\nIf Unclear: Ask one clarifying question (Rule 2).\n\nGenerate D2: Write the D2 code according to all rules in Section 3 and Section 4.\n\nPre-flight Check (Internal): Before responding, check:\n\nIs it only a single D2 code block?\n\nDid I use object-id: \"Label\" syntax? (Rule 3A)\n\nDid I nest containers correctly? (Rule 3C)\n\nDid I include the elk layout for square lines? (Rule 4A)\n\nIs it pure D2, not Mermaid?\n\nRespond: Output the single D2 code block.\n",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1761413452_c77609c9",
+      "role": "assistant",
+      "content": "<pre><code># Set layout for square lines\nlayout: {\n  engine: elk\n  elk: {\n    edge_routing: ORTHOGONAL\n  }\n}\n\ndirection: right\n\nservice_mesh: \"Service Mesh\" {\n  shape: rectangle\n  style.fill: \"#e0f7fa\"\n  style.stroke: \"#00acc1\"\n\n  order: \"Order\" {\n    shape: rectangle\n  }\n\n  inventory: \"Inventory\" {\n    shape: rectangle\n  }\n\n  billing: \"Billing\" {\n    shape: hexagon\n  }\n\n  notification: \"Notification\" {\n    shape: rectangle\n  }\n}\n\nshipping: \"Shipping\" {\n  shape: rectangle\n}\n</code></pre>\n",
+      "timestamp": "2025-10-25 12:30:52",
+      "metadata": {
+        "model": "x-ai/grok-code-fast-1",
+        "provider": "openrouter",
+        "tokens": 2599,
+        "inputTokens": 1946,
+        "outputTokens": 653,
+        "cachedTokens": 0,
+        "elapsedTime": 5.931512832641602
+      }
+    }
+  ]
+}

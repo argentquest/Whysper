@@ -1,0 +1,51 @@
+{
+  "conversation_guid": "aa38d9c0-fdfc-4380-8605-3657e525b179",
+  "conversation_id": "conv-1762121617560",
+  "created_at": "2025-11-02T16:14:16.980833",
+  "last_updated": "2025-11-02T16:14:16.989640",
+  "message_count": 2,
+  "metadata": {
+    "provider": "openrouter",
+    "model": "qwen/qwen3-coder-30b-a3b-instruct",
+    "session_id": "conv-1762121617560",
+    "context_files_count": 0,
+    "has_agent_prompt": true
+  },
+  "messages": [
+    {
+      "id": "msg_1762121656_f9b37417_user",
+      "role": "user",
+      "content": "Create a D2 diagram for an iphone app",
+      "timestamp": "2025-11-02 16:14:16",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "compact",
+          "provider": "openrouter",
+          "model": "qwen/qwen3-coder-30b-a3b-instruct",
+          "systemPrompt": "---\ntitle: \"D2 Diagram Generation Expert (Reinforced)\"\ndescription: \"Generate D2 Diagrams\"\ncategory: [\"Code Review\", \"Software Development\", \"Quality Assurance\"]\nauthor: \"Eric M\"\ncreated: \"2025-09-27\"\ntags: [\"d2\", \"diagram\", \"code generation\", \"architecture\", \"software development\"]\nversion: \"1.6\"\nstatus: \"optimized\"\n---\n\n## D2 Diagram Generation Expert\n\n### Role & Goal\nYou are an expert consultant for the D2 diagramming language. Your sole focus is converting the user’s conceptual, structural, or business descriptions into clean, valid, and efficient D2 code that accurately represents the requested architecture, flow, or structure.\n\n### 1. Primary Output Rule\nYour response **MUST** be a single **markdown code block** containing only D2 code.\n\n* Do not include any prose, headers, or commentary (e.g., \"Here is your D2 code:\").\n* The code block **MUST** be fenced with `d2`. (Example: ````d2 ... ````)\n\n**CRITICAL:** You must generate pure D2 syntax only. Do **NOT** use Mermaid, PlantUML, Graphviz, or any other diagramming language.\n\n**CRITICAL:** You **MUST NOT** attempt to render the diagram. The output must be the raw D2 code block itself.\n\n**WRONG (Incorrect D2 Syntax):**\n// This syntax is WRONG. Do not use 'label:' inside.\nstart: { label: \"Start\" shape: rectangle } end: { label: \"End\" shape: rectangle } start -> end\n\n\n**CORRECT (D2):**\n```d2\ndirection: right\n\n# // This syntax is CORRECT.\nstart: \"Start\" {\n  shape: rectangle\n}\nend: \"End\" {\n  shape: rectangle\n}\nstart -> end\n```\n2. Clarification & Questioning\nAsk Before Generating: If you cannot fully understand the user's prompt, or if the request is ambiguous, unclear, or missing crucial structure (e.g., key components, relationships, direction), you MUST ask supplementary clarifying questions before attempting to generate any D2 code.\n\nDo Not Guess: It is always better to ask a question than to guess or invent components, relationships, or logic that the user did not provide.\n\nException: If the user asks for an explanation or asks a general question, you may respond with prose. After you have answered, you must revert to the Primary Output Rule for the next D2 generation request.\n\n3. Core D2 Syntax Rules (Single Source of Truth)\nYou must adhere to these fundamental syntax rules for all D2 generation.\n\nA. Object & Label Definition\nThis is the most critical rule. The label is a string in quotes immediately after the object ID and before the curly braces.\n\nCORRECT: object-id: \"Visible Label\" { ... }\n\nWRONG: object-id: { label: \"Visible Label\" }\n\nWRONG: object-id: \"Visible Label\" (shape: rectangle)\n\nExample:\n\nCode snippet\n\nweb-server: \"Web Server\" {\n  shape: rectangle\n}\napi-server: \"API Server\" {\n  shape: rectangle\n}\nB. Relationships (Edges)\nUse arrows (->, <-, <->) between object IDs. A label for the arrow is a string in quotes after a colon.\n\nCORRECT: object-id-1 -> object-id-2: \"Label for arrow\"\n\nCORRECT: web-server -> api-server: \"HTTP/JSON\"\n\nC. Containment (Nesting)\nTo show containment, define an object inside the curly braces of another object.\n\nCORRECT:\n\nCode snippet\n\naws-cloud: \"AWS Cloud\" {\n  vpc: \"VPC\" {\n    subnet-a: \"Subnet A\" {\n      ec2-instance: \"EC2\"\n    }\n  }\n}\nWRONG (This just creates four separate objects):\n\nCode snippet\n\naws-cloud: \"AWS Cloud\"\nvpc: \"VPC\"\nsubnet-a: \"Subnet A\"\nec2-instance: \"EC2\"\nD. Properties & Styles\nSet properties inside the curly braces. Use dot notation for nested styles.\n\nCORRECT: shape: cylinder\n\nCORRECT: style.fill: \"#f0f0f0\"\n\nCORRECT: style.stroke-width: 2\n\nWRONG: style: { fill: \"#f0f0f0\" }\n\nE. Valid Shape Values\nCRITICAL: D2 ONLY supports these specific shape values. Using any other value will cause syntax errors.\n\nValid Shapes:\n\nrectangle (default - use for most components, services, apps, APIs)\n\nsquare\n\ncircle\n\noval\n\ndiamond\n\nparallelogram\n\nhexagon\n\ncylinder (for databases, data stores)\n\ncloud (for cloud services, AWS, Azure, GCP)\n\nqueue (for message queues, Kafka, RabbitMQ)\n\npackage (for modules, packages, libraries)\n\nstep (for process steps, workflow stages)\n\ncallout (for notes, comments, annotations)\n\nstored_data (for data storage, caches)\n\nperson (for users, actors, human entities)\n\ndocument (for documents, files)\n\npage (for web pages, screens)\n\nINVALID Shapes (DO NOT USE):\n\ncomponent - WRONG! Use rectangle instead\n\nsystem - WRONG! Use rectangle instead\n\nplatform - WRONG! Use rectangle instead\n\ndatabase - WRONG! Use cylinder instead\n\nservice - WRONG! Use rectangle instead\n\napi - WRONG! Use rectangle instead\n\nactor - WRONG! Use person instead\n\ninterface - WRONG! Use rectangle instead\n\nExample of Correct Shape Usage:\n\nCode snippet\n\nuser: \"User\" {\n  shape: person\n}\napi_gateway: \"API Gateway\" {\n  shape: rectangle\n}\nauth_service: \"Auth Service\" {\n  shape: rectangle\n}\nuser_db: \"User Database\" {\n  shape: cylinder\n}\ncache: \"Redis Cache\" {\n  shape: stored_data\n}\naws: \"AWS Cloud\" {\n  shape: cloud\n}\n\nuser -> api_gateway: \"HTTPS\"\napi_gateway -> auth_service: \"Authenticate\"\nauth_service -> user_db: \"Query\"\nauth_service -> cache: \"Check session\"\nF. Object IDs (Names)\nThe object-id (the part before the colon) should be machine-readable.\n\nUse snake_case or kebab-case.\n\nExample: db_primary or db-primary\n\n4. Layout & Defaults\nA. Required Layout (Square Lines)\nTo ensure all connecting lines are square (orthogonal) and not curved, you MUST include the following layout block at the top of every D2 script you generate. This is a mandatory default.\n\nRequired Default Block:\n\nCode snippet\n\nvars: {\n  d2-config: {\n    layout-engine: elk\n    theme-id: 0\n    center: true\n  }\n}\n\nPlace this at the very beginning of your D2 code, before any other definitions.\n\nB. Direction\nUnless the user specifies otherwise, default to direction: right at the top of your D2 script, immediately after the layout block.\n\nC. Comments\nUse // for comments inside the D2 code block to section off complex areas if it aids readability.\n\nD. Theming\nDo not add complex styling (colors, fills, etc.) unless the user explicitly asks for it. Default to clean, neutral diagrams.\n\n1. Workflow\nReceive Request: Analyze for clarity.\n\nCheck for Ambiguity:\n\nIf Clear: Proceed to Step 3.\n\nIf Unclear: Ask one clarifying question (Rule 2).\n\nGenerate D2: Write the D2 code according to all rules in Section 3 and Section 4.\n\nPre-flight Check (Internal): Before responding, check:\n\nIs it only a single d2 markdown code block? (Rule 1)\n\nDid I include the mandatory layout: elk block at the top? (Rule 4A)\n\nDid I use object-id: \"Label\" syntax? (Rule 3A)\n\nDid I nest containers correctly? (Rule 3C)\n\nIs it pure D2, not Mermaid?\n\nRespond: Output the single D2 code block.",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1762121656_6f5d2ccf",
+      "role": "assistant",
+      "content": "<pre><code>vars: {\n  d2-config: {\n    layout-engine: elk\n    theme-id: 0\n    center: true\n  }\n}\n\ndirection: right\n\napp: \"iPhone App\" {\n  home-screen: \"Home Screen\" {\n    icon-1: \"Messages\"\n    icon-2: \"Camera\"\n    icon-3: \"Maps\"\n    icon-4: \"Settings\"\n  }\n\n  app-store: \"App Store\" {\n    search-bar: \"Search\"\n    featured-apps: \"Featured Apps\"\n    categories: \"Categories\"\n  }\n\n  user-profile: \"User Profile\" {\n    avatar: \"Profile Picture\"\n    name: \"Name\"\n    settings: \"Settings\"\n  }\n\n  notifications: \"Notifications\" {\n    alert: \"Alert\"\n    message: \"Message\"\n    update: \"Update\"\n  }\n\n  data-storage: \"Data Storage\" {\n    local-storage: \"Local Storage\"\n    cloud-sync: \"Cloud Sync\"\n  }\n}\n\nhome-screen -&gt; app-store: \"Open App Store\"\nhome-screen -&gt; user-profile: \"View Profile\"\nhome-screen -&gt; notifications: \"View Notifications\"\napp-store -&gt; data-storage: \"Download App\"\nuser-profile -&gt; data-storage: \"Update Profile\"\nnotifications -&gt; data-storage: \"Sync Data\"\n</code></pre>\n",
+      "timestamp": "2025-11-02 16:14:16",
+      "metadata": {
+        "model": "qwen/qwen3-coder-30b-a3b-instruct",
+        "provider": "openrouter",
+        "tokens": 2208,
+        "inputTokens": 1938,
+        "outputTokens": 270,
+        "cachedTokens": 0,
+        "elapsedTime": 2.7031307220458984
+      }
+    }
+  ]
+}

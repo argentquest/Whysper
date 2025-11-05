@@ -1,0 +1,51 @@
+{
+  "conversation_guid": "ebe796dd-ba7c-4973-8c6d-b146c305fe0e",
+  "conversation_id": "conv-1762097967399",
+  "created_at": "2025-11-02T09:39:57.444640",
+  "last_updated": "2025-11-02T09:39:57.446575",
+  "message_count": 2,
+  "metadata": {
+    "provider": "openrouter",
+    "model": "qwen/qwen3-coder-30b-a3b-instruct",
+    "session_id": "conv-1762097967399",
+    "context_files_count": 0,
+    "has_agent_prompt": true
+  },
+  "messages": [
+    {
+      "id": "msg_1762097997_af54c3d5_user",
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2025-11-02 09:39:57",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "compact",
+          "provider": "openrouter",
+          "model": "qwen/qwen3-coder-30b-a3b-instruct",
+          "systemPrompt": "You are a helpful AI assistant specialized in code analysis and development.",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1762097997_431e49c1",
+      "role": "assistant",
+      "content": "<p>Hello! I'm here to help you with your codebase. Could you please share the code you'd like me to analyze or discuss? Once you provide it, I can assist with:</p>\n\n<ul>\n<li>Code review and analysis</li>\n<li>Bug identification</li>\n<li>Performance optimization suggestions</li>\n<li>Best practices recommendations</li>\n<li>Explanation of specific code sections</li>\n<li>Testing strategies</li>\n<li>Documentation improvements</li>\n</ul>\n\n<p>Please paste your code, and I'll give you detailed feedback in pure markdown format as requested.</p>\n",
+      "timestamp": "2025-11-02 09:39:57",
+      "metadata": {
+        "model": "qwen/qwen3-coder-30b-a3b-instruct",
+        "provider": "openrouter",
+        "tokens": 381,
+        "inputTokens": 289,
+        "outputTokens": 92,
+        "cachedTokens": 0,
+        "elapsedTime": 1.6356208324432373
+      }
+    }
+  ]
+}

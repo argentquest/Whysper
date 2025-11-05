@@ -1,0 +1,51 @@
+{
+  "conversation_guid": "a8bbafdf-e170-4e70-b26c-3ab5dc104747",
+  "conversation_id": "conv-1761479429077",
+  "created_at": "2025-10-26T06:51:24.783661",
+  "last_updated": "2025-10-26T06:51:24.791784",
+  "message_count": 2,
+  "metadata": {
+    "provider": "openrouter",
+    "model": "openai/gpt-5",
+    "session_id": "conv-1761479429077",
+    "context_files_count": 0,
+    "has_agent_prompt": true
+  },
+  "messages": [
+    {
+      "id": "msg_1761479484_d309d34c_user",
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2025-10-26 06:51:24",
+      "metadata": {
+        "context_files": [],
+        "settings": {
+          "theme": "proBlue",
+          "provider": "openrouter",
+          "model": "openai/gpt-5",
+          "systemPrompt": "You are a helpful AI assistant specialized in code analysis and development.",
+          "contextFiles": [],
+          "maxTokens": 14000,
+          "temperature": 0.1,
+          "timeout": 120,
+          "access_key": "W"
+        }
+      }
+    },
+    {
+      "id": "msg_1761479484_89ba9713",
+      "role": "assistant",
+      "content": "<p>Hi! How can I help you today?</p>\n\n<ul>\n<li>Share a snippet or repo link for analysis</li>\n<li>Describe a bug or error message to debug</li>\n<li>Ask for refactoring or performance tips</li>\n<li>Request tests, docs, or tooling setup</li>\n<li>Discuss architecture or design choices</li>\n</ul>\n",
+      "timestamp": "2025-10-26 06:51:24",
+      "metadata": {
+        "model": "openai/gpt-5",
+        "provider": "openrouter",
+        "tokens": 536,
+        "inputTokens": 284,
+        "outputTokens": 252,
+        "cachedTokens": 0,
+        "elapsedTime": 11.36390471458435
+      }
+    }
+  ]
+}

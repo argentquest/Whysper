@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(awk '{print $9, \"\"\"\"(\"\"\"\" $5 \"\"\"\")\"\"\"\"}')",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(ss:*)",
+      "Bash(lsof:*)",
+      "Bash(py -m pytest:*)",
+      "Bash(find:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(py.test backend/tests/api/v1/endpoints/test_diagram_provider.py -v --tb=line)",
+      "Bash(py.test backend/diagrams/tests/ backend/tests/providers/ backend/tests/api/ -v --tb=line)",
+      "Bash(py.test backend/tests/services/test_conversation_service.py backend/tests/utils/test_code_extraction.py backend/tests/utils/test_language_detection.py -v --tb=line)",
+      "Bash(py.test:*)",
+      "Bash(xargs ls:*)",
+      "Bash(/c/Code2025/Whysper/PHASE2_INFRASTRUCTURE_REPORT.md)",
+      "Bash(__NEW_LINE__ find /c/Code2025/Whysper/backend -type f -name \"*.py\" -path \"*common*\" -o -name \"*.py\" -path \"*core*\")",
+      "Bash(git checkout:*)",
+      "Bash(git clean:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
