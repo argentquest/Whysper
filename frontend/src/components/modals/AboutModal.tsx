@@ -1,10 +1,13 @@
 import React from 'react';
 import { Typography, Space, Tag, Button, Divider } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   GithubOutlined,
   BookOutlined,
   BugOutlined,
   HeartOutlined,
+  HomeOutlined,
+  DesktopOutlined,
 } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
 
@@ -19,8 +22,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   open,
   onCancel,
 }) => {
+  const navigate = useNavigate();
   const version = '2.0.0';
   const buildDate = new Date().toLocaleDateString();
+
+  const handleNavigateToRoot = () => {
+    onCancel();
+    navigate('/');
+  };
+
+  const handleNavigateToStudio = () => {
+    onCancel();
+    navigate('/studio');
+  };
 
   return (
     <Modal
@@ -103,6 +117,28 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             </div>
           </div>
         </div>
+
+        <Divider />
+
+        {/* Navigation Links */}
+        <Space direction="vertical" style={{ width: '100%' }} size="small">
+          <div className="flex justify-center gap-2">
+            <Button
+              type="primary"
+              icon={<HomeOutlined />}
+              onClick={handleNavigateToRoot}
+            >
+              Go to Chat
+            </Button>
+            <Button
+              type="default"
+              icon={<DesktopOutlined />}
+              onClick={handleNavigateToStudio}
+            >
+              Go to GenStudio
+            </Button>
+          </div>
+        </Space>
 
         <Divider />
 
