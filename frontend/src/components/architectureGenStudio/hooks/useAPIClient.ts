@@ -49,7 +49,16 @@ export function useAPIClient(): UseAPIClientReturn {
         throw new Error(`Failed to fetch agents: ${response.statusText}`);
       }
 
-      const agents: Agent[] = await response.json();
+      const agentPrompts = await response.json();
+
+      // Transform agent prompts to Agent interface format
+      const agents: Agent[] = agentPrompts.map((prompt: any) => ({
+        id: prompt.name, // Use name as ID (unique identifier)
+        name: prompt.title || prompt.name, // Use title for display, fallback to name
+        description: prompt.description || '',
+        type: prompt.category && prompt.category.length > 0 ? prompt.category[0] : undefined,
+      }));
+
       return agents;
     } catch (error) {
       console.error('Error fetching agents:', error);
