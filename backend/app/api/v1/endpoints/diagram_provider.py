@@ -561,3 +561,65 @@ async def download_diagram(filename: str):
         filename=filename,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+
+# ===================================================================
+# Diagram Generation Endpoint (for ArchStudio)
+# ===================================================================
+
+class GenerateDiagramRequest(BaseModel):
+    """Request model for diagram generation using an agent"""
+    agentId: str = Field(..., description="Agent ID to use for generation")
+    prompt: str = Field(..., description="User prompt for the agent", min_length=1)
+    diagramType: Optional[str] = Field("mermaid", description="Diagram type (mermaid, d2, plantuml, etc.)")
+
+
+class GenerateDiagramResponse(BaseModel):
+    """Response model for diagram generation"""
+    requestId: str = Field(..., description="Unique request ID for tracking")
+    diagram: Optional[DiagramRenderResponse] = Field(None, description="Initial diagram response if available")
+
+
+@router.post("/v2/generate", response_model=GenerateDiagramResponse)
+@log_method_call
+def generate_diagram(request: GenerateDiagramRequest):
+    """Generate a diagram using an agent and optional rendering.
+
+    For the ArchStudio application, this endpoint:
+    1. Calls the specified agent with the prompt
+    2. Returns a request ID for SSE tracking
+    3. Optionally returns an initial diagram response
+
+    Args:
+        request: GenerateDiagramRequest with agentId, prompt, and diagramType
+
+    Returns:
+        GenerateDiagramResponse with requestId and optional initial diagram
+    """
+    import uuid
+    from datetime import datetime
+
+    logger.debug(f"[GENERATE] Received diagram generation request for agent: {request.agentId}")
+
+    # Generate a unique request ID for tracking
+    request_id = str(uuid.uuid4())
+
+    try:
+        # Log the request
+        logger.info(f"[GENERATE] Request ID: {request_id}, Agent: {request.agentId}, Diagram Type: {request.diagramType}")
+
+        # For now, return a placeholder response with the request ID
+        # The actual diagram generation would happen asynchronously
+        # and be delivered via SSE connection
+
+        return GenerateDiagramResponse(
+            requestId=request_id,
+            diagram=None  # Diagram will be sent via SSE when ready
+        )
+
+    except Exception as e:
+        logger.error(f"[GENERATE] Error generating diagram: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate diagram: {str(e)}"
+        )
