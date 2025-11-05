@@ -327,7 +327,7 @@ export function useArchitectureStudioState(): UseArchitectureStudioStateReturn {
   // Load from localStorage on mount
   useEffect(() => {
     loadFromLocalStorage();
-  }, [loadFromLocalStorage]);
+  }, []); // Only run once on mount
 
   // Save to localStorage whenever state changes (debounced)
   useEffect(() => {
@@ -336,7 +336,7 @@ export function useArchitectureStudioState(): UseArchitectureStudioStateReturn {
     }, 1000); // Debounce at 1 second
 
     return () => clearTimeout(timer);
-  }, [state, saveToLocalStorage]);
+  }, [state]); // Only depend on state changes
 
   return {
     state,
