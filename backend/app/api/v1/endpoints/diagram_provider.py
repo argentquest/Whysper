@@ -605,8 +605,21 @@ def generate_diagram(request: GenerateDiagramRequest):
     request_id = str(uuid.uuid4())
 
     try:
-        # Log the request
-        logger.info(f"[GENERATE] Request ID: {request_id}, Agent: {request.agentId}, Diagram Type: {request.diagramType}")
+        # Log all request details for debugging
+        logger.info(f"[GENERATE] =============== DIAGRAM GENERATION REQUEST ===============")
+        logger.info(f"[GENERATE] Request ID: {request_id}")
+        logger.info(f"[GENERATE] Agent ID: {request.agentId}")
+        logger.info(f"[GENERATE] Diagram Type: {request.diagramType}")
+        logger.info(f"[GENERATE] Prompt Length: {len(request.prompt)} characters")
+        logger.info(f"[GENERATE] Prompt Preview: {request.prompt[:200] if len(request.prompt) > 200 else request.prompt}...")
+        logger.info(f"[GENERATE] ========================================================")
+
+        # TODO: Implement actual diagram generation using the agent
+        # This would involve:
+        # 1. Loading the agent prompt from prompts/coding/agent/{agentId}.md
+        # 2. Calling the AI model with the agent prompt + user prompt
+        # 3. Parsing the generated diagram code
+        # 4. Rendering it based on the diagramType
 
         # For now, return a placeholder response with the request ID
         # The actual diagram generation would happen asynchronously
