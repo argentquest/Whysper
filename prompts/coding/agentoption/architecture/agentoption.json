@@ -1,0 +1,26 @@
+[
+  {
+    "id": "arch-review-scalability",
+    "name": "Scalability Review",
+    "description": "Evaluate system architecture for scalability and performance",
+    "helpContent": "Conduct a comprehensive architectural review focusing on scalability, performance, and ability to handle growth.",
+    "template": "Review the system architecture for:\n1. Horizontal scalability potential\n2. Vertical scalability limits\n3. Database scaling strategies\n4. Caching mechanisms\n5. Load balancing approaches\n6. Bottleneck identification\n\nProvide detailed recommendations.",
+    "tags": ["architecture", "review", "scalability", "performance"]
+  },
+  {
+    "id": "arch-review-modularity",
+    "name": "Modularity Assessment",
+    "description": "Assess system modularity, coupling, and cohesion",
+    "helpContent": "Evaluate how well modules are separated, dependencies between them, and overall system cohesion.",
+    "template": "Analyze the architecture for:\n1. Component/module independence\n2. Coupling and dependencies\n3. Cohesion within modules\n4. Interface clarity\n5. Reusability potential\n6. Testing impact of current structure\n\nIdentify areas for improvement.",
+    "tags": ["architecture", "review", "modularity", "design"]
+  },
+  {
+    "id": "arch-review-resilience",
+    "name": "Resilience & Reliability",
+    "description": "Review system resilience, fault tolerance, and reliability patterns",
+    "helpContent": "Evaluate how well the system handles failures and maintains reliability.",
+    "template": "Review for resilience patterns:\n1. Failure points and dependencies\n2. Redundancy and failover mechanisms\n3. Circuit breaker patterns\n4. Retry and timeout strategies\n5. Data consistency and recovery\n6. Monitoring and alerting\n\nProvide recommendations for improvement.",
+    "tags": ["architecture", "review", "resilience", "reliability"]
+  }
+]

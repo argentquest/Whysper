@@ -1,0 +1,18 @@
+[
+  {
+    "id": "c4-full-model",
+    "name": "Complete C4 Model",
+    "description": "Generate all C4 levels (Context, Container, Component, Code) in D2",
+    "helpContent": "Create comprehensive C4 model diagrams in D2 format showing system context, containers, components, and code-level details.",
+    "template": "Generate a complete C4 model in D2 with:\n1. C1 Context: System and external actors\n2. C2 Containers: Applications, databases, services\n3. C3 Components: Internal structure\n4. C4 Code: Class/method relationships (if applicable)\n\nEach level should zoom in on the previous level.",
+    "tags": ["c4", "d2", "architecture", "complete model"]
+  },
+  {
+    "id": "c4-context-container",
+    "name": "Context + Container Levels",
+    "description": "D2 diagram combining C1 and C2 levels",
+    "helpContent": "Create a D2 diagram showing both system context and container levels in a single visualization.",
+    "template": "Create a D2 diagram showing:\n1. System boundary and external actors\n2. Internal containers (services, databases, apps)\n3. Relationships between all elements\n\nUse consistent notation for clarity.",
+    "tags": ["c4", "d2", "context", "container"]
+  }
+]

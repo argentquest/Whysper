@@ -1,0 +1,18 @@
+[
+  {
+    "id": "c2-basic-containers",
+    "name": "Basic Container Diagram",
+    "description": "Create a C2 container diagram showing major applications, databases, and services",
+    "helpContent": "Generate a C2 (Container) diagram showing the main technical components of a system. Containers represent applications, services, databases, and other executable elements.",
+    "template": "Create a C2 Container diagram showing:\n1. Applications: [List apps, web services, mobile apps]\n2. Data Stores: [Databases, caches]\n3. External Systems: [Third-party APIs]\n4. Synchronous/Asynchronous Flows: [Communication patterns]\n\nEach container should have clear responsibilities.",
+    "tags": ["c4", "c2", "container", "plantuml"]
+  },
+  {
+    "id": "c2-microservices-containers",
+    "name": "Microservices Containers",
+    "description": "C2 diagram showing microservices, APIs, databases, and message queues",
+    "helpContent": "Design container-level architecture for microservices. Show individual services, their databases, APIs, and asynchronous communication channels.",
+    "template": "Generate a C2 diagram for microservices with:\n1. Services: [List each microservice container]\n2. Data Layer: [Service databases, shared databases]\n3. Message Queue: [Event/message broker]\n4. API Gateway: [Entry point]\n5. External Services: [Third-party integrations]\n\nShow synchronous (HTTPS) and asynchronous (Events) flows.",
+    "tags": ["c4", "c2", "microservices", "containers", "architecture"]
+  }
+]

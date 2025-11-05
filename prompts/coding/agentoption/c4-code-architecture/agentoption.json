@@ -1,0 +1,18 @@
+[
+  {
+    "id": "c4-code-classes",
+    "name": "Class-Level Diagram",
+    "description": "C4 code level diagram showing class structures and relationships",
+    "helpContent": "Generate C4 code-level diagrams showing class hierarchies, interfaces, and dependencies at the code level.",
+    "template": "Create a C4 code level diagram showing:\n1. Classes and interfaces\n2. Inheritance and implementation relationships\n3. Method signatures\n4. Dependencies and associations\n5. External library usage\n\nShow the logical structure of the codebase.",
+    "tags": ["c4", "code", "architecture", "classes"]
+  },
+  {
+    "id": "c4-code-methods",
+    "name": "Method-Level Interactions",
+    "description": "C4 diagram showing method calls and interactions",
+    "helpContent": "Design code-level diagrams showing how methods interact and call each other within the codebase.",
+    "template": "Generate a C4 code diagram showing:\n1. Key classes and their methods\n2. Method call sequences\n3. Data transformations\n4. Error handling paths\n5. Integration with external services\n\nFocus on critical code flows.",
+    "tags": ["c4", "code", "methods", "interactions"]
+  }
+]

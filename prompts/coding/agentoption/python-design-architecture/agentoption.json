@@ -1,0 +1,18 @@
+[
+  {
+    "id": "python-design-patterns",
+    "name": "Design Patterns Review",
+    "description": "Analyze Python code for applicable design patterns and structural improvements",
+    "helpContent": "Review Python code architecture for design patterns that could improve structure, maintainability, and scalability. Recommend SOLID principles implementation.",
+    "template": "Review the Python [module/class/system] for:\n1. Current design patterns used\n2. Applicable design patterns not yet implemented\n3. SOLID principle violations\n4. Refactoring opportunities\n5. Scalability concerns\n\nProvide specific recommendations with examples.",
+    "tags": ["python", "design patterns", "architecture", "SOLID"]
+  },
+  {
+    "id": "python-package-structure",
+    "name": "Package Structure Evaluation",
+    "description": "Evaluate Python project structure and organization",
+    "helpContent": "Assess Python project layout, module organization, and dependency management. Recommend improvements for scalability and maintainability.",
+    "template": "Analyze the Python project structure for:\n1. Package organization and hierarchy\n2. Module responsibilities and dependencies\n3. Circular dependencies\n4. Code organization best practices\n5. Testing structure integration\n\nSuggest organizational improvements.",
+    "tags": ["python", "architecture", "structure", "organization"]
+  }
+]

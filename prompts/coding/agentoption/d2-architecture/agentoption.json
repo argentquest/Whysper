@@ -1,0 +1,18 @@
+[
+  {
+    "id": "d2-system-architecture",
+    "name": "System Architecture",
+    "description": "Generate D2 diagrams for system-level architecture and interactions",
+    "helpContent": "Create D2 diagrams for visualizing system architecture, component relationships, and data flows.",
+    "template": "Create a D2 architecture diagram showing:\n1. Major Components/Services\n2. Interactions and relationships\n3. Data flows\n4. External integrations\n\nUse clear labels and organize components logically.",
+    "tags": ["d2", "architecture", "system design"]
+  },
+  {
+    "id": "d2-data-flow",
+    "name": "Data Flow Diagram",
+    "description": "D2 diagram showing how data flows through the system",
+    "helpContent": "Design data flow diagrams in D2 showing how information moves between system components.",
+    "template": "Generate a D2 data flow diagram showing:\n1. Data sources (users, external APIs, databases)\n2. Processing steps\n3. Data transformations\n4. Storage/caching points\n5. Final destinations\n\nClearly label all flows and transformations.",
+    "tags": ["d2", "data flow", "architecture"]
+  }
+]

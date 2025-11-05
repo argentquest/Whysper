@@ -1,0 +1,18 @@
+[
+  {
+    "id": "structurizr-c4-dsl",
+    "name": "C4 Model DSL",
+    "description": "Generate Structurizr C4 model using Structurizr DSL",
+    "helpContent": "Create architecture diagrams using Structurizr's domain-specific language (DSL). Structurizr provides powerful C4 model support with views.",
+    "template": "Generate a Structurizr DSL definition showing:\n1. Workspace definition\n2. System landscape (systems and people)\n3. System context (for chosen system)\n4. Container view\n5. Component views (if detailed enough)\n6. Deployment views\n7. Dynamic views (for flows)\n\nUse proper Structurizr DSL syntax.",
+    "tags": ["structurizr", "c4", "dsl", "architecture"]
+  },
+  {
+    "id": "structurizr-views-styles",
+    "name": "Views and Styling",
+    "description": "Create styled Structurizr views with custom themes",
+    "helpContent": "Design Structurizr diagrams with custom styling, colors, and themes for professional documentation.",
+    "template": "Create a Structurizr model with:\n1. Multiple views (context, containers, components)\n2. Custom styling and themes\n3. Element descriptions and technology labels\n4. Consistent visual language\n5. Professional color schemes\n\nEnsure views are clear and well-organized.",
+    "tags": ["structurizr", "views", "styling", "c4"]
+  }
+]

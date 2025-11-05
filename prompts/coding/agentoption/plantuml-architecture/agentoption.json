@@ -1,0 +1,18 @@
+[
+  {
+    "id": "plantuml-uml-diagram",
+    "name": "UML Class Diagram",
+    "description": "Generate PlantUML UML diagrams for class structures and relationships",
+    "helpContent": "Create PlantUML UML diagrams showing classes, interfaces, inheritance, and associations.",
+    "template": "Generate a PlantUML UML diagram showing:\n1. Classes and their attributes\n2. Methods and visibility\n3. Inheritance relationships\n4. Associations and dependencies\n5. Interfaces and implementations\n\nUse standard UML notation.",
+    "tags": ["plantuml", "uml", "class diagram"]
+  },
+  {
+    "id": "plantuml-deployment",
+    "name": "Deployment Diagram",
+    "description": "PlantUML deployment diagram showing infrastructure and node relationships",
+    "helpContent": "Design deployment diagrams in PlantUML showing how components are deployed across nodes/servers.",
+    "template": "Create a PlantUML deployment diagram showing:\n1. Deployment nodes (servers, containers)\n2. Artifacts deployed on each node\n3. Connections between nodes\n4. Network/communication links\n5. Important configurations\n\nShow the actual infrastructure layout.",
+    "tags": ["plantuml", "deployment", "infrastructure"]
+  }
+]

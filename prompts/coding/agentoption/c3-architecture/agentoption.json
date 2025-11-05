@@ -1,0 +1,18 @@
+[
+  {
+    "id": "c3-basic-components",
+    "name": "Basic Component Diagram",
+    "description": "Create a C3 diagram showing components within a container and their interactions",
+    "helpContent": "Generate a C3 (Component) diagram decomposing a container into logical components. Show responsibilities and dependencies between components within the same container.",
+    "template": "Create a C3 Component diagram for [Service Name] showing:\n1. Components: [List internal components/modules]\n2. Responsibilities: [Brief description of each component]\n3. Dependencies: [Which components interact and how]\n4. External Services: [APIs called, databases accessed]\n\nShow synchronous/asynchronous communication patterns.",
+    "tags": ["c4", "c3", "component", "plantuml"]
+  },
+  {
+    "id": "c3-layered-architecture",
+    "name": "Layered Architecture Components",
+    "description": "C3 diagram showing presentation, business logic, and persistence layers",
+    "helpContent": "Design component-level diagrams for layered architectures. Show how components in different layers (presentation, business logic, persistence) interact.",
+    "template": "Generate a C3 diagram with layered components:\n1. Presentation Layer: [UI components, controllers]\n2. Business Logic Layer: [Services, handlers]\n3. Persistence Layer: [Repositories, DAOs]\n4. External Integrations: [APIs, external services]\n\nShow layer-to-layer communication and external dependencies.",
+    "tags": ["c4", "c3", "layered", "component", "architecture"]
+  }
+]

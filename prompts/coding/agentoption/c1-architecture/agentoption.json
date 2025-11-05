@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c1-basic-system",
+    "name": "Basic System Context",
+    "description": "Create a simple C1 diagram showing a single system with users and external services",
+    "helpContent": "Generate a C1 (System Context) diagram showing the primary system, its users/actors, and external dependencies. Use PlantUML C4 extensions for clean, professional architecture visualization.",
+    "template": "Create a C1 System Context diagram showing:\n1. Main System: [System Name]\n2. Users/Actors: [List key users/roles]\n3. External Systems: [List integrations]\n\nInclude clear relationships between components.",
+    "tags": ["c4", "c1", "system context", "plantuml"]
+  },
+  {
+    "id": "c1-microservices",
+    "name": "Microservices System Context",
+    "description": "C1 diagram for microservices architecture showing service boundaries and external integrations",
+    "helpContent": "Create a high-level C1 diagram for microservices systems. Show the overall system boundary, key actors, and external systems. This provides context before diving into container or component details.",
+    "template": "Generate a C1 Context diagram for a microservices system with:\n1. System Boundary: Microservices Platform\n2. Internal Services: [List core services]\n3. External Integrations: [APIs, databases, third-party services]\n4. Users: [Admin users, end users, etc]\n\nFocus on system-level interactions.",
+    "tags": ["c4", "c1", "microservices", "architecture"]
+  },
+  {
+    "id": "c1-ecommerce",
+    "name": "E-Commerce Platform Context",
+    "description": "C1 diagram for e-commerce systems showing platform, users, and external services",
+    "helpContent": "Design a C1 system context diagram for e-commerce platforms including payment gateways, inventory systems, customer databases, and various user roles.",
+    "template": "Create a C1 diagram for an e-commerce platform showing:\n1. Platform: Online Store\n2. Users: Customers, Admins, Support Staff\n3. External Systems: Payment Gateway, Shipping API, Email Service, Analytics\n\nShow all key interactions.",
+    "tags": ["c4", "c1", "ecommerce", "architecture"]
+  }
+]

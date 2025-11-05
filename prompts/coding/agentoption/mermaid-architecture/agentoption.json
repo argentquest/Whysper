@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mermaid-system-diagram",
+    "name": "System Architecture Diagram",
+    "description": "Create Mermaid diagrams for system architecture and components",
+    "helpContent": "Generate Mermaid diagrams for visualizing architecture. Mermaid supports flowcharts, sequence diagrams, and more for architecture documentation.",
+    "template": "Create a Mermaid diagram showing:\n1. System components\n2. Component relationships\n3. Data/API interactions\n4. External services\n\nUse appropriate Mermaid diagram type (graph, sequence, etc).",
+    "tags": ["mermaid", "architecture", "diagram"]
+  },
+  {
+    "id": "mermaid-sequence-interactions",
+    "name": "Component Interactions",
+    "description": "Mermaid sequence diagram showing component interactions",
+    "helpContent": "Design sequence diagrams in Mermaid showing how different components interact over time.",
+    "template": "Generate a Mermaid sequence diagram showing:\n1. Actors/Components involved\n2. Sequence of interactions\n3. Messages passed between components\n4. Decision points\n5. Final outcomes\n\nClearly show request/response patterns.",
+    "tags": ["mermaid", "sequence", "interactions"]
+  }
+]
