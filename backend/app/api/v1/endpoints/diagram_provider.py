@@ -623,3 +623,65 @@ def generate_diagram(request: GenerateDiagramRequest):
             status_code=500,
             detail=f"Failed to generate diagram: {str(e)}"
         )
+
+
+# ===================================================================
+# Diagram Streaming Endpoint (for ArchStudio SSE)
+# ===================================================================
+
+from fastapi.responses import StreamingResponse
+
+
+@router.get("/stream")
+@log_method_call
+def stream_diagram(requestId: str):
+    """Stream diagram generation updates via SSE for a specific request.
+
+    This endpoint provides Server-Sent Events (SSE) for real-time updates
+    on diagram generation progress. The frontend maintains an EventSource
+    connection to receive updates as diagrams are generated.
+
+    Args:
+        requestId: The request ID returned from the /generate endpoint
+
+    Yields:
+        SSE formatted messages with diagram generation updates
+    """
+    import asyncio
+
+    logger.debug(f"[STREAM] Client connected to stream for request: {requestId}")
+
+    async def event_generator():
+        """Generate SSE events for diagram updates"""
+        try:
+            # Send a connection confirmation
+            yield f"event: connected\ndata: {{'requestId': '{requestId}', 'message': 'Connected to diagram stream'}}\n\n"
+
+            # Simulate a brief delay before sending placeholder message
+            await asyncio.sleep(1)
+
+            # Send a placeholder update (in a real implementation, this would be populated
+            # from a task queue or similar mechanism)
+            yield f"event: status\ndata: {{'requestId': '{requestId}', 'status': 'processing'}}\n\n"
+
+            # Keep connection alive for a reasonable time or until client disconnects
+            for i in range(10):
+                await asyncio.sleep(2)
+                # Send keepalive pings
+                yield f": keepalive\n\n"
+
+        except asyncio.CancelledError:
+            logger.debug(f"[STREAM] Client disconnected from stream for request: {requestId}")
+        except Exception as e:
+            logger.error(f"[STREAM] Error in stream for request {requestId}: {str(e)}")
+            yield f"event: error\ndata: {{'requestId': '{requestId}', 'error': '{str(e)}'}}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
