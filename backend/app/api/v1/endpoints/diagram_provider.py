@@ -611,8 +611,8 @@ def generate_diagram(request: GenerateDiagramRequest):
         # Log all request details for debugging
         logger.info(f"[GENERATE] =============== DIAGRAM GENERATION REQUEST ===============")
         logger.info(f"[GENERATE] Request ID: {request_id}")
-        logger.info(f"[GENERATE] Agent ID: {request.agentId}")
-        logger.info(f"[GENERATE] Diagram Type: {request.diagramType}")
+        logger.info(f"[GENERATE] Agent ID: '{request.agentId}'")
+        logger.info(f"[GENERATE] Diagram Type: '{request.diagramType}' (type={type(request.diagramType).__name__})")
         logger.info(f"[GENERATE] User Prompt Length: {len(request.prompt)} characters")
         logger.info(f"[GENERATE] User Prompt Preview: {request.prompt[:200] if len(request.prompt) > 200 else request.prompt}...")
 
