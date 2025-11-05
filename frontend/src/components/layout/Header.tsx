@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { AgentPrompt } from '../../types';
 import { Layout, Button, Select, Typography, Tooltip, Dropdown } from 'antd';
 import {
@@ -17,6 +18,7 @@ import {
   EditOutlined,
   FileSearchOutlined,
   QuestionCircleOutlined,
+  DesktopOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../../themes';
 import { BrandColors, Brand } from 'branding';
@@ -67,6 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
   agentPrompts = [],
 }) => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   // Use agent prompts instead of hardcoded system options
   const systemOptions = agentPrompts.length > 0
@@ -352,7 +355,27 @@ export const Header: React.FC<HeaderProps> = ({
               Edit File
             </Button>
           </Tooltip>
-          
+
+          <Tooltip title="Architecture Studio - Diagram Generation">
+            <Button
+              type="primary"
+              icon={<DesktopOutlined />}
+              onClick={() => navigate('/studio')}
+              size="large"
+              style={{
+                background: `linear-gradient(135deg, #722ed1 0%, #9254de 100%)`,
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(114, 46, 209, 0.4)',
+                padding: '0 20px',
+                height: '44px',
+              }}
+            >
+              ArchStudio
+            </Button>
+          </Tooltip>
+
         </div>
 
         {/* Secondary Actions */}
