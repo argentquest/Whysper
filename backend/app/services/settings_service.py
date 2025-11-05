@@ -248,5 +248,31 @@ class SettingsService:
             logger.error(f"Error loading architecture agents: {e}")
             return []
 
+    @log_method_call
+    def get_agent_options(self, agent_id: str) -> List[Dict[str, Any]]:
+        """Load agent options from agentoption.json file for a specific agent."""
+        try:
+            # Build path to agentoption.json
+            agentoption_dir = os.path.join(
+                os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "agentoption", agent_id
+            )
+            agentoption_file = os.path.join(agentoption_dir, "agentoption.json")
+
+            if os.path.exists(agentoption_file):
+                with open(agentoption_file, 'r', encoding='utf-8') as f:
+                    options = json.load(f)
+                    logger.debug(f"Loaded {len(options)} options for agent '{agent_id}'")
+                    return options
+            else:
+                logger.warning(f"Agent options file not found: {agentoption_file}")
+                return []
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse agent options JSON for '{agent_id}': {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Error loading agent options for '{agent_id}': {e}")
+            return []
+
 
 settings_service = SettingsService()

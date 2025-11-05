@@ -293,7 +293,7 @@ def restart_server() -> Dict[str, Any]:
 @log_method_call
 def list_studio_agents() -> List[Dict[str, Any]]:
     """List all available architecture agents for the Studio application.
-    
+
     Returns only agents with 'architecture' in their name, title, description, or category.
     This filtered list is specifically for the Architecture Gen Studio application.
     """
@@ -301,3 +301,28 @@ def list_studio_agents() -> List[Dict[str, Any]]:
     result = settings_service.get_architecture_agents()
     logger.debug(f"Returning {len(result)} architecture agents for Studio")
     return result
+
+
+@router.get("/agents/{agent_id}/options")
+@log_method_call
+def get_agent_options(agent_id: str) -> List[Dict[str, Any]]:
+    """Get agent options for a specific agent.
+
+    Returns the list of predefined options/use cases for the given agent from the
+    agentoption.json file. Each option includes a template for the agent.
+
+    Args:
+        agent_id: The unique identifier of the agent (e.g., 'c4-architecture')
+
+    Returns:
+        List[Dict[str, Any]]: List of agent options with id, name, description, template, etc.
+    """
+    logger.debug(f"get_agent_options endpoint called for agent: {agent_id}")
+
+    try:
+        result = settings_service.get_agent_options(agent_id)
+        logger.debug(f"Returning {len(result)} options for agent '{agent_id}'")
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching agent options for '{agent_id}': {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch agent options: {str(e)}")
