@@ -38,7 +38,7 @@ export function useAPIClient(): UseAPIClientReturn {
 
   const fetchAgents = useCallback(async (): Promise<Agent[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/studio-agents`, {
+      const response = await fetch(`${API_BASE_URL}/settings/studio-agents`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
