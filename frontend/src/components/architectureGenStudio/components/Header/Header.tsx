@@ -5,19 +5,14 @@
 
 import React from 'react';
 import { Layout, Row, Col } from 'antd';
-import { HeaderProps } from '../../types';
+import type { HeaderProps } from '../../types';
 import { BrandingSection } from './BrandingSection';
-import { AgentSelector } from './AgentSelector';
 import { NavigationMenu } from './NavigationMenu';
 import { UserAccountMenu } from './UserAccountMenu';
 import { NotificationBadge } from './NotificationBadge';
 import styles from '../../styles/architectureStudio.module.css';
 
 export const Header: React.FC<HeaderProps> = ({
-  onAgentChange,
-  currentAgent,
-  agents,
-  agentsLoading,
   notificationCount,
   onLogout,
 }) => {

@@ -3,25 +3,71 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 from common.lazy_file_scanner import LazyCodebaseScanner, FileInfo
 from common.logger import get_logger
+from common.env_manager import env_manager
+from security_utils import SecurityUtils
 
 logger = get_logger(__name__)
 
 
 class FileService:
-    """Wraps the existing scanners to expose REST-friendly helpers."""
+    """Wraps the existing scanners to expose REST-friendly helpers with support for external directories."""
 
-    def __init__(self) -> None:
+    def __init__(self, base_directory: Optional[str] = None) -> None:
         logger.info("Initializing FileService")
         self._scanner = LazyCodebaseScanner()
-        logger.info("FileService initialized with scanner")
+        # Support for custom base directory - uses CODE_PATH from env or provided parameter
+        # This allows scanning external folders (frontend, other projects, etc.)
+        if base_directory:
+            self._base_directory = base_directory
+        else:
+            # Try to load from environment variable CODE_PATH
+            env_vars = env_manager.load_env_file()
+            self._base_directory = env_vars.get("CODE_PATH", None)
+        logger.info(f"FileService initialized with scanner, base_directory={self._base_directory}")
 
     # ------------------------------------------------------------------
     # Directory helpers
     # ------------------------------------------------------------------
+    def set_base_directory(self, directory: str) -> Dict[str, Any]:
+        """
+        Safely set a new base directory for file scanning.
+
+        This allows scanning external folders (frontend, other projects, etc.)
+        while maintaining path traversal protection.
+
+        Args:
+            directory: The new base directory path
+
+        Returns:
+            Dict with validation result
+        """
+        # Validate the directory exists and is accessible
+        validation = self.validate_directory(directory)
+
+        if validation["is_valid"]:
+            self._base_directory = directory
+            logger.info(f"Base directory changed to: {directory}")
+            return {
+                "success": True,
+                "message": f"Base directory set to {directory}",
+                "directory": directory
+            }
+        else:
+            logger.warning(f"Failed to set base directory: {validation['error']}")
+            return {
+                "success": False,
+                "message": validation["error"],
+                "error": validation["error"]
+            }
+
+    def get_base_directory(self) -> str:
+        """Get the current base directory."""
+        return self._base_directory or os.getcwd()
+
     def validate_directory(self, directory: str) -> Dict[str, Any]:
         """
         Validate if a given directory path is safe and accessible.
@@ -41,14 +87,23 @@ class FileService:
             "error": error_message,
         }
 
-    def scan_directory(self, directory: str) -> List[Dict[str, Any]]:
-        """Return metadata for all supported files under a directory."""
-        logger.info(f"Scanning directory: {directory}")
+    def scan_directory(self, directory: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Return metadata for all supported files under a directory.
+
+        Args:
+            directory: Directory to scan. If None, uses base directory.
+
+        Returns:
+            List of file metadata dictionaries
+        """
+        scan_dir = directory or self.get_base_directory()
+        logger.info(f"Scanning directory: {scan_dir}")
         files: List[Dict[str, Any]] = []
-        for batch in self._scanner.scan_directory_lazy(directory):
+        for batch in self._scanner.scan_directory_lazy(scan_dir):
             for info in batch:
-                files.append(self._serialize_file_info(info, directory))
-        logger.info(f"Scan complete for {directory}: {len(files)} files")
+                files.append(self._serialize_file_info(info, scan_dir))
+        logger.info(f"Scan complete for {scan_dir}: {len(files)} files")
         return files
 
     def build_directory_tree(self, directory: str) -> Dict[str, Any]:

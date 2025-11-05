@@ -3,7 +3,7 @@
  * Tests the complete workflow from API calls to state updates
  */
 
-import { Agent, AgentOption, DiagramResponse, ValidationResult, GenerateDiagramRequest } from '../types/architectureStudio';
+import type { Agent, AgentOption, DiagramResponse, ValidationResult, GenerateDiagramRequest } from '../types/architectureStudio';
 
 // ============================================================================
 // Mock API Setup

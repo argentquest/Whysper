@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Dropdown, Avatar, Menu } from 'antd';
+import { Dropdown, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 
 interface UserAccountMenuProps {

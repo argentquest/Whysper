@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import {
+import type {
   Agent,
   AgentOption,
   DiagramResponse,
@@ -12,11 +12,10 @@ import {
   ValidateCodeRequest,
   RenderDiagramRequest,
   ValidationResult,
-  DiagramType,
 } from '../types/architectureStudio';
 
 // Placeholder for actual API base URL - replace with your backend URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export interface UseAPIClientReturn {
   // Agents

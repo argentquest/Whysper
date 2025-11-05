@@ -3,7 +3,7 @@
  * Displays current processing status
  */
 
-import React from 'antd';
+import React from 'react';
 import { Tag, Spin } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 
@@ -15,7 +15,6 @@ export const StatusColumn: React.FC<StatusColumnProps> = ({ status }) => {
   const isProcessing = status.includes('Execution') || status.includes('Rendering');
   const isSuccess = status.includes('Generated') || status.includes('success');
   const isError = status.includes('Error');
-  const isIdle = status === 'Idle';
 
   let icon = null;
   let color = 'default';

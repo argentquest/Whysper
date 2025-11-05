@@ -3,10 +3,9 @@
  * Displays validation and render errors
  */
 
-import React from 'antd';
-import { Alert, Collapse, Button, Space, Empty } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
-import { ValidationError } from '../../types';
+import React from 'react';
+import { Collapse } from 'antd';
+import type { ValidationError } from '../../types';
 
 interface ErrorPanelProps {
   errors: ValidationError[];
@@ -19,7 +18,6 @@ export const ErrorPanel: React.FC<ErrorPanelProps> = ({
   errors,
   type,
   isVisible,
-  onDismiss,
 }) => {
   if (!isVisible || errors.length === 0) {
     return null;

@@ -3,10 +3,10 @@
  * Monaco editor for diagram code and validation
  */
 
-import React from 'antd';
-import { Layout, Button, Tooltip, Space, message } from 'antd';
+import React from 'react';
+import { Layout, Button, Tooltip, Space } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-import { RightColumnProps } from '../../types';
+import type { RightColumnProps } from '../../types';
 import { CodeEditor } from './CodeEditor';
 import { ValidateButton } from './ValidateButton';
 import { RenderButton } from './RenderButton';
@@ -17,7 +17,6 @@ export const RightColumn: React.FC<RightColumnProps> = ({
   isCollapsed,
   onCollapsedChange,
   width,
-  onWidthChange,
   code,
   onCodeChange,
   diagramType,

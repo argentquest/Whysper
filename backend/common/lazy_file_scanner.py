@@ -54,7 +54,7 @@ class LazyCodebaseScanner:
     """
 
     def __init__(
-        self, cache_size: int = 100, max_file_size: int = 1024 * 1024  # 1MB limit
+        self, cache_size: int = 500, max_file_size: int = 10 * 1024 * 1024  # 10MB limit (increased from 1MB)
     ) -> None:
         """
         Initialize lazy scanner.
@@ -109,6 +109,14 @@ class LazyCodebaseScanner:
             ".sh",
             ".bat",
             ".ps1",
+            # Added for expanded code access (safe additions)
+            ".svg",      # SVG diagrams and vector graphics
+            ".lock",     # Dependency lock files (package-lock.json, poetry.lock, etc.)
+            ".toml",     # TOML configuration files
+            ".ini",      # INI configuration files
+            ".gradle",   # Gradle build files
+            ".pom",      # Maven POM files
+            ".properties", # Java properties files
         ]
         self.special_files = [
             ".env",
@@ -126,9 +134,10 @@ class LazyCodebaseScanner:
         ignore_folders_env = os.getenv(
             "IGNORE_FOLDERS",
             "venv,.venv,env,__pycache__,node_modules,dist,build,.git,"
-            + ".mypy_cache,.claude,.github,.vscode,.idea,.roo,results,logs,"
+            + ".mypy_cache,.claude,.github,.vscode,.idea,.roo,"
             + ".tox,.nox,.pytest_cache,htmlcov,cover",
         )
+        # Note: "results" and "logs" folders removed to allow access to generated content and logs
         self.ignore_folders = set(
             folder.strip()
             for folder in ignore_folders_env.split(",")
@@ -390,14 +399,14 @@ class LazyCodebaseScanner:
 
     @log_performance()
     def get_codebase_content_lazy(
-        self, file_paths: List[str], max_total_size: int = 10 * 1024 * 1024
+        self, file_paths: List[str], max_total_size: int = 100 * 1024 * 1024
     ) -> str:
         """
         Get combined content from multiple files with size limits.
 
         Args:
             file_paths: List of file paths
-            max_total_size: Maximum total content size (10MB default)
+            max_total_size: Maximum total content size (100MB default, increased from 10MB)
 
         Returns:
             Combined file content with separators

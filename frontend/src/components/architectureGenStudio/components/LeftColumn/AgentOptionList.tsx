@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Menu, Spin, Empty } from 'antd';
-import { AgentOption } from '../../types';
+import type { AgentOption } from '../../types';
 
 interface AgentOptionListProps {
   options: AgentOption[];

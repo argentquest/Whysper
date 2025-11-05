@@ -4,9 +4,9 @@
  */
 
 import React from 'react';
-import { Layout, Button, Tooltip, Row, Collapse } from 'antd';
+import { Layout, Button, Tooltip } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-import { LeftColumnProps } from '../../types';
+import type { LeftColumnProps } from '../../types';
 import { AgentOptionList } from './AgentOptionList';
 import { PromptEditor } from './PromptEditor';
 import { SubmitButton } from './SubmitButton';
@@ -15,8 +15,6 @@ import styles from '../../styles/architectureStudio.module.css';
 export const LeftColumn: React.FC<LeftColumnProps> = ({
   isCollapsed,
   onCollapsedChange,
-  width,
-  onWidthChange,
   currentAgent,
   agentOptions,
   selectedOption,
@@ -26,7 +24,6 @@ export const LeftColumn: React.FC<LeftColumnProps> = ({
   onSubmit,
   onCancel,
   isProcessing,
-  hasUnsavedPrompt,
   optionsLoading,
   optionsError,
 }) => {
@@ -47,7 +44,6 @@ export const LeftColumn: React.FC<LeftColumnProps> = ({
 
   return (
     <Layout.Sider
-      width={`${width}%`}
       style={{
         overflow: 'auto',
         backgroundColor: 'var(--ant-color-bg-container)',

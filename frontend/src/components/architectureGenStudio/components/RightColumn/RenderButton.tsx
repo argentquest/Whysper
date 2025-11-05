@@ -6,7 +6,7 @@
 import React from 'react';
 import { Button, message } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
-import { DiagramType } from '../../types';
+import type { DiagramType } from '../../types';
 
 interface RenderButtonProps {
   code: string;
@@ -18,7 +18,6 @@ interface RenderButtonProps {
 
 export const RenderButton: React.FC<RenderButtonProps> = ({
   code,
-  diagramType,
   onRender,
   isLoading,
   canRender,

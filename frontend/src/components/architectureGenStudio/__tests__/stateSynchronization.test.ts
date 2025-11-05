@@ -3,15 +3,15 @@
  * Tests state management, updates, and consistency
  */
 
-import {
+import type {
   ArchitectureStudioState,
   Agent,
   AgentOption,
   DiagramResponse,
   ValidationResult,
   GeneratedDiagram,
-  DEFAULT_STATE,
 } from '../types/architectureStudio';
+import { DEFAULT_STATE } from '../types/architectureStudio';
 
 // ============================================================================
 // State Synchronization Test Suite

@@ -3,7 +3,7 @@
  * Provides typed localStorage access with error handling
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export function useLocalStorage<T>(
   key: string,

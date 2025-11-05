@@ -5,8 +5,9 @@
 
 import React from 'react';
 import { Layout, Button, Tooltip, Row, Tabs, Empty, Spin, message } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined, DownloadOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { CenterColumnProps, DIAGRAM_TYPES, DEFAULT_ZOOM, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP } from '../../types';
+import { MenuFoldOutlined, MenuUnfoldOutlined, DownloadOutlined } from '@ant-design/icons';
+import type { CenterColumnProps } from '../../types';
+import { DIAGRAM_TYPES, DEFAULT_ZOOM, MIN_ZOOM, MAX_ZOOM, ZOOM_STEP } from '../../types';
 import { DiagramRenderingArea } from './DiagramRenderingArea';
 import { ZoomControls } from './ZoomControls';
 import styles from '../../styles/architectureStudio.module.css';
@@ -14,8 +15,6 @@ import styles from '../../styles/architectureStudio.module.css';
 export const CenterColumn: React.FC<CenterColumnProps> = ({
   isCollapsed,
   onCollapsedChange,
-  width,
-  onWidthChange,
   selectedDiagramType,
   onDiagramTypeChange,
   generatedDiagrams,
@@ -24,7 +23,6 @@ export const CenterColumn: React.FC<CenterColumnProps> = ({
   zoomLevel,
   onZoomChange,
   onExport,
-  onMinimize,
 }) => {
   if (isCollapsed) {
     return (

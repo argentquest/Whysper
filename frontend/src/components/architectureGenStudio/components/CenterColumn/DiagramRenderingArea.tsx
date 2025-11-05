@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { DiagramResponse } from '../../types';
+import type { DiagramResponse } from '../../types';
 
 interface DiagramRenderingAreaProps {
   diagram: DiagramResponse;

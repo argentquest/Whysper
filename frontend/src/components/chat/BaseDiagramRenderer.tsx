@@ -14,11 +14,11 @@
 import React, { ReactNode } from 'react';
 import { message as antMessage } from 'antd';
 import diagramProviderService, {
-  DiagramType,
-  OutputFormat,
-  DiagramRenderResponse,
-  DiagramValidationResponse,
-  ProviderInfo
+  type DiagramType,
+  type OutputFormat,
+  type DiagramRenderResponse,
+  type DiagramValidationResponse,
+  type ProviderInfo
 } from '../../services/diagramProviderService';
 
 // ===================================================================

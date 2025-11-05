@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useCallback, useRef, useState } from 'react';
-import { SSEMessage } from '../types/architectureStudio';
+import type { SSEMessage } from '../types/architectureStudio';
 
 export interface UseSSEReturn {
   messages: SSEMessage[];
@@ -14,7 +14,7 @@ export interface UseSSEReturn {
   clearMessages: () => void;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const RECONNECT_DELAY = 3000; // 3 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
 

@@ -3,13 +3,12 @@
  * Displays status, SSE messages, and links
  */
 
-import React from 'antd';
+import React from 'react';
 import { Layout, Row, Col, Divider } from 'antd';
-import { FooterProps } from '../../types';
+import type { FooterProps } from '../../types';
 import { StatusColumn } from './StatusColumn';
 import { SSEMessagesColumn } from './SSEMessagesColumn';
 import { LinksColumn } from './LinksColumn';
-import styles from '../../styles/architectureStudio.module.css';
 
 export const Footer: React.FC<FooterProps> = ({
   currentStatus,

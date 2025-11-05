@@ -3,10 +3,10 @@
  * Validates diagram code
  */
 
-import React from 'antd';
+import React from 'react';
 import { Button } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
-import { DiagramType } from '../../types';
+import type { DiagramType } from '../../types';
 
 interface ValidateButtonProps {
   code: string;
@@ -17,7 +17,6 @@ interface ValidateButtonProps {
 
 export const ValidateButton: React.FC<ValidateButtonProps> = ({
   code,
-  diagramType,
   onValidate,
   isLoading,
 }) => {

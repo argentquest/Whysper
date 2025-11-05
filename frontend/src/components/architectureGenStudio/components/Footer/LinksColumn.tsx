@@ -3,7 +3,7 @@
  * Displays about/help links and disclaimer
  */
 
-import React from 'antd';
+import React from 'react';
 import { Button, Space, Divider, Typography } from 'antd';
 import { QuestionCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 

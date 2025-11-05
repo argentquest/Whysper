@@ -5,7 +5,7 @@
 
 import React, { useMemo } from 'react';
 import { Select, Modal, Spin } from 'antd';
-import { Agent } from '../../types';
+import type { Agent } from '../../types';
 
 interface AgentSelectorProps {
   agents: Agent[];

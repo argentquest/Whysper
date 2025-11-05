@@ -3,9 +3,9 @@
  * Displays and edits diagram code
  */
 
-import React, { useCallback } from 'antd';
-import { Input, Select } from 'antd';
-import { DiagramType } from '../../types';
+import React, { useCallback } from 'react';
+import { Input } from 'antd';
+import type { DiagramType } from '../../types';
 
 interface CodeEditorProps {
   code: string;
@@ -14,20 +14,9 @@ interface CodeEditorProps {
   isReadOnly: boolean;
 }
 
-const getLanguageMode = (type: DiagramType): string => {
-  const modes: Record<DiagramType, string> = {
-    mermaid: 'mermaid',
-    d2: 'plaintext',
-    structurizr: 'plaintext',
-    plantuml: 'plaintext',
-  };
-  return modes[type];
-};
-
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   code,
   onChange,
-  diagramType,
   isReadOnly,
 }) => {
   const handleChange = useCallback(

@@ -5,8 +5,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Badge, Button, Space, Modal, Tag } from 'antd';
-import { BgColorsOutlined } from '@ant-design/icons';
-import { SSEMessage } from '../../types';
+import type { SSEMessage } from '../../types';
 
 interface SSEMessagesColumnProps {
   messages: SSEMessage[];

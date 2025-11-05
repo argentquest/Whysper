@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import {
+import type {
   ArchitectureStudioState,
   Agent,
   AgentOption,
@@ -12,9 +12,11 @@ import {
   GeneratedDiagram,
   ValidationResult,
   SSEMessage,
+  DiagramResponse,
+} from '../types/architectureStudio';
+import {
   DEFAULT_STATE,
   STORAGE_KEYS,
-  DiagramResponse,
 } from '../types/architectureStudio';
 
 export interface UseArchitectureStudioStateReturn {
@@ -53,6 +55,7 @@ export interface UseArchitectureStudioStateReturn {
   clearSSEMessages: () => void;
   setCurrentStatus: (status: string, type?: 'idle' | 'processing' | 'success' | 'error') => void;
   setZoomLevel: (level: number) => void;
+  setSseMessages: (messages: SSEMessage[]) => void;
   // Persistence
   loadFromLocalStorage: () => void;
   saveToLocalStorage: () => void;
@@ -268,6 +271,10 @@ export function useArchitectureStudioState(): UseArchitectureStudioStateReturn {
     setState((prev) => ({ ...prev, zoomLevel: level }));
   }, []);
 
+  const setSseMessages = useCallback((messages: SSEMessage[]) => {
+    setState((prev) => ({ ...prev, sseMessages: messages }));
+  }, []);
+
   // ============================================================================
   // LocalStorage Persistence
   // ============================================================================
@@ -361,6 +368,7 @@ export function useArchitectureStudioState(): UseArchitectureStudioStateReturn {
     clearSSEMessages,
     setCurrentStatus,
     setZoomLevel,
+    setSseMessages,
     loadFromLocalStorage,
     saveToLocalStorage,
   };
