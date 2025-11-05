@@ -54,7 +54,7 @@ export const ArchitectureGenStudio: React.FC = () => {
     };
 
     loadAgents();
-  }, [stateManager, apiClient]);
+  }, []);
 
   // Load agent options when current agent changes
   useEffect(() => {
@@ -75,7 +75,7 @@ export const ArchitectureGenStudio: React.FC = () => {
     };
 
     loadOptions();
-  }, [state.currentAgent, stateManager, apiClient]);
+  }, [state.currentAgent?.id]);
 
   // Connect SSE when processing request ID changes
   useEffect(() => {
@@ -84,12 +84,12 @@ export const ArchitectureGenStudio: React.FC = () => {
     } else {
       disconnectSSE();
     }
-  }, [state.processingRequestId, connectSSE, disconnectSSE]);
+  }, [state.processingRequestId]);
 
   // Update state with SSE messages
   useEffect(() => {
     stateManager.setSseMessages(sseMessages);
-  }, [sseMessages, stateManager]);
+  }, [sseMessages]);
 
   // ============================================================================
   // Handlers
