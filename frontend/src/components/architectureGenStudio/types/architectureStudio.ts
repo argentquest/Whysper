@@ -11,6 +11,7 @@ export interface Agent {
   id: string;
   name: string;
   description?: string;
+  type?: string; // Agent type/category (e.g., 'Architecture', 'Code Generation', etc.)
 }
 
 export interface AgentOption {
