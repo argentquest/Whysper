@@ -580,7 +580,7 @@ class GenerateDiagramResponse(BaseModel):
     diagram: Optional[DiagramRenderResponse] = Field(None, description="Initial diagram response if available")
 
 
-@router.post("/v2/generate", response_model=GenerateDiagramResponse)
+@router.post("/generate", response_model=GenerateDiagramResponse)
 @log_method_call
 def generate_diagram(request: GenerateDiagramRequest):
     """Generate a diagram using an agent and optional rendering.
