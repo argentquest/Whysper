@@ -287,3 +287,17 @@ def restart_server() -> Dict[str, Any]:
 
 
 
+
+
+@router.get("/studio-agents")
+@log_method_call
+def list_studio_agents() -> List[Dict[str, Any]]:
+    """List all available architecture agents for the Studio application.
+    
+    Returns only agents with 'architecture' in their name, title, description, or category.
+    This filtered list is specifically for the Architecture Gen Studio application.
+    """
+    logger.debug("list_studio_agents endpoint called")
+    result = settings_service.get_architecture_agents()
+    logger.debug(f"Returning {len(result)} architecture agents for Studio")
+    return result
