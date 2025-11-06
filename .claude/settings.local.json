@@ -3,7 +3,17 @@
     "allow": [
       "Bash(python -m py_compile:*)",
       "Bash(.venv/Scripts/python:*)",
-      "Bash(python -m json.tool:*)"
+      "Bash(python -m json.tool:*)",
+      "Bash(python -c:*)",
+      "Bash(python3:*)",
+      "Bash(timeout 15 curl:*)",
+      "Bash(awk:*)",
+      "Bash(xargs kill:*)",
+      "Bash(kill:*)",
+      "Bash(timeout 20 curl:*)",
+      "Bash(timeout 30 curl:*)",
+      "Bash(timeout 60 curl:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
