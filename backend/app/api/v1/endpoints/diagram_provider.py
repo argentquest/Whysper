@@ -5,7 +5,7 @@ Supports Mermaid, D2, and future diagram types
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from fastapi.responses import Response, FileResponse
+from fastapi.responses import Response, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
@@ -13,6 +13,7 @@ from common.logging_decorator import log_method_call
 from pathlib import Path
 from datetime import datetime
 import os
+import re
 
 from diagrams.provider_registry import get_registry, ProviderRegistry
 from diagrams.base_diagram import BaseDiagramProvider
@@ -582,22 +583,26 @@ class GenerateDiagramResponse(BaseModel):
 
 @router.post("/generate", response_model=GenerateDiagramResponse)
 @log_method_call
-def generate_diagram(request: GenerateDiagramRequest):
+def generate_diagram(request: GenerateDiagramRequest, background_tasks: BackgroundTasks):
     """Generate a diagram using an agent and optional rendering.
 
     For the ArchStudio application, this endpoint:
-    1. Calls the specified agent with the prompt
-    2. Returns a request ID for SSE tracking
-    3. Optionally returns an initial diagram response
+    1. Calls the specified agent with the prompt via LLM
+    2. Uses the provider infrastructure for validation and rendering
+    3. Returns a request ID for SSE tracking
+    4. Processes diagram generation in background task
 
     Args:
         request: GenerateDiagramRequest with agentId, prompt, and diagramType
+        background_tasks: FastAPI BackgroundTasks for async processing
 
     Returns:
         GenerateDiagramResponse with requestId and optional initial diagram
     """
     import uuid
     from datetime import datetime
+    from providers.openrouter_provider import OpenRouterProvider
+    from app.core.config import settings
 
     logger.debug(f"[GENERATE] Received diagram generation request for agent: {request.agentId}")
 
@@ -616,43 +621,243 @@ def generate_diagram(request: GenerateDiagramRequest):
         logger.info(f"[GENERATE] User Prompt Length: {len(request.prompt)} characters")
         logger.info(f"[GENERATE] User Prompt Preview: {request.prompt[:200] if len(request.prompt) > 200 else request.prompt}...")
 
-        # Load the agent's system prompt
+        # =====================================================================
+        # STEP 1: Load the agent's system prompt
+        # =====================================================================
         agent_prompt_filename = f"{request.agentId}.md"
         agent_system_prompt = settings_service.get_agent_prompt_content(agent_prompt_filename)
         logger.info(f"[GENERATE] Agent System Prompt Length: {len(agent_system_prompt)} characters")
         logger.info(f"[GENERATE] Agent System Prompt Preview: {agent_system_prompt[:200] if len(agent_system_prompt) > 200 else agent_system_prompt}...")
 
+        # =====================================================================
+        # STEP 2: Get the provider registry and find providers for diagram type
+        # =====================================================================
+        # Note: Multiple providers can support the same diagram type
+        registry = get_registry()
+        providers_for_type = registry.find_by_diagram_type(request.diagramType)
+
+        if not providers_for_type:
+            logger.error(f"[GENERATE] No providers found for diagram type: {request.diagramType}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No diagram providers found for type '{request.diagramType}'"
+            )
+
+        # Get the default provider for this diagram type
+        default_provider = registry.get_default_provider(request.diagramType)
+        logger.info(f"[GENERATE] Found {len(providers_for_type)} provider(s) for '{request.diagramType}'")
+        logger.info(f"[GENERATE] Using default provider: {default_provider.provider_id}")
+
+        # =====================================================================
+        # STEP 3: Schedule background task for LLM call and diagram generation
+        # =====================================================================
+        background_tasks.add_task(
+            _generate_diagram_async,
+            request_id=request_id,
+            agent_id=request.agentId,
+            agent_system_prompt=agent_system_prompt,
+            user_prompt=request.prompt,
+            diagram_type=request.diagramType,
+            provider=default_provider
+        )
+
+        logger.info(f"[GENERATE] Background task scheduled for request {request_id}")
         logger.info(f"[GENERATE] ========================================================")
 
-        # TODO: Implement actual diagram generation using the agent
-        # This would involve:
-        # 1. ✓ Loading the agent prompt from prompts/coding/agent/{agentId}.md
-        # 2. Call the AI model with the agent prompt + user prompt
-        # 3. Parse the generated diagram code
-        # 4. Render it based on the diagramType via SSE stream
-
-        # For now, return a placeholder response with the request ID
-        # The actual diagram generation would happen asynchronously
-        # and be delivered via SSE connection
-
+        # Return immediately with request ID; diagram will be sent via SSE
         return GenerateDiagramResponse(
             requestId=request_id,
             diagram=None  # Diagram will be sent via SSE when ready
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"[GENERATE] Error generating diagram: {str(e)}")
+        logger.error(f"[GENERATE] Error generating diagram: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate diagram: {str(e)}"
         )
 
 
+# =====================================================================
+# Storage for pending diagram requests (in production, use Redis/database)
+# =====================================================================
+_pending_requests: Dict[str, Dict[str, Any]] = {}
+
+
+def _generate_diagram_async(
+    request_id: str,
+    agent_id: str,
+    agent_system_prompt: str,
+    user_prompt: str,
+    diagram_type: str,
+    provider: BaseDiagramProvider
+):
+    """
+    Async task to generate diagram using LLM and provider infrastructure.
+
+    This function:
+    1. Calls OpenRouter LLM with agent prompt + user prompt
+    2. Parses the response to extract diagram code
+    3. Uses provider.render_with_validation() for validation and rendering
+    4. Stores result in _pending_requests for SSE streaming
+
+    Args:
+        request_id: Unique request ID for tracking
+        agent_id: Agent ID being used
+        agent_system_prompt: System prompt from agent markdown file
+        user_prompt: User's diagram generation request
+        diagram_type: Type of diagram to generate
+        provider: Provider instance for rendering
+    """
+    import re
+
+    logger.info(f"[GENERATE_ASYNC] Starting diagram generation for request {request_id}")
+    logger.info(f"[GENERATE_ASYNC] Using provider: {provider.provider_id}")
+
+    try:
+        # =====================================================================
+        # STEP 1: Call LLM with agent prompt + user prompt
+        # =====================================================================
+        logger.info(f"[GENERATE_ASYNC] Calling OpenRouter LLM...")
+
+        # Get OpenRouter provider
+        openrouter = OpenRouterProvider(api_key=settings.openrouter_api_key)
+
+        # Combine agent system prompt with user prompt
+        # The agent prompt provides context on how to generate the specific diagram type
+        combined_system_prompt = agent_system_prompt
+
+        # Call LLM
+        llm_response = openrouter.process_question(
+            question=user_prompt,
+            conversation_history=[],
+            codebase_content="",  # Not needed for diagram generation
+            model=settings.openrouter_model or "openai/gpt-4"
+        )
+
+        logger.info(f"[GENERATE_ASYNC] LLM Response Length: {len(llm_response)} characters")
+        logger.info(f"[GENERATE_ASYNC] LLM Response Preview: {llm_response[:300] if len(llm_response) > 300 else llm_response}...")
+
+        # =====================================================================
+        # STEP 2: Extract diagram code from LLM response
+        # =====================================================================
+        logger.info(f"[GENERATE_ASYNC] Extracting {diagram_type} diagram code from response...")
+
+        # Try to extract code block based on diagram type
+        diagram_code = _extract_diagram_code(llm_response, diagram_type)
+
+        if not diagram_code:
+            logger.warning(f"[GENERATE_ASYNC] No {diagram_type} code found in LLM response")
+            raise ValueError(f"Could not extract {diagram_type} diagram code from LLM response")
+
+        logger.info(f"[GENERATE_ASYNC] Extracted diagram code length: {len(diagram_code)} characters")
+        logger.info(f"[GENERATE_ASYNC] Extracted code preview: {diagram_code[:200] if len(diagram_code) > 200 else diagram_code}...")
+
+        # =====================================================================
+        # STEP 3: Validate and render using provider infrastructure
+        # =====================================================================
+        logger.info(f"[GENERATE_ASYNC] Rendering diagram using {provider.provider_id}...")
+
+        # Use provider's render_with_validation which handles:
+        # - Validation
+        # - Pattern-based auto-fix
+        # - LLM-based correction (if enabled)
+        # - Rendering to SVG/PNG
+        render_result = provider.render_with_validation(
+            code=diagram_code,
+            output_format="svg",
+            auto_fix=True,
+            llm_correction=True
+        )
+
+        # =====================================================================
+        # STEP 4: Store result for SSE streaming
+        # =====================================================================
+        _pending_requests[request_id] = {
+            "status": "completed",
+            "diagram_code": diagram_code,
+            "render_result": render_result,
+            "agent_id": agent_id,
+            "diagram_type": diagram_type,
+            "provider_id": provider.provider_id,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        if render_result.success:
+            logger.info(f"[GENERATE_ASYNC] ✅ Diagram generation completed successfully for request {request_id}")
+        else:
+            logger.error(f"[GENERATE_ASYNC] ⚠️  Diagram generation completed with errors for request {request_id}")
+            logger.error(f"[GENERATE_ASYNC] Render error: {render_result.error}")
+
+    except Exception as e:
+        logger.error(f"[GENERATE_ASYNC] ❌ Error during diagram generation: {str(e)}", exc_info=True)
+        _pending_requests[request_id] = {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+def _extract_diagram_code(response: str, diagram_type: str) -> Optional[str]:
+    """
+    Extract diagram code from LLM response based on diagram type.
+
+    Handles various markdown code block formats:
+    - ```mermaid\\n...\\n```
+    - ```d2\\n...\\n```
+    - ```plantuml\\n...\\n```
+    - etc.
+
+    Args:
+        response: LLM response text
+        diagram_type: Type of diagram to extract
+
+    Returns:
+        Extracted diagram code or None if not found
+    """
+    # Normalize diagram type
+    diagram_type_lower = diagram_type.lower()
+
+    # Try exact match first (e.g., "```mermaid")
+    pattern = rf"```{re.escape(diagram_type_lower)}\s*\n(.*?)\n```"
+    match = re.search(pattern, response, re.DOTALL | re.IGNORECASE)
+
+    if match:
+        return match.group(1).strip()
+
+    # Try without language specifier (plain code block)
+    # Assume if there's a code block and we can't find the specific type,
+    # and the diagram type is likely plantuml/structurizr, it might be wrapped differently
+    pattern = r"```\s*\n(.*?)\n```"
+    matches = re.findall(pattern, response, re.DOTALL)
+
+    if matches:
+        # Return the first code block found
+        # In production, might want to be more sophisticated here
+        return matches[0].strip()
+
+    # Fallback: try to find any indented code block
+    lines = response.split('\n')
+    code_lines = []
+    in_code = False
+
+    for line in lines:
+        if line.strip().startswith('```'):
+            in_code = not in_code
+        elif in_code:
+            code_lines.append(line)
+
+    if code_lines:
+        return '\n'.join(code_lines).strip()
+
+    return None
+
+
 # ===================================================================
 # Diagram Streaming Endpoint (for ArchStudio SSE)
 # ===================================================================
-
-from fastapi.responses import StreamingResponse
 
 
 @router.get("/stream")
@@ -671,6 +876,8 @@ def stream_diagram(requestId: str):
         SSE formatted messages with diagram generation updates
     """
     import asyncio
+    import json
+    import time
 
     logger.debug(f"[STREAM] Client connected to stream for request: {requestId}")
 
@@ -678,26 +885,95 @@ def stream_diagram(requestId: str):
         """Generate SSE events for diagram updates"""
         try:
             # Send a connection confirmation
-            yield f"event: connected\ndata: {{'requestId': '{requestId}', 'message': 'Connected to diagram stream'}}\n\n"
+            connection_data = {"requestId": requestId, "message": "Connected to diagram stream"}
+            yield f"event: connected\ndata: {json.dumps(connection_data)}\n\n"
 
-            # Simulate a brief delay before sending placeholder message
-            await asyncio.sleep(1)
+            # Poll for diagram completion (max 5 minutes = 300 seconds)
+            max_wait_time = 300
+            poll_interval = 1  # Check every second
+            elapsed = 0
 
-            # Send a placeholder update (in a real implementation, this would be populated
-            # from a task queue or similar mechanism)
-            yield f"event: status\ndata: {{'requestId': '{requestId}', 'status': 'processing'}}\n\n"
+            while elapsed < max_wait_time:
+                # Check if diagram has been generated
+                if requestId in _pending_requests:
+                    request_data = _pending_requests[requestId]
 
-            # Keep connection alive for a reasonable time or until client disconnects
-            for i in range(10):
-                await asyncio.sleep(2)
-                # Send keepalive pings
-                yield f": keepalive\n\n"
+                    if request_data["status"] == "completed":
+                        # Send the completed diagram
+                        render_result = request_data["render_result"]
+
+                        # Build the diagram response
+                        diagram_response = {
+                            "requestId": requestId,
+                            "success": render_result.success,
+                            "diagramCode": request_data["diagram_code"],
+                            "diagramType": request_data["diagram_type"],
+                            "providerId": request_data["provider_id"],
+                            "content": render_result.content,
+                            "outputFormat": render_result.output_format,
+                            "validationResult": {
+                                "isValid": render_result.validation.is_valid,
+                                "error": render_result.validation.error,
+                                "autoFixed": render_result.validation.auto_fixed,
+                                "llmCorrected": render_result.validation.llm_corrected,
+                                "correctionMethod": render_result.validation.correction_method
+                            },
+                            "metadata": render_result.metadata,
+                            "timestamp": request_data["timestamp"]
+                        }
+
+                        if render_result.success:
+                            logger.info(f"[STREAM] Sending completed diagram for request {requestId}")
+                            yield f"event: diagram\ndata: {json.dumps(diagram_response)}\n\n"
+                        else:
+                            logger.warning(f"[STREAM] Diagram generation failed for request {requestId}")
+                            diagram_response["error"] = render_result.error
+                            yield f"event: error\ndata: {json.dumps(diagram_response)}\n\n"
+
+                        # Clean up
+                        del _pending_requests[requestId]
+
+                        # Send completion event
+                        complete_data = {"requestId": requestId, "message": "Diagram generation complete"}
+                        yield f"event: complete\ndata: {json.dumps(complete_data)}\n\n"
+                        return
+
+                    elif request_data["status"] == "error":
+                        # Send error event
+                        logger.error(f"[STREAM] Diagram generation error for request {requestId}: {request_data['error']}")
+                        error_response = {
+                            "requestId": requestId,
+                            "error": request_data["error"]
+                        }
+                        yield f"event: error\ndata: {json.dumps(error_response)}\n\n"
+
+                        # Clean up
+                        del _pending_requests[requestId]
+                        return
+
+                # Wait before polling again
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+
+                # Send keepalive to keep connection alive
+                if elapsed % 10 == 0:
+                    yield f": keepalive\n\n"
+
+            # Timeout waiting for diagram
+            logger.error(f"[STREAM] Timeout waiting for diagram generation for request {requestId}")
+            timeout_data = {"requestId": requestId, "error": "Diagram generation timed out"}
+            yield f"event: timeout\ndata: {json.dumps(timeout_data)}\n\n"
+
+            # Clean up if still pending
+            if requestId in _pending_requests:
+                del _pending_requests[requestId]
 
         except asyncio.CancelledError:
             logger.debug(f"[STREAM] Client disconnected from stream for request: {requestId}")
         except Exception as e:
-            logger.error(f"[STREAM] Error in stream for request {requestId}: {str(e)}")
-            yield f"event: error\ndata: {{'requestId': '{requestId}', 'error': '{str(e)}'}}\n\n"
+            logger.error(f"[STREAM] Error in stream for request {requestId}: {str(e)}", exc_info=True)
+            error_data = {"requestId": requestId, "error": str(e)}
+            yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
 
     return StreamingResponse(
         event_generator(),
