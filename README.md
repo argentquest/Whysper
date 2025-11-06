@@ -87,11 +87,12 @@ MyApp/
 ### Backend (FastAPI + Python)
 - 🤖 Multi-provider AI integration (OpenRouter, OpenAI, Anthropic)
 - 📊 Code extraction and analysis
-- 🎨 Mermaid diagram rendering
+- 🎨 LLM-powered diagram generation with 7 providers (Mermaid, D2, PlantUML, C4, Kroki)
 - 📂 File system integration
-- 🔄 Real-time chat processing
+- 🔄 Real-time chat processing with Server-Sent Events (SSE)
 - 📝 Conversation persistence
 - 🔐 API key management
+- 🎯 Architecture diagram generation with agent system prompts
 
 ### Integration
 - 🚀 Single-command deployment
@@ -227,12 +228,20 @@ See `DEPLOYMENT.md` for detailed deployment instructions.
 
 ## 📚 API Endpoints
 
+### Core Endpoints
 - `GET /` - Frontend application
 - `GET /api/v1/` - API health check
 - `POST /api/v1/chat/` - Send chat messages
 - `GET /api/v1/files/` - Browse files
 - `GET /api/v1/settings/` - Get application settings
 - `GET /docs` - Interactive API documentation
+
+### Diagram Generation Endpoints (NEW - v2)
+- `GET /api/v1/settings/studio-agents` - List available architecture agents (13 agents)
+- `GET /api/v1/settings/agents/{agentId}/options` - Get options for an agent
+- `POST /api/v1/diagrams/v2/generate` - Request diagram generation (returns requestId)
+- `GET /api/v1/diagrams/v2/stream?requestId={id}` - Stream diagram results via SSE
+- `GET /api/v1/diagrams/v2/providers` - List available diagram providers
 
 ## 🛠️ Troubleshooting
 
@@ -254,4 +263,5 @@ This project is provided as-is for educational and development purposes.
 
 ## Change History
 
+- **2025-11-05:** Implemented LLM-powered diagram generation system with OpenRouter integration, provider infrastructure with multi-provider support, SSE streaming for real-time updates, and 13 architecture agents. Backend fully tested and production ready.
 - **2025-10-11, GEMINI:** Fixed a bug in the C4 diagram detection logic. The detection is now case-sensitive, which aligns with the documentation. Also fixed build errors caused by unused variables.

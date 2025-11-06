@@ -194,6 +194,47 @@ def process_question(self, question):
 - Reduced user friction
 - Smart context detection
 
+### 7. Diagram Provider Infrastructure
+
+**Purpose**: Support multiple diagram rendering providers with intelligent selection, validation, and error correction.
+
+**Implementation**: [`ProviderRegistry`](backend/diagrams/provider_registry.py) and [`BaseDiagramProvider`](backend/diagrams/base_diagram.py)
+
+**Key Components**:
+- **Provider Registry**: Auto-discovers and manages 7+ diagram providers (D2, Mermaid, PlantUML, C4, Kroki-based)
+- **Base Provider**: Abstract class defining validation, rendering, and error correction interface
+- **Provider Capabilities**: Each provider declares supported formats, diagram types, and capabilities
+- **Multi-Provider Support**: Multiple providers can support the same diagram type; intelligent default selection
+
+**Three-Tier Error Correction**:
+1. **Pattern-Based Auto-Fix**: Regex-based syntax correction for common errors
+2. **LLM-Based Correction**: Uses Claude/GPT to fix complex syntax issues with retry logic (up to 8 retries)
+3. **User Feedback**: Graceful error messages for user correction
+
+**Request Flow**:
+```python
+# 1. Find all providers for diagram type
+providers = registry.find_by_diagram_type("d2")
+
+# 2. Select intelligent default
+provider = registry.get_default_provider("d2")
+
+# 3. Render with full validation and correction
+result = provider.render_with_validation(
+    diagram_code=code,
+    auto_fix=True,
+    llm_correct=True,
+    max_retries=8
+)
+```
+
+**Benefits**:
+- Pluggable diagram providers
+- Automatic provider discovery
+- Robust error handling with auto-correction
+- Flexible diagram type support
+- Production-ready rendering pipeline
+
 ## Security Architecture
 
 ### API Key Management
@@ -307,6 +348,42 @@ flowchart LR
 
     style A fill:#e1f5fe
     style I fill:#c8e6c9
+```
+
+### LLM-Powered Diagram Generation Flow
+
+```mermaid
+flowchart LR
+    A[Diagram Request] --> B[POST /generate]
+    B --> C[Load Agent Prompt]
+    C --> D[Find Providers]
+    D --> E[Schedule Background Task]
+    E --> F[Return requestId<br/>Immediately]
+
+    B --> G[Background: Call LLM]
+    G --> H[Extract Diagram Code]
+    H --> I[Provider Validation]
+    I --> J{Valid?}
+    J -->|No| K[Auto-Fix Pattern]
+    K --> L{Fixed?}
+    L -->|No| M[LLM Correction]
+    M --> N[Retry Render]
+    L -->|Yes| N
+    J -->|Yes| N
+    N --> O[Render SVG/PNG]
+    O --> P[Store Result]
+
+    F --> Q[Client SSE Poll]
+    P --> Q
+    Q --> R[Send Events]
+    R --> S{Complete?}
+    S -->|Yes| T[Close Connection]
+    S -->|No| U[Keepalive]
+    U --> Q
+
+    style A fill:#e1f5fe
+    style T fill:#c8e6c9
+    style P fill:#fff9c4
 ```
 
 ## Performance Optimizations

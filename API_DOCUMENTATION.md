@@ -663,6 +663,238 @@ mcp_response = requests.post(
 )
 ```
 
+## Diagram Generation API (v2) - NEW
+
+### Overview
+The diagram generation API provides LLM-powered diagram generation with multiple provider support, real-time streaming via Server-Sent Events (SSE), and flexible agent-based system prompts.
+
+#### GET /api/v1/settings/studio-agents
+List available architecture agents for diagram generation.
+
+**Response:**
+```json
+{
+  "agents": [
+    {
+      "id": "c4-architecture",
+      "name": "C4 Architecture",
+      "description": "Expert in C4 model diagrams",
+      "icon": "🏗️",
+      "capabilities": ["c4"]
+    },
+    {
+      "id": "d2-architecture",
+      "name": "D2 Architecture",
+      "description": "Expert in D2 diagrams",
+      "icon": "📊",
+      "capabilities": ["d2"]
+    }
+  ],
+  "count": 13
+}
+```
+
+#### GET /api/v1/settings/agents/{agentId}/options
+Get predefined options for a specific agent.
+
+**Parameters:**
+- `agentId` (path): Agent identifier (e.g., `c4-architecture`)
+
+**Response:**
+```json
+{
+  "agentId": "c4-architecture",
+  "options": [
+    {
+      "id": "complete-c4",
+      "label": "Complete C4 Model",
+      "description": "Full C4 model with all levels",
+      "templates": ["C4_CONTAINER", "C4_COMPONENT"],
+      "tags": ["comprehensive", "enterprise"]
+    }
+  ]
+}
+```
+
+#### POST /api/v1/diagrams/v2/generate
+Request diagram generation from an agent.
+
+**Request Body:**
+```json
+{
+  "agentId": "d2-architecture",
+  "prompt": "Create a simple frontend-backend system architecture",
+  "diagramType": "d2"
+}
+```
+
+**Response:**
+```json
+{
+  "requestId": "fa5c0891-aa6e-4dad-89d6-c82ba9794002",
+  "diagram": null
+}
+```
+
+**Notes:**
+- Returns immediately with a `requestId` for polling
+- Actual diagram generation happens asynchronously in the background
+- Use the `requestId` to poll the `/stream` endpoint for results
+
+#### GET /api/v1/diagrams/v2/stream
+Stream diagram generation results via Server-Sent Events (SSE).
+
+**Query Parameters:**
+- `requestId` (required): The request ID from the generate endpoint
+
+**Connection Type:** Server-Sent Events (long-lived persistent connection)
+
+**Events Sent:**
+```
+event: connected
+data: {"requestId": "fa5c0891...", "status": "connected"}
+
+event: keepalive
+data: {}
+
+event: diagram
+data: {
+  "requestId": "fa5c0891...",
+  "success": true,
+  "diagramCode": "circle: description\nfrom: x\nto: y",
+  "diagramType": "d2",
+  "providerId": "d2v1",
+  "content": "<svg>...</svg>",
+  "outputFormat": "svg",
+  "validationResult": {
+    "isValid": true,
+    "error": null,
+    "autoFixed": false,
+    "llmCorrected": false
+  },
+  "metadata": {}
+}
+
+event: complete
+data: {"requestId": "fa5c0891...", "status": "complete"}
+```
+
+**Event Types:**
+- `connected`: Initial connection confirmation
+- `keepalive`: Ping every 10 seconds (no data)
+- `diagram`: Complete diagram with rendering (on success)
+- `error`: Error message (on failure)
+- `complete`: Stream finished successfully
+- `timeout`: 5-minute max wait exceeded
+
+**Note:** Connection automatically closes after diagram is sent or 5-minute timeout, whichever comes first.
+
+#### GET /api/v1/diagrams/v2/providers
+List available diagram providers and their capabilities.
+
+**Response:**
+```json
+{
+  "providers": [
+    {
+      "id": "d2v1",
+      "name": "D2 CLI Renderer",
+      "diagram_type": "d2",
+      "is_available": true,
+      "capabilities": ["render", "validate", "autocorrect"],
+      "supported_output_formats": ["svg", "png"],
+      "config": {
+        "timeout": 30,
+        "retry_count": 3
+      }
+    },
+    {
+      "id": "mermaidv1",
+      "name": "Mermaid CLI Renderer",
+      "diagram_type": "mermaid",
+      "is_available": true,
+      "capabilities": ["render", "validate"],
+      "supported_output_formats": ["svg", "png"]
+    }
+  ],
+  "total": 7,
+  "available": 2
+}
+```
+
+### Integration Example
+
+#### JavaScript/TypeScript (EventSource)
+```javascript
+// 1. Request diagram generation
+const response = await fetch('http://localhost:8003/api/v1/diagrams/v2/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    agentId: 'd2-architecture',
+    prompt: 'Create a simple frontend-backend system',
+    diagramType: 'd2'
+  })
+});
+
+const { requestId } = await response.json();
+
+// 2. Stream results via SSE
+const eventSource = new EventSource(
+  `http://localhost:8003/api/v1/diagrams/v2/stream?requestId=${requestId}`
+);
+
+eventSource.addEventListener('diagram', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Diagram SVG:', data.content);
+  eventSource.close();
+});
+
+eventSource.addEventListener('error', (event) => {
+  const data = JSON.parse(event.data);
+  console.error('Generation failed:', data.error);
+  eventSource.close();
+});
+
+eventSource.addEventListener('timeout', (event) => {
+  console.error('Diagram generation timed out');
+  eventSource.close();
+});
+```
+
+#### Python (requests + requests-sse)
+```python
+import requests
+import json
+
+# 1. Request diagram generation
+response = requests.post(
+    'http://localhost:8003/api/v1/diagrams/v2/generate',
+    json={
+        'agentId': 'c4-architecture',
+        'prompt': 'Design a microservices architecture',
+        'diagramType': 'c4'
+    }
+)
+
+request_id = response.json()['requestId']
+
+# 2. Stream results
+stream_url = f'http://localhost:8003/api/v1/diagrams/v2/stream?requestId={request_id}'
+
+with requests.get(stream_url, stream=True) as r:
+    for line in r.iter_lines():
+        if line:
+            line = line.decode('utf-8')
+            if line.startswith('event: diagram'):
+                # Next line contains the data
+                continue
+            elif line.startswith('data: '):
+                data = json.loads(line[6:])
+                print('Generated diagram:', data['content'][:100])
+                break
+```
+
 ## WebSocket Connection (MCP)
 
 ### JavaScript Example
