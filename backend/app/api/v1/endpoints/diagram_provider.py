@@ -14,10 +14,13 @@ from pathlib import Path
 from datetime import datetime
 import os
 import re
+import json
 
 from diagrams.provider_registry import get_registry, ProviderRegistry
 from diagrams.base_diagram import BaseDiagramProvider
 from diagrams.models import ProviderCapability
+from providers.openrouter_provider import OpenRouterProvider
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -600,9 +603,6 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
         GenerateDiagramResponse with requestId and optional initial diagram
     """
     import uuid
-    from datetime import datetime
-    from providers.openrouter_provider import OpenRouterProvider
-    from app.core.config import settings
 
     logger.debug(f"[GENERATE] Received diagram generation request for agent: {request.agentId}")
 
@@ -723,7 +723,7 @@ def _generate_diagram_async(
         logger.info(f"[GENERATE_ASYNC] Calling OpenRouter LLM...")
 
         # Get OpenRouter provider
-        openrouter = OpenRouterProvider(api_key=settings.openrouter_api_key)
+        openrouter = OpenRouterProvider(api_key=settings.api_key)
 
         # Combine agent system prompt with user prompt
         # The agent prompt provides context on how to generate the specific diagram type
@@ -734,7 +734,9 @@ def _generate_diagram_async(
             question=user_prompt,
             conversation_history=[],
             codebase_content="",  # Not needed for diagram generation
-            model=settings.openrouter_model or "openai/gpt-4"
+            model=settings.default_model or "openai/gpt-4",
+            max_tokens=int(settings.max_tokens) or 4000,
+            temperature=settings.temperature or 0.5
         )
 
         logger.info(f"[GENERATE_ASYNC] LLM Response Length: {len(llm_response)} characters")
