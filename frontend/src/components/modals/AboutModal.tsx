@@ -13,11 +13,38 @@ import { Modal } from '../common/Modal';
 
 const { Title, Text, Paragraph } = Typography;
 
+/**
+ * Props interface for the AboutModal component
+ * 
+ * @interface AboutModalProps
+ * @property {boolean} open - Controls modal visibility state
+ * @property {() => void} onCancel - Callback triggered when modal is cancelled
+ */
 interface AboutModalProps {
   open: boolean;
   onCancel: () => void;
 }
 
+/**
+ * AboutModal Component
+ * 
+ * An informational modal that displays comprehensive information about the Whysper application:
+ * - Application branding and version information
+ * - Feature overview and capabilities
+ * - Technology stack details
+ * - Navigation links to different application sections
+ * - External links to repository, documentation, and issue reporting
+ * 
+ * Features:
+ * - Responsive design with centered content layout
+ * - Version tagging and build date display
+ * - Interactive navigation buttons to different app sections
+ * - External link integration with proper target handling
+ * - Professional styling with consistent theming
+ * 
+ * @param {AboutModalProps} props - Component props
+ * @returns {JSX.Element} Rendered about modal
+ */
 export const AboutModal: React.FC<AboutModalProps> = ({
   open,
   onCancel,
@@ -26,11 +53,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const version = '2.0.0';
   const buildDate = new Date().toLocaleDateString();
 
+  /**
+   * Handles navigation to the root chat interface
+   * Closes modal and navigates to the main chat page
+   */
   const handleNavigateToRoot = () => {
     onCancel();
     navigate('/');
   };
 
+  /**
+   * Handles navigation to the architecture generation studio
+   * Closes modal and navigates to the GenStudio interface
+   */
   const handleNavigateToStudio = () => {
     onCancel();
     navigate('/studio');

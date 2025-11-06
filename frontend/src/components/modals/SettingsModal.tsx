@@ -10,12 +10,43 @@ const { Option } = Select;
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 
+/**
+ * Props interface for the SettingsModal component
+ * 
+ * @interface SettingsModalProps
+ * @property {boolean} open - Controls modal visibility state
+ * @property {() => void} onCancel - Callback triggered when modal is cancelled
+ * @property {(settings: AppSettings) => void} onSave - Callback triggered when settings are successfully saved
+ */
 interface SettingsModalProps {
   open: boolean;
   onCancel: () => void;
   onSave: (settings: AppSettings) => void;
 }
 
+/**
+ * SettingsModal Component
+ * 
+ * A comprehensive settings modal that provides configuration options for:
+ * - AI Provider and API settings (OpenRouter, custom providers)
+ * - Model parameters and selection
+ * - UI theme and interface preferences  
+ * - File system and codebase scanning options
+ * - System prompts and conversation settings
+ * - Server configuration and networking
+ * - Advanced performance and logging options
+ * 
+ * Features:
+ * - Multi-tab interface organizing settings by category
+ * - Form validation and error handling
+ * - Dynamic provider/model lists from backend
+ * - Real-time settings preview and application
+ * - Server restart functionality
+ * - Sensitive data handling (API keys, passwords)
+ * 
+ * @param {SettingsModalProps} props - Component props
+ * @returns {JSX.Element} Rendered settings modal
+ */
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onCancel,
@@ -30,6 +61,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const providersListValue = Form.useWatch('providersList', form);
   const modelsListValue = Form.useWatch('modelsList', form);
 
+  /**
+   * Updates available providers list when providersList field changes
+   * Parses comma-separated provider string and filters out empty values
+   * 
+   * @param {string | undefined} providersListValue - Comma-separated provider list from form
+   */
   useEffect(() => {
     if (providersListValue !== undefined) {
       const providers = providersListValue
@@ -39,6 +76,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [providersListValue]);
 
+  /**
+   * Updates available models list when modelsList field changes
+   * Parses comma-separated model string and filters out empty values
+   * 
+   * @param {string | undefined} modelsListValue - Comma-separated model list from form
+   */
   useEffect(() => {
     if (modelsListValue !== undefined) {
       const models = modelsListValue
@@ -48,22 +91,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [modelsListValue]);
 
+  // Dynamic provider options combining available providers with current selection
   const providerValue = form.getFieldValue('provider') || 'openrouter';
   const providerOptions = availableProviders.length > 0
     ? Array.from(new Set([...availableProviders, providerValue]))
     : ['openrouter', 'custom'];
+
+  // Dynamic model options combining available models with current selection
   const defaultModelValue = form.getFieldValue('defaultModel') || '';
   const modelOptions = availableModels.length > 0
     ? Array.from(new Set([...availableModels, defaultModelValue].filter(Boolean)))
     : (defaultModelValue ? [defaultModelValue] : []);
 
+  /**
+   * Loads current settings from backend API
+   * Fetches environment settings and maps them to form structure
+   * Handles sensitive data separation (API keys, passwords)
+   * Updates available models and providers lists
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   const loadSettings = React.useCallback(async () => {
     try {
       const response = await ApiService.getSettings();
       if (response.success && response.data) {
         const settings = response.data;
 
-        // Get sensitive values for form
+        // Get sensitive values for form (handled separately for security)
         const apiKeyValue = settings.values?.API_KEY || '';
         const tokenPasswordValue = settings.values?.TOKEN_PASSWORD || '';
 
@@ -166,23 +221,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [form, theme]);
 
+  /**
+   * Effect to load settings when modal opens
+   */
   useEffect(() => {
     if (open) {
       loadSettings();
     }
   }, [open, loadSettings]);
 
+  /**
+   * Handles form submission and settings persistence
+   * Validates form, normalizes provider/model lists, maps form values to backend format
+   * Updates API client timeout settings and triggers save callback
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   const handleSave = async () => {
     try {
       setSaving(true);
       const values = await form.validateFields();
 
+      // Normalize providers list - remove duplicates and empty values
       const normalizedProviders = (values.providersList || '')
         .split(',')
         .map((provider: string) => provider.trim())
         .filter(Boolean)
         .join(',');
 
+      // Normalize models list and ensure default model is included
       const models = (values.modelsList || '')
         .split(',')
         .map((model: string) => model.trim())
@@ -193,10 +261,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
 
       const normalizedModels = models.join(',');
-
       values.modelsList = normalizedModels;
 
-      // Map form values back to backend environment format
+      // Map form values back to backend environment variable format
       const backendSettings = {
         // API Configuration
         API_KEY: values.apiKey || '',
@@ -289,12 +356,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  /**
+   * Handles theme change and updates both form values and global theme
+   * 
+   * @param {'light' | 'dark'} newTheme - New theme selection
+   */
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
     form.setFieldValue('theme', newTheme);
     form.setFieldValue('uiTheme', newTheme);
   };
 
+  /**
+   * Handles server restart functionality
+   * Calls backend API to restart server and reloads page after delay
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   const handleRestartServer = async () => {
     try {
       setRestarting(true);
