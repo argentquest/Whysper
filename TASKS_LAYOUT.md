@@ -75,7 +75,7 @@
 **Depends on:** None
 **Estimated Hours:** 4 (actual: 2.5)
 
-- [x] Create `/frontend/src/components/architectureGenStudio/` directory
+- [x] Create `/frontend/src/components/studio-ui/` directory
 - [x] Create subdirectories:
   - [x] `/components/` (for all UI components)
   - [x] `/hooks/` (custom React hooks)
@@ -114,13 +114,13 @@
 
 - [x] Create route path `/studio`
 - [x] Add route to main router configuration
-- [x] Import ArchitectureGenStudio page component
+- [x] Import StudioUI page component
 - [x] Test route navigation path
 - [x] Ensure proper layout hierarchy with existing theme provider
 
 **Completed:**
 - [x] Route added to router config (`frontend/src/main.tsx`)
-- [x] ArchitectureGenStudio component imported
+- [x] StudioUI component imported
 - [x] Theme provider wraps component (inherited from app)
 - [x] React Router properly configured
 
@@ -129,7 +129,7 @@
 
 **Route Details:**
 - Path: `/studio`
-- Component: `ArchitectureGenStudio`
+- Component: `StudioUI`
 - Theme Provider: Inherited from parent `<ThemeProvider>`
 - Accessible at: `http://localhost:5173/studio`
 
@@ -663,7 +663,7 @@ interface SubmitButtonProps {
 **Depends on:** 1.3, 3.3, 3.2
 **Estimated Hours:** 2
 
-In main ArchitectureGenStudio page component:
+In main StudioUI page component:
 
 - [ ] Load on mount:
   - [ ] `studio_currentAgent` → set currentAgent
@@ -1489,7 +1489,7 @@ In Footer component or higher (App level):
 **Depends on:** 3.1-6.6
 **Estimated Hours:** 2
 
-File: `/pages/ArchitectureGenStudio/index.tsx`
+File: `/pages/studio-ui/index.tsx`
 
 - [ ] Import all main components:
   - [ ] Header

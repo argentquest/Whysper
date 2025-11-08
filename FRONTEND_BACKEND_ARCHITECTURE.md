@@ -99,7 +99,7 @@ This document provides a comprehensive analysis of the Whysper application's fro
   - Global state management
   - Layout coordination
 
-#### 2. **Architecture Studio** (`frontend/src/components/architectureGenStudio/`)
+#### 2. **Architecture Studio** (`frontend/src/components/studio-ui/`)
 - **Header**: Navigation and controls
 - **LeftColumn**: Prompt management and context selection
 - **CenterColumn**: Diagram generation and display

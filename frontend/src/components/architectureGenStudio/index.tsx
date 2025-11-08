@@ -25,7 +25,7 @@ import styles from './styles/architectureStudio.module.css';
  * - API integration
  * - SSE streaming
  */
-export const ArchitectureGenStudio: React.FC = () => {
+export const StudioUI: React.FC = () => {
   // Get state management
   const stateManager = useArchitectureStudioState();
   const apiClient = useAPIClient();
@@ -312,4 +312,4 @@ export const ArchitectureGenStudio: React.FC = () => {
   );
 };
 
-export default ArchitectureGenStudio;
+export default StudioUI;

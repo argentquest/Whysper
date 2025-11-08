@@ -4,7 +4,7 @@
 **Client**: Wells Fargo
 **Status**: ✅ **COMPLETE** - All 8 Phases Delivered
 **Date**: January 15, 2024
-**Location**: `frontend/src/components/architectureGenStudio/`
+**Location**: `frontend/src/components/studio-ui/`
 
 ---
 
@@ -434,7 +434,7 @@ The Architecture Gen Studio has been completely implemented with all 8 phases de
 
 ### File Structure
 ```
-frontend/src/components/architectureGenStudio/
+frontend/src/components/studio-ui/
 ├── Components (24 files)
 │   ├── Header/ (6 files)
 │   ├── LeftColumn/ (4 files)

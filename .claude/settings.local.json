@@ -13,7 +13,10 @@
       "Bash(timeout 20 curl:*)",
       "Bash(timeout 30 curl:*)",
       "Bash(timeout 60 curl:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git fetch:*)",
+      "Bash(git push:*)",
+      "Bash(ls -la \"c:\\Code2025\\Whysper\\backend\\app\\utils\\diagram_wizard\"\" 2>/dev/null || echo \"Checking path...\" && dir \"c:Code2025Whysperbackendapputilsdiagram_wizard\"\")"
     ],
     "deny": [],
     "ask": []

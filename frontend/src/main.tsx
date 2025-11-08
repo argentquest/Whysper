@@ -5,7 +5,7 @@ import { App as AntApp } from 'antd'
 import { ThemeProvider } from './themes'
 import './index.css'
 import App from './App.tsx'
-import ArchitectureGenStudio from './components/architectureGenStudio'
+import StudioUI from './components/architectureGenStudio'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,7 +16,7 @@ createRoot(document.getElementById('root')!).render(
             {/* Main application */}
             <Route path="/" element={<App />} />
             {/* Architecture Gen Studio - Diagram Generation Tool */}
-            <Route path="/studio" element={<ArchitectureGenStudio />} />
+            <Route path="/studio" element={<StudioUI />} />
           </Routes>
         </AntApp>
       </ThemeProvider>

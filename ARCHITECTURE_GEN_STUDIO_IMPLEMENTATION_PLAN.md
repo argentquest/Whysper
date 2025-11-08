@@ -11,8 +11,8 @@ The **Architecture Gen Studio** is a specialized three-column web application fo
 ## Phase 1: Core Infrastructure Setup (Week 1-2)
 
 ### 1.1 Route & Page Structure
-- [ ] Create new route `/architecture-studio` in frontend
-- [ ] Create `ArchitectureGenStudio.tsx` main page component
+- [ ] Create new route `/studio` in frontend
+- [ ] Create `StudioUI.tsx` main page component
 - [ ] Integrate with existing `ThemeProvider` wrapper
 - [ ] Ensure header and footer are properly integrated
 
@@ -284,7 +284,7 @@ The **Architecture Gen Studio** is a specialized three-column web application fo
 ### 6.1 Global State Architecture
 - [ ] Design state structure (use React Context + Hooks pattern):
   ```typescript
-  interface ArchitectureStudioState {
+  interface StudioUIState {
     // Agent selection
     selectedAgent: Agent | null;
     selectedAgentOption: AgentOption | null;
@@ -310,8 +310,8 @@ The **Architecture Gen Studio** is a specialized three-column web application fo
   ```
 
 ### 6.2 Create Context & Hooks
-- [ ] `ArchitectureStudioContext` for global state
-- [ ] `useArchitectureStudio()` hook to access context
+- [ ] `StudioUIContext` for global state
+- [ ] `useStudioUI()` hook to access context
 - [ ] Separate hooks for specific features:
   - `usePromptSubmit()` - Handle prompt submission
   - `useDiagramRendering()` - Handle diagram rendering
@@ -505,12 +505,12 @@ The **Architecture Gen Studio** is a specialized three-column web application fo
 frontend/
 ├── src/
 │   ├── pages/
-│   │   └── ArchitectureGenStudio/
-│   │       ├── ArchitectureGenStudio.tsx (main page)
+│   │   └── studio-ui/
+│   │       ├── StudioUI.tsx (main page)
 │   │       ├── context/
-│   │       │   └── ArchitectureStudioContext.tsx
+│   │       │   └── StudioUIContext.tsx
 │   │       ├── hooks/
-│   │       │   ├── useArchitectureStudio.ts
+│   │       │   ├── useStudioUI.ts
 │   │       │   ├── usePromptSubmit.ts
 │   │       │   ├── useDiagramRendering.ts
 │   │       │   ├── useCodeValidation.ts
@@ -538,7 +538,7 @@ frontend/
 │   │       └── types/
 │   │           └── index.ts (local types)
 │   └── services/
-│       └── architectureStudio.ts (API service)
+│       └── studio-ui.ts (API service)
 ```
 
 ---

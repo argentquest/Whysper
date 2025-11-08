@@ -12,17 +12,17 @@ import {
   SCENARIO_VALIDATION_ERROR,
   SCENARIO_REQUEST_CANCELLATION,
   SCENARIO_MULTIPLE_DIAGRAMS,
-} from './frontend/src/components/architectureGenStudio/__tests__/integration.test';
+} from './frontend/src/components/studio-ui/__tests__/integration.test';
 
 import {
   runStateSynchronizationTests,
   StateSynchronizationTestRunner,
-} from './frontend/src/components/architectureGenStudio/__tests__/stateSynchronization.test';
+} from './frontend/src/components/studio-ui/__tests__/stateSynchronization.test';
 
 import {
   runErrorHandlingTests,
   ErrorHandlingTestRunner,
-} from './frontend/src/components/architectureGenStudio/__tests__/errorHandling.test';
+} from './frontend/src/components/studio-ui/__tests__/errorHandling.test';
 
 /**
  * Main test execution

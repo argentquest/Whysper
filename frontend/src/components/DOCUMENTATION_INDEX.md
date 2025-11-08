@@ -7,9 +7,9 @@ This comprehensive documentation system provides detailed JSDoc comments, type d
 ## Documentation Categories
 
 ### 🏗️ **Architecture Documentation**
-- **[ARCHITECTURE.md](architectureGenStudio/ARCHITECTURE.md)** - Detailed technical documentation covering component hierarchy, custom hooks, data flow, state management, and API integration
-- **[ARCHITECTURE_DIAGRAM.md](architectureGenStudio/ARCHITECTURE_DIAGRAM.md)** - Mermaid diagrams showing component relationships, data flow sequences, and system architecture
-- **[ARCHITECTURE_SUMMARY.md](architectureGenStudio/ARCHITECTURE_SUMMARY.md)** - ASCII visual diagrams providing quick reference for component layout and technology stack
+- **[ARCHITECTURE.md](studio-ui/ARCHITECTURE.md)** - Detailed technical documentation covering component hierarchy, custom hooks, data flow, state management, and API integration
+- **[ARCHITECTURE_DIAGRAM.md](studio-ui/ARCHITECTURE_DIAGRAM.md)** - Mermaid diagrams showing component relationships, data flow sequences, and system architecture
+- **[ARCHITECTURE_SUMMARY.md](studio-ui/ARCHITECTURE_SUMMARY.md)** - ASCII visual diagrams providing quick reference for component layout and technology stack
 
 ### 📋 **Core Application Files**
 - **[App.tsx](App.tsx)** - Main application component with routing, layout, theme management, and conversation state
@@ -19,17 +19,17 @@ This comprehensive documentation system provides detailed JSDoc comments, type d
 - **[api.ts](../services/api.ts)** - REST API client with comprehensive request/response type documentation
 - **[diagramProviderService.ts](../services/diagramProviderService.ts)** - Diagram provider management with validation and rendering services
 
-### 🎨 **ArchitectureGenStudio Components**
+### 🎨 **Studio UI Components**
 #### Main Layout Components
-- **[Header.tsx](architectureGenStudio/Header.tsx)** - Navigation header with logo, controls, and user interface elements
-- **[LeftColumn.tsx](architectureGenStudio/LeftColumn.tsx)** - Left sidebar with prompt management and context selection
-- **[CenterColumn.tsx](architectureGenStudio/CenterColumn.tsx)** - Central area for diagram generation and display
-- **[RightColumn.tsx](architectureGenStudio/RightColumn.tsx)** - Right panel for generated code display and management
-- **[Footer.tsx](architectureGenStudio/Footer.tsx)** - Application footer with status information and controls
+- **[Header.tsx](studio-ui/Header.tsx)** - Navigation header with logo, controls, and user interface elements
+- **[LeftColumn.tsx](studio-ui/LeftColumn.tsx)** - Left sidebar with prompt management and context selection
+- **[CenterColumn.tsx](studio-ui/CenterColumn.tsx)** - Central area for diagram generation and display
+- **[RightColumn.tsx](studio-ui/RightColumn.tsx)** - Right panel for generated code display and management
+- **[Footer.tsx](studio-ui/Footer.tsx)** - Application footer with status information and controls
 
 #### Core Components
-- **[TabManager.tsx](architectureGenStudio/TabManager.tsx)** - Tab management system for multiple conversations and code display
-- **[ContextManager.tsx](architectureGenStudio/ContextManager.tsx)** - File selection and context management interface
+- **[TabManager.tsx](studio-ui/TabManager.tsx)** - Tab management system for multiple conversations and code display
+- **[ContextManager.tsx](studio-ui/ContextManager.tsx)** - File selection and context management interface
 
 ### 🛠️ **Utility Functions**
 - **[mermaidUtils.ts](../utils/mermaidUtils.ts)** - Mermaid diagram utilities with syntax validation and processing functions
@@ -299,10 +299,10 @@ When adding new components or modifying existing ones:
 
 ## Navigation Links
 
-- [Architecture Overview](architectureGenStudio/ARCHITECTURE.md)
+- [Architecture Overview](studio-ui/ARCHITECTURE.md)
 - [Documentation Standards](DOCUMENTATION_GUIDE.md)
 - [API Documentation](../services/api.ts)
-- [Component Library](architectureGenStudio/)
+- [Component Library](studio-ui/)
 - [Modal Components](modals/)
 - [Utility Functions](../utils/)
 

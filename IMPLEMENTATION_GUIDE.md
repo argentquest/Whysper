@@ -20,7 +20,7 @@ This is a detailed implementation guide for the Architecture Gen Studio - a spec
 ## 🎯 PROJECT STRUCTURE
 
 ```
-frontend/src/pages/ArchitectureGenStudio/
+frontend/src/pages/studio-ui/
 ├── components/
 │   ├── Header/
 │   │   ├── Header.tsx

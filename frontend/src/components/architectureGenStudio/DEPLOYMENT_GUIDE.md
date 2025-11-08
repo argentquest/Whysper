@@ -156,13 +156,13 @@ const criticalColors = [
 ### Code Splitting
 ```typescript
 // Lazy load diagram components if needed
-const ArchitectureGenStudio = lazy(
-  () => import('./components/architectureGenStudio')
+const StudioUI = lazy(
+  () => import('./components/studio-ui')
 );
 
 // Suspense boundary
 <Suspense fallback={<Spinner />}>
-  <ArchitectureGenStudio />
+  <StudioUI />
 </Suspense>
 ```
 
