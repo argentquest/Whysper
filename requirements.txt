@@ -32,3 +32,9 @@ pytest-xdist>=3.0.0
 
 # Optional: for testing mermaid rendering
 cairosvg>=2.7.0
+
+langgraph>=0.0.40
+langchain>=0.1.0
+langchain-openai>=0.0.5
+asyncio
+typing-extensions>=4.0.0

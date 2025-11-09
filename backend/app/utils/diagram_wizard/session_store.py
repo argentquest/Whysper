@@ -7,7 +7,7 @@ Manages session state with thread-safe operations and TTL-based cleanup.
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .graph_state import GraphState
 
 

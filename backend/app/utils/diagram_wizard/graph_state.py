@@ -49,6 +49,7 @@ class GraphState(TypedDict, total=False):
     # Input phase
     design_prompt: str
     diagram_type: DiagramType
+    provider_id: Optional[str]
 
     # Clarification loop
     clarification_history: List[Dict[str, str]]

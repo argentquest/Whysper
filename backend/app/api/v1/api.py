@@ -23,7 +23,7 @@ Router Organization:
 """
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, documentation, auth, diagram_provider, diagram_events
+    chat, code, files, settings, system, documentation, auth, diagram_provider, diagram_events, diagram as diagram_wizard
 )
 from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
@@ -73,6 +73,13 @@ api_router.include_router(
     system.router,
     prefix="/system",
     tags=["system"]
+)
+
+# ==================== Diagram Wizard Endpoints ====================
+api_router.include_router(
+    diagram_wizard.router,
+    prefix="/diagram_wizard",
+    tags=["diagram-wizard"],
 )
 
 # ==================== Diagram Event Logging Endpoints ====================
