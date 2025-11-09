@@ -6,7 +6,8 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import DiagramApi, { DiagramStatus, DiagramUpdate } from '../../../services/diagram/diagramApi';
+import DiagramApi from '../../../services/diagram/diagramApi';
+import type { DiagramStatus, DiagramUpdate } from '../../../services/diagram/diagramApi';
 
 interface UseDiagramSessionOptions {
   onUpdate?: (update: DiagramUpdate) => void;

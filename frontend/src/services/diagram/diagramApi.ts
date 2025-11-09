@@ -192,4 +192,7 @@ export class DiagramApi {
   }
 }
 
+// Export all interfaces for external use
+export type { DiagramSession, DiagramStatus, DiagramUpdate };
+
 export default DiagramApi;

@@ -4,14 +4,13 @@
  * Provides easy access to all diagram wizard components and hooks
  */
 
-export { DiagramWizard as default } from './DiagramWizard';
-export type { DiagramWizard } from './DiagramWizard';
+export { DiagramWizard as default, DiagramWizard } from './DiagramWizard';
 
 // Hooks
 export { useDiagramSession } from './hooks/useDiagramSession';
 
 // Services
-export { DiagramApi } from '../../services/diagram/diagramApi';
+export { default as DiagramApi } from '../../services/diagram/diagramApi';
 export type { DiagramStatus, DiagramUpdate, DiagramSession } from '../../services/diagram/diagramApi';
 
 // Panel Components
