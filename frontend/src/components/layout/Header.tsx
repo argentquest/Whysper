@@ -376,6 +376,26 @@ export const Header: React.FC<HeaderProps> = ({
             </Button>
           </Tooltip>
 
+          <Tooltip title="AI Diagram Wizard - LangGraph-powered diagram generation">
+            <Button
+              type="primary"
+              icon={<CodeOutlined />}
+              onClick={() => navigate('/diagram-wizard')}
+              size="large"
+              style={{
+                background: `linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)`,
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)',
+                padding: '0 20px',
+                height: '44px',
+              }}
+            >
+              🧙‍♂️ DiagramWizard
+            </Button>
+          </Tooltip>
+
         </div>
 
         {/* Secondary Actions */}
