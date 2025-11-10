@@ -117,14 +117,14 @@ Project Root/
 │   │   ├── api/v1/endpoints/
 │   │   │   └── diagram.py                 (6 endpoints)
 │   │   ├── services/
-│   │   │   └── diagram_factory_service.py (147 lines)
+│   │   │   └── diagram_factory_service.py (900+ lines)
 │   │   └── utils/
 │   │       └── diagram_wizard/
 │   │           ├── README.md
 │   │           ├── __init__.py
 │   │           ├── main.py
 │   │           ├── graph_state.py
-│   │           ├── nodes.py
+│   │           ├── nodes.py               (Real AI integration)
 │   │           ├── langgraph_builder.py
 │   │           ├── session_store.py
 │   │           ├── tool_config.py
@@ -137,6 +137,22 @@ Project Root/
 │   └── diagrams/
 │       ├── IMPLEMENTATION_STATUS.md
 │       └── (provider configuration)
+│
+├── tests/                                 ✅ NEW: Organized Test Suite
+│   ├── 1-UNIT/diagram_wizard/
+│   │   ├── README.md                      (Documentation)
+│   │   └── test_svg_validation.py         (SVG validation)
+│   └── 2-INTEGRATION/diagram_wizard/
+│       ├── README.md                      (Documentation)
+│       ├── simple_flow_test.py            ✅ WORKING (1506 chars D2)
+│       ├── perfect_score_test.py          ✅ WORKING (2744 chars + SVG)
+│       ├── debug_test.py                  (Workflow debugging)
+│       ├── fixed_workflow_test.py         (Fixed patterns)
+│       ├── explicit_commands_test.py      (Command handling)
+│       ├── test_complete_svg_workflow.py  (Full SVG workflow)
+│       ├── test_diagram_wizard_workflow.py (Complete validation)
+│       ├── run_simple_test.py             (Test runner)
+│       └── run_svg_test.py                (SVG runner)
 │
 └── frontend/
     └── src/
@@ -198,6 +214,8 @@ Project Root/
 | Diagram Types | 3 |
 | Tasks Completed | 31/32 (96.9%) |
 | Files Created | 20+ |
+| **Test Files Organized** | ✅ **9 test files properly categorized** |
+| **Working Tests Verified** | ✅ **2 core tests generating 1500+ char diagrams** |
 
 ---
 
@@ -359,6 +377,7 @@ This index provides a complete reference to all Diagram Wizard documentation.
 
 ---
 
-**Index Updated**: November 8, 2025
+**Index Updated**: November 10, 2025
 **Documentation Status**: Complete ✅
 **System Status**: Production Ready ✅
+**Test Suite**: Organized & Validated ✅

@@ -9,12 +9,14 @@ from app.services.diagram_factory_service import (
     DiagramSessionStore,
     DiagramSession,
 )
+from common.logging_decorator import log_method_call
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/diagram/start")
+@router.post("/start")
+@log_method_call
 async def start_diagram_generation(
     initial_prompt: str = Body(..., embed=True),
     diagram_type: str = Body("Mermaid", embed=True),
@@ -41,7 +43,8 @@ async def start_diagram_generation(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/diagram/stream/{session_id}")
+@router.get("/stream/{session_id}")
+@log_method_call
 async def stream_diagram_updates(session_id: str):
     """
     Streams real-time updates for a diagram generation session via Server-Sent Events.
@@ -78,7 +81,8 @@ async def stream_diagram_updates(session_id: str):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.post("/diagram/clarify")
+@router.post("/clarify")
+@log_method_call
 async def submit_clarification(
     session_id: str = Body(..., embed=True),
     response: str = Body(..., embed=True),
@@ -103,7 +107,8 @@ async def submit_clarification(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/diagram/render")
+@router.post("/render")
+@log_method_call
 async def render_diagram(
     session_id: str = Body(..., embed=True),
     code: str = Body(None, embed=True),
@@ -128,7 +133,8 @@ async def render_diagram(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/diagram/{session_id}")
+@router.get("/{session_id}")
+@log_method_call
 async def get_diagram_status(session_id: str):
     """
     Gets the current status of a diagram generation session.
@@ -151,7 +157,8 @@ async def get_diagram_status(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/diagram/{session_id}")
+@router.delete("/{session_id}")
+@log_method_call
 async def delete_session(session_id: str):
     """
     Deletes a diagram generation session.
