@@ -155,6 +155,25 @@ export default defineConfig({
 }
 ```
 
+## Diagram Wizard
+
+The Diagram Wizard is a powerful feature that allows users to generate diagrams from natural language descriptions. The frontend implementation of the Diagram Wizard is designed to be highly interactive and provide real-time feedback to the user.
+
+### `useDiagramSession` Hook
+
+The `useDiagramSession` hook is the core of the Diagram Wizard's frontend logic. It is responsible for:
+
+*   Starting and ending diagram generation sessions.
+*   Submitting clarification responses to the backend.
+*   Handling real-time updates from the backend via Server-Sent Events (SSE).
+*   Managing the state of the Diagram Wizard, including the conversation history, diagram code, SVG output, and JSON representation.
+
+### "JSON" Tab
+
+The Diagram Wizard's UI includes a "JSON" tab that displays the structured JSON representation of the diagram. This provides users with a transparent view of the data that is being used to generate the diagram.
+
+The "JSON" tab is implemented using a `CodeEditorPanel` component, which provides a read-only view of the JSON data with syntax highlighting.
+
 ## Switching to a Different Brand
 
 To create and activate a new brand (e.g., "ACME"):

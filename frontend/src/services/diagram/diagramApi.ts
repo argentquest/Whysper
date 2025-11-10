@@ -31,6 +31,7 @@ export interface DiagramStatus {
   errors: string[];
   diagramType: string;
   isRunning: boolean;
+  jsonRepresentation?: Record<string, any>;
 }
 
 export interface DiagramUpdate {
@@ -46,6 +47,7 @@ export interface DiagramUpdate {
   status?: string;
   message?: string;
   type?: string;
+  jsonRepresentation?: Record<string, any>;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
@@ -135,6 +137,24 @@ export class DiagramApi {
 
     if (!resp.ok) {
       throw new Error(`Failed to submit clarification: ${resp.statusText}`);
+    }
+
+    return resp.json();
+  }
+
+  static async approveRender(sessionId: string): Promise<DiagramStatus> {
+    const resp = await fetch(`${API_BASE}/diagram/approve_render`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Failed to approve render: ${resp.statusText}`);
     }
 
     return resp.json();

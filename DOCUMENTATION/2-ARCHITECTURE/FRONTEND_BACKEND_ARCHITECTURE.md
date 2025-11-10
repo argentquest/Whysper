@@ -179,15 +179,18 @@ Display Status     Data Prepared      Show Spinner       Find Providers
                                           ↓                      ↓
                                    Open EventSource      Return requestId
                                           ↓
-                                   ┌─────────────────────┐
-                                   │ Background Thread:  │
-                                   │ Call OpenRouter LLM │
-                                   │ Extract Code        │
-                                   │ Provider Validate   │
-                                   │ Auto-fix (if needed)│
-                                   │ Render SVG/PNG      │
-                                   │ Store Result        │
-                                   └─────────────────────┘
+                                   ┌────────────────────────┐
+                                   │   Background Thread:   │
+                                   │ Call LLM for Clarify   │
+                                   │ Generate JSON from     │
+                                   │ conversation history   │
+                                   │ Generate Diagram Code  │
+                                   │ from JSON              │
+                                   │ Provider Validate      │
+                                   │ Auto-fix (if needed)   │
+                                   │ Render SVG/PNG         │
+                                   │ Store Result           │
+                                   └────────────────────────┘
                                           ↓
                                    SSE: diagram event
                                           ↓

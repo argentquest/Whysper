@@ -1,0 +1,774 @@
+[
+  {
+    "timestamp": "14:00:56.751",
+    "step": "PHASE 1: Initial Prompt Submission",
+    "details": {
+      "action": "Starting new diagram session"
+    }
+  },
+  {
+    "timestamp": "14:00:56.751",
+    "step": "Initial Prompt Submitted",
+    "details": {
+      "session_id": "test_7a82af42-9431-42bc-88a8-be064cc5c8eb",
+      "prompt": "Create a diagram for a web application that handles user authentication, \n        data storage, and real-time notifications.",
+      "prompt_length": 124
+    }
+  },
+  {
+    "timestamp": "14:01:00.491",
+    "step": "Initial Analysis Complete",
+    "details": {
+      "status": null,
+      "message": "",
+      "clarifications_count": 0
+    }
+  },
+  {
+    "timestamp": "14:01:00.491",
+    "step": "CLARIFICATION ROUND 1",
+    "details": {
+      "action": "Submitting user clarification"
+    }
+  },
+  {
+    "timestamp": "14:01:03.511",
+    "step": "Clarification 1 Processed",
+    "details": {
+      "user_input": "The web application is built with React frontend and Node.js backend. \n                Users can reg",
+      "status": null,
+      "ai_response": "",
+      "total_clarifications": 1,
+      "graph_state": "clarifying"
+    }
+  },
+  {
+    "timestamp": "14:01:03.511",
+    "step": "CLARIFICATION ROUND 2",
+    "details": {
+      "action": "Submitting user clarification"
+    }
+  },
+  {
+    "timestamp": "14:01:06.524",
+    "step": "Clarification 2 Processed",
+    "details": {
+      "user_input": "Authentication uses JWT tokens stored in localStorage. \n                The database is PostgreSQL w",
+      "status": null,
+      "ai_response": "",
+      "total_clarifications": 2,
+      "graph_state": "clarifying"
+    }
+  },
+  {
+    "timestamp": "14:01:06.524",
+    "step": "CLARIFICATION ROUND 3",
+    "details": {
+      "action": "Submitting user clarification"
+    }
+  },
+  {
+    "timestamp": "14:01:09.524",
+    "step": "Clarification 3 Processed",
+    "details": {
+      "user_input": "The system has three main components: AuthService for login/register, \n                NotificationS",
+      "status": null,
+      "ai_response": "",
+      "total_clarifications": 3,
+      "graph_state": "clarifying"
+    }
+  },
+  {
+    "timestamp": "14:01:09.524",
+    "step": "PHASE 2: Diagram Type Selection",
+    "details": {
+      "action": "User selecting D2 diagram type"
+    }
+  },
+  {
+    "timestamp": "14:01:12.531",
+    "step": "Diagram Type Selected",
+    "details": {
+      "user_choice": "D2 diagram",
+      "status": null,
+      "message": "",
+      "graph_state": "clarifying"
+    }
+  },
+  {
+    "timestamp": "14:01:12.531",
+    "step": "PHASE 3: Diagram Code Generation",
+    "details": {
+      "action": "Waiting for LangGraph to generate diagram code"
+    }
+  },
+  {
+    "timestamp": "14:01:12.531",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "0s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:17.545",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "5s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:22.558",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "10s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:27.560",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "15s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:32.575",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "20s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:37.576",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "25s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:42.592",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "30s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:47.603",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "35s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:52.609",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "40s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:01:57.614",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "45s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:02.622",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "50s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:07.631",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "55s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:12.639",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "60s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:17.645",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "65s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:22.654",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "70s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:27.657",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "75s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:32.670",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "80s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:37.674",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "85s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:42.674",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "90s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:47.692",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "95s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:52.703",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "100s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:02:57.713",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "105s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:02.721",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "110s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:07.724",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "115s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:12.725",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "120s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:17.732",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "125s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:22.740",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "130s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:27.744",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "135s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:32.755",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "140s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:37.771",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "145s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:42.786",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "150s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:47.793",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "155s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:52.803",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "160s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:03:57.807",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "165s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:02.809",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "170s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:07.819",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "175s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:12.821",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "180s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:17.827",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "185s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:22.838",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "190s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:27.853",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "195s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:32.863",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "200s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:37.877",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "205s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:42.893",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "210s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:47.909",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "215s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:52.924",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "220s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:04:57.925",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "225s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:02.927",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "230s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:07.942",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "235s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:12.947",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "240s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:17.961",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "245s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:22.975",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "250s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:27.990",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "255s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:32.991",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "260s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:37.996",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "265s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:43.007",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "270s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:48.011",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "275s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:53.026",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "280s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:05:58.041",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "285s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:06:03.042",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "290s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:06:08.044",
+    "step": "Generation Progress Check",
+    "details": {
+      "wait_time": "295s",
+      "current_status": "unknown",
+      "message": "",
+      "has_diagram_code": false,
+      "code_length": 0
+    }
+  },
+  {
+    "timestamp": "14:06:13.052",
+    "step": "TIMEOUT: Diagram Generation",
+    "details": {
+      "timeout_after": "300s",
+      "final_status": null,
+      "final_message": ""
+    }
+  }
+]

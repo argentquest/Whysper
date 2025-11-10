@@ -5,7 +5,7 @@
  * Handles initialization, updates, and cleanup.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import DiagramApi from '../../../services/diagram/diagramApi';
 import type { DiagramStatus, DiagramUpdate } from '../../../services/diagram/diagramApi';
 
@@ -21,6 +21,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [cleanupFn, setCleanupFn] = useState<(() => void) | null>(null);
+  const lastStatusRef = useRef<string | null>(null);
 
   // Start a new diagram generation session
   const startSession = useCallback(
@@ -28,18 +29,27 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
       try {
         setLoading(true);
         setError(null);
+        lastStatusRef.current = null; // Reset on new session
 
         // Start the diagram generation
         const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType);
         setSessionId(result.session_id);
         setStatus(result.status);
+        lastStatusRef.current = result.status.status;
 
         // Start streaming updates
         const cleanup = DiagramApi.streamDiagramUpdates(
           result.session_id,
           (update) => {
-            setStatus(update);
-            options.onUpdate?.(update);
+            // Only propagate update if the status has actually changed
+            if (update.status !== lastStatusRef.current) {
+              setStatus(update);
+              options.onUpdate?.(update);
+              lastStatusRef.current = update.status;
+            } else {
+              // Still update status for things like history, but don't trigger a full phase change
+              setStatus(s => ({ ...s, ...update }));
+            }
           },
           (err) => {
             setError(err);
@@ -110,6 +120,27 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     [sessionId]
   );
 
+  // Approve render
+  const approveRender = useCallback(async () => {
+    if (!sessionId) {
+      throw new Error('No active session');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await DiagramApi.approveRender(sessionId);
+      setStatus(result);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to approve render');
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
+
   // Refresh the current session status
   const refreshStatus = useCallback(async () => {
     if (!sessionId) {
@@ -162,6 +193,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     startSession,
     submitClarification,
     renderDiagram,
+    approveRender,
     refreshStatus,
     endSession,
   };

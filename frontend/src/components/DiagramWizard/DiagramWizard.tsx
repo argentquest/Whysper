@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Button, Select, Input, Spin, Alert, message, Divider, Space, Steps } from 'antd';
+import { Layout, Button, Select, Input, Spin, Alert, message, Divider, Space, Steps, Tabs } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
@@ -43,8 +43,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false);
-  const [analysisMessage, setAnalysisMessage] = useState('');
   const [clarificationInput, setClarificationInput] = useState('');
+  const [score, setScore] = useState(0);
 
   const {
     sessionId,
@@ -54,12 +54,18 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     startSession,
     submitClarification,
     renderDiagram,
+    approveRender,
     endSession,
   } = useDiagramSession({
     onUpdate: (update) => {
       // Handle incoming updates from SSE and respect LangGraph phases
       console.log('🔄 LangGraph SSE update received:', update);
       
+      // Update score if present
+      if (update.score) {
+        setScore(update.score);
+      }
+
       // PHASE 1: Information Gathering & Analysis
       if (update.status === 'analyzing') {
         setCurrentPhase(1);
@@ -69,29 +75,39 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       } else if (update.status === 'clarifying') {
         setCurrentPhase(1);
         setIsInAnalysisPhase(true);
-        setAnalysisMessage(update.message || '');
+        if (status && update.message) {
+          status.history.push(['assistant', update.message]);
+        }
         message.info('❓ AI needs more information - please provide additional details');
         
       } else if (update.status === 'can_proceed') {
         setCurrentPhase(1);
         setIsInAnalysisPhase(true);
-        setAnalysisMessage(update.message || '');
+        if (status && update.message) {
+          status.history.push(['assistant', update.message]);
+        }
         message.success('✅ AI has sufficient information - ready to proceed!');
         
       } else if (update.status === 'type_selection') {
         setCurrentPhase(1);
         setIsInAnalysisPhase(true);
-        setAnalysisMessage(update.message || '');
+        if (status && update.message) {
+          status.history.push(['assistant', update.message]);
+        }
         message.info('🎯 AI analysis complete - please select diagram type');
         
       } else if (update.status === 'ai_thinking') {
         // AI is processing - show thinking state but don't change phase
-        setAnalysisMessage(update.message || 'AI is processing...');
+        if (status && update.message) {
+          status.history.push(['assistant', update.message]);
+        }
         message.loading('🧠 AI is thinking...');
         
       } else if (update.status === 'ai_response') {
         // AI has responded but still in same phase - update message only
-        setAnalysisMessage(update.message || '');
+        if (status && update.message) {
+          status.history.push(['assistant', update.message]);
+        }
         
       } else if (update.status === 'clarification_received') {
         // User provided clarification - wait for AI to process
@@ -510,6 +526,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
                         <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: 8 }}>
                           📊 Information Progress: {status.score_info.info_score}/3
                         </div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: 8 }}>
+                          🎯 AI Score: {score}/10
+                        </div>
                         <div style={{ display: 'flex', gap: '12px', fontSize: '12px', marginBottom: 8 }}>
                           <span style={{ color: status.score_info.entities ? '#52c41a' : '#ff4d4f' }}>
                             {status.score_info.entities ? '✅' : '❌'} Entities
@@ -613,24 +632,30 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
               <Divider type="vertical" style={{ height: '100%' }} />
 
               <div className={styles.rightPanel}>
-                <div className={styles.previewPanel}>
-                  <PreviewPanel
-                    svgOutput={status?.svgOutput || ''}
-                    diagramType={diagramType}
-                    isLoading={loading || status?.isRunning}
-                  />
-                </div>
-
-                <Divider />
-
-                <div className={styles.codePanel}>
-                  <CodeEditorPanel
-                    code={status?.diagramCode || ''}
-                    diagramType={diagramType}
-                    onChange={handleCodeChange}
-                    isLoading={loading}
-                  />
-                </div>
+                <Tabs defaultActiveKey="1" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Tabs.TabPane tab="Preview" key="1" style={{ height: '100%', overflow: 'auto' }}>
+                    <PreviewPanel
+                      svgOutput={status?.svgOutput || ''}
+                      diagramType={diagramType}
+                      isLoading={loading || status?.isRunning}
+                    />
+                  </Tabs.TabPane>
+                  <Tabs.TabPane tab="Code" key="2" style={{ height: '100%' }}>
+                    <CodeEditorPanel
+                      code={status?.diagramCode || ''}
+                      diagramType={diagramType}
+                      onChange={handleCodeChange}
+                      isLoading={loading}
+                    />
+                  </Tabs.TabPane>
+                  <Tabs.TabPane tab="JSON" key="3" style={{ height: '100%' }}>
+                    <CodeEditorPanel
+                      code={JSON.stringify(status?.jsonRepresentation, null, 2) || ''}
+                      diagramType="json"
+                      isLoading={loading}
+                    />
+                  </Tabs.TabPane>
+                </Tabs>
               </div>
             </div>
 
@@ -639,6 +664,16 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
             {/* Action buttons */}
             <div className={styles.actionBar}>
               <Space>
+                {status?.diagramCode && !status?.svgOutput && (
+                  <Button
+                    type="primary"
+                    onClick={() => approveRender()}
+                    loading={loading}
+                  >
+                    Render Diagram
+                  </Button>
+                )}
+
                 <Button
                   icon={<DownloadOutlined />}
                   onClick={handleDownloadSVG}

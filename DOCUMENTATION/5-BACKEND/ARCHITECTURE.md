@@ -218,10 +218,12 @@ The API uses a dual-path strategy for versioning:
 - `GET /languages` - Get supported programming languages
 - `POST /detect-language` - Detect programming language of code
 
-#### 4. Mermaid Endpoints (`/api/v1/mermaid/`)
-- `POST /render` - Render Mermaid diagram to SVG
-- `POST /validate` - Validate Mermaid syntax
-- `GET /themes` - Get available Mermaid themes
+### 3. Diagram Generation (`/api/v1/diagrams/`)
+- `POST /start` - Start a new diagram generation session
+- `POST /clarify` - Submit a clarification response
+- `GET /{session_id}` - Get the status of a diagram generation session
+- `GET /stream/{session_id}` - Stream real-time updates for a session
+- `POST /approve_render` - Approve a diagram for rendering
 
 #### 5. Files Endpoints (`/api/v1/files/`)
 - `POST /upload` - Upload file to conversation

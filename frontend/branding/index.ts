@@ -64,4 +64,7 @@ export const ACTIVE_BRAND = activeBrand;
 // Log the active brand on module load (only in development)
 if (import.meta.env.DEV) {
   console.log(`🎨 Active Brand: ${activeBrand}`);
+  console.log(`🎨 Brand Colors:`, BrandColors);
+  console.log(`🎨 Default Light Theme Primary:`, DefaultLightTheme.token.colorPrimary);
+  console.log(`🎨 Default Dark Theme Primary:`, DefaultDarkTheme.token.colorPrimary);
 }

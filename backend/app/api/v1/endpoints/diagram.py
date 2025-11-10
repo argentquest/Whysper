@@ -107,6 +107,30 @@ async def submit_clarification(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/approve_render")
+@log_method_call
+async def approve_render(
+    session_id: str = Body(..., embed=True),
+):
+    """
+    Approves the diagram for rendering.
+    
+    Args:
+        session_id: The session to approve for rendering
+    """
+    session = DiagramSessionStore.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        service = DiagramFactoryService(session)
+        await service.approve_render()
+        return service.get_status()
+    except Exception as e:
+        logger.error(f"Error approving render: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/render")
 @log_method_call
 async def render_diagram(

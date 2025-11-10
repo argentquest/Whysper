@@ -60,6 +60,7 @@ class GraphState(TypedDict, total=False):
 
     # Generation & Validation loop
     diagram_code: str
+    json_representation: Dict[str, Any]
     validation_error: str
     validation_error_type: str
     recovery_suggestions: List[str]
@@ -72,3 +73,4 @@ class GraphState(TypedDict, total=False):
     # State tracking
     current_state: SessionState
     error_message: Optional[str]
+    user_approved_render: bool

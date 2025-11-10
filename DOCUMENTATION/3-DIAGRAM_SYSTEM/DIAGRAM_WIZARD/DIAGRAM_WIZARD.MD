@@ -24,16 +24,27 @@ graph TD
     B --> C[Information Scoring]
     C --> D[LangGraph Workflow]
     D --> E[AI Clarification]
-    E --> F[Diagram Generation]
-    F --> G[Validation]
-    G --> H[SVG Rendering]
-    H --> I[Frontend Display]
+    E --> F[JSON Representation Generation]
+    F --> G[Diagram Generation]
+    G --> H[Validation]
+    H --> I[SVG Rendering]
+    I --> J[Frontend Display]
     
-    J[SSE Events] --> K[Real-time Updates]
-    B --> J
-    D --> J
-    F --> J
+    K[SSE Events] --> L[Real-time Updates]
+    B --> K
+    D --> K
+    F --> K
 ```
+
+## JSON-First Architecture
+
+The new architecture of the Diagram Wizard is "JSON-first". This means that the primary goal of the initial conversation with the user is to gather enough information to create a structured JSON representation of the diagram. This JSON object conforms to the schema defined in `backend/app/utils/architecture_schema.py`.
+
+Once the JSON object is created, it is used to generate the diagram code (e.g., Mermaid, D2, PlantUML). This approach has several advantages:
+
+*   **Robustness:** By separating the data from the presentation, we can ensure that the data is valid before we attempt to generate the diagram.
+*   **Flexibility:** The same JSON object can be used to generate multiple diagram types.
+*   **Extensibility:** It is easy to add new features, such as saving and loading diagrams, by working with the JSON object.
 
 ## Implementation Structure
 
@@ -44,6 +55,7 @@ graph TD
 - **`session_store.py`** - Session management
 - **`tool_config.py`** - Provider configuration abstraction
 - **`prompt_loader.py`** - Dynamic prompt loading system
+- **`architecture_schema.py`** - Defines the JSON schema for the architecture
 
 ### Service Layer (`backend/app/services/`)
 - **`diagram_factory_service.py`** - Main orchestration service
@@ -62,7 +74,7 @@ graph TD
 ### Frontend Integration (`frontend/src/components/DiagramWizard/`)
 - **`DiagramWizard.tsx`** - Main React component
 - **`useDiagramSession.ts`** - Session state management hook
-- **Panel Components** - Chat, Preview, Code Editor interfaces
+- **Panel Components** - Chat, Preview, Code Editor, and JSON panels
 - **Tab Integration** - Seamless integration with main app
 
 ## Key Design Decisions
@@ -110,6 +122,7 @@ GraphState = TypedDict:
     clarification_history: List[Dict[str, str]]
     llm_ready: bool
     final_design_summary: str
+    json_representation: Dict[str, Any]
     diagram_code: str
     svg_output: str
     current_state: str
@@ -120,11 +133,12 @@ GraphState = TypedDict:
 ### State Transitions
 1. **INITIALIZED** → Information scoring and analysis
 2. **CLARIFYING** → AI-driven requirement gathering  
-3. **GENERATING** → LLM diagram code creation
-4. **VALIDATING** → Provider-based validation
-5. **REFINING** → Error correction (if needed)
-6. **RENDERING** → SVG generation
-7. **READY** → Complete diagram available
+3. **GENERATING_JSON** → LLM JSON representation creation
+4. **GENERATING_CODE** → LLM diagram code creation
+5. **VALIDATING** → Provider-based validation
+6. **REFINING** → Error correction (if needed)
+7. **RENDERING** → SVG generation
+8. **READY** → Complete diagram available
 
 ## AI Integration Details
 

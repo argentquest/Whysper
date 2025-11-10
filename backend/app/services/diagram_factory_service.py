@@ -146,7 +146,7 @@ class DiagramFactoryService:
             session: The DiagramSession instance to manage
         """
         self.session = session
-        self.graph = get_diagram_factory_graph()  # LangGraph workflow
+        self.graph = get_diagram_factory_graph(self)  # LangGraph workflow
         self._load_keywords()
 
     def _load_keywords(self):
@@ -235,33 +235,25 @@ class DiagramFactoryService:
             diagram_type: Requested diagram type or "auto" for analysis
         """
         try:
-            # Handle auto diagram type - analyze system first
-            if diagram_type.lower() == "auto":
-                self.session.diagram_type = "auto"  # Set diagram type to auto
-                await self._analyze_system_type(initial_prompt)
-                return
-                
-            # Direct diagram generation mode
-            self.session.diagram_type = diagram_type
             self.session.history.append(("user", initial_prompt))
 
             # Initialize LangGraph state for diagram generation
             initial_state: GraphState = {
                 "design_prompt": initial_prompt,
-                "diagram_type": DiagramType(diagram_type.capitalize()),
+                "diagram_type": DiagramType(diagram_type.capitalize()) if diagram_type.lower() != "auto" else DiagramType.MERMAID,
                 "clarification_history": [
                     {"role": "user", "content": initial_prompt}
                 ],
                 "llm_ready": False,
                 "question_count": 0,
                 "refinement_attempt": 0,
-                "current_state": "initialized"
+                "current_state": "analyzing"
             }
 
             self.session.graph_state = initial_state
             await self._push_update({
                 "status": "started", 
-                "message": f"Starting {diagram_type} diagram generation..."
+                "message": "Starting diagram analysis..."
             })
             self.session.graph_task = asyncio.create_task(
                 self._run_graph_workflow(initial_state)
@@ -273,61 +265,6 @@ class DiagramFactoryService:
 
         except Exception as e:
             logger.error(f"Error: {e}")
-            self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
-
-    @log_method_call
-    async def _analyze_system_type(self, system_description: str):
-        """Analyze system description and determine information completeness.
-        
-        This method implements the intelligent analysis system that evaluates
-        whether the user has provided enough information to generate a
-        meaningful diagram. It uses a scoring system based on:
-        - Entity detection (systems, components, users)
-        - Action identification (processes, workflows)
-        - Structure recognition (relationships, architecture)
-        - Word count analysis
-        
-        Args:
-            system_description: User's system description
-        """
-        try:
-            self.session.history.append(("user", system_description))
-            await self._push_update({
-                "status": "analyzing", 
-                "message": "Analyzing your system description..."
-            })
-            
-            # Check if we have enough information to generate a diagram
-            has_enough_info, score_info = (
-                self._assess_information_completeness(system_description)
-            )
-            
-            # Always show score analysis
-            clarification_question = (
-                self._generate_clarification_question_with_score(
-                    system_description, score_info
-                )
-            )
-            self.session.clarifications.append(clarification_question)
-            
-            if has_enough_info:
-                # Has enough info - offer to proceed
-                await self._push_update({
-                    "status": "can_proceed",
-                    "message": clarification_question,
-                    "score_info": score_info
-                })
-            else:
-                # Need more info - continue clarification
-                await self._push_update({
-                    "status": "clarifying",
-                    "message": clarification_question,
-                    "score_info": score_info
-                })
-            
-        except Exception as e:
-            logger.error(f"Error analyzing system: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -396,175 +333,6 @@ class DiagramFactoryService:
         return has_enough_info, score_info
 
     @log_method_call
-    def _generate_clarification_question(self, description: str) -> str:
-        """Generate a clarifying question to get more specific information.
-        
-        This method analyzes the current description and determines what
-        type of information is missing, then generates a targeted question
-        to help gather that information.
-        
-        The questions focus on three main areas:
-        1. Entities/Components - Who/what is involved
-        2. Actions/Processes - What happens and how
-        3. Structure/Relationships - How things connect
-        
-        Args:
-            description: Current system description
-            
-        Returns:
-            str: A targeted clarification question
-        """
-        description_lower = description.lower()
-        
-        # Determine what type of clarification is needed
-        if not any(word in description_lower for word in 
-                  ["user", "system", "component", "service"]):
-            return (
-                "I need more details about the **entities/components** involved. "
-                "Could you tell me:\n"
-                "• Who are the main actors (users, systems, services)?\n"
-                "• What are the key components or systems involved?"
-            )
-        
-        elif not any(word in description_lower for word in 
-                    ["process", "flow", "create", "update", "login", "send"]):
-            return (
-                "I need more details about the **processes or interactions**. "
-                "Could you tell me:\n"
-                "• What specific actions or processes happen?\n"
-                "• How do the components interact with each other?\n"
-                "• What is the main workflow or sequence of events?"
-            )
-        
-        else:
-            return (
-                "I need more details about the **structure or relationships**. "
-                "Could you tell me:\n"
-                "• How are the components connected or related?\n"
-                "• What is the overall architecture or hierarchy?\n"
-                "• Are there any specific technologies or protocols involved?"
-            )
-
-    @log_method_call
-    def _generate_clarification_question_with_score(
-        self, description: str, score_info: dict
-    ) -> str:
-        """Generate a clarifying question with information score display.
-        
-        This method creates an enhanced clarification question that includes
-        a visual score display showing the user exactly what information
-        has been provided and what might be missing.
-        
-        The score display uses:
-        - Visual indicators (✅/❌) for each category
-        - Progress indicators (X/3 score)
-        - Word count analysis
-        - Encouraging messages based on completeness level
-        
-        Args:
-            description: Current system description
-            score_info: Information completeness scores
-            
-        Returns:
-            str: Enhanced clarification question with score display
-        """
-        
-        # Determine the status and next steps
-        if score_info['has_good_info']:
-            status_msg = (
-                "🎉 **Excellent information! Ready to generate diagram.**"
-            )
-            next_msg = (
-                "You can proceed to diagram generation, or continue adding "
-                "more details to make it even better!"
-            )
-        elif score_info['has_minimum_info']:
-            status_msg = "✅ **Good information! Can generate diagram.**"
-            next_msg = (
-                "You have enough info to proceed, or add more details "
-                "for a better diagram."
-            )
-        else:
-            status_msg = "📋 **Need more information.**"
-            next_msg = "Please provide more details to help create a better diagram."
-        
-        base_question = self._generate_clarification_question(description)
-        
-        # Create enhanced score display
-        score_display = f"""
-**📊 Information Score: {score_info['info_score']}/3** 
-
-✅ **Entities/Components**: {"✓ Found" if score_info['entities'] else "✗ Missing"}
-✅ **Actions/Processes**: {"✓ Found" if score_info['actions'] else "✗ Missing"}  
-✅ **Structure/Relationships**: {"✓ Found" if score_info['structure'] else "✗ Missing"}
-
-📝 **Detail Level**: {score_info['word_count']} words
-
-{status_msg}
-
----
-
-{next_msg if score_info['has_minimum_info'] else base_question}
-        """
-        
-        return score_display.strip()
-
-    @log_method_call
-    async def _suggest_diagram_type(self, system_description: str):
-        """Suggest appropriate diagram type based on complete information.
-        
-        This method analyzes the system description and recommends the most
-        suitable diagram type based on the content. It considers:
-        
-        - Mermaid: Best for flowcharts, sequences, user journeys
-        - D2: Best for architecture diagrams, system components
-        - PlantUML: Best for UML diagrams, database schemas
-        
-        The recommendation is based on keyword analysis and content patterns.
-        
-        Args:
-            system_description: Complete system description
-        """
-        description_lower = system_description.lower()
-        
-        # Determine best diagram type based on content
-        if any(word in description_lower for word in 
-              ["flow", "process", "step", "workflow", "sequence", "auth"]):
-            suggested_type = "Mermaid"
-            reason = "flowcharts and sequence diagrams"
-        elif any(word in description_lower for word in 
-                ["architecture", "system", "component", "service", 
-                 "microservice", "container"]):
-            suggested_type = "D2"  
-            reason = "system architecture diagrams"
-        elif any(word in description_lower for word in 
-                ["class", "uml", "entity", "relationship", "database"]):
-            suggested_type = "PlantUML"
-            reason = "UML and database diagrams"
-        else:
-            suggested_type = "Mermaid"
-            reason = "general purpose diagrams"
-            
-        # Ask user to confirm diagram type
-        question = (
-            f"Perfect! I have enough information to create your diagram.\n\n"
-            f"Based on your description, I recommend **{suggested_type}** for "
-            f"{reason}. Would you like to proceed with {suggested_type}, or "
-            f"choose a different diagram type?\n\n"
-            f"Available options:\n"
-            f"• **Mermaid** - Flowcharts, sequences, user journeys\n"
-            f"• **D2** - Architecture diagrams, system components\n" 
-            f"• **PlantUML** - UML diagrams, database schemas"
-        )
-        
-        self.session.clarifications.append(question)
-        await self._push_update({
-            "status": "type_selection",
-            "message": question,
-            "suggested_type": suggested_type
-        })
-
-    @log_method_call
     async def _run_graph_workflow(self, initial_state: GraphState):
         """Execute the LangGraph workflow for diagram generation.
         
@@ -590,6 +358,14 @@ class DiagramFactoryService:
             initial_state["_session_id"] = self.session.session_id
             
             result = await self.graph.ainvoke(initial_state)
+
+            # Check if the result is the end of the graph
+            if result.get("message") == "__end__":
+                await self._push_update({
+                    "status": "completed", 
+                    "message": "Diagram generation completed"
+                })
+                return
 
             self.session.diagram_code = result.get("diagram_code", "")
             self.session.svg_output = result.get("svg_output", "")
@@ -640,13 +416,6 @@ class DiagramFactoryService:
             self.session.history.append(("user", response))
             self.session.clarifications.append(response)
             
-            # Check if this is a diagram type selection response
-            if not self.session.diagram_type or self.session.diagram_type == "auto":
-                # Check if this is answering a clarification question or 
-                # selecting diagram type
-                await self._handle_clarification_or_type_selection(response)
-                return
-            
             if self.session.graph_state:
                 clarification_history = self.session.graph_state.get(
                     "clarification_history", []
@@ -662,190 +431,45 @@ class DiagramFactoryService:
                 "message": response
             })
 
+            # Since the graph is paused waiting for user input, we need to resume it
+            if self.session.graph_task and not self.session.graph_task.done():
+                # This is a simplified approach. In a real-world scenario, you would
+                # need a more robust way to signal the graph to continue.
+                # For this implementation, we'll re-invoke the graph with the updated state.
+                logger.info("Re-invoking graph workflow after clarification.")
+                self.session.graph_task = asyncio.create_task(
+                    self._run_graph_workflow(self.session.graph_state)
+                )
+
         except Exception as e:
             logger.error(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
     @log_method_call
-    async def _handle_clarification_or_type_selection(self, response: str):
-        """Handle either clarification response or diagram type selection.
-        
-        This method determines whether the user's response is:
-        1. A request to proceed (triggers diagram type suggestion)
-        2. A specific diagram type selection
-        3. Additional clarification information
-        
-        It uses keyword analysis and context to make this determination
-        and routes accordingly.
-        
-        Args:
-            response: User's response to analyze
-        """
+    async def approve_render(self):
+        """Approve the diagram for rendering."""
         try:
-            response_lower = response.lower()
-            
-            # Check if this is a diagram type selection or proceed command
-            if (response_lower.strip() == "proceed" or 
-                any(word in response_lower for word in 
-                    ["mermaid", "d2", "plantuml", "yes"])):
-                if response_lower.strip() == "proceed":
-                    # User wants to proceed - suggest diagram type based on current info
-                    all_info = ""
-                    for role, content in self.session.history:
-                        if role == "user":
-                            all_info += content + " "
-                    await self._suggest_diagram_type(all_info.strip())
-                else:
-                    # User is selecting a specific diagram type
-                    await self._handle_diagram_type_selection(response)
-                return
-            
-            # This is a clarification response - combine with previous info and re-analyze
-            all_info = ""
-            for role, content in self.session.history:
-                if role == "user":
-                    all_info += content + " "
-            
-            # Re-assess if we now have enough information
-            has_enough_info, score_info = (
-                self._assess_information_completeness(all_info.strip())
-            )
-            
-            # Always show score and allow user to continue or proceed
-            clarification_question = (
-                self._generate_clarification_question_with_score(
-                    all_info.strip(), score_info
-                )
-            )
-            self.session.clarifications.append(clarification_question)
-            
-            if has_enough_info:
-                # Has enough info - offer to proceed to diagram type selection
-                await self._push_update({
-                    "status": "can_proceed",
-                    "message": clarification_question,
-                    "score_info": score_info
-                })
-            else:
-                # Need more info - continue clarification
-                await self._push_update({
-                    "status": "clarifying", 
-                    "message": clarification_question,
-                    "score_info": score_info
-                })
-            
-        except Exception as e:
-            logger.error(f"Error handling clarification: {e}")
-            self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
+            if self.session.graph_state:
+                self.session.graph_state["user_approved_render"] = True
 
-    @log_method_call
-    async def _handle_diagram_type_selection(self, response: str):
-        """Handle user's diagram type selection.
-        
-        This method processes the user's diagram type selection and
-        initiates the actual diagram generation workflow. It:
-        
-        1. Parses the selected diagram type from the response
-        2. Sets up the LangGraph initial state
-        3. Starts the diagram generation task
-        
-        Args:
-            response: User's diagram type selection response
-        """
-        try:
-            response_lower = response.lower()
-            
-            # Parse diagram type from response
-            if "mermaid" in response_lower:
-                diagram_type = "Mermaid"
-            elif "d2" in response_lower:
-                diagram_type = "D2"
-            elif "plantuml" in response_lower:
-                diagram_type = "PlantUML"
-            elif ("yes" in response_lower or "proceed" in response_lower or 
-                  "ok" in response_lower):
-                # Use suggested type from last update
-                diagram_type = getattr(self.session, 'suggested_type', 'Mermaid')
-            else:
-                # Default to Mermaid if unclear
-                diagram_type = "Mermaid"
-            
-            self.session.diagram_type = diagram_type
-            
-            # Get original system description from history
-            original_prompt = ""
-            for role, content in self.session.history:
-                if role == "user":
-                    original_prompt = content
-                    break
-            
-            # Create comprehensive clarification history from all user inputs
-            comprehensive_history = [
-                {"role": "user", "content": original_prompt}
-            ]
-            
-            # Add all clarifications from the analysis phase
-            for role, content in self.session.history:
-                if role == "user" and content != original_prompt:  # Avoid duplicate
-                    comprehensive_history.append({"role": "user", "content": content})
-            
-            # Add a comprehensive summary that addresses D2-specific requirements
-            all_user_content = "\n".join([
-                msg["content"] for msg in comprehensive_history 
-            ])
-            
-            # Create a D2-focused summary that addresses all clarification criteria
-            if diagram_type.upper() == "D2":
-                summary_message = f"""Based on our conversation, here is the complete system information for the {diagram_type} diagram:
-
-SYSTEM SCOPE: {all_user_content}
-
-CORE COMPONENTS: Web application system with frontend, backend API, authentication service, database components, and user management
-EXTERNAL SYSTEMS: User clients, external authentication providers if any
-COMMUNICATION PATTERNS: HTTP REST API calls, database queries, authentication flows
-DATA FLOW: User requests -> Frontend -> Backend API -> Authentication Service -> Database and back
-TECHNOLOGY STACK: Web application architecture with authentication and database layers  
-USERS/CLIENTS: End users accessing the web application through frontend interface
-
-I have provided comprehensive information about the system architecture, all components, their relationships, communication patterns, and data flow. All clarification criteria are met. Please proceed with creating the complete {diagram_type} diagram."""
-            else:
-                summary_message = f"""Based on our conversation, I need a {diagram_type} diagram that shows: {all_user_content}
-
-I have provided detailed information about the system components, their relationships, and how they interact. Please proceed with creating the comprehensive diagram."""
-            
-            comprehensive_history.append({"role": "user", "content": summary_message})
-            
-            # Start the actual diagram generation workflow
-            # Since we already have enough information (perfect score), skip clarification
-            initial_state: GraphState = {
-                "design_prompt": original_prompt,
-                "diagram_type": DiagramType(diagram_type.capitalize()),
-                "clarification_history": comprehensive_history,
-                "llm_ready": True,  # Skip clarification since we already have enough info
-                "question_count": 0,
-                "refinement_attempt": 0,
-                "current_state": "generating",  # Start in generating state
-                "final_design_summary": summary_message  # Provide the design summary directly
-            }
-
-            self.session.graph_state = initial_state
             await self._push_update({
-                "status": "started", 
-                "message": f"Great! Starting {diagram_type} diagram generation..."
+                "status": "rendering",
+                "message": "User approved render. Starting diagram rendering..."
             })
-            
-            self.session.graph_task = asyncio.create_task(
-                self._run_graph_workflow(initial_state)
-            )
-            logger.info(
-                f"Started {diagram_type} diagram generation for session "
-                f"{self.session.session_id}"
-            )
-            
+
+            # Since the graph is paused waiting for user input, we need to resume it
+            if self.session.graph_task and not self.session.graph_task.done():
+                # This is a simplified approach. In a real-world scenario, you would
+                # need a more robust way to signal the graph to continue.
+                # For this implementation, we'll re-invoke the graph with the updated state.
+                logger.info("Re-invoking graph workflow after render approval.")
+                self.session.graph_task = asyncio.create_task(
+                    self._run_graph_workflow(self.session.graph_state)
+                )
+
         except Exception as e:
-            logger.error(f"Error handling diagram type selection: {e}")
+            logger.error(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -908,5 +532,6 @@ I have provided detailed information about the system components, their relation
             "svgOutput": self.session.svg_output,
             "errors": self.session.errors,
             "diagramType": self.session.diagram_type,
-            "isRunning": self.session.is_running
+            "isRunning": self.session.is_running,
+            "jsonRepresentation": self.session.graph_state.get("json_representation") if self.session.graph_state else None,
         }

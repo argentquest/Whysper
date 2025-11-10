@@ -456,11 +456,35 @@ export type ThemeMode = ThemeKey; // Updated to support all theme keys
 
 export const getThemeConfig = (themeKey: ThemeKey) => {
   const selectedTheme = themes[themeKey];
-  return {
+  if (!selectedTheme) {
+    console.error(`🎨 getThemeConfig: Theme "${themeKey}" not found in themes object`);
+    console.log(`🎨 Available themes:`, Object.keys(themes));
+    // Fallback to modernGradient
+    return getThemeConfig('modernGradient');
+  }
+
+  // Validate theme configuration
+  const config = {
     algorithm: selectedTheme.algorithm,
     token: selectedTheme.token,
     components: selectedTheme.components,
   };
+
+  // Basic validation
+  if (!config.token) {
+    console.error(`🎨 getThemeConfig: Theme "${themeKey}" missing token configuration`);
+  }
+  if (!config.token.colorPrimary) {
+    console.warn(`🎨 getThemeConfig: Theme "${themeKey}" missing colorPrimary token`);
+  }
+
+  console.log(`🎨 getThemeConfig: Retrieved config for theme "${themeKey}"`, {
+    hasToken: !!config.token,
+    hasComponents: !!config.components,
+    primaryColor: config.token?.colorPrimary,
+  });
+
+  return config;
 };
 
 export const getThemeList = () => {

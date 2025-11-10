@@ -12,10 +12,12 @@ Implements five core nodes:
 import tempfile
 import os
 import logging
+import json
 from typing import Dict, Any
 from .graph_state import GraphState, DiagramType
 from .prompt_loader import get_prompt
 from .tool_config import DiagramToolRunner, DiagramToolConfig
+from ..architecture_schema import ArchitectureSchema
 from common.logging_decorator import log_method_call
 from common.ai import create_ai_processor
 from common.env_manager import env_manager
@@ -28,6 +30,103 @@ except ImportError:
     PROVIDER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+@log_method_call
+async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
+    """
+    Analyzes the initial user request to decide the next step.
+
+    Calls an LLM with a specialized prompt to determine if the request
+    is clear enough to proceed with diagram generation or if clarification
+
+    is needed.
+
+    Returns:
+        - A dictionary with 'next_action' set to either 'clarify' or 'generate'.
+        - If 'clarify', a 'clarification_question' is also returned.
+        - If 'generate', a 'suggested_diagram_type' and 'reason' are returned.
+    """
+    session_id = state.get("_session_id")
+    logger.info("🔬 Analyzing initial user request...", extra={'session_id': session_id})
+
+    update_callback = state.get("_update_callback")
+    if update_callback:
+        await update_callback({
+            "status": "analyzing",
+            "message": "AI is analyzing your request...",
+        })
+
+    prompt_template = get_prompt("analyze_request")
+    if not prompt_template:
+        logger.error("analyze_request prompt not found!", extra={'session_id': session_id})
+        return {
+            "next_action": "clarify",
+            "clarification_question": "I'm having trouble understanding your request. Could you please describe the diagram you want to create in more detail?",
+            "error_message": "Internal error: analysis prompt not found."
+        }
+
+    clarification_history = state.get("clarification_history", [])
+    user_content = "\n".join([msg.get('content', '') for msg in clarification_history if msg.get('role') == 'user'])
+
+    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+
+    try:
+        ai_response = json.loads(ai_response_str)
+        action = ai_response.get("action")
+        payload = ai_response.get("payload")
+        assessment_score = ai_response.get("assessment_score")
+        architecture_json = ai_response.get("architecture_json")
+
+        # Store the architecture_json in the state, even if incomplete
+        if architecture_json:
+            state["json_representation"] = json.loads(architecture_json)
+
+        if action == "ASK_CLARIFICATION":
+            logger.info("Analysis result: Need clarification.", extra={'session_id': session_id})
+            if update_callback:
+                await update_callback({
+                    "status": "clarifying",
+                    "message": payload,
+                    "score": assessment_score,
+                })
+            return {
+                "next_action": "clarify",
+                "clarification_question": payload,
+                "clarification_history": clarification_history + [{"role": "assistant", "content": payload}],
+                "score": assessment_score,
+            }
+        elif action == "PROCEED_TO_JSON":
+            logger.info(f"Analysis result: Ready to generate JSON.", extra={'session_id': session_id})
+            if update_callback:
+                await update_callback({
+                    "status": "generating_json",
+                    "message": payload,
+                    "score": assessment_score,
+                })
+            return {
+                "next_action": "generate",
+                "final_design_summary": user_content, # Use the conversation as the summary
+                "llm_ready": True,
+                "score": assessment_score,
+            }
+        else:
+            raise ValueError(f"Invalid action from analysis AI: {action}")
+
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.error(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
+        # Fallback to clarification
+        fallback_question = "I'm not sure I understand. Could you please provide more details about the components and how they interact?"
+        if update_callback:
+            await update_callback({
+                "status": "clarifying",
+                "message": fallback_question,
+            })
+        return {
+            "next_action": "clarify",
+            "clarification_question": fallback_question,
+            "error_message": str(e),
+        }
 
 
 @log_method_call
@@ -112,6 +211,70 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None) -> s
 
 
 @log_method_call
+async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
+    """
+    Generates a structured JSON representation of the diagram.
+
+    Calls an LLM with a specialized prompt to convert the conversation
+    history into a JSON object that conforms to the architecture schema.
+
+    Returns:
+        - A dictionary with 'json_representation' containing the generated JSON.
+    """
+    session_id = state.get("_session_id")
+    logger.info("Generating JSON representation...", extra={'session_id': session_id})
+
+    update_callback = state.get("_update_callback")
+    if update_callback:
+        await update_callback({
+            "status": "generating_json",
+            "message": "AI is creating a structured representation of your diagram...",
+        })
+
+    prompt_template = get_prompt("json_generation")
+    if not prompt_template:
+        logger.error("json_generation prompt not found!", extra={'session_id': session_id})
+        return {
+            "error_message": "Internal error: JSON generation prompt not found."
+        }
+
+    clarification_history = state.get("clarification_history", [])
+    user_content = "\n".join([msg.get('content', '') for msg in clarification_history if msg.get('role') == 'user'])
+
+    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+
+    try:
+        json_representation = json.loads(ai_response_str)
+        
+        # Validate the JSON against the schema
+        is_valid, errors = ArchitectureSchema.validate(json_representation)
+        if not is_valid:
+            raise ValueError(f"Generated JSON is invalid: {errors}")
+
+        logger.info("Successfully generated and validated JSON representation.", extra={'session_id': session_id})
+        if update_callback:
+            await update_callback({
+                "status": "json_generated",
+                "message": "Successfully created structured representation.",
+            })
+
+        return {
+            "json_representation": json_representation,
+        }
+
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.error(f"Error processing JSON response from AI: {e}", extra={'session_id': session_id})
+        if update_callback:
+            await update_callback({
+                "status": "error",
+                "message": "Failed to create a structured representation of your diagram.",
+            })
+        return {
+            "error_message": str(e),
+        }
+
+
+@log_method_call
 async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     """
     Clarification loop node.
@@ -124,9 +287,12 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
         - If llm_ready: False, returns next question via SSE
     """
     # Check if we're already ready to proceed (skip clarification)
-    if state.get("llm_ready", False) and state.get("final_design_summary"):
+    # BUT only if user explicitly confirmed readiness, not AI-determined
+    if (state.get("llm_ready", False) and
+        state.get("final_design_summary") and
+        state.get("user_confirmed_ready", False)):
         session_id = state.get("_session_id")
-        logger.info("🎯 Skipping clarification - already have complete design summary", 
+        logger.info("🎯 Skipping clarification - user confirmed ready with complete design summary",
                    extra={'session_id': session_id} if session_id else {})
         return {
             "llm_ready": True,
@@ -196,10 +362,16 @@ Determine if you have enough information or need to ask more questions."""
         summary = ai_response.replace("READY:", "").strip()
         logger.info("🎯 AI determined enough information gathered - proceeding to diagram generation", 
                    extra={'session_id': session_id} if session_id else {})
+        if update_callback:
+            await update_callback({
+                "status": "ready_for_json_generation",
+                "message": "✅ AI has sufficient information. Proceeding to generate structured diagram data.",
+                "message_type": "success"
+            })
         return {
             "llm_ready": True,
             "final_design_summary": summary,
-            "current_state": "generating"
+            "current_state": "generating_json"
         }
     
     # AI wants more clarification - add response to conversation history for context
@@ -223,7 +395,7 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     """
     Code generation node.
 
-    Generates diagram code from final design summary.
+    Generates diagram code from the structured JSON representation.
     Uses diagram-type-specific generation prompt.
 
     Returns:
@@ -231,7 +403,7 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     """
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
-    design_summary = state.get("final_design_summary", "")
+    json_representation = state.get("json_representation", {})
     
     # Get code generation prompt template
     prompt_key = f"generate_{diagram_type_str.lower()}"
@@ -241,14 +413,10 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
         # Fallback prompt if specific prompt not found
         prompt_template = f"""You are a {diagram_type_str} diagram code generator.
 
-Create ONLY the diagram code based on the design summary. Do not include explanations or markdown formatting.
+Create ONLY the diagram code based on the following JSON representation. Do not include explanations or markdown formatting.
 
-For {diagram_type_str} diagrams:
-{"- Start with 'graph TD' or similar" if diagram_type_str == "Mermaid" else ""}
-{"- Use simple syntax: A -> B for connections" if diagram_type_str == "D2" else ""}
-{"- Wrap in @startuml...@enduml" if diagram_type_str == "PlantUML" else ""}
-
-Design Summary: {design_summary}
+JSON Representation:
+{json.dumps(json_representation, indent=2)}
 
 Generate clean, syntactically correct {diagram_type_str} code:"""
 
@@ -267,7 +435,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
             "message_type": "progress"
         })
     
-    ai_response = await _call_llm(prompt_template, design_summary, session_id)
+    ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id)
     
     if ai_response.startswith("ERROR:"):
         logger.error(f"AI code generation failed: {ai_response}")

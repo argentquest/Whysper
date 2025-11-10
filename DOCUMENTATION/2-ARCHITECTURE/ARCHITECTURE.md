@@ -360,30 +360,33 @@ flowchart LR
     D --> E[Schedule Background Task]
     E --> F[Return requestId<br/>Immediately]
 
-    B --> G[Background: Call LLM]
-    G --> H[Extract Diagram Code]
-    H --> I[Provider Validation]
-    I --> J{Valid?}
-    J -->|No| K[Auto-Fix Pattern]
-    K --> L{Fixed?}
-    L -->|No| M[LLM Correction]
-    M --> N[Retry Render]
-    L -->|Yes| N
-    J -->|Yes| N
-    N --> O[Render SVG/PNG]
-    O --> P[Store Result]
+    B --> G[Background: Call LLM for Clarification]
+    G --> H{Sufficient Info?}
+    H -->|No| G
+    H -->|Yes| I[Generate JSON Representation]
+    I --> J[Generate Diagram Code]
+    J --> K[Provider Validation]
+    K --> L{Valid?}
+    L -->|No| M[Auto-Fix Pattern]
+    M --> N{Fixed?}
+    N -->|No| O[LLM Correction]
+    O --> P[Retry Render]
+    N -->|Yes| P
+    L -->|Yes| P
+    P --> Q[Render SVG/PNG]
+    Q --> R[Store Result]
 
-    F --> Q[Client SSE Poll]
-    P --> Q
-    Q --> R[Send Events]
-    R --> S{Complete?}
-    S -->|Yes| T[Close Connection]
-    S -->|No| U[Keepalive]
-    U --> Q
+    F --> S[Client SSE Poll]
+    R --> S
+    S --> T[Send Events]
+    T --> U{Complete?}
+    U -->|Yes| V[Close Connection]
+    U -->|No| W[Keepalive]
+    W --> S
 
     style A fill:#e1f5fe
-    style T fill:#c8e6c9
-    style P fill:#fff9c4
+    style V fill:#c8e6c9
+    style R fill:#fff9c4
 ```
 
 ## Performance Optimizations

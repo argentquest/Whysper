@@ -1,42 +1,20 @@
 {
-  "entity_words": [
-    "user",
-    "system",
-    "database",
-    "service",
-    "component",
-    "server",
-    "api",
-    "frontend",
-    "backend",
-    "client",
-    "admin",
-    "customer"
-  ],
-  "action_words": [
-    "login",
-    "register",
-    "create",
-    "update",
-    "delete",
-    "process",
-    "send",
-    "receive",
-    "authenticate",
-    "authorize",
-    "validate",
-    "flow"
-  ],
-  "structure_words": [
-    "architecture",
-    "workflow",
-    "sequence",
-    "hierarchy",
-    "relationship",
-    "contains",
-    "connects",
-    "depends",
-    "interacts",
-    "communicates"
-  ]
+    "entity_words": [
+        "user", "system", "database", "service", "component", "server",
+        "api", "frontend", "backend", "client", "admin", "customer",
+        "application", "module", "interface", "gateway", "router",
+        "firewall", "load balancer", "cache", "queue", "worker"
+    ],
+    "action_words": [
+        "login", "register", "create", "update", "delete", "process",
+        "send", "receive", "authenticate", "authorize", "validate", "flow",
+        "request", "response", "invoke", "call", "execute", "query",
+        "subscribe", "publish", "consume", "produce", "trigger"
+    ],
+    "structure_words": [
+        "architecture", "workflow", "sequence", "hierarchy", 
+        "relationship", "contains", "connects", "depends", 
+        "interacts", "communicates", "integrates", "calls",
+        "data flow", "control flow", "network", "topology"
+    ]
 }
