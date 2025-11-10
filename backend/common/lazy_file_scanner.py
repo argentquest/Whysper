@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import hashlib
 from .file_filters import _normalize_patterns, _matches_any
 from common.logger import get_logger, log_performance
+from .logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
@@ -53,6 +54,7 @@ class LazyCodebaseScanner:
     - Memory-efficient handling of large codebases
     """
 
+    @log_method_call
     def __init__(
         self, cache_size: int = 500, max_file_size: int = 10 * 1024 * 1024  # 10MB limit (increased from 1MB)
     ) -> None:
@@ -178,6 +180,7 @@ class LazyCodebaseScanner:
         }
         logger.debug("LazyCodebaseScanner initialized with stats tracking")
 
+    @log_method_call
     @log_performance()
     def scan_directory_lazy(
         self, directory: str, progress_callback=None
@@ -319,6 +322,7 @@ class LazyCodebaseScanner:
                 scan_time=scan_time,
             )
 
+    @log_method_call
     @log_performance()
     def get_file_content_lazy(self, file_path: str, force_reload: bool = False) -> str:
         """
@@ -397,6 +401,7 @@ class LazyCodebaseScanner:
             read_time = time.time() - start_time
             self.stats["total_read_time"] += read_time
 
+    @log_method_call
     @log_performance()
     def get_codebase_content_lazy(
         self, file_paths: List[str], max_total_size: int = 100 * 1024 * 1024
@@ -472,6 +477,7 @@ class LazyCodebaseScanner:
 
         return "\n".join(content_parts)
 
+    @log_method_call
     def get_directory_stats(self, directory: str) -> Dict:
         """Get statistics about a directory without loading all content."""
         stats = {
@@ -509,6 +515,7 @@ class LazyCodebaseScanner:
 
         return stats
 
+    @log_method_call
     def clear_cache(self):
         """Clear all caches."""
         self._content_cache.clear()
@@ -516,6 +523,7 @@ class LazyCodebaseScanner:
         self._directory_scan_times.clear()
         self.stats["files_cached"] = 0
 
+    @log_method_call
     def get_cache_stats(self) -> Dict:
         """Get cache statistics."""
         return {
@@ -529,6 +537,7 @@ class LazyCodebaseScanner:
             * 100,
         }
 
+    @log_method_call
     def scan_directory(self, directory: str) -> List[str]:
         """Scan directory and return file paths (compatibility method)."""
         file_paths: List[str] = []
@@ -540,6 +549,7 @@ class LazyCodebaseScanner:
             pass
         return sorted(file_paths)
 
+    @log_method_call
     def get_relative_paths(self, files: List[str], base_directory: str) -> List[str]:
         """Convert absolute paths to relative paths."""
         relative_paths = []
@@ -551,10 +561,12 @@ class LazyCodebaseScanner:
                 relative_paths.append(os.path.basename(file_path))
         return relative_paths
 
+    @log_method_call
     def read_file_content(self, file_path: str) -> str:
         """Read file content (alias for compatibility)."""
         return self.get_file_content_lazy(file_path)
 
+    @log_method_call
     def get_codebase_content(self, files: List[str]) -> str:
         """Get combined codebase content (alias for compatibility)."""
         # Filter out ignored folders
@@ -565,6 +577,7 @@ class LazyCodebaseScanner:
         ]
         return self.get_codebase_content_lazy(filtered_files)
 
+    @log_method_call
     def validate_directory(self, directory: str) -> Tuple[bool, str]:
         """Validate directory (compatibility method)."""
         if not directory:
@@ -581,6 +594,7 @@ class LazyCodebaseScanner:
 
         return True, ""
 
+    @log_method_call
     def _is_directory_valid(self, directory: str) -> bool:
         """Check if directory is valid and accessible."""
         return (
@@ -590,11 +604,13 @@ class LazyCodebaseScanner:
             and os.access(directory, os.R_OK)
         )
 
+    @log_method_call
     def _should_skip_directory(self, directory_path: str) -> bool:
         """Check if directory should be skipped based on ignore folders."""
         path_parts = set(Path(directory_path).parts)
         return bool(path_parts.intersection(self.ignore_folders))
 
+    @log_method_call
     def _is_supported_file(self, filename: str) -> bool:
         """Check if file is supported."""
         return (
@@ -602,6 +618,7 @@ class LazyCodebaseScanner:
             or filename in self.special_files
         )
 
+    @log_method_call
     def _get_cached_directory_info(self, directory: str) -> Optional[List[FileInfo]]:
         """Get cached directory info if still valid."""
         if directory not in self._file_info_cache:
@@ -617,11 +634,13 @@ class LazyCodebaseScanner:
 
         return self._file_info_cache[directory]
 
+    @log_method_call
     def _cache_directory_info(self, directory: str, file_infos: List[FileInfo]):
         """Cache directory scan results."""
         self._file_info_cache[directory] = file_infos
         self._directory_scan_times[directory] = time.time()
 
+    @log_method_call
     def _cache_file_content(
         self, file_path: str, content: str, content_hash: str, size: int
     ):
@@ -642,6 +661,7 @@ class LazyCodebaseScanner:
         )
         self.stats["files_cached"] += 1
 
+    @log_method_call
     def _remove_from_cache(self, file_path: str):
         """Remove file from cache."""
         if file_path in self._content_cache:

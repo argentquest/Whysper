@@ -2,7 +2,7 @@
 Correction Session Management
 
 Tracks correction attempts and manages user correction workflow.
-Sessions store the history of correction attempts (pattern, LLM, user)
+Sessions store history of correction attempts (pattern, LLM, user)
 and provide a mechanism for users to manually edit and resubmit code.
 """
 
@@ -14,6 +14,7 @@ import uuid
 import logging
 
 from .models import CorrectionAttemptType, CorrectionAttempt
+from common.logging_decorator import log_method_call
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class CorrectionSession(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
+    @log_method_call
     def add_attempt(
         self,
         attempt_type: CorrectionAttemptType,
@@ -67,7 +69,7 @@ class CorrectionSession(BaseModel):
         is_valid: bool,
         error: Optional[str] = None
     ) -> CorrectionAttempt:
-        """Add a correction attempt to the session"""
+        """Add a correction attempt to session"""
         attempt = CorrectionAttempt(
             attempt_number=len(self.attempts) + 1,
             attempt_type=attempt_type,
@@ -99,16 +101,19 @@ class CorrectionSession(BaseModel):
 
         return attempt
 
+    @log_method_call
     def can_use_llm(self) -> bool:
         """Check if LLM correction can still be used"""
         return self.llm_retries_used < self.max_llm_retries
 
+    @log_method_call
     def check_expired(self) -> bool:
         """Check if session has expired"""
         if datetime.now() > self.expires_at:
             self.is_expired = True
         return self.is_expired
 
+    @log_method_call
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of the correction session"""
         return {
@@ -133,10 +138,12 @@ class CorrectionSession(BaseModel):
 class CorrectionSessionManager:
     """Manages active correction sessions"""
 
+    @log_method_call
     def __init__(self):
         self._sessions: Dict[str, CorrectionSession] = {}
         logger.info("Correction session manager initialized")
 
+    @log_method_call
     def create_session(
         self,
         provider_id: str,
@@ -176,6 +183,7 @@ class CorrectionSessionManager:
 
         return session
 
+    @log_method_call
     def get_session(self, session_id: str) -> Optional[CorrectionSession]:
         """Get a session by ID"""
         session = self._sessions.get(session_id)
@@ -186,16 +194,19 @@ class CorrectionSessionManager:
 
         return session
 
+    @log_method_call
     def update_session(self, session: CorrectionSession):
         """Update a session"""
         self._sessions[session.session_id] = session
 
+    @log_method_call
     def delete_session(self, session_id: str):
         """Delete a session"""
         if session_id in self._sessions:
             del self._sessions[session_id]
             logger.info(f"[SESSION {session_id[:8]}] Deleted")
 
+    @log_method_call
     def cleanup_expired_sessions(self):
         """Remove expired sessions"""
         expired = [
@@ -209,10 +220,12 @@ class CorrectionSessionManager:
         if expired:
             logger.info(f"Cleaned up {len(expired)} expired session(s)")
 
+    @log_method_call
     def get_active_sessions_count(self) -> int:
         """Get count of active sessions"""
         return len(self._sessions)
 
+    @log_method_call
     def get_all_sessions(self) -> List[CorrectionSession]:
         """Get all active sessions (for debugging)"""
         return list(self._sessions.values())
@@ -221,7 +234,7 @@ class CorrectionSessionManager:
 # Global singleton
 _session_manager = None
 
-
+@log_method_call
 def get_session_manager() -> CorrectionSessionManager:
     """Get the global session manager instance"""
     global _session_manager
@@ -230,7 +243,8 @@ def get_session_manager() -> CorrectionSessionManager:
     return _session_manager
 
 
+@log_method_call
 def set_session_manager(manager: CorrectionSessionManager):
-    """Set the global session manager instance (for testing)"""
+    """Set global session manager instance (for testing)"""
     global _session_manager
     _session_manager = manager

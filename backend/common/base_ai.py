@@ -44,6 +44,7 @@ from typing import List, Dict, Any, Callable, Optional, Tuple
 from .system_message_manager import system_message_manager
 from security_utils import SecurityUtils
 from app.core.config import settings
+from .logging_decorator import log_method_call
 
 
 class AIProviderConfig:
@@ -62,6 +63,7 @@ class AIProviderConfig:
 class BaseAIProvider(ABC):
     """Abstract base class for AI providers."""
 
+    @log_method_call
     def __init__(self, api_key: str = ""):
         self.api_key = api_key
         # Read VALIDATE_SSL from environment, default to True
@@ -99,18 +101,22 @@ class BaseAIProvider(ABC):
         """Handle provider-specific API errors."""
         pass
     
+    @log_method_call
     def get_provider_name(self) -> str:
         """Get the provider name."""
         return self.config.name
     
+    @log_method_call
     def set_api_key(self, api_key: str):
         """Set the API key."""
         self.api_key = api_key
     
+    @log_method_call
     def validate_api_key(self) -> bool:
         """Validate that the API key is set."""
         return bool(self.api_key)
     
+    @log_method_call
     def get_provider_info(self) -> Dict[str, Any]:
         """Get information about this provider."""
         return {
@@ -121,6 +127,7 @@ class BaseAIProvider(ABC):
             "has_api_key": bool(self.api_key)
         }
     
+    @log_method_call
     def get_secure_debug_info(self) -> Dict[str, Any]:
         """Get debug information with sensitive data masked for safe logging."""
         debug_info = {
@@ -135,6 +142,7 @@ class BaseAIProvider(ABC):
         
         return SecurityUtils.safe_debug_info(debug_info)
     
+    @log_method_call
     def create_system_message(self, codebase_content: str) -> Dict[str, str]:
         """
         Create system message with codebase content.
@@ -149,6 +157,7 @@ class BaseAIProvider(ABC):
         content = system_message_manager.get_system_message(codebase_content)
         return {"role": "system", "content": content}
     
+    @log_method_call
     def _extract_nested_value(self, data: Dict[str, Any], path: List[str], default: Any) -> Any:
         """Helper method to extract nested values safely."""
         if not path:
@@ -162,6 +171,7 @@ class BaseAIProvider(ABC):
         except (KeyError, IndexError, TypeError):
             return default
     
+    @log_method_call
     def process_question(
         self,
         question: str,
@@ -340,6 +350,7 @@ class BaseAIProvider(ABC):
                 update_callback(f"Error: {sanitized_msg}", sanitized_msg)
             raise Exception(sanitized_msg)
     
+    @log_method_call
     def process_question_async(
         self,
         question: str,

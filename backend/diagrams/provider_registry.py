@@ -2,19 +2,20 @@
 Provider Registry
 
 Auto-discovers and manages diagram providers.
-Scans the diagrams folder for provider subfolders and registers them.
+Scans diagrams folder for provider subfolders and registers them.
 """
 
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 import importlib
 import logging
-import json
 
 from .base_diagram import BaseDiagramProvider
 from .models import ProviderMetadata
 from .provider_config import ProviderConfigLoader
 from .llm_correction_service import get_llm_correction_service
+
+from common.logging_decorator import log_method_call
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,13 @@ logger = logging.getLogger(__name__)
 class ProviderRegistry:
     """
     Registry for all diagram providers.
-    Auto-discovers providers from the diagrams folder.
+    Auto-discovers providers from diagrams folder.
     """
 
+    @log_method_call
     def __init__(self, diagrams_root: Optional[Path] = None, auto_discover: bool = True):
         """
-        Initialize the provider registry.
+        Initialize provider registry.
 
         Args:
             diagrams_root: Path to diagrams folder. If None, uses default.
@@ -42,6 +44,7 @@ class ProviderRegistry:
         if auto_discover:
             self._discover_providers()
 
+    @log_method_call
     def _discover_providers(self):
         """Auto-discover providers from diagrams subfolders"""
         logger.info(f"Discovering providers in: {self.diagrams_root}")
@@ -63,14 +66,14 @@ class ProviderRegistry:
                 logger.debug(f"Skipping {provider_id} - no config.json found")
                 continue
 
-            # Try to import the provider module
+            # Try to import provider module
             try:
                 module_path = f"diagrams.{provider_id}.{self._get_renderer_module_name(provider_id)}"
                 logger.debug(f"Attempting to import: {module_path}")
 
                 module = importlib.import_module(module_path)
 
-                # Find the provider class
+                # Find provider class
                 provider_class = self._find_provider_class(module)
 
                 if provider_class:
@@ -93,9 +96,10 @@ class ProviderRegistry:
             except Exception as e:
                 logger.error(f"❌ Error loading provider {provider_id}: {e}", exc_info=True)
 
+    @log_method_call
     def _get_renderer_module_name(self, provider_id: str) -> str:
         """
-        Determine the expected module name from provider_id.
+        Determine expected module name from provider_id.
 
         Examples:
         - mermaidv1 -> mermaid_renderer
@@ -108,7 +112,7 @@ class ProviderRegistry:
         base_name = provider_id.lower()
 
         # Remove version suffix
-        base_name = base_name.replace('v1', '').replace('v2', '').replace('v3', '')
+        base_name = base_name.replace('v1', '').replace('v2', '')
 
         # Remove hyphens
         base_name = base_name.replace('-', '_')
@@ -130,8 +134,9 @@ class ProviderRegistry:
         else:
             return 'renderer'
 
+    @log_method_call
     def _find_provider_class(self, module) -> Optional[Type[BaseDiagramProvider]]:
-        """Find the provider class in the module
+        """Find provider class in module
 
         Prioritizes concrete subclasses over base classes.
         This ensures KrokiD2Provider is used instead of KrokiBaseProvider, etc.
@@ -150,8 +155,10 @@ class ProviderRegistry:
                 # Prefer concrete classes
                 if candidate is None or issubclass(attr, candidate):
                     candidate = attr
+
         return candidate
 
+    @log_method_call
     def register(self, provider: BaseDiagramProvider):
         """
         Register a provider.
@@ -162,6 +169,7 @@ class ProviderRegistry:
         self._providers[provider.provider_id] = provider
         logger.debug(f"Provider {provider.provider_id} registered successfully")
 
+    @log_method_call
     def unregister(self, provider_id: str):
         """
         Unregister a provider.
@@ -173,6 +181,7 @@ class ProviderRegistry:
             del self._providers[provider_id]
             logger.info(f"Provider {provider_id} unregistered")
 
+    @log_method_call
     def get(self, provider_id: str) -> Optional[BaseDiagramProvider]:
         """
         Get a provider by ID.
@@ -185,6 +194,7 @@ class ProviderRegistry:
         """
         return self._providers.get(provider_id)
 
+    @log_method_call
     def list_all(self) -> List[ProviderMetadata]:
         """
         List all registered providers.
@@ -194,6 +204,7 @@ class ProviderRegistry:
         """
         return [p.get_metadata() for p in self._providers.values()]
 
+    @log_method_call
     def list_available(self) -> List[ProviderMetadata]:
         """
         List only available providers.
@@ -203,6 +214,7 @@ class ProviderRegistry:
         """
         return [p.get_metadata() for p in self._providers.values() if p.is_available()]
 
+    @log_method_call
     def find_by_diagram_type(self, diagram_type: str) -> List[BaseDiagramProvider]:
         """
         Find all providers for a specific diagram type.
@@ -218,6 +230,7 @@ class ProviderRegistry:
             if p.diagram_type.lower() == diagram_type.lower() and p.is_available()
         ]
 
+    @log_method_call
     def find_by_output_format(self, output_format: str) -> List[BaseDiagramProvider]:
         """
         Find all providers that support a specific output format.
@@ -234,9 +247,10 @@ class ProviderRegistry:
             and p.is_available()
         ]
 
+    @log_method_call
     def get_default_provider(self, diagram_type: str) -> Optional[BaseDiagramProvider]:
         """
-        Get the default provider for a diagram type.
+        Get default provider for a diagram type.
         Uses preferences from root config.json, falls back to v1 providers, then first available.
 
         Args:
@@ -277,6 +291,7 @@ class ProviderRegistry:
         logger.debug(f"Using first available provider for {diagram_type}: {providers[0].provider_id}")
         return providers[0]
 
+    @log_method_call
     def reload_provider(self, provider_id: str) -> bool:
         """
         Reload a provider's configuration.
@@ -292,6 +307,7 @@ class ProviderRegistry:
             return provider.reload_config()
         return False
 
+    @log_method_call
     def get_statistics(self) -> Dict[str, any]:
         """
         Get registry statistics.
@@ -323,6 +339,7 @@ class ProviderRegistry:
 _registry = None
 
 
+@log_method_call
 def get_registry(diagrams_root: Optional[Path] = None) -> ProviderRegistry:
     """
     Get the global provider registry instance.
@@ -339,12 +356,14 @@ def get_registry(diagrams_root: Optional[Path] = None) -> ProviderRegistry:
     return _registry
 
 
+@log_method_call
 def reset_registry():
     """Reset the global registry (for testing)"""
     global _registry
     _registry = None
 
 
+@log_method_call
 def get_provider_registry(diagrams_root: Optional[Path] = None) -> ProviderRegistry:
     """
     Alias for get_registry() - for convenience.
@@ -358,6 +377,7 @@ def get_provider_registry(diagrams_root: Optional[Path] = None) -> ProviderRegis
     return get_registry(diagrams_root)
 
 
+@log_method_call
 def set_provider_registry(registry: Optional[ProviderRegistry]):
     """
     Set the global registry instance (for testing).

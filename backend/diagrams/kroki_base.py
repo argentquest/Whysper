@@ -10,12 +10,6 @@ This module provides shared functionality for all Kroki diagram providers:
 
 All Kroki providers use the same HTTP-based API to communicate with a
 local Kroki server, so this base class eliminates code duplication.
-
-Architecture:
-- HTTP-based: Sends diagram code to Kroki server via POST
-- No local dependencies: All rendering happens on Kroki server
-- Fast response: Direct API calls without CLI overhead
-- Error handling: Parses Kroki error responses
 """
 
 from pathlib import Path
@@ -30,6 +24,8 @@ from diagrams.models import (
     RenderResult
 )
 
+from common.logging_decorator import log_method_call
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,7 +37,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
     - provider_id: Unique identifier (e.g., 'krokid2')
     - provider_name: Human-readable name (e.g., 'Kroki D2 Renderer')
     - diagram_type: Primary diagram type (e.g., 'd2')
-    - diagram_endpoint: Kroki API endpoint (e.g., 'd2')
+    - diagram_endpoint: Kroki API endpoint (e.g., 'd2', 'mermaid')
     - get_llm_correction_rules(): Language-specific rules
 
     Configuration (from config.json custom settings):
@@ -51,7 +47,6 @@ class KrokiBaseProvider(BaseDiagramProvider):
     - max_retries: Max retries for failed requests (default: 3)
     """
 
-    # These should be overridden in subclasses
     @property
     def diagram_endpoint(self) -> str:
         """Kroki API endpoint for this diagram type (e.g., 'd2', 'mermaid')"""
@@ -59,6 +54,23 @@ class KrokiBaseProvider(BaseDiagramProvider):
             "Subclasses must define diagram_endpoint property"
         )
 
+    @property
+    def supported_output_formats(self) -> List[str]:
+        """Output formats: SVG (fast, vector) and PNG (rasterized)"""
+        return ["svg", "png"]
+
+    @property
+    def capabilities(self) -> List[ProviderCapability]:
+        """All Kroki providers support: validation, rendering, auto-fix, LLM correction"""
+        return [
+            ProviderCapability.VALIDATE,
+            ProviderCapability.RENDER_SVG,
+            ProviderCapability.RENDER_PNG,
+            ProviderCapability.AUTO_FIX,
+            ProviderCapability.LLM_CORRECTION
+        ]
+
+    @log_method_call
     def __init__(self, provider_folder: Path):
         """
         Initialize Kroki base provider.
@@ -84,22 +96,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
             f"{self.server_url}/{self.diagram_endpoint}"
         )
 
-    @property
-    def supported_output_formats(self) -> List[str]:
-        """Output formats: SVG (fast, vector) and PNG (rasterized)"""
-        return ["svg", "png"]
-
-    @property
-    def capabilities(self) -> List[ProviderCapability]:
-        """All Kroki providers support: validation, rendering, auto-fix, LLM correction"""
-        return [
-            ProviderCapability.VALIDATE,
-            ProviderCapability.RENDER_SVG,
-            ProviderCapability.RENDER_PNG,
-            ProviderCapability.AUTO_FIX,
-            ProviderCapability.LLM_CORRECTION
-        ]
-
+    @log_method_call
     def is_available(self) -> bool:
         """Check if Kroki server is available"""
         if self._server_available is None:
@@ -108,6 +105,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     f"{self.server_url}/health",
                     timeout=5
                 )
+
                 self._server_available = response.status_code == 200
                 if self._server_available:
                     self.logger.info(
@@ -124,6 +122,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
         return self._server_available
 
+    @log_method_call
     def get_version(self) -> Optional[str]:
         """Get Kroki service version"""
         if not self.is_available():
@@ -134,12 +133,14 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 f"{self.server_url}/version",
                 timeout=5
             )
+
             if response.status_code == 200:
                 return response.text.strip()
             return "Unknown"
         except Exception:
             return "Unknown"
 
+    @log_method_call
     def validate_code(self, code: str, **options) -> ValidationResult:
         """
         Validate diagram code using Kroki service.
@@ -190,7 +191,6 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     error=error_msg,
                     code_length=len(code)
                 )
-
         except requests.exceptions.Timeout:
             return ValidationResult(
                 is_valid=False,
@@ -206,6 +206,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 code_length=len(code)
             )
 
+    @log_method_call
     def auto_fix_pattern_based(
         self, code: str, error_message: str, **options
     ) -> ValidationResult:
@@ -214,6 +215,14 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
         This implements general fixes that work across all Kroki diagram types.
         Subclasses can override this to add diagram-specific fixes.
+
+        Args:
+            code: The invalid code
+            error_message: The error message from validation
+            **options: Provider-specific options
+
+        Returns:
+            ValidationResult with fixed code if successful
         """
         self.logger.info(
             f"Attempting pattern-based auto-fix for {self.diagram_type}..."
@@ -244,13 +253,12 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 self.logger.info(
                     f"Pattern-based fixes applied: {', '.join(corrections)}"
                 )
-            else:
-                self.logger.info("Pattern-based validation check passed")
         else:
             self.logger.debug("Pattern-based fix did not resolve errors")
 
         return validation_result
 
+    @log_method_call
     def render(
         self, code: str, output_format: str = "svg", **options
     ) -> RenderResult:
@@ -306,14 +314,10 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 # SVG is text, PNG is binary
                 if output_format == 'svg':
                     content = response.text
+                    output_size = len(content)
                 else:
                     content = response.content
-
-                output_size = len(response.content)
-                self.logger.info(
-                    f"Rendered to {output_format.upper()} "
-                    f"({output_size} bytes, {output_size/1024:.1f} KB)"
-                )
+                    output_size = len(content)
 
                 return RenderResult(
                     success=True,
@@ -347,7 +351,6 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     metadata={"server_url": self.server_url},
                     error=error_msg
                 )
-
         except requests.exceptions.Timeout:
             error_msg = (
                 f"Rendering request timed out after {self.timeout} seconds"

@@ -1,10 +1,11 @@
-"""Theme management service for the web backend."""
+"""Theme management service for web backend."""
 from __future__ import annotations
 
 import os
 from typing import List
 
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
@@ -13,15 +14,16 @@ class ThemeManager:
     """
     Simple theme manager for web backend that handles light/dark themes.
 
-    This is a simplified version of the tkinter theme manager, adapted for
+    This is a simplified version of tkinter theme manager, adapted for
     web use without GUI dependencies.
     """
 
+    @log_method_call
     def __init__(self) -> None:
         """
-        Initialize the theme manager with available themes.
+        Initialize theme manager with available themes.
 
-        Loads the user's saved theme preference from UI_THEME environment variable.
+        Loads user's saved theme preference from UI_THEME environment variable.
 
         Returns:
             None
@@ -35,6 +37,7 @@ class ThemeManager:
         # Load user's saved theme preference
         self._load_theme_preference()
 
+    @log_method_call
     def _load_theme_preference(self) -> None:
         """
         Load user's theme preference from UI_THEME environment variable.
@@ -45,12 +48,13 @@ class ThemeManager:
         if theme_pref in self.themes:
             self.current_theme_name = theme_pref
 
+    @log_method_call
     def switch_theme(self, theme_name: str) -> bool:
         """
         Switch to a specific theme by name.
 
         Args:
-            theme_name (str): Name of the theme to switch to ('light' or 'dark')
+            theme_name (str): Name of theme to switch to ('light' or 'dark')
 
         Returns:
             bool: True if theme was successfully switched, False if invalid
@@ -60,15 +64,17 @@ class ThemeManager:
             return True
         return False
 
+    @log_method_call
     def get_current_theme(self) -> str:
         """
-        Get the currently active theme name.
+        Get currently active theme name.
 
         Returns:
             str: The active theme name ('light' or 'dark')
         """
         return self.current_theme_name
 
+    @log_method_call
     def get_available_themes(self) -> List[str]:
         """
         Get list of all available theme names.
@@ -78,6 +84,7 @@ class ThemeManager:
         """
         return self.themes.copy()
 
+    @log_method_call
     def toggle_theme(self) -> bool:
         """
         Toggle between light and dark themes.

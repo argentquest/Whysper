@@ -12,6 +12,7 @@ import subprocess
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
@@ -31,6 +32,7 @@ class ExportService:
             "../../templates/export"
         )
     
+    @log_method_call
     def export_to_pdf(self, content: str, options: Dict[str, Any] = None) -> bytes:
         """
         Export documentation to PDF format.
@@ -74,6 +76,7 @@ class ExportService:
             # Return simple markdown as fallback
             return content.encode('utf-8')
     
+    @log_method_call
     def export_to_html(self, content: str, options: Dict[str, Any] = None) -> str:
         """
         Export documentation to HTML format.
@@ -121,6 +124,31 @@ class ExportService:
             </html>
             """
     
+    def export_to_markdown(self, content: str, options: Dict[str, Any] = None) -> str:
+        """
+        Export documentation to Markdown format.
+        
+        Args:
+            content: Markdown content to export
+            options: Export options
+            
+        Returns:
+            Markdown document as string
+        """
+        self.logger.info("Exporting documentation to Markdown")
+        
+        try:
+            options = options or {}
+            
+            # Just return the content as-is for markdown
+            self.logger.info("Markdown export completed successfully")
+            return content
+            
+        except Exception as e:
+            self.logger.error(f"Error exporting to Markdown: {e}")
+            return content
+    
+    @log_method_call
     def export_to_docx(self, content: str, options: Dict[str, Any] = None) -> bytes:
         """
         Export documentation to Word document format.
@@ -185,6 +213,7 @@ class ExportService:
             self.logger.error(f"Error exporting to Word document: {e}")
             return content.encode('utf-8')
     
+    @log_method_call
     def _markdown_to_html(self, content: str) -> str:
         """Convert markdown content to HTML."""
         try:
@@ -201,6 +230,7 @@ class ExportService:
                 html = content.replace('\n\n', '</p><p>').replace('\n', '<br>')
                 return f'<p>{html}</p>'
     
+    @log_method_call
     def _apply_html_template(self, content: str, template_name: str, options: Dict[str, Any]) -> str:
         """Apply HTML template to content."""
         try:
@@ -225,6 +255,7 @@ class ExportService:
             self.logger.error(f"Error applying HTML template: {e}")
             return content
     
+    @log_method_call
     def _export_to_pdf_with_reportlab(self, content: str, options: Dict[str, Any]) -> bytes:
         """Export to PDF using ReportLab as fallback."""
         try:
@@ -283,10 +314,12 @@ class ExportService:
             self.logger.error(f"Error with ReportLab PDF export: {e}")
             return content.encode('utf-8')
     
+    @log_method_call
     def get_supported_formats(self) -> List[str]:
         """Get list of supported export formats."""
         return ['markdown', 'html', 'pdf', 'docx']
     
+    @log_method_call
     def get_format_options(self, format: str) -> Dict[str, Any]:
         """Get available options for a specific format."""
         options = {

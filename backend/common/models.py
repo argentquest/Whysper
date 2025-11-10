@@ -11,6 +11,7 @@ between configuration, data transfer objects, and state management.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Any
+from .logging_decorator import log_method_call
 
 @dataclass
 class AppConfig:
@@ -35,6 +36,7 @@ class AppConfig:
     window_geometry: str
     
     @classmethod
+    @log_method_call
     def get_default(cls) -> 'AppConfig':
         """
         Create a default application configuration.
@@ -77,6 +79,7 @@ class ConversationMessage:
     role: str  
     content: str
     
+    @log_method_call
     def to_dict(self) -> Dict[str, str]:
         """
         Convert message to dictionary format for API calls.
@@ -128,6 +131,7 @@ class AppState:
     - Clean state reset capabilities
     """
     
+    @log_method_call
     def __init__(self):
         """
         Initialize application state with empty defaults.
@@ -156,6 +160,7 @@ class AppState:
         self.max_tokens: int = AppConfig.get_default().default_max_tokens
         self.temperature: float = AppConfig.get_default().default_temperature
         
+    @log_method_call
     def add_message(self, role: str, content: str):
         """
         Add a new message to the conversation history.
@@ -171,6 +176,7 @@ class AppState:
         message = ConversationMessage(role=role, content=content)
         self.conversation_history.append(message)
         
+    @log_method_call
     def clear_conversation(self):
         """
         Clear the conversation history and reset persistent state.
@@ -186,6 +192,7 @@ class AppState:
         self.persistent_selected_files = []  # Reset file context for clean start
         self.question_history = []  # Reset question history for clean start
         
+    @log_method_call
     def add_question(self, question: str) -> QuestionStatus:
         """
         Add a new question to the question history with working status.
@@ -202,7 +209,8 @@ class AppState:
         self.question_history.append(question_status)
         return question_status
         
-    def update_question_status(self, question_index: int, status: str, response: str = "", 
+    @log_method_call
+    def update_question_status(self, question_index: int, status: str, response: str = "",
                              tokens_used: int = 0, processing_time: float = 0.0, model_used: str = ""):
         """
         Update the status of a question in the history.
@@ -227,6 +235,7 @@ class AppState:
             if model_used:
                 question_status.model_used = model_used
         
+    @log_method_call
     def set_persistent_files(self, selected_files: List[str]):
         """
         Set the files that should persist across conversation turns.
@@ -241,6 +250,7 @@ class AppState:
         """
         self.persistent_selected_files = selected_files.copy()
         
+    @log_method_call
     def get_persistent_files(self) -> List[str]:
         """
         Get the files that should persist across conversation turns.
@@ -254,6 +264,7 @@ class AppState:
         """
         return self.persistent_selected_files.copy()
         
+    @log_method_call
     def get_conversation_dict(self) -> List[Dict[str, str]]:
         """
         Get conversation history formatted for API calls.

@@ -78,7 +78,7 @@ api_router.include_router(
 # ==================== Diagram Wizard Endpoints ====================
 api_router.include_router(
     diagram_wizard.router,
-    prefix="/diagram_wizard",
+    prefix="/diagram",
     tags=["diagram-wizard"],
 )
 

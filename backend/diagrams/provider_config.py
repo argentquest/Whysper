@@ -15,6 +15,8 @@ import json
 import logging
 from copy import deepcopy
 
+from common.logging_decorator import log_method_call
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +34,6 @@ class LLMCorrectionConfig(BaseModel):
     enabled: bool = True
     max_retries: int = Field(default=3, ge=0, le=10)
     temperature: float = Field(default=0.3, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=4000, ge=100, le=32000)
     model_override: Optional[str] = None
 
 
@@ -50,7 +51,7 @@ class UserCorrectionConfig(BaseModel):
 class ValidationConfig(BaseModel):
     """Validation configuration"""
     timeout_seconds: int = Field(default=120, ge=10, le=600)
-    max_code_length_bytes: int = Field(default=512000, ge=1024)
+    max_code_length_bytes: int = Field(default=512000, ge=1024, le=524288)
 
 
 class RenderingConfig(BaseModel):
@@ -77,8 +78,8 @@ class DefaultConfig(BaseModel):
 
 
 class GlobalSettings(BaseModel):
-    """Global settings that affect the entire diagram system"""
-    session_cleanup_interval_seconds: int = Field(default=300, ge=60)
+    """Global settings that affect entire diagram system"""
+    session_cleanup_interval_seconds: int = Field(default=300, ge=60, le=3600)
     max_concurrent_renders: int = Field(default=10, ge=1, le=100)
     enable_metrics: bool = True
     enable_debug_logging: bool = False
@@ -127,6 +128,7 @@ class ConfigMerger:
     """Handles merging of default config with provider overrides"""
 
     @staticmethod
+    @log_method_call
     def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
         """
         Deep merge two dictionaries.
@@ -152,6 +154,7 @@ class ConfigMerger:
         return result
 
     @staticmethod
+    @log_method_call
     def merge_configs(
         root_config: RootConfig,
         provider_config_data: Dict[str, Any]
@@ -191,18 +194,20 @@ class ConfigMerger:
 class ProviderConfigLoader:
     """Loads and merges configurations"""
 
+    @log_method_call
     def __init__(self, diagrams_root: Path):
         """
         Initialize the config loader.
 
         Args:
-            diagrams_root: Path to the diagrams folder
+            diagrams_root: Path to diagrams folder
         """
         self.diagrams_root = diagrams_root
         self.root_config = self._load_root_config()
 
+    @log_method_call
     def _load_root_config(self) -> RootConfig:
-        """Load the root config.json from diagrams folder"""
+        """Load root config.json from diagrams folder"""
         root_config_file = self.diagrams_root / "config.json"
 
         if not root_config_file.exists():
@@ -224,6 +229,7 @@ class ProviderConfigLoader:
             logger.info("Using default root configuration")
             return RootConfig()
 
+    @log_method_call
     def _save_root_config(self, config: RootConfig):
         """Save the root config.json"""
         root_config_file = self.diagrams_root / "config.json"
@@ -236,16 +242,18 @@ class ProviderConfigLoader:
                     indent=2,
                     ensure_ascii=False
                 )
+
             logger.info("Saved root configuration")
         except Exception as e:
             logger.error(f"Error saving root config: {e}")
 
+    @log_method_call
     def load_provider_config(self, provider_folder: Path) -> Optional[ProviderConfig]:
         """
         Load provider configuration by merging root defaults with provider overrides.
 
         Args:
-            provider_folder: Path to the provider folder
+            provider_folder: Path to provider folder
 
         Returns:
             Merged ProviderConfig or None if error
@@ -287,9 +295,9 @@ class ProviderConfigLoader:
             logger.error(f"Error loading provider config from {provider_config_file}: {e}")
             return None
 
+    @log_method_call
     def _create_minimal_provider_config(self, provider_id: str) -> ProviderConfig:
         """Create minimal provider config using all defaults"""
-
         # Detect diagram type from provider_id
         if 'mermaid' in provider_id.lower():
             diagram_type = 'mermaid'
@@ -314,12 +322,13 @@ class ProviderConfigLoader:
 
         return ProviderConfig(**merged_data)
 
+    @log_method_call
     def save_provider_config(
         self,
         config: ProviderConfig,
         provider_folder: Path,
         include_defaults: bool = False
-    ):
+    ) -> None:
         """
         Save provider configuration.
 
@@ -327,6 +336,7 @@ class ProviderConfigLoader:
             config: Provider configuration to save
             provider_folder: Path to provider folder
             include_defaults: If True, save full config. If False, save only overrides.
+
         """
         provider_config_file = provider_folder / "config.json"
 
@@ -344,13 +354,13 @@ class ProviderConfigLoader:
                 json.dump(config_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved config for {config.provider_id}")
-
         except Exception as e:
             logger.error(f"Error saving provider config: {e}")
 
+    @log_method_call
     def _extract_overrides(self, config: ProviderConfig) -> Dict[str, Any]:
         """
-        Extract only the values that differ from defaults.
+        Extract only values that differ from defaults.
 
         Returns:
             Dictionary with provider identity + overrides + custom
@@ -362,7 +372,7 @@ class ProviderConfigLoader:
 
         # Compare each section with defaults
         for section in ['llm_correction', 'pattern_correction', 'correction_strategy',
-                       'user_correction', 'validation', 'rendering', 'batch']:
+                        'user_correction', 'validation', 'rendering', 'batch']:
 
             if section in current and section in defaults:
                 if isinstance(current[section], dict):
@@ -370,7 +380,6 @@ class ProviderConfigLoader:
                     for key, value in current[section].items():
                         if key not in defaults[section] or defaults[section][key] != value:
                             section_overrides[key] = value
-
                     if section_overrides:
                         overrides[section] = section_overrides
                 else:
@@ -395,18 +404,17 @@ class ProviderConfigLoader:
 
         return result
 
+    @log_method_call
     def get_root_config(self) -> RootConfig:
         """Get the root configuration"""
         return self.root_config
-
-    def reload_root_config(self):
-        """Reload root configuration from disk"""
-        self.root_config = self._load_root_config()
 
 
 # Global instance
 _config_loader = None
 
+
+@log_method_call
 def get_config_loader() -> ProviderConfigLoader:
     """Get the global config loader instance"""
     global _config_loader
@@ -416,6 +424,7 @@ def get_config_loader() -> ProviderConfigLoader:
     return _config_loader
 
 
+@log_method_call
 def load_provider_config(provider_folder: Path) -> Optional[ProviderConfig]:
     """Convenience function to load provider config with defaults merged"""
     loader = get_config_loader()

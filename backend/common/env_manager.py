@@ -22,6 +22,7 @@ import os
 from typing import Dict, List, Tuple, Optional
 import re
 from common.logger import get_logger
+from .logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 from env_validator import env_validator
@@ -51,12 +52,14 @@ class EnvManager:
         env_manager.save_env_file(env_vars)
     """
 
+    @log_method_call
     def __init__(self, env_path: str = ".env"):
         self.env_path = env_path
         self.env_vars = {}
         self.comments = {}
         self.original_lines = []
 
+    @log_method_call
     def load_env_file(self) -> Dict[str, str]:
         """Load and parse the .env file."""
         self.env_vars = {}
@@ -114,6 +117,7 @@ class EnvManager:
 
         return self.env_vars
 
+    @log_method_call
     def _create_default_env(self):
         """Create a default .env file with common variables."""
         default_content = """# Code Chat with AI Configuration
@@ -157,6 +161,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
         except Exception as e:
             logger.error(f"Error creating default .env file: {e}")
 
+    @log_method_call
     def save_env_file(self, env_vars: Dict[str, str]) -> bool:
         """Save environment variables back to the .env file, always using double quotes for values."""
         try:
@@ -200,6 +205,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             logger.error(f"Error saving .env file: {e}")
             return False
 
+    @log_method_call
     def get_env_descriptions(self) -> Dict[str, str]:
         """Get descriptions for common environment variables."""
         return {
@@ -229,11 +235,13 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             "FRONT_END_TIMEOUT": "Frontend timeout in seconds for API requests (default: 120)",
         }
 
+    @log_method_call
     def validate_env_var(self, key: str, value: str) -> Tuple[bool, str]:
         """Validate an environment variable value using the comprehensive validator."""
         result = env_validator.validate(key, value)
         return result.is_valid, result.error_message
 
+    @log_method_call
     def validate_all_env_vars(
         self, env_vars: Dict[str, str]
     ) -> Dict[str, Tuple[bool, str]]:
@@ -247,11 +255,13 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
 
         return results
 
+    @log_method_call
     def get_validation_summary(self, env_vars: Dict[str, str]) -> Dict:
         """Get a comprehensive validation summary."""
         validation_results = env_validator.validate_all(env_vars)
         return env_validator.get_validation_summary(validation_results)
 
+    @log_method_call
     def get_validation_suggestions(self, env_vars: Dict[str, str]) -> List[str]:
         """Get validation suggestions for improvement."""
         validation_results = env_validator.validate_all(env_vars)
@@ -265,6 +275,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
 
         return suggestions
 
+    @log_method_call
     def update_single_var(self, key: str, value: str) -> bool:
         """Update a single environment variable and save to file."""
         try:

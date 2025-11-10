@@ -54,10 +54,13 @@ export interface Tab {
   title: string;
   isActive: boolean;
   isDirty: boolean;
-  type: 'chat' | 'file' | 'documentation';
+  type: 'chat' | 'file' | 'documentation' | 'diagramWizard' | 'archStudio';
   filePath?: string;
   fileContent?: string;
   originalContent?: string;
+  // Additional properties for new tab types
+  sessionId?: string; // For diagram wizard sessions
+  projectId?: string; // For architecture studio projects
 }
 
 export interface AppSettings {

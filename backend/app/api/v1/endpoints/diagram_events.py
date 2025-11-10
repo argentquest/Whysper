@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Any, Dict
 import logging
+from common.logging_decorator import log_method_call
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class DiagramEventPayload(BaseModel):
     summary="Log a diagram event",
     description="Log diagram-related events for debugging and analytics"
 )
+@log_method_call
 def log_diagram_event(event: DiagramEventPayload):
     """
     Log a diagram event from the frontend.

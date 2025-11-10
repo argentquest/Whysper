@@ -13,6 +13,7 @@ import asyncio
 import queue
 from typing import Set, Dict, Optional
 from datetime import datetime
+from .logging_decorator import log_method_call
 
 
 class LogBroadcaster:
@@ -35,6 +36,7 @@ class LogBroadcaster:
         return cls._instance
 
     @classmethod
+    @log_method_call
     def add_client(cls, client_queue: asyncio.Queue, session_id: Optional[str] = None):
         """
         Register a new SSE client to receive log broadcasts
@@ -48,6 +50,7 @@ class LogBroadcaster:
         print(f"📡 [LOG BROADCASTER] Client connected (session: {session_id or 'ALL'}). Total clients: {len(cls._client_sessions)}")
 
     @classmethod
+    @log_method_call
     def remove_client(cls, client_queue: asyncio.Queue):
         """Unregister an SSE client"""
         session_id = cls._client_sessions.get(client_queue, 'unknown')
@@ -154,6 +157,7 @@ class SSELoggingHandler(logging.Handler):
 log_broadcaster = LogBroadcaster()
 
 
+@log_method_call
 def setup_log_broadcasting():
     """
     Initialize log broadcasting by adding SSE handler to root logger

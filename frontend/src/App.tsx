@@ -62,6 +62,21 @@ import { FileEditorView } from './components/editor/FileEditorView';
 import { DocumentationView } from './components/documentation/DocumentationView';
 import { WelcomeScreen } from './components/welcome/WelcomeScreen';
 
+// Tab-specific components
+import { DiagramWizard } from './components/DiagramWizard/DiagramWizard';
+
+// Placeholder Architecture Studio component (to be implemented)
+const ArchitectureGenStudio = () => {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-600 mb-4">Architecture Studio</h2>
+        <p className="text-gray-500">Coming soon...</p>
+      </div>
+    </div>
+  );
+};
+
 // Terminal components  
 
 // Theme management
@@ -884,6 +899,50 @@ function App() {
     setActiveTabId(newTabId);
   };
 
+  const handleNewDiagramWizardTab = () => {
+    const newTabId = `diagram-tab-${Date.now()}`;
+    const newSessionId = `diagram-session-${Date.now()}`;
+
+    const newTab: Tab = {
+      id: newTabId,
+      conversationId: '', // Not needed for diagram wizard
+      title: `Diagram Wizard ${tabs.filter(t => t.type === 'diagramWizard').length + 1}`,
+      isActive: true,
+      isDirty: false,
+      type: 'diagramWizard',
+      sessionId: newSessionId,
+    };
+
+    setTabs(prev => [
+      ...prev.map(tab => ({ ...tab, isActive: false })),
+      newTab,
+    ]);
+    setActiveTabId(newTabId);
+    message.success('New Diagram Wizard tab created');
+  };
+
+  const handleNewArchStudioTab = () => {
+    const newTabId = `arch-tab-${Date.now()}`;
+    const newProjectId = `arch-project-${Date.now()}`;
+
+    const newTab: Tab = {
+      id: newTabId,
+      conversationId: '', // Not needed for arch studio
+      title: `Architecture Studio ${tabs.filter(t => t.type === 'archStudio').length + 1}`,
+      isActive: true,
+      isDirty: false,
+      type: 'archStudio',
+      projectId: newProjectId,
+    };
+
+    setTabs(prev => [
+      ...prev.map(tab => ({ ...tab, isActive: false })),
+      newTab,
+    ]);
+    setActiveTabId(newTabId);
+    message.success('New Architecture Studio tab created');
+  };
+
   const handleTabClose = (tabId: string) => {
     if (tabs.length <= 1) return;
 
@@ -1323,6 +1382,8 @@ function App() {
         onHelp={handleToggleHelpModal}
         onMermaidTester={() => setMermaidTesterModalOpen(true)}
         onD2Tester={() => setD2TesterModalOpen(true)}
+        onDiagramWizard={handleNewDiagramWizardTab}
+        onArchStudio={handleNewArchStudioTab}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1337,6 +1398,8 @@ function App() {
         onTabClose={handleTabClose}
         onTabSave={handleTabSave}
         onNewTab={handleNewTab}
+        onNewDiagramWizardTab={handleNewDiagramWizardTab}
+        onNewArchStudioTab={handleNewArchStudioTab}
         onTabsAction={handleTabsAction}
       />
 
@@ -1364,8 +1427,20 @@ function App() {
               onDownload={handleDownloadDocumentation}
             />
           )
+        ) : activeTab?.type === 'diagramWizard' ? (
+          // Diagram Wizard View
+          <DiagramWizard
+            onDiagramGenerated={(code: string, svg: string) => {
+              console.log('Diagram generated:', { code, svg });
+              message.success('Diagram generated successfully!');
+            }}
+            initialPrompt=""
+          />
+        ) : activeTab?.type === 'archStudio' ? (
+          // Architecture Studio View
+          <ArchitectureGenStudio />
         ) : (
-          // Chat View
+          // Chat View (default)
           <>
             <ChatView
               messages={currentMessages}
@@ -1457,6 +1532,14 @@ function App() {
       <AboutModal
         open={aboutModalOpen}
         onCancel={() => setAboutModalOpen(false)}
+        onCreateChatTab={() => {
+          handleNewTab();
+          setAboutModalOpen(false);
+        }}
+        onCreateArchStudioTab={() => {
+          handleNewArchStudioTab();
+          setAboutModalOpen(false);
+        }}
       />
 
       <SystemMessageModal

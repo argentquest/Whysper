@@ -18,6 +18,7 @@ from .models import (
     RenderResult,
     ProviderMetadata
 )
+from common.logging_decorator import log_method_call
 
 
 class BaseDiagramProvider(ABC):
@@ -25,11 +26,11 @@ class BaseDiagramProvider(ABC):
     Abstract base class for all diagram providers.
 
     ARCHITECTURE OVERVIEW:
-    The provider system is designed around the concept of self-contained, pluggable
+    The provider system is designed around concept of self-contained, pluggable
     diagram renderers. Each provider is a folder containing:
     - config.json: Provider configuration and overrides
     - {provider}_renderer.py: Implementation of BaseDiagramProvider
-    - README.md: Documentation for adding/modifying the provider
+    - README.md: Documentation for adding/modifying provider
 
     PROVIDER RESPONSIBILITIES:
     1. Validation: Check if diagram code is syntactically correct
@@ -55,7 +56,7 @@ class BaseDiagramProvider(ABC):
         - Provides clear error descriptions from CLI
 
     RENDERING PIPELINE:
-    The render_with_validation() method orchestrates the full pipeline:
+    The render_with_validation() method orchestrates full pipeline:
 
     1. Initial Validation → validate_code()
        ↓ (if invalid)
@@ -93,9 +94,10 @@ class BaseDiagramProvider(ABC):
     - Singleton: Each provider is instantiated once per registry
     """
 
+    @log_method_call
     def __init__(self, provider_folder: Path):
         """
-        Initialize the provider.
+        Initialize provider.
 
         Args:
             provider_folder: Path to the provider's folder (contains config.json)
@@ -116,6 +118,7 @@ class BaseDiagramProvider(ABC):
             f"strategy: {self.config.correction_strategy})"
         )
 
+    @log_method_call
     def _load_config(self) -> Optional[ProviderConfig]:
         """Load configuration from config.json in provider folder"""
         config = load_provider_config(self.provider_folder)
@@ -126,6 +129,7 @@ class BaseDiagramProvider(ABC):
 
         return config
 
+    @log_method_call
     def _validate_config(self):
         """Validate that config matches provider implementation"""
         if self.config.provider_id != self.provider_id:
@@ -134,6 +138,7 @@ class BaseDiagramProvider(ABC):
                 f"implementation provider_id '{self.provider_id}'"
             )
 
+    @log_method_call
     def _setup_logging(self):
         """Setup logging for this provider"""
         if hasattr(self, 'config') and self.config:
@@ -229,18 +234,19 @@ class BaseDiagramProvider(ABC):
 
     @abstractmethod
     def get_version(self) -> Optional[str]:
-        """Get the version of the underlying tool/library"""
+        """Get version of underlying tool/library"""
         pass
 
     @abstractmethod
     def is_available(self) -> bool:
-        """Check if the provider is available and properly configured"""
+        """Check if provider is available and properly configured"""
         pass
 
     # =====================================================================
     # OPTIONAL METHODS - Can be overridden for pattern-based auto-fix
     # =====================================================================
 
+    @log_method_call
     def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
         """
         Attempt pattern-based auto-fix (override in subclass for custom logic).
@@ -267,6 +273,7 @@ class BaseDiagramProvider(ABC):
             code_length=len(code)
         )
 
+    @log_method_call
     def get_llm_correction_rules(self) -> Optional[str]:
         """
         Get provider-specific rules for LLM correction.
@@ -281,14 +288,17 @@ class BaseDiagramProvider(ABC):
     # CONCRETE METHODS - Provided by base class
     # =====================================================================
 
+    @log_method_call
     def set_llm_correction_service(self, service):
-        """Set the LLM correction service for this provider"""
+        """Set LLM correction service for this provider"""
         self._llm_correction_service = service
 
+    @log_method_call
     def get_config(self) -> ProviderConfig:
-        """Get the current configuration"""
+        """Get current configuration"""
         return self.config
 
+    @log_method_call
     def reload_config(self) -> bool:
         """
         Reload configuration from config.json.
@@ -308,6 +318,7 @@ class BaseDiagramProvider(ABC):
             self.logger.error(f"Failed to reload config: {e}")
             return False
 
+    @log_method_call
     def get_metadata(self) -> ProviderMetadata:
         """Get comprehensive metadata about this provider"""
         return ProviderMetadata(
@@ -322,14 +333,17 @@ class BaseDiagramProvider(ABC):
             requires_llm=ProviderCapability.LLM_CORRECTION in self.capabilities
         )
 
+    @log_method_call
     def supports_capability(self, capability: ProviderCapability) -> bool:
         """Check if this provider supports a specific capability"""
         return capability in self.capabilities
 
+    @log_method_call
     def supports_output_format(self, output_format: str) -> bool:
         """Check if this provider supports a specific output format"""
         return output_format.lower() in [fmt.lower() for fmt in self.supported_output_formats]
 
+    @log_method_call
     def render_with_validation(
         self,
         code: str,
@@ -343,7 +357,7 @@ class BaseDiagramProvider(ABC):
         Render with automatic validation and correction (template method pattern).
 
         THIS IS THE CORE METHOD OF THE PROVIDER SYSTEM.
-        It orchestrates the complete rendering pipeline with error correction.
+        It orchestrates complete rendering pipeline with error correction.
 
         PIPELINE FLOW:
         ┌─────────────────────────────────────────────────────────────────┐
@@ -375,7 +389,7 @@ class BaseDiagramProvider(ABC):
                               ↓
                        [Code Valid?] ──Yes──> Continue
                               ↓ No
-                       Return error to user
+                        Return error to user
                               ↓
         ┌─────────────────────────────────────────────────────────────────┐
         │ 4. RENDER DIAGRAM                                                │
@@ -520,6 +534,7 @@ class BaseDiagramProvider(ABC):
 
         return render_result
 
+    @log_method_call
     def _attempt_llm_correction(
         self,
         code: str,
@@ -558,7 +573,7 @@ class BaseDiagramProvider(ABC):
                 self.logger.warning(f"[{self.provider_id}] LLM correction failed: {message}")
                 continue
 
-            # Validate the corrected code
+            # Validate corrected code
             validation_result = self.validate_code(corrected_code, **options)
 
             if validation_result.is_valid:
@@ -586,6 +601,7 @@ class BaseDiagramProvider(ABC):
             code_length=len(current_code)
         )
 
+    @log_method_call
     def _create_metadata(self, start_time: datetime) -> Dict[str, Any]:
         """Create standard metadata dictionary"""
         return {
@@ -599,6 +615,7 @@ class BaseDiagramProvider(ABC):
     # BATCH RENDERING - Optional override
     # =====================================================================
 
+    @log_method_call
     def render_batch(
         self,
         codes: List[str],

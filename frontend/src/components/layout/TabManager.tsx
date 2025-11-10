@@ -5,6 +5,9 @@ import {
   SaveOutlined,
   CloseOutlined,
   MoreOutlined,
+  MessageOutlined,
+  ProjectOutlined,
+  PartitionOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { Tab } from '../../types';
@@ -16,6 +19,8 @@ interface TabManagerProps {
   onTabClose: (tabId: string) => void;
   onTabSave: (tabId: string) => void;
   onNewTab: () => void;
+  onNewDiagramWizardTab?: () => void;
+  onNewArchStudioTab?: () => void;
   onTabsAction?: (action: string, tabId?: string) => void;
 }
 
@@ -26,6 +31,8 @@ export const TabManager: React.FC<TabManagerProps> = ({
   onTabClose,
   onTabSave,
   onNewTab,
+  onNewDiagramWizardTab,
+  onNewArchStudioTab,
   onTabsAction,
 }) => {
 
@@ -69,6 +76,30 @@ export const TabManager: React.FC<TabManagerProps> = ({
       label: 'Close All Tabs',
       onClick: () => onTabsAction?.('close-all'),
       danger: true,
+    },
+  ];
+
+  // New Tab Menu Items
+  const newTabMenuItems: MenuProps['items'] = [
+    {
+      key: 'chat',
+      label: 'New Chat',
+      icon: <MessageOutlined />,
+      onClick: () => onNewTab(),
+    },
+    {
+      key: 'diagramWizard',
+      label: 'Diagram Wizard',
+      icon: <PartitionOutlined />,
+      onClick: () => onNewDiagramWizardTab?.(),
+      disabled: !onNewDiagramWizardTab,
+    },
+    {
+      key: 'archStudio',
+      label: 'Architecture Studio',
+      icon: <ProjectOutlined />,
+      onClick: () => onNewArchStudioTab?.(),
+      disabled: !onNewArchStudioTab,
     },
   ];
 
@@ -142,17 +173,20 @@ export const TabManager: React.FC<TabManagerProps> = ({
         />
         
         <Space className="ml-4">
-          <Tooltip title="New Tab">
+          <Dropdown
+            menu={{ items: newTabMenuItems }}
+            trigger={['click']}
+            placement="bottomLeft"
+          >
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={onNewTab}
               size="small"
               className="!bg-blue-600 !border-blue-600"
             >
               New Tab
             </Button>
-          </Tooltip>
+          </Dropdown>
           
           <Tooltip title="Close Tab">
             <Button

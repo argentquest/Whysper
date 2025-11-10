@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { AgentPrompt } from '../../types';
 import { Layout, Button, Select, Typography, Tooltip, Dropdown } from 'antd';
 import {
@@ -42,6 +41,8 @@ interface HeaderProps {
   onHelp: () => void;
   onMermaidTester: () => void;
   onD2Tester: () => void;
+  onDiagramWizard: () => void;
+  onArchStudio: () => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
   onRunSystemPrompt: (systemName: string) => void;
@@ -63,13 +64,14 @@ export const Header: React.FC<HeaderProps> = ({
   onHelp,
   onMermaidTester,
   onD2Tester,
+  onDiagramWizard,
+  onArchStudio,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
   agentPrompts = [],
 }) => {
   const { theme } = useTheme();
-  const navigate = useNavigate();
 
   // Use agent prompts instead of hardcoded system options
   const systemOptions = agentPrompts.length > 0
@@ -360,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Button
               type="primary"
               icon={<DesktopOutlined />}
-              onClick={() => navigate('/studio')}
+              onClick={onArchStudio}
               size="large"
               style={{
                 background: `linear-gradient(135deg, #722ed1 0%, #9254de 100%)`,
@@ -380,7 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Button
               type="primary"
               icon={<CodeOutlined />}
-              onClick={() => navigate('/diagram-wizard')}
+              onClick={onDiagramWizard}
               size="large"
               style={{
                 background: `linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)`,

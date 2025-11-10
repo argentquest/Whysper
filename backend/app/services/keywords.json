@@ -1,0 +1,42 @@
+{
+  "entity_words": [
+    "user",
+    "system",
+    "database",
+    "service",
+    "component",
+    "server",
+    "api",
+    "frontend",
+    "backend",
+    "client",
+    "admin",
+    "customer"
+  ],
+  "action_words": [
+    "login",
+    "register",
+    "create",
+    "update",
+    "delete",
+    "process",
+    "send",
+    "receive",
+    "authenticate",
+    "authorize",
+    "validate",
+    "flow"
+  ],
+  "structure_words": [
+    "architecture",
+    "workflow",
+    "sequence",
+    "hierarchy",
+    "relationship",
+    "contains",
+    "connects",
+    "depends",
+    "interacts",
+    "communicates"
+  ]
+}

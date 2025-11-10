@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
@@ -27,8 +28,9 @@ class HistoryService:
     - Creates history directory if it doesn't exist
     """
     
+    @log_method_call
     def __init__(self, history_dir: str = None):
-        """Initialize the history service with a target directory."""
+        """Initialize history service with a target directory."""
         if history_dir is None:
             # Default to history folder in project root
             project_root = Path(__file__).parent.parent.parent.parent
@@ -43,6 +45,7 @@ class HistoryService:
         
         logger.info(f"History service initialized with directory: {self.history_dir}")
     
+    @log_method_call
     def _ensure_conversation_record(self, conversation_id: str) -> Tuple[str, str]:
         """
         Ensure we have tracking data for this conversation.
@@ -68,12 +71,13 @@ class HistoryService:
             self._conversation_start_times[conversation_id],
         )
 
+    @log_method_call
     def get_or_create_conversation_guid(self, conversation_id: str) -> str:
         """
         Get existing GUID for conversation or create a new one.
         
         Args:
-            conversation_id: The conversation ID from the frontend
+            conversation_id: The conversation ID from frontend
             
         Returns:
             str: GUID for this conversation
@@ -81,19 +85,21 @@ class HistoryService:
         guid, _ = self._ensure_conversation_record(conversation_id)
         return guid
 
+    @log_method_call
     def get_conversation_start_time(self, conversation_id: str) -> str:
         """
-        Retrieve the ISO timestamp for when the conversation started.
+        Retrieve ISO timestamp for when conversation started.
 
         Args:
-            conversation_id: The conversation ID from the frontend
+            conversation_id: The conversation ID from frontend
 
         Returns:
-            str: ISO formatted timestamp for the conversation start
+            str: ISO formatted timestamp for conversation start
         """
         _, start_time_iso = self._ensure_conversation_record(conversation_id)
         return start_time_iso
 
+    @log_method_call
     def _timestamp_prefix(self, timestamp_iso: str) -> str:
         """
         Convert an ISO timestamp into a filesystem-friendly prefix.
@@ -116,12 +122,14 @@ class HistoryService:
                 .split(".")[0]
             )
     
+    @log_method_call
     def get_history_filepath(self, conversation_id: str) -> Path:
-        """Get the file path for a conversation's history."""
+        """Get file path for a conversation's history."""
         guid, start_time_iso = self._ensure_conversation_record(conversation_id)
         timestamp_prefix = self._timestamp_prefix(start_time_iso)
         return self.history_dir / f"{timestamp_prefix}_{guid}.json"
     
+    @log_method_call
     def save_conversation_history(
         self, 
         conversation_id: str, 
@@ -134,7 +142,7 @@ class HistoryService:
         Args:
             conversation_id: The conversation ID from frontend
             messages: List of message objects with full structure
-            metadata: Optional metadata about the conversation
+            metadata: Optional metadata about conversation
             
         Returns:
             bool: True if saved successfully, False otherwise
@@ -178,6 +186,7 @@ class HistoryService:
             logger.error(f"Failed to save conversation history for {conversation_id}: {e}")
             return False
     
+    @log_method_call
     def load_conversation_history(self, conversation_id: str) -> Optional[Dict[str, Any]]:
         """
         Load conversation history from file.
@@ -213,6 +222,7 @@ class HistoryService:
             logger.error(f"Failed to load conversation history for {conversation_id}: {e}")
             return None
     
+    @log_method_call
     def list_conversation_histories(self) -> List[Dict[str, Any]]:
         """
         List all conversation history files with basic info.
@@ -248,6 +258,7 @@ class HistoryService:
         
         return histories
     
+    @log_method_call
     def delete_conversation_history(self, conversation_id: str) -> bool:
         """
         Delete conversation history file.

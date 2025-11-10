@@ -4,10 +4,12 @@ from __future__ import annotations
 import os
 from fnmatch import fnmatch
 from typing import Iterable, List, Optional, Sequence, Union
+from .logging_decorator import log_method_call
 
 PatternInput = Optional[Union[str, Sequence[str]]]
 
 
+@log_method_call
 def _normalize_patterns(patterns: PatternInput) -> List[str]:
     """Convert a pattern specification into a clean list of glob patterns."""
     if not patterns:
@@ -28,6 +30,7 @@ def _normalize_patterns(patterns: PatternInput) -> List[str]:
     return normalized
 
 
+@log_method_call
 def _matches_any(patterns: Sequence[str], file_path: str) -> bool:
     """Check whether a path matches any pattern (full path or basename)."""
     if not patterns:
@@ -40,6 +43,7 @@ def _matches_any(patterns: Sequence[str], file_path: str) -> bool:
     )
 
 
+@log_method_call
 def filter_files(
     files: Iterable[str],
     include: PatternInput = None,

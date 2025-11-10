@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from common.lazy_file_scanner import LazyCodebaseScanner, FileInfo
 from common.logger import get_logger
 from common.env_manager import env_manager
+from common.logging_decorator import log_method_call
 from security_utils import SecurityUtils
 
 logger = get_logger(__name__)
@@ -16,6 +17,7 @@ logger = get_logger(__name__)
 class FileService:
     """Wraps the existing scanners to expose REST-friendly helpers with support for external directories."""
 
+    @log_method_call
     def __init__(self, base_directory: Optional[str] = None) -> None:
         logger.info("Initializing FileService")
         self._scanner = LazyCodebaseScanner()
@@ -32,6 +34,7 @@ class FileService:
     # ------------------------------------------------------------------
     # Directory helpers
     # ------------------------------------------------------------------
+    @log_method_call
     def set_base_directory(self, directory: str) -> Dict[str, Any]:
         """
         Safely set a new base directory for file scanning.
@@ -64,10 +67,12 @@ class FileService:
                 "error": validation["error"]
             }
 
+    @log_method_call
     def get_base_directory(self) -> str:
         """Get the current base directory."""
         return self._base_directory or os.getcwd()
 
+    @log_method_call
     def validate_directory(self, directory: str) -> Dict[str, Any]:
         """
         Validate if a given directory path is safe and accessible.
@@ -87,6 +92,7 @@ class FileService:
             "error": error_message,
         }
 
+    @log_method_call
     def scan_directory(self, directory: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Return metadata for all supported files under a directory.
@@ -106,6 +112,7 @@ class FileService:
         logger.info(f"Scan complete for {scan_dir}: {len(files)} files")
         return files
 
+    @log_method_call
     def build_directory_tree(self, directory: str) -> Dict[str, Any]:
         """Return a nested tree of directories and supported files."""
         root_path = Path(directory)
@@ -139,15 +146,18 @@ class FileService:
     # ------------------------------------------------------------------
     # File content helpers
     # ------------------------------------------------------------------
+    @log_method_call
     def read_file(self, file_path: str) -> str:
         return self._scanner.read_file_content(file_path)
 
+    @log_method_call
     def read_files(self, file_paths: Iterable[str]) -> str:
         return self._scanner.get_codebase_content(list(file_paths))
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    @log_method_call
     def _ensure_directory(
         self,
         children_map: Dict[Path, Dict[str, Any]],
@@ -172,6 +182,7 @@ class FileService:
         children_map[directory] = node
         return node
 
+    @log_method_call
     def _serialize_file_info(
         self, info: FileInfo, base_directory: str
     ) -> Dict[str, Any]:
@@ -184,6 +195,7 @@ class FileService:
             "isSpecial": info.is_special,
         }
 
+    @log_method_call
     def get_folder_file_counts(self, directory: str) -> List[Dict[str, Any]]:
         """Return recursive subfolders with file counts."""
 

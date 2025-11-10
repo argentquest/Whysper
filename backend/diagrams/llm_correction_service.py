@@ -1,13 +1,15 @@
 """
 LLM Correction Service
 
-Handles LLM-based diagram code correction using the existing AI processor.
+Handles LLM-based diagram code correction using existing AI processor.
 Sends error messages to LLM and gets corrected diagram code.
 """
 
 from typing import Optional, Tuple
 import logging
 import re
+
+from common.logging_decorator import log_method_call
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +22,10 @@ class LLMCorrectionService:
     to LLM and get corrected code back.
     """
 
+    @log_method_call
     def __init__(self, ai_processor=None):
         """
-        Initialize the LLM correction service.
+        Initialize LLM correction service.
 
         Args:
             ai_processor: Optional AI processor instance. If None, will be set later.
@@ -31,12 +34,13 @@ class LLMCorrectionService:
         self._initialized = ai_processor is not None  # Initialize if processor provided
         logger.info("LLM correction service created (not yet initialized)" if ai_processor is None else "LLM correction service created with AI processor")
 
+    @log_method_call
     def initialize(self, api_key: str = None, provider: str = "openrouter"):
         """
-        Initialize the AI processor with credentials.
+        Initialize AI processor with credentials.
 
         Args:
-            api_key: API key for the LLM provider (optional if already set in env)
+            api_key: API key for LLM provider (optional if already set in env)
             provider: LLM provider name (default: "openrouter")
         """
         if self.ai_processor is None:
@@ -52,10 +56,12 @@ class LLMCorrectionService:
             self._initialized = True
             logger.info("LLM correction service using existing AI processor")
 
+    @log_method_call
     def is_available(self) -> bool:
         """Check if LLM correction service is available"""
         return self._initialized and self.ai_processor is not None
 
+    @log_method_call
     def correct_diagram_code(
         self,
         diagram_type: str,
@@ -125,6 +131,7 @@ class LLMCorrectionService:
             logger.error(f"[LLM CORRECTION] ❌ Error during correction: {e}", exc_info=True)
             return False, invalid_code, f"LLM correction failed: {str(e)}"
 
+    @log_method_call
     def _build_correction_prompt(
         self,
         diagram_type: str,
@@ -132,15 +139,15 @@ class LLMCorrectionService:
         error_message: str,
         provider_specific_rules: Optional[str]
     ) -> str:
-        """Build the correction prompt for the LLM"""
+        """Build correction prompt for LLM"""
 
         # Generic rules for all diagram types
         generic_rules = [
             "Fix ALL syntax errors completely",
-            "Maintain the original intent and structure",
-            "Keep the diagram simple and readable",
-            "Use proper syntax according to the specification",
-            "Do NOT add explanations - return ONLY the corrected code block"
+            "Maintain original intent and structure",
+            "Keep diagram simple and readable",
+            "Use proper syntax according to specification",
+            "Do NOT add explanations - return ONLY corrected code block"
         ]
 
         # Diagram-type-specific rules
@@ -168,12 +175,13 @@ class LLMCorrectionService:
 {chr(10).join(f"- {rule}" for rule in all_rules)}
 
 **INSTRUCTIONS:**
-Return ONLY the corrected ```{diagram_type} code block with ALL errors fixed.
+Return ONLY corrected ```{diagram_type} code block with ALL errors fixed.
 Do not include explanations, comments, or any text outside the code block.
 The code must be complete and valid."""
 
         return prompt
 
+    @log_method_call
     def _get_type_specific_rules(self, diagram_type: str) -> list:
         """Get diagram-type-specific correction rules"""
 
@@ -203,6 +211,7 @@ The code must be complete and valid."""
 
         return rules_map.get(diagram_type.lower(), [])
 
+    @log_method_call
     def _extract_code_from_response(self, response: str, diagram_type: str) -> Optional[str]:
         """Extract diagram code from LLM response"""
 
@@ -220,13 +229,13 @@ The code must be complete and valid."""
         matches = re.findall(pattern, response, re.DOTALL)
 
         if matches:
-            # Return the first code block
+            # Return first code block
             extracted = matches[0].strip()
             logger.debug(f"[LLM CORRECTION] Extracted code with generic fence")
             return extracted
 
         # If no code blocks found, try to find diagram-type-specific keywords
-        # and extract the portion that looks like code
+        # and extract portion that looks like code
         if diagram_type.lower() == "mermaid":
             # Look for mermaid diagram keywords
             keywords = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram',
@@ -244,7 +253,7 @@ The code must be complete and valid."""
                     logger.debug(f"[LLM CORRECTION] Extracted mermaid code by keyword detection")
                     return extracted
 
-        # Last resort: return the entire response stripped
+        # Last resort: return entire response stripped
         logger.warning("[LLM CORRECTION] No code blocks found, using full response")
         return response.strip()
 
@@ -253,6 +262,7 @@ The code must be complete and valid."""
 _llm_correction_service = None
 
 
+@log_method_call
 def get_llm_correction_service() -> LLMCorrectionService:
     """Get the global LLM correction service instance"""
     global _llm_correction_service
@@ -275,6 +285,7 @@ def get_llm_correction_service() -> LLMCorrectionService:
     return _llm_correction_service
 
 
+@log_method_call
 def set_llm_correction_service(service: LLMCorrectionService):
     """Set the global LLM correction service instance (for testing)"""
     global _llm_correction_service

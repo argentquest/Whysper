@@ -1,6 +1,5 @@
 import React from 'react';
 import { Typography, Space, Tag, Button, Divider } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import {
   GithubOutlined,
   BookOutlined,
@@ -19,10 +18,14 @@ const { Title, Text, Paragraph } = Typography;
  * @interface AboutModalProps
  * @property {boolean} open - Controls modal visibility state
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
+ * @property {() => void} onCreateChatTab - Callback to create a new chat tab
+ * @property {() => void} onCreateArchStudioTab - Callback to create a new Architecture Studio tab
  */
 interface AboutModalProps {
   open: boolean;
   onCancel: () => void;
+  onCreateChatTab?: () => void;
+  onCreateArchStudioTab?: () => void;
 }
 
 /**
@@ -48,27 +51,28 @@ interface AboutModalProps {
 export const AboutModal: React.FC<AboutModalProps> = ({
   open,
   onCancel,
+  onCreateChatTab,
+  onCreateArchStudioTab,
 }) => {
-  const navigate = useNavigate();
   const version = '2.0.0';
   const buildDate = new Date().toLocaleDateString();
 
   /**
-   * Handles navigation to the root chat interface
-   * Closes modal and navigates to the main chat page
+   * Handles creating a new chat tab
+   * Closes modal and creates a new chat tab
    */
-  const handleNavigateToRoot = () => {
+  const handleCreateChatTab = () => {
     onCancel();
-    navigate('/');
+    onCreateChatTab?.();
   };
 
   /**
-   * Handles navigation to the architecture generation studio
-   * Closes modal and navigates to the GenStudio interface
+   * Handles creating a new Architecture Studio tab
+   * Closes modal and creates a new Architecture Studio tab
    */
-  const handleNavigateToStudio = () => {
+  const handleCreateArchStudioTab = () => {
     onCancel();
-    navigate('/studio');
+    onCreateArchStudioTab?.();
   };
 
   return (
@@ -161,16 +165,18 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <Button
               type="primary"
               icon={<HomeOutlined />}
-              onClick={handleNavigateToRoot}
+              onClick={handleCreateChatTab}
+              disabled={!onCreateChatTab}
             >
-              Go to Chat
+              New Chat Tab
             </Button>
             <Button
               type="default"
               icon={<DesktopOutlined />}
-              onClick={handleNavigateToStudio}
+              onClick={handleCreateArchStudioTab}
+              disabled={!onCreateArchStudioTab}
             >
-              Go to GenStudio
+              New Studio Tab
             </Button>
           </div>
         </Space>

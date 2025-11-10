@@ -4,10 +4,12 @@ System message manager for custom AI system messages.
 import os
 from typing import Optional, List, Dict, Any
 from common.env_manager import env_manager
+from .logging_decorator import log_method_call
 
 class SystemMessageManager:
     """Manages system messages from file or default."""
 
+    @log_method_call
     def __init__(self, system_message_file: str = "systemmessage_default.txt"):
         self.system_message_file = system_message_file
 
@@ -43,6 +45,7 @@ class SystemMessageManager:
             "The user has provided the following codebase:\n\n{codebase_content}"
         )
     
+    @log_method_call
     def get_system_message(self, codebase_content: str) -> str:
         """
         Get system message, either from currently selected file or default.
@@ -67,6 +70,7 @@ class SystemMessageManager:
             # Use default system message
             return self.default_system_message.format(codebase_content=codebase_content)
     
+    @log_method_call
     def load_custom_system_message(self, filename: str = None) -> Optional[str]:
         """
         Load custom system message from file.
@@ -99,6 +103,7 @@ class SystemMessageManager:
             print(f"Error reading system message file: {e}")
             return None
     
+    @log_method_call
     def save_custom_system_message(self, message: str) -> bool:
         """
         Save custom system message to file.
@@ -122,6 +127,7 @@ class SystemMessageManager:
             print(f"Error saving system message file: {e}")
             return False
     
+    @log_method_call
     def delete_custom_system_message(self) -> bool:
         """
         Delete custom system message file to revert to default.
@@ -144,6 +150,7 @@ class SystemMessageManager:
             print(f"Error deleting system message file: {e}")
             return False
     
+    @log_method_call
     def has_custom_system_message(self) -> bool:
         """
         Check if current system message file exists and has content.
@@ -153,6 +160,7 @@ class SystemMessageManager:
         """
         return self.load_custom_system_message(self.current_message_file) is not None
     
+    @log_method_call
     def scan_system_message_files(self) -> List[str]:
         """
         Scan for all files that start with 'systemmessage'.
@@ -176,6 +184,7 @@ class SystemMessageManager:
             print(f"Error scanning for system message files: {e}")
             return []
     
+    @log_method_call
     def get_system_message_files_info(self) -> List[dict]:
         """
         Get detailed information about all system message files.
@@ -209,6 +218,7 @@ class SystemMessageManager:
         
         return file_info
     
+    @log_method_call
     def set_current_system_message_file(self, filename: str) -> bool:
         """
         Set the current system message file to use.
@@ -235,6 +245,7 @@ class SystemMessageManager:
                     return True
         return False
     
+    @log_method_call
     def get_current_system_message_file(self) -> str:
         """
         Get the currently active system message filename.
@@ -244,6 +255,7 @@ class SystemMessageManager:
         """
         return self.current_message_file
     
+    @log_method_call
     def get_display_name_for_file(self, filename: str) -> str:
         """
         Get a user-friendly display name for a system message file.
@@ -263,6 +275,7 @@ class SystemMessageManager:
         
         return display_name.title() if display_name else "Default"
     
+    @log_method_call
     def get_system_message_info(self) -> dict:
         """
         Get information about the current system message setup.
@@ -287,6 +300,7 @@ class SystemMessageManager:
                        else custom_message) if custom_message else None
         }
     
+    @log_method_call
     def create_example_system_message(self) -> str:
         """
         Create an example system message file content.
