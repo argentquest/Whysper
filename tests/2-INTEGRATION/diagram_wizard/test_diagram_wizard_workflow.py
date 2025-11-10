@@ -191,10 +191,10 @@ class DiagramWizardTester:
         self.log_step("PHASE 3: Diagram Code Generation", {
             "action": "Waiting for LangGraph to generate diagram code"
         })
-        
+
         try:
             # Wait for the graph workflow to complete
-            max_wait = 60  # 60 seconds max
+            max_wait = 300  # 300 seconds max (5 minutes for AI processing)
             wait_time = 0
             
             while wait_time < max_wait:
