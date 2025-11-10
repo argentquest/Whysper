@@ -14,7 +14,7 @@ This verifies the LangGraph phases work correctly and there are no AI feedback l
 
 import asyncio
 import json
-import time
+import uuid
 from datetime import datetime
 from typing import Dict, Any
 
@@ -24,7 +24,6 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
 from app.services.diagram_factory_service import DiagramFactoryService
-from app.utils.diagram_wizard.graph_state import DiagramType
 
 
 class DiagramWizardTester:
@@ -37,15 +36,17 @@ class DiagramWizardTester:
         
     async def setup(self):
         """Initialize the diagram factory service."""
-        print("🔧 Setting up DiagramWizard test environment...")
-        self.service = DiagramFactoryService()
-        await self.service.initialize()
-        print("✅ DiagramWizard service initialized")
+        print("[SETUP] Setting up DiagramWizard test environment...")
+        from app.services.diagram_factory_service import DiagramSession
+        session = DiagramSession(session_id="test_" + str(uuid.uuid4()))
+        self.service = DiagramFactoryService(session)
+        self.session_id = session.session_id
+        print(f"[OK] DiagramWizard service initialized with session {self.session_id}")
         
     def log_step(self, step_name: str, details: Dict[str, Any]):
         """Log a test step with timestamp."""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        print(f"\n[{timestamp}] 🔸 {step_name}")
+        print(f"\n[{timestamp}] [STEP] {step_name}")
         
         # Log details
         for key, value in details.items():
@@ -70,7 +71,7 @@ class DiagramWizardTester:
         data storage, and real-time notifications."""
         
         try:
-            await self.service.start_diagram_generation(initial_prompt)
+            await self.service.start_generation(initial_prompt, "d2")
             self.session_id = self.service.session.session_id
             
             self.log_step("Initial Prompt Submitted", {
@@ -275,10 +276,10 @@ class DiagramWizardTester:
     def print_test_summary(self, success: bool):
         """Print a comprehensive test summary."""
         print("\n" + "="*80)
-        print("🧪 DIAGRAM WIZARD WORKFLOW TEST SUMMARY")
+        print("[TEST] DIAGRAM WIZARD WORKFLOW TEST SUMMARY")
         print("="*80)
         
-        print(f"Overall Result: {'✅ PASSED' if success else '❌ FAILED'}")
+        print(f"Overall Result: {'[OK] PASSED' if success else '[FAIL] FAILED'}")
         print(f"Session ID: {self.session_id}")
         print(f"Total Test Steps: {len(self.test_results)}")
         print(f"Test Duration: {len(self.test_results) * 3}+ seconds")
@@ -286,7 +287,7 @@ class DiagramWizardTester:
         # Session state summary
         if self.service and self.service.session:
             session = self.service.session
-            print(f"\n📊 Final Session State:")
+            print(f"\n[STATS] Final Session State:")
             print(f"  Clarifications: {len(session.clarifications)}")
             print(f"  History Entries: {len(session.history)}")
             print(f"  Errors: {len(session.errors)}")
@@ -299,74 +300,74 @@ class DiagramWizardTester:
                 print(f"  Question Count: {session.graph_state.get('question_count', 0)}")
         
         # Detailed step breakdown
-        print(f"\n📝 Test Step Details:")
+        print(f"\n[DETAILS] Test Step Details:")
         for i, result in enumerate(self.test_results, 1):
-            status_icon = "✅" if "ERROR" not in result["step"] else "❌"
+            status_icon = "[OK]" if "ERROR" not in result["step"] else "[FAIL]"
             print(f"  {i:2d}. {status_icon} [{result['timestamp']}] {result['step']}")
         
         # Success criteria check
-        print(f"\n🎯 Success Criteria:")
+        print(f"\n[CRITERIA] Success Criteria:")
         has_initial = any("Initial Prompt" in r["step"] for r in self.test_results)
         has_clarifications = any("Clarification" in r["step"] for r in self.test_results)
         has_type_selection = any("Type Selection" in r["step"] for r in self.test_results)
         has_generation = any("Generation Complete" in r["step"] for r in self.test_results)
         has_rendering = any("Rendering Complete" in r["step"] for r in self.test_results)
         
-        print(f"  Initial Prompt: {'✅' if has_initial else '❌'}")
-        print(f"  Clarifications: {'✅' if has_clarifications else '❌'}")
-        print(f"  Type Selection: {'✅' if has_type_selection else '❌'}")
-        print(f"  Code Generation: {'✅' if has_generation else '❌'}")
-        print(f"  SVG Rendering: {'✅' if has_rendering else '❌'}")
+        print(f"  Initial Prompt: {'[OK]' if has_initial else '[FAIL]'}")
+        print(f"  Clarifications: {'[OK]' if has_clarifications else '[FAIL]'}")
+        print(f"  Type Selection: {'[OK]' if has_type_selection else '[FAIL]'}")
+        print(f"  Code Generation: {'[OK]' if has_generation else '[FAIL]'}")
+        print(f"  SVG Rendering: {'[OK]' if has_rendering else '[FAIL]'}")
         
         print("\n" + "="*80)
 
 
 async def main():
     """Run the complete DiagramWizard workflow test."""
-    print("🚀 Starting DiagramWizard Workflow Test")
+    print("[START] Starting DiagramWizard Workflow Test")
     print("This will test the complete LangGraph workflow without frontend")
     print("-" * 60)
-    
+
     tester = DiagramWizardTester()
     success = True
-    
+
     try:
         # Setup
         await tester.setup()
-        
+
         # Phase 1: Initial prompt and clarifications
         if success:
             success = await tester.test_initial_prompt()
-        
+
         if success:
             success = await tester.test_clarification_rounds()
-        
+
         if success:
             success = await tester.test_diagram_type_selection()
-        
-        # Phase 2: Generation 
+
+        # Phase 2: Generation
         if success:
             success = await tester.test_diagram_generation()
-        
+
         # Phase 3: Rendering
         if success:
             success = await tester.test_diagram_rendering()
-        
+
         # Summary
         tester.print_test_summary(success)
-        
+
         # Save detailed results to file
         results_file = f"test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(results_file, 'w') as f:
             json.dump(tester.test_results, f, indent=2)
-        print(f"\n💾 Detailed test results saved to: {results_file}")
-        
+        print(f"\n[SAVE] Detailed test results saved to: {results_file}")
+
     except KeyboardInterrupt:
-        print("\n\n⚠️ Test interrupted by user")
+        print("\n\n[WARNING] Test interrupted by user")
         tester.print_test_summary(False)
-        
+
     except Exception as e:
-        print(f"\n\n❌ Test failed with exception: {e}")
+        print(f"\n\n[ERROR] Test failed with exception: {e}")
         tester.print_test_summary(False)
         raise
 
