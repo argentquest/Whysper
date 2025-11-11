@@ -292,26 +292,24 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
             "current_state": "generating"
         }
     
-    diagram_type = state.get("diagram_type", DiagramType.MERMAID)
-    diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
     clarification_history = state.get("clarification_history", [])
     clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
-    
-    # Get clarification prompt template
-    prompt_key = f"clarify_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(prompt_key)
-    
+
+    # Get unified clarification prompt template
+    prompt_template = get_prompt("clarify_universal")
+
     if not prompt_template:
         # Fallback prompt if specific prompt not found
-        prompt_template = f"""You are a diagram design assistant for {diagram_type_str} diagrams.
+        prompt_template = """You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
 
-Your task is to interview the user to gather enough information to create a detailed {diagram_type_str} diagram.
-
-CRITICAL INSTRUCTIONS:
-1. If you have enough detailed information to create a comprehensive diagram, respond with "READY:" followed by a detailed design summary
-2. If you need more information, ask ONE specific clarifying question
-3. Focus on gathering: entities/components, relationships/connections, processes/flows, and technical details
+INSTRUCTIONS:
+1. Ask ONE clarifying question per turn to understand system components and connections
+2. After each user response, provide a clarity_score (1-10)
+3. Update the json_representation with new information
+4. Respond ONLY in JSON format with: question, clarity_score, ready, json_representation
+5. Mark ready=true when clarity_score >= 8 and you have sufficient detail
+6. When ready, include design_summary with "READY:" prefix
 
 Conversation history: {clarification_history}
 

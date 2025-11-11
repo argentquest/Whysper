@@ -15,7 +15,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(timeout 360 \".venv/Scripts/python.exe\":*)"
+      "Bash(timeout 360 \".venv/Scripts/python.exe\":*)",
+      "Bash(dir:*)",
+      "Bash(\".venv\\Scripts\\python.exe\":*)",
+      "Bash(\".venv\\Scripts\\python.exe\" -c \"from backend.app.utils.diagram_wizard.keyword_scorer import determine_diagram_type; print(''✓ keyword_scorer imports OK'')\")",
+      "Bash(\"..\\..\\..\\..\\.venv\\Scripts\\python.exe\" -c \"\nfrom keyword_scorer import KeywordScorer, determine_diagram_type\n\n# Test the keyword scorer\ntext = ''I need a flowchart showing the user registration process with decision points for validation and approval''\ndiagram_type, scores = determine_diagram_type(text)\nprint(f''Selected: {diagram_type.value}'')\nprint(f''Scores: {scores}'')\n\")",
+      "Bash(\".venv\\Scripts\\python.exe\" test_keyword_scorer.py)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m py_compile backend/app/utils/diagram_wizard/keyword_scorer.py)",
+      "Bash(\".venv\\Scripts\\python.exe\" -c \"\nfrom backend.app.utils.diagram_wizard.keyword_scorer import determine_diagram_type\nfrom backend.app.utils.diagram_wizard.graph_state import GraphState, DiagramType\nfrom backend.app.utils.diagram_wizard.nodes import analyze_request, clarify_prompt, determine_diagram_type_node\nprint(''✓ All imports successful'')\nprint(''✓ DiagramType enum:'', list(DiagramType))\nprint(''✓ GraphState TypedDict available'')\nprint(''✓ All nodes imported correctly'')\n\")"
     ],
     "deny": [],
     "ask": []

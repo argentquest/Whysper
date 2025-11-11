@@ -37,15 +37,11 @@ def load_prompts() -> Dict[str, str]:
     if json_gen_path.exists():
         _prompt_cache["json_generation"] = _load_full_file(json_gen_path)
 
-    # Load clarification prompts
+    # Load clarification prompts (unified universal prompt)
     clarify_path = prompt_dir / "CLARIFY_PROMPTS.md"
     if clarify_path.exists():
-        _prompt_cache["clarify_mermaid"] = _extract_section(
-            clarify_path, "Mermaid Prompts"
-        )
-        _prompt_cache["clarify_d2"] = _extract_section(clarify_path, "D2 Prompts")
-        _prompt_cache["clarify_plantuml"] = _extract_section(
-            clarify_path, "PlantUML Prompts"
+        _prompt_cache["clarify_universal"] = _extract_section(
+            clarify_path, "Universal Clarification Prompt"
         )
 
     # Load generation prompts
