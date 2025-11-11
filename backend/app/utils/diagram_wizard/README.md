@@ -63,11 +63,12 @@ Seven core LangGraph nodes (async functions):
 
 2. **clarify_prompt**
    - Iterative user clarification loop
-   - Calls LLM with clarification prompts (Mermaid/D2/PlantUML specific)
+   - Combines ANALYZE_PROMPT (schema context) + CLARIFY_PROMPTS (loop guidance) for each turn
    - LLM returns clarity_score (1-10) for each turn
    - Tracks clarity_scores list across all turns
    - Sets `llm_ready` flag when clarity_score >= 8
    - Returns: json_representation, final_design_summary, clarity_scores
+   - **Context**: Each LLM call includes full schema (~9.3KB) to prevent constraint forgetting
 
 3. **determine_diagram_type**
    - Runs after clarification completes (when llm_ready=True)
@@ -149,11 +150,12 @@ All LLM prompts stored as markdown files (NOT hardcoded):
    - Returns: payload, assessment_score, architecture_json
 
 2. **CLARIFY_PROMPTS.md**
-   - Mermaid, D2, PlantUML-specific clarification instructions
+   - Universal clarification prompt (combined with ANALYZE_PROMPT for schema context)
    - One question per turn
    - Clarity scoring (1-10) and JSON evolution
    - Readiness criteria (clarity_score >= 8)
    - Returns: question, clarity_score, ready, json_representation, design_summary
+   - **Note**: In clarify_prompt node, this is combined with ANALYZE_PROMPT to provide persistent schema context
 
 3. **GENERATE_PROMPTS.md**
    - Instructions for code generation
@@ -221,6 +223,17 @@ END (svg_output ready)
 - Keyword scoring is automatic (no user input needed for diagram type selection)
 
 ## Recent Enhancements
+
+### Persistent Schema Context in Clarification Loop
+
+- ANALYZE_PROMPT combined with CLARIFY_PROMPTS in each clarification turn
+- LLM sees full schema definition (~7KB) + clarification guidance (~2KB) per turn
+- Benefits:
+  - Prevents LLM from forgetting schema constraints between turns
+  - Ensures consistent enum matching (component types, protocols)
+  - Maintains awareness of required vs. optional fields
+  - Provides component ID auto-generation rules on every turn
+  - ~9.3KB context overhead per turn (acceptable for clarity/consistency tradeoff)
 
 ### Clarity Score Tracking
 
