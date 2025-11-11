@@ -16,6 +16,7 @@ import json
 from typing import Dict, Any
 from .graph_state import GraphState, DiagramType
 from .prompt_loader import get_prompt
+from .keyword_scorer import determine_diagram_type
 from .tool_config import DiagramToolRunner, DiagramToolConfig
 from ..architecture_schema import ArchitectureSchema
 from common.logging_decorator import log_method_call
@@ -73,45 +74,36 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
     try:
         ai_response = json.loads(ai_response_str)
-        action = ai_response.get("action")
         payload = ai_response.get("payload")
         assessment_score = ai_response.get("assessment_score")
         architecture_json = ai_response.get("architecture_json")
 
         # Store the architecture_json in the state, even if incomplete
         if architecture_json:
-            state["json_representation"] = json.loads(architecture_json)
+            try:
+                state["json_representation"] = json.loads(architecture_json)
+            except json.JSONDecodeError as json_err:
+                logger.warning(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
+                state["json_representation"] = {}
 
-        if action == "ASK_CLARIFICATION":
-            logger.info("Analysis result: Need clarification.", extra={'session_id': session_id})
-            if update_callback:
-                await update_callback({
-                    "status": "clarifying",
-                    "message": payload,
-                    "score": assessment_score,
-                })
-            return {
-                "next_action": "clarify",
-                "clarification_question": payload,
-                "clarification_history": clarification_history + [{"role": "assistant", "content": payload}],
-                "score": assessment_score,
-            }
-        elif action == "PROCEED_TO_JSON":
-            logger.info(f"Analysis result: Ready to generate JSON.", extra={'session_id': session_id})
-            if update_callback:
-                await update_callback({
-                    "status": "generating_json",
-                    "message": payload,
-                    "score": assessment_score,
-                })
-            return {
-                "next_action": "generate",
-                "final_design_summary": user_content, # Use the conversation as the summary
-                "llm_ready": True,
-                "score": assessment_score,
-            }
-        else:
-            raise ValueError(f"Invalid action from analysis AI: {action}")
+        # ANALYZE phase always shows results and moves to CLARIFY loop
+        logger.info(f"Analysis complete: LLM score {assessment_score}/10", extra={'session_id': session_id})
+
+        if update_callback:
+            await update_callback({
+                "status": "analysis_complete",
+                "message": payload,
+                "assessment_score": assessment_score,
+                "json_representation": state.get("json_representation", {}),
+            })
+
+        return {
+            "next_action": "clarify",
+            "assessment_score": assessment_score,
+            "json_representation": state.get("json_representation", {}),
+            "clarification_history": clarification_history + [{"role": "assistant", "content": payload}],
+            "current_state": "clarifying",
+        }
 
     except (json.JSONDecodeError, ValueError) as e:
         logger.error(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
@@ -303,6 +295,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
     clarification_history = state.get("clarification_history", [])
+    clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
     
     # Get clarification prompt template
@@ -342,51 +335,159 @@ Determine if you have enough information or need to ask more questions."""
     session_id = state.get("_session_id")
     
     # Call AI for clarification decision
-    logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1}", 
+    logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1}",
                extra={'session_id': session_id} if session_id else {})
-    logger.info(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}", 
+    logger.info(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
                extra={'session_id': session_id} if session_id else {})
-    ai_response = await _call_llm(prompt_template, user_content, session_id)
-    
-    # Send AI response to frontend immediately via callback if available
+    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+
+    try:
+        # Parse JSON response from LLM
+        ai_response = json.loads(ai_response_str)
+        question = ai_response.get("question")
+        clarity_score = ai_response.get("clarity_score", 5)
+        ready = ai_response.get("ready", False)
+        json_representation = ai_response.get("json_representation", {})
+        design_summary = ai_response.get("design_summary", "")
+
+        # Send AI response to frontend with score and JSON
+        update_callback = state.get("_update_callback")
+        if update_callback and callable(update_callback):
+            await update_callback({
+                "status": "clarifying",
+                "question": question,
+                "clarity_score": clarity_score,
+                "json_representation": json_representation,
+                "message_type": "clarification"
+            })
+
+        # Check if AI thinks we're ready
+        if ready or design_summary.startswith("READY:"):
+            summary = design_summary.replace("READY:", "").strip() if design_summary else user_content
+            # Store final clarity score
+            updated_clarity_scores = clarity_scores + [clarity_score]
+            logger.info(f"🎯 AI determined enough information gathered (score: {clarity_score}) - proceeding to code generation",
+                       extra={'session_id': session_id} if session_id else {})
+            if update_callback:
+                await update_callback({
+                    "status": "ready_for_code_generation",
+                    "message": f"✅ AI has sufficient information (clarity: {clarity_score}/10). Proceeding to code generation.",
+                    "clarity_score": clarity_score,
+                    "clarity_scores": updated_clarity_scores,
+                    "json_representation": json_representation,
+                    "message_type": "success"
+                })
+            # Update state with final JSON representation
+            state["json_representation"] = json_representation
+            return {
+                "llm_ready": True,
+                "final_design_summary": summary,
+                "json_representation": json_representation,
+                "clarity_scores": updated_clarity_scores,
+                "clarity_score": clarity_score,
+                "current_state": "generating"
+            }
+
+        # AI wants more clarification - add question to conversation history
+        logger.info(f"❓ AI requesting additional clarification (score: {clarity_score}/10)",
+                   extra={'session_id': session_id} if session_id else {})
+        updated_history = clarification_history.copy()
+        updated_history.append({"role": "assistant", "content": question or "Please provide more details"})
+
+        # Store this turn's clarity score
+        updated_clarity_scores = clarity_scores + [clarity_score]
+
+        # Update JSON representation in state
+        state["json_representation"] = json_representation
+
+        return {
+            "llm_ready": False,
+            "clarification_history": updated_history,
+            "json_representation": json_representation,
+            "clarity_scores": updated_clarity_scores,
+            "clarity_score": clarity_score,
+            "question_count": question_count + 1,
+            "current_state": "clarifying"
+        }
+
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ Failed to parse clarification response as JSON: {e}",
+                    extra={'session_id': session_id} if session_id else {})
+        # Fallback to simple string parsing
+        if ai_response_str.startswith("READY:"):
+            summary = ai_response_str.replace("READY:", "").strip()
+            return {
+                "llm_ready": True,
+                "final_design_summary": summary,
+                "clarity_scores": clarity_scores,
+                "current_state": "generating"
+            }
+        else:
+            # Treat as a question
+            updated_history = clarification_history.copy()
+            updated_history.append({"role": "assistant", "content": ai_response_str})
+            return {
+                "llm_ready": False,
+                "clarification_history": updated_history,
+                "clarity_scores": clarity_scores,
+                "question_count": question_count + 1,
+                "current_state": "clarifying",
+                "error_message": f"Clarification response not in expected JSON format: {str(e)}"
+            }
+
+
+@log_method_call
+async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
+    """
+    Determines the appropriate diagram type based on keyword analysis.
+
+    Runs after the clarification loop completes, analyzing the final
+    design summary and JSON representation to select the best diagram type
+    (Mermaid, D2, or PlantUML).
+
+    Returns:
+        - diagram_type: The determined DiagramType
+        - keyword_scores: Dictionary with scoring breakdown
+    """
+    session_id = state.get("_session_id")
+    final_design_summary = state.get("final_design_summary", "")
+    json_representation = state.get("json_representation", {})
+
+    logger.info("🎯 Determining diagram type based on clarification results...",
+               extra={'session_id': session_id} if session_id else {})
+
+    # Combine design summary and JSON metadata for better keyword analysis
+    analysis_text = final_design_summary
+    if json_representation and isinstance(json_representation, dict):
+        metadata = json_representation.get("metadata", {})
+        if metadata:
+            description = metadata.get("description", "")
+            if description:
+                analysis_text = f"{analysis_text}\n{description}"
+
+    # Determine diagram type using keyword scoring
+    diagram_type, keyword_scores = determine_diagram_type(analysis_text)
+
+    logger.info(
+        f"📊 Diagram type determined: {diagram_type.value} | Scores: Mermaid={keyword_scores.get('Mermaid', 0):.1f}%, D2={keyword_scores.get('D2', 0):.1f}%, PlantUML={keyword_scores.get('PlantUML', 0):.1f}%",
+        extra={'session_id': session_id} if session_id else {}
+    )
+
+    # Send update to frontend with diagram type and scores
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
         await update_callback({
-            "status": "ai_thinking", 
-            "message": ai_response,
-            "message_type": "clarification"
+            "status": "diagram_type_determined",
+            "message": f"✅ Selected {diagram_type.value} diagram based on your design.",
+            "diagram_type": diagram_type.value,
+            "keyword_scores": keyword_scores,
+            "message_type": "info"
         })
-    
-    # Check if AI thinks we're ready to generate
-    if ai_response.startswith("READY:"):
-        summary = ai_response.replace("READY:", "").strip()
-        logger.info("🎯 AI determined enough information gathered - proceeding to diagram generation", 
-                   extra={'session_id': session_id} if session_id else {})
-        if update_callback:
-            await update_callback({
-                "status": "ready_for_json_generation",
-                "message": "✅ AI has sufficient information. Proceeding to generate structured diagram data.",
-                "message_type": "success"
-            })
-        return {
-            "llm_ready": True,
-            "final_design_summary": summary,
-            "current_state": "generating_json"
-        }
-    
-    # AI wants more clarification - add response to conversation history for context
-    logger.info("❓ AI requesting additional clarification from user", 
-               extra={'session_id': session_id} if session_id else {})
-    logger.info(f"💬 AI response to be stored: {ai_response[:100]}{'...' if len(ai_response) > 100 else ''}", 
-               extra={'session_id': session_id} if session_id else {})
-    updated_history = clarification_history.copy()
-    updated_history.append({"role": "assistant", "content": ai_response})
-    
+
     return {
-        "llm_ready": False,
-        "clarification_history": updated_history,
-        "question_count": question_count + 1,
-        "current_state": "clarifying"
+        "diagram_type": diagram_type,
+        "keyword_scores": keyword_scores,
+        "current_state": "generating"
     }
 
 

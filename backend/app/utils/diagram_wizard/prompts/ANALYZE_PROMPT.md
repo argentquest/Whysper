@@ -11,91 +11,92 @@ Note: For the purposes of information gathering, you must prioritize the require
 JSON
 
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "System Architecture Schema",
-    "type": "object",
-    "required": ["metadata", "components"],
-    "properties": {
-        "metadata": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "version": {"type": "string"},
-                "description": {"type": "string"},
-                "author": {"type": "string"},
-                "date": {"type": "string"},
-                "tags": {"type": "array", "items": {"type": "string"}},
-                "status": {
-                    "type": "string",
-                    "enum": ["draft", "proposed", "active", "deprecated"]
-                }
-            },
-            "required": ["name", "description"]
-        },
-        "components": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-                "type": "object",
-                "required": ["id", "name", "type"],
-                "properties": {
-                    "id": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
-                    "name": {"type": "string"},
-                    "type": {
-                        "type": "string",
-                        "enum": ["service", "database", "queue", "cache", "api_gateway", "load_balancer", "external_service", "client", "container", "function", "storage", "monitoring", "other"]
-                    },
-                    "description": {"type": "string"},
-                    "technology": {"type": "string"},
-                    "responsibility": {"type": "array", "items": {"type": "string"}},
-                    "owner": {"type": "string"},
-                    "hosted_on": {"type": "string"}
-                }
-            }
-        },
-        "connections": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": ["from", "to", "protocol"],
-                "properties": {
-                    "id": {"type": "string"},
-                    "from": {"type": "string"},
-                    "to": {"type": "string"},
-                    "protocol": {
-                        "type": "string",
-                        "enum": ["http", "https", "grpc", "websocket", "tcp", "udp", "amqp", "kafka", "rest", "graphql", "sql", "redis", "other"]
-                    },
-                    "direction": {
-                        "type": "string",
-                        "enum": ["one-way", "two-way"]
-                    },
-                    "label": {"type": "string"},
-                    "type": {
-                        "type": "string",
-                        "enum": ["synchronous", "asynchronous", "publish-subscribe", "request-reply"]
-                    }
-                }
-            }
-        },
-        "users": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": ["id", "name", "type"],
-                "properties": {
-                    "id": {"type": "string"},
-                    "name": {"type": "string"},
-                    "type": {
-                        "type": "string",
-                        "enum": ["user", "system", "service", "mobile_app", "web_app", "third_party"]
-                    },
-                    "description": {"type": "string"}
-                }
-            }
-        }
-    }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "System Architecture Schema",
+    "type": "object",
+    "required": ["metadata", "components"],
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "version": {"type": "string"},
+                "description": {"type": "string"},
+                "author": {"type": "string"},
+                "date": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "status": {
+                    "type": "string",
+                    "enum": ["draft", "proposed", "active", "deprecated"]
+                }
+            },
+            "required": ["name", "description"]
+        },
+        "components": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["id", "name", "type"],
+                "properties": {
+                    "id": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
+                    "name": {"type": "string"},
+                    "type": {
+                        "type": "string",
+                        "enum": ["service", "database", "queue", "cache", "api_gateway", "load_balancer", "external_service", "client", "container", "function", "storage", "monitoring", "other"]
+                    },
+                    "description": {"type": "string"},
+                    "technology": {"type": "string"},
+                    "responsibility": {"type": "array", "items": {"type": "string"}},
+                    "owner": {"type": "string"},
+                    "hosted_on": {"type": "string"}
+                }
+            }
+        },
+        "connections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["from", "to", "protocol"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "from": {"type": "string"},
+                    "to": {"type": "string"},
+                    "protocol": {
+                        "type": "string",
+                        "enum": ["http", "https", "grpc", "websocket", "tcp", "udp", "amqp", "kafka", "rest", "graphql", "sql", "redis", "other"]
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": ["one-way", "two-way"]
+                    },
+                    "label": {"type": "string"},
+                    "type": {
+                        "type": "string",
+                        "enum": ["synchronous", "asynchronous", "publish-subscribe", "request-reply"]
+                    }
+                }
+            }
+        },
+        "users": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["id", "name", "type"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "type": {
+                        "type": "string",
+                        "enum": ["user", "system", "service", "mobile_app", "web_app", "third_party"]
+                    },
+                    "description": {"type": "string"}
+                }
+            }
+        }
+    }
 }
+
 🧠 Clarification and Generation Strategy
 Prioritization (Core Relationship): Your primary focus is on identifying all named components and clearly establishing all their connections (from, to, protocol).
 
@@ -127,13 +128,15 @@ Evaluate how well the current input data fits the core architectural schema requ
 8-10 (Good Fit): All required core fields are present, and most relevant optional fields have been identified.
 
 📋 Output Format
-You must respond in a single, structured JSON object with all four keys: action, payload, assessment_score, and architecture_json.
+You must respond in a single, structured JSON object with all required keys.
+
+IMPORTANT: The action should ALWAYS be "SHOW_ANALYSIS" to display results to the user. The user will decide to proceed to clarification or accept the analysis. Do NOT select a diagram type - that will be determined by our system based on keyword analysis.
 
 JSON
 
 {
-  "action": "ASK_CLARIFICATION" | "PROCEED_TO_JSON",
-  "payload": "string containing the clarification question OR a summary of the generated architecture and score justification.",
-  "assessment_score": 1, // Integer between 1 and 10
-  "architecture_json": "string containing the generated JSON architecture object."
+  "action": "SHOW_ANALYSIS",
+  "payload": "Summary of the generated architecture and score justification.",
+  "assessment_score": 1-10,
+  "architecture_json": "string containing the generated JSON architecture object."
 }

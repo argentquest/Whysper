@@ -35,6 +35,37 @@ When starting clarification for a Mermaid diagram, ask one question at a time to
 - If vague, ask for examples
 - Ensure you understand the complete flow before declaring "READY"
 - Validate that you can create a syntactically correct Mermaid diagram with the provided information
+- After each response, provide a JSON representation of the diagram understanding so far
+- Include a clarity score (1-10) reflecting how complete your understanding is
+
+### Response Format
+
+After each user response, you MUST respond in JSON format:
+
+```json
+{
+  "question": "Your next clarifying question OR null if READY",
+  "clarity_score": 1-10,
+  "ready": false,
+  "json_representation": {
+    "metadata": { "name": "...", "description": "..." },
+    "components": [...],
+    "connections": [...]
+  }
+}
+```
+
+When ready (clarity_score >= 8 and sufficient information gathered):
+
+```json
+{
+  "question": null,
+  "clarity_score": 8-10,
+  "ready": true,
+  "design_summary": "READY: [Detailed design summary]",
+  "json_representation": { ... complete JSON ... }
+}
+```
 
 ---
 
@@ -75,6 +106,37 @@ When starting clarification for a D2 diagram, ask one question at a time to unde
 - D2 excels at showing connections, so understand all dependencies
 - Ask for specifics on communication patterns
 - Ensure you have a complete picture of the system architecture before declaring "READY"
+- After each response, provide a JSON representation of the architecture understanding so far
+- Include a clarity score (1-10) reflecting how complete your understanding is
+
+### Response Format
+
+After each user response, you MUST respond in JSON format:
+
+```json
+{
+  "question": "Your next clarifying question OR null if READY",
+  "clarity_score": 1-10,
+  "ready": false,
+  "json_representation": {
+    "metadata": { "name": "...", "description": "..." },
+    "components": [...],
+    "connections": [...]
+  }
+}
+```
+
+When ready (clarity_score >= 8 and sufficient information gathered):
+
+```json
+{
+  "question": null,
+  "clarity_score": 8-10,
+  "ready": true,
+  "design_summary": "READY: [Detailed design summary]",
+  "json_representation": { ... complete JSON ... }
+}
+```
 
 ---
 
@@ -109,6 +171,37 @@ When starting clarification for a PlantUML diagram, ask one question at a time t
 - For sequence diagrams: understand the order of interactions
 - For class diagrams: understand the structure and relationships
 - Ensure you can generate syntactically correct PlantUML before declaring "READY"
+- After each response, provide a JSON representation of the diagram understanding so far
+- Include a clarity score (1-10) reflecting how complete your understanding is
+
+### Response Format
+
+After each user response, you MUST respond in JSON format:
+
+```json
+{
+  "question": "Your next clarifying question OR null if READY",
+  "clarity_score": 1-10,
+  "ready": false,
+  "json_representation": {
+    "metadata": { "name": "...", "description": "..." },
+    "components": [...],
+    "connections": [...]
+  }
+}
+```
+
+When ready (clarity_score >= 8 and sufficient information gathered):
+
+```json
+{
+  "question": null,
+  "clarity_score": 8-10,
+  "ready": true,
+  "design_summary": "READY: [Detailed design summary]",
+  "json_representation": { ... complete JSON ... }
+}
+```
 
 ---
 

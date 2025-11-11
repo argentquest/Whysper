@@ -10,7 +10,7 @@ from .graph_state import GraphState
 from .nodes import (
     analyze_request,
     clarify_prompt,
-    generate_json_representation,
+    determine_diagram_type_node,
     generate_code,
     validate_code,
     refine_code,
@@ -18,25 +18,15 @@ from .nodes import (
 )
 
 
-def route_analysis(state: GraphState) -> str:
-    """
-    Route from analysis node based on next_action.
-    """
-    if state.get("next_action") == "clarify":
-        return "clarify_prompt"
-    else:
-        return "generate_json_representation"
-
-
 def route_clarification(state: GraphState) -> str:
     """
     Route from clarification node based on llm_ready flag.
 
-    If llm_ready is True, proceed to JSON generation.
+    If llm_ready is True, proceed to code generation.
     If False, end and wait for user response.
     """
     if state.get("llm_ready", False):
-        return "generate_json_representation"
+        return "generate_code"
     else:
         return END
 
@@ -68,7 +58,7 @@ def build_diagram_factory_graph(service) -> StateGraph:
     # Add nodes
     workflow.add_node("analyze_request", partial(analyze_request, service=service))
     workflow.add_node("clarify_prompt", clarify_prompt)
-    workflow.add_node("generate_json_representation", generate_json_representation)
+    workflow.add_node("determine_diagram_type", determine_diagram_type_node)
     workflow.add_node("generate_code", generate_code)
     workflow.add_node("validate_code", validate_code)
     workflow.add_node("refine_code", refine_code)
@@ -78,22 +68,19 @@ def build_diagram_factory_graph(service) -> StateGraph:
     workflow.set_entry_point("analyze_request")
 
     # Add edges
-    workflow.add_edge("generate_json_representation", "generate_code")
+    workflow.add_edge("determine_diagram_type", "generate_code")
     workflow.add_edge("generate_code", "validate_code")
     workflow.add_edge("refine_code", "validate_code")
     workflow.add_edge("render_diagram", END)
 
     # Add conditional edges
-    workflow.add_conditional_edges(
-        "analyze_request",
-        route_analysis,
-        {"clarify_prompt": "clarify_prompt", "generate_json_representation": "generate_json_representation"},
-    )
+    # ANALYZE always routes to CLARIFY (which is the first clarification turn)
+    workflow.add_edge("analyze_request", "clarify_prompt")
 
     workflow.add_conditional_edges(
         "clarify_prompt",
         route_clarification,
-        {"generate_json_representation": "generate_json_representation", END: END},
+        {"generate_code": "determine_diagram_type", END: END},
     )
 
     workflow.add_conditional_edges(

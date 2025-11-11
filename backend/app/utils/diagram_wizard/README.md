@@ -16,9 +16,12 @@ app/utils/diagram_wizard/
 ├── tool_config.py              # Tool configuration & execution
 ├── nodes.py                    # LangGraph node implementations
 ├── langgraph_builder.py        # Graph compilation
+├── keyword_scorer.py           # Diagram type determination (NEW)
+├── prompt_loader.py            # Prompt loading and caching
 ├── session_store.py            # Session management
 └── prompts/                    # Prompt storage (markdown)
     ├── __init__.py
+    ├── ANALYZE_PROMPT.md       # Initial analysis prompt (NEW)
     ├── CLARIFY_PROMPTS.md      # Clarification prompts
     ├── GENERATE_PROMPTS.md     # Code generation prompts
     └── REFINE_PROMPTS.md       # Refinement prompts
@@ -49,63 +52,115 @@ Safe execution of diagram rendering tools:
 - `ToolValidationError`: Custom exception
 
 ### nodes.py
-Five core LangGraph nodes (async functions):
+Seven core LangGraph nodes (async functions):
 
-1. **clarify_prompt**
-   - Iterative user clarification
-   - Type-specific questions
-   - Calls LLM with clarification prompts
-   - Sets `llm_ready` flag when done
+1. **analyze_request**
+   - Initial analysis of user's design prompt
+   - Calls LLM to score request fitness to architecture schema (1-10)
+   - Generates initial JSON representation (schema-compliant)
+   - Always routes to clarify_prompt (no diagram type selected yet)
+   - Returns: assessment_score, json_representation
 
-2. **generate_code**
+2. **clarify_prompt**
+   - Iterative user clarification loop
+   - Calls LLM with clarification prompts (Mermaid/D2/PlantUML specific)
+   - LLM returns clarity_score (1-10) for each turn
+   - Tracks clarity_scores list across all turns
+   - Sets `llm_ready` flag when clarity_score >= 8
+   - Returns: json_representation, final_design_summary, clarity_scores
+
+3. **determine_diagram_type**
+   - Runs after clarification completes (when llm_ready=True)
+   - Uses keyword scoring to analyze final_design_summary
+   - Loads base keywords from keywords.json (entity_words, action_words, structure_words)
+   - Combines with diagram-specific keywords (flowchart, architecture, class, etc.)
+   - Automatically selects best diagram type (no user input)
+   - Returns: diagram_type, keyword_scores
+
+4. **generate_code**
    - Generates diagram code from design summary
    - Uses type-specific generation prompts
+   - Now has diagram_type available from previous node
    - Returns raw diagram code
 
-3. **validate_code**
+5. **validate_code**
    - Validates code using appropriate tool
    - Classifies errors
    - Suggests recovery actions
    - Returns `is_valid` flag
 
-4. **refine_code**
+6. **refine_code**
    - Fixes invalid code using LLM
    - Error-specific refinement prompts
    - Increments refinement counter
    - Returns improved code
 
-5. **render_diagram**
+7. **render_diagram**
    - Renders valid code to SVG
    - Manages temporary files
    - Returns SVG output
 
+### keyword_scorer.py
+
+Automatic diagram type determination (NEW):
+
+- `KeywordScorer` class for text analysis
+- Loads base keywords from keywords.json (entity_words, action_words, structure_words)
+- Diagram-specific keywords for Mermaid, D2, PlantUML
+- Heuristic scoring combining base and diagram-specific keywords
+- `determine_diagram_type()`: Analyzes text and returns (DiagramType, scores_dict)
+- Used by determine_diagram_type node after clarification completes
+
 ### langgraph_builder.py
+
 Builds the state machine graph:
-- Registers all nodes
+
+- Registers all nodes (including determine_diagram_type)
 - Defines edges and conditional routing
 - Compilation and lazy loading
+- Graph flow: analyze → clarify (loop) → determine_diagram_type → generate → validate → refine → render
+
+### prompt_loader.py
+
+Dynamic prompt management:
+
+- Loads markdown prompts from prompts/ directory
+- Caches prompts in memory for performance
+- Supports both section-based extraction and full-file loading
+- `get_prompt(name)`: Retrieve prompt by name
 
 ### session_store.py
+
 Thread-safe session management:
+
 - Create/read/update/delete operations
 - TTL-based expiration (default 1 hour)
 - Async lock for thread safety
 - Automatic cleanup of expired sessions
 
 ### prompts/
+
 All LLM prompts stored as markdown files (NOT hardcoded):
 
-1. **CLARIFY_PROMPTS.md**
-   - System instructions for clarification phase
-   - Type-specific questions for Mermaid, D2, PlantUML
-   - Readiness criteria
+1. **ANALYZE_PROMPT.md** (NEW)
+   - Initial request analysis instructions
+   - Schema fitness scoring (1-10)
+   - JSON representation generation
+   - Returns: payload, assessment_score, architecture_json
 
-2. **GENERATE_PROMPTS.md**
+2. **CLARIFY_PROMPTS.md**
+   - Mermaid, D2, PlantUML-specific clarification instructions
+   - One question per turn
+   - Clarity scoring (1-10) and JSON evolution
+   - Readiness criteria (clarity_score >= 8)
+   - Returns: question, clarity_score, ready, json_representation, design_summary
+
+3. **GENERATE_PROMPTS.md**
    - Instructions for code generation
-   - Format-specific templates
+   - Format-specific templates (Mermaid, D2, PlantUML)
    - Best practices for each format
 
-3. **REFINE_PROMPTS.md**
+4. **REFINE_PROMPTS.md**
    - Error-specific refinement instructions
    - Common issues and fixes
    - Syntax reminders
@@ -115,26 +170,86 @@ All LLM prompts stored as markdown files (NOT hardcoded):
 ```
 User Input
     ↓
-START (clarify_prompt)
+[ANALYZE PHASE]
+analyze_request
+    - Score request fitness to schema (1-10)
+    - Generate initial JSON representation
+    - Always route to clarify (no diagram type selected)
     ↓
-[Clarifying] ← → User (via SSE)
+[CLARIFICATION PHASE] ← → User (via SSE)
+clarify_prompt (loop)
+    - Ask clarifying questions (type-specific)
+    - Track clarity_score for each turn (1-10)
+    - Update JSON representation each turn
+    - Exit when clarity_score >= 8 (llm_ready=True)
     ↓
-(llm_ready?) → No → Wait for user response
+[DIAGRAM TYPE DETECTION]
+determine_diagram_type
+    - Analyze final design summary + JSON metadata
+    - Keyword scoring: base keywords + diagram-specific keywords
+    - Automatically select best diagram type
+    - Return keyword scores for transparency
     ↓
-Yes → generate_code
+[CODE GENERATION]
+generate_code
+    - Generate diagram code using determined diagram type
+    - Use type-specific generation prompts
+    - Return raw diagram code
     ↓
-[Generating] Generate diagram code
-    ↓
+[VALIDATION & REFINEMENT] (loop if invalid)
 validate_code
+    - Validate diagram code syntax
+    - Classify errors
+    - Return is_valid flag
     ↓
-(is_valid?) → No → refine_code → back to validate
+(is_valid?) → No → refine_code → back to validate (max 3 attempts)
     ↓
 Yes → render_diagram
     ↓
-[Rendering] Convert to SVG
+[RENDERING]
+render_diagram
+    - Convert diagram code to SVG
+    - Manage temporary files
     ↓
 END (svg_output ready)
 ```
+
+**Key Flow Properties:**
+- Diagram type is determined AFTER clarification (not during analysis)
+- Clarity scores are tracked throughout clarification to show user progress
+- JSON representation evolves through each clarification turn
+- Keyword scoring is automatic (no user input needed for diagram type selection)
+
+## Recent Enhancements
+
+### Clarity Score Tracking
+
+- Added `clarity_scores: List[int]` to GraphState
+- Each clarification turn records its clarity_score (1-10)
+- Allows users to see improvement progression through clarification loop
+- Scores sent to frontend via SSE callbacks for real-time feedback
+
+### Keyword-Based Diagram Type Detection
+
+- **New module**: `keyword_scorer.py`
+- Loads base keywords from `backend/app/services/keywords.json`
+  - entity_words: user, system, database, service, component, etc.
+  - action_words: login, create, update, process, send, etc.
+  - structure_words: architecture, workflow, relationship, etc.
+- Diagram-specific keywords:
+  - Mermaid: flowchart, flow, process, sequence, state, etc.
+  - D2: architecture, microservice, infrastructure, deployment, etc.
+  - PlantUML: class, inheritance, interface, component, use case, etc.
+- Heuristic scoring combines base + diagram-specific keywords
+- Automatically selects best diagram type after clarification completes
+- Returns keyword scores for transparency to user
+
+### Enhanced Workflow
+
+- **New node**: `determine_diagram_type` (runs after clarification)
+- **New prompt**: `ANALYZE_PROMPT.md` for initial request scoring
+- **Updated clarification prompts**: Now return JSON with clarity_score each turn
+- Flow: analyze → clarify (loop) → determine_type → generate → validate → refine → render
 
 ## Integration Points
 

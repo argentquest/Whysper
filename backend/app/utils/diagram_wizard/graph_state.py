@@ -4,7 +4,7 @@ Graph state schema for diagram factory LangGraph.
 Defines the central state object that flows through all graph nodes.
 """
 
-from typing import TypedDict, List, Dict, Optional
+from typing import TypedDict, List, Dict, Optional, Any
 from enum import Enum
 
 
@@ -53,6 +53,7 @@ class GraphState(TypedDict, total=False):
 
     # Clarification loop
     clarification_history: List[Dict[str, str]]
+    clarity_scores: List[int]
     clarification_timeout: bool
     llm_ready: bool
     final_design_summary: str
