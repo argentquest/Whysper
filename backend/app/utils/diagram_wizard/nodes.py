@@ -296,10 +296,26 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
 
-    # Get unified clarification prompt template
-    prompt_template = get_prompt("clarify_universal")
+    # Get both ANALYZE and CLARIFY prompts for persistent schema context
+    analyze_prompt = get_prompt("analyze_request")
+    clarify_prompt_template = get_prompt("clarify_universal")
 
-    if not prompt_template:
+    # Combine prompts: ANALYZE provides schema context, CLARIFY guides the clarification loop
+    # This ensures the LLM has full schema reference throughout all turns
+    if analyze_prompt and clarify_prompt_template:
+        prompt_template = f"""{analyze_prompt}
+
+---
+
+## Clarification Loop Phase
+
+{clarify_prompt_template}
+
+### Current Clarification Turn
+Continue refining the JSON representation based on the user's responses."""
+    elif clarify_prompt_template:
+        prompt_template = clarify_prompt_template
+    else:
         # Fallback prompt if specific prompt not found
         prompt_template = """You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
 
@@ -310,8 +326,6 @@ INSTRUCTIONS:
 4. Respond ONLY in JSON format with: question, clarity_score, ready, json_representation
 5. Mark ready=true when clarity_score >= 8 and you have sufficient detail
 6. When ready, include design_summary with "READY:" prefix
-
-Conversation history: {clarification_history}
 
 Determine if you have enough information or need to ask more questions."""
 
