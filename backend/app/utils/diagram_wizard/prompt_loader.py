@@ -27,22 +27,28 @@ def load_prompts() -> Dict[str, str]:
 
     prompt_dir = Path(__file__).parent / "prompts"
 
-    # Load analyze request prompt (full file content)
-    analyze_path = prompt_dir / "ANALYZE_PROMPT.md"
-    if analyze_path.exists():
-        _prompt_cache["analyze_request"] = _load_full_file(analyze_path)
+    # Load unified analyse/clarify prompt if present
+    unified_path = prompt_dir / "ANALYSE_CLARIFY.md"
+    if unified_path.exists():
+        unified_content = _load_full_file(unified_path)
+        _prompt_cache["analyze_request"] = unified_content
+        _prompt_cache["clarify_universal"] = unified_content
+    else:
+        # Legacy fallback: load separate analyze/clarify prompts if they still exist
+        analyze_path = prompt_dir / "ANALYZE_PROMPT.md"
+        if analyze_path.exists():
+            _prompt_cache["analyze_request"] = _load_full_file(analyze_path)
+
+        clarify_path = prompt_dir / "CLARIFY_PROMPTS.md"
+        if clarify_path.exists():
+            _prompt_cache["clarify_universal"] = _extract_section(
+                clarify_path, "Universal Clarification Prompt"
+            )
 
     # Load JSON generation prompt (full file content)
     json_gen_path = prompt_dir / "JSON_GENERATION_PROMPT.md"
     if json_gen_path.exists():
         _prompt_cache["json_generation"] = _load_full_file(json_gen_path)
-
-    # Load clarification prompts (unified universal prompt)
-    clarify_path = prompt_dir / "CLARIFY_PROMPTS.md"
-    if clarify_path.exists():
-        _prompt_cache["clarify_universal"] = _extract_section(
-            clarify_path, "Universal Clarification Prompt"
-        )
 
     # Load generation prompts
     generate_path = prompt_dir / "GENERATE_PROMPTS.md"

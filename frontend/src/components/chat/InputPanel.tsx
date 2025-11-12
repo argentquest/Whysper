@@ -116,9 +116,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   // Get unique categories from subagent commands
   const categories = React.useMemo(() => {
-    console.log('📊 Total subagent commands loaded:', subagentCommands.length, subagentCommands);
     const uniqueCategories = [...new Set(subagentCommands.map(cmd => cmd.category))];
-    console.log('📊 Categories found:', uniqueCategories);
     return uniqueCategories.sort();
   }, [subagentCommands]);
 

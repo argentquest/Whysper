@@ -18,11 +18,11 @@ from .nodes import (
 )
 
 
-def route_clarification(state: GraphState) -> str:
+def route_to_diagram_type_determination(state: GraphState) -> str:
     """
     Route from clarification node based on llm_ready flag.
 
-    If llm_ready is True, proceed to code generation.
+    If llm_ready is True, proceed to determine diagram type.
     If False, end and wait for user response.
     """
     if state.get("llm_ready", False):
@@ -35,15 +35,11 @@ def route_validation(state: GraphState) -> str:
     """
     Route from validation node based on is_valid flag.
 
-    If valid and user has approved, proceed to rendering.
-    If valid and user has not approved, end and wait for user input.
+    If valid, proceed to rendering.
     If invalid, proceed to refinement.
     """
     if state.get("is_valid", False):
-        if state.get("user_approved_render", False):
-            return "render_diagram"
-        else:
-            return END
+        return "render_diagram"
     else:
         return "refine_code"
 
@@ -79,7 +75,7 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
     workflow.add_conditional_edges(
         "clarify_prompt",
-        route_clarification,
+        route_to_diagram_type_determination,
         {"generate_code": "determine_diagram_type", END: END},
     )
 

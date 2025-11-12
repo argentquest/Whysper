@@ -10,8 +10,13 @@ import { Card, List, Input, Button, Empty, Spin, Avatar, Space } from 'antd';
 import { UserOutlined, RobotOutlined, SendOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface Panel1ChatProps {
-  messages: Array<[string, string]>;
+  messages: ConversationMessage[];
   clarifications: string[];
   onSubmit: (message: string) => Promise<void>;
   isLoading: boolean;
@@ -63,11 +68,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
         ) : (
           <List
             dataSource={messages}
-            renderItem={([role, content], index) => (
+            renderItem={(msg, index) => (
               <List.Item
                 key={index}
                 style={{
-                  justifyContent: role === 'user' ? 'flex-end' : 'flex-start',
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
                 }}
               >
                 <div
@@ -75,13 +80,13 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     maxWidth: '80%',
                     display: 'flex',
                     gap: 8,
-                    flexDirection: role === 'user' ? 'row-reverse' : 'row',
+                    flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
                   }}
                 >
                   <Avatar
-                    icon={role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+                    icon={msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
                     style={{
-                      backgroundColor: role === 'user' ? '#1890ff' : '#52c41a',
+                      backgroundColor: msg.role === 'user' ? '#1890ff' : '#52c41a',
                     }}
                   />
 
@@ -90,11 +95,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                       padding: '8px 12px',
                       borderRadius: 8,
                       backgroundColor:
-                        role === 'user' ? '#e6f7ff' : '#f6ffed',
+                        msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
                       wordBreak: 'break-word',
                     }}
                   >
-                    <p style={{ margin: 0, fontSize: 14 }}>{content}</p>
+                    <p style={{ margin: 0, fontSize: 14 }}>{msg.content}</p>
                   </div>
                 </div>
               </List.Item>

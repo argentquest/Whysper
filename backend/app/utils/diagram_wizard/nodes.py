@@ -14,10 +14,11 @@ import os
 import logging
 import json
 from typing import Dict, Any
-from .graph_state import GraphState, DiagramType
+from .graph_state import GraphState, DiagramType, SessionState
 from .prompt_loader import get_prompt
 from .keyword_scorer import determine_diagram_type
 from .tool_config import DiagramToolRunner, DiagramToolConfig
+import httpx
 from ..architecture_schema import ArchitectureSchema
 from common.logging_decorator import log_method_call
 from common.ai import create_ai_processor
@@ -31,6 +32,22 @@ except ImportError:
     PROVIDER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+# Provider mapping constant to avoid duplication
+PROVIDER_MAP = {
+    "Mermaid": "mermaidv1",
+    "D2": "d2v1",
+    "PlantUML": "krokiplantuml"
+}
+
+
+def get_diagram_type_str(diagram_type: DiagramType) -> str:
+    """
+    Helper function to convert DiagramType enum to string.
+
+    Handles both enum values and string fallbacks.
+    """
+    return diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
 
 
 @log_method_call
@@ -74,14 +91,22 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
     try:
         ai_response = json.loads(ai_response_str)
-        payload = ai_response.get("payload")
+        analysis_summary = ai_response.get("analysis_summary") or ai_response.get("payload")
         assessment_score = ai_response.get("assessment_score")
-        architecture_json = ai_response.get("architecture_json")
+        clarity_score = ai_response.get("clarity_score")
+        architecture_json = (
+            ai_response.get("json_representation")
+            or ai_response.get("architecture_json")
+        )
+        follow_up_question = ai_response.get("question")
 
         # Store the architecture_json in the state, even if incomplete
         if architecture_json:
             try:
-                state["json_representation"] = json.loads(architecture_json)
+                if isinstance(architecture_json, str):
+                    state["json_representation"] = json.loads(architecture_json)
+                else:
+                    state["json_representation"] = architecture_json
             except json.JSONDecodeError as json_err:
                 logger.warning(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
                 state["json_representation"] = {}
@@ -92,17 +117,20 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         if update_callback:
             await update_callback({
                 "status": "analysis_complete",
-                "message": payload,
+                "message": analysis_summary,
                 "assessment_score": assessment_score,
+                "score": assessment_score,
+                "clarity_score": clarity_score,
                 "json_representation": state.get("json_representation", {}),
+                "question": follow_up_question,
             })
 
         return {
             "next_action": "clarify",
             "assessment_score": assessment_score,
             "json_representation": state.get("json_representation", {}),
-            "clarification_history": clarification_history + [{"role": "assistant", "content": payload}],
-            "current_state": "clarifying",
+            "clarification_history": clarification_history + [{"role": "assistant", "content": analysis_summary or ""}],
+            "current_state": SessionState.CLARIFYING,
         }
 
     except (json.JSONDecodeError, ValueError) as e:
@@ -195,11 +223,18 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None) -> s
                    extra={'session_id': session_id} if session_id else {})
         
         return response
-        
-    except Exception as e:
-        logger.error(f"❌ AI call failed in diagram wizard: {e}", 
+    except httpx.RequestError as e:
+        logger.error(f"❌ AI call failed due to a network error: {e}", 
                     extra={'session_id': session_id} if session_id else {})
-        return f"ERROR: AI call failed - {str(e)}"
+        return f"ERROR: AI call failed due to a network error - {str(e)}"
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ Failed to parse AI response as JSON: {e}", 
+                    extra={'session_id': session_id} if session_id else {})
+        return f"ERROR: Failed to parse AI response as JSON - {str(e)}"
+    except Exception as e:
+        logger.error(f"❌ An unexpected error occurred during the AI call: {e}", 
+                    extra={'session_id': session_id} if session_id else {})
+        return f"ERROR: An unexpected error occurred during the AI call - {str(e)}"
 
 
 @log_method_call
@@ -296,6 +331,20 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
 
+    # Check for clarification timeout (max 10 questions or 5 minutes)
+    import time
+    current_time = time.time()
+    start_time = state.get("clarification_start_time", current_time)
+    if question_count >= 10 or (current_time - start_time) > 300:  # 5 minutes
+        logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+                      extra={'session_id': state.get("_session_id")})
+        return {
+            "llm_ready": True,
+            "final_design_summary": "TIMEOUT: Maximum clarification attempts reached. Proceeding with available information.",
+            "clarification_timeout": True,
+            "current_state": SessionState.GENERATING
+        }
+
     # Get both ANALYZE and CLARIFY prompts for persistent schema context
     analyze_prompt = get_prompt("analyze_request")
     clarify_prompt_template = get_prompt("clarify_universal")
@@ -360,6 +409,11 @@ Determine if you have enough information or need to ask more questions."""
         clarity_score = ai_response.get("clarity_score", 5)
         ready = ai_response.get("ready", False)
         json_representation = ai_response.get("json_representation", {})
+        if isinstance(json_representation, str):
+            try:
+                json_representation = json.loads(json_representation)
+            except json.JSONDecodeError:
+                json_representation = {}
         design_summary = ai_response.get("design_summary", "")
 
         # Send AI response to frontend with score and JSON
@@ -376,28 +430,30 @@ Determine if you have enough information or need to ask more questions."""
         # Check if AI thinks we're ready
         if ready or design_summary.startswith("READY:"):
             summary = design_summary.replace("READY:", "").strip() if design_summary else user_content
-            # Store final clarity score
             updated_clarity_scores = clarity_scores + [clarity_score]
-            logger.info(f"🎯 AI determined enough information gathered (score: {clarity_score}) - proceeding to code generation",
-                       extra={'session_id': session_id} if session_id else {})
+            logger.info(
+                f"🎯 AI gathered enough information (score: {clarity_score}) - waiting for user confirmation",
+                extra={'session_id': session_id} if session_id else {}
+            )
+            state["json_representation"] = json_representation
             if update_callback:
                 await update_callback({
-                    "status": "ready_for_code_generation",
-                    "message": f"✅ AI has sufficient information (clarity: {clarity_score}/10). Proceeding to code generation.",
+                    "status": "clarification_ready",
+                    "message": summary,
                     "clarity_score": clarity_score,
                     "clarity_scores": updated_clarity_scores,
                     "json_representation": json_representation,
-                    "message_type": "success"
+                    "awaiting_user_confirmation": True,
+                    "message_type": "clarification_summary"
                 })
-            # Update state with final JSON representation
-            state["json_representation"] = json_representation
             return {
-                "llm_ready": True,
+                "llm_ready": False,
                 "final_design_summary": summary,
                 "json_representation": json_representation,
                 "clarity_scores": updated_clarity_scores,
                 "clarity_score": clarity_score,
-                "current_state": "generating"
+                "awaiting_user_confirmation": True,
+                "current_state": SessionState.CLARIFYING
             }
 
         # AI wants more clarification - add question to conversation history
@@ -419,7 +475,9 @@ Determine if you have enough information or need to ask more questions."""
             "clarity_scores": updated_clarity_scores,
             "clarity_score": clarity_score,
             "question_count": question_count + 1,
-            "current_state": "clarifying"
+            "clarification_start_time": start_time,  # Track start time for timeout
+            "awaiting_user_confirmation": False,
+            "current_state": SessionState.CLARIFYING
         }
 
     except json.JSONDecodeError as e:
@@ -429,10 +487,11 @@ Determine if you have enough information or need to ask more questions."""
         if ai_response_str.startswith("READY:"):
             summary = ai_response_str.replace("READY:", "").strip()
             return {
-                "llm_ready": True,
+                "llm_ready": False,
                 "final_design_summary": summary,
                 "clarity_scores": clarity_scores,
-                "current_state": "generating"
+                "awaiting_user_confirmation": True,
+                "current_state": SessionState.CLARIFYING
             }
         else:
             # Treat as a question
@@ -499,7 +558,7 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     return {
         "diagram_type": diagram_type,
         "keyword_scores": keyword_scores,
-        "current_state": "generating"
+        "current_state": SessionState.GENERATING
     }
 
 
@@ -515,7 +574,7 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
         diagram_code: The generated diagram code
     """
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
-    diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
+    diagram_type_str = get_diagram_type_str(diagram_type)
     json_representation = state.get("json_representation", {})
     
     # Get code generation prompt template
@@ -560,7 +619,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
             })
         return {
             "diagram_code": "",
-            "current_state": "error",
+            "current_state": SessionState.ERROR,
             "error_message": ai_response
         }
     
@@ -585,7 +644,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
     
     return {
         "diagram_code": diagram_code,
-        "current_state": "validating"
+        "current_state": SessionState.VALIDATING
     }
 
 
@@ -617,7 +676,7 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
             "validation_error": "No diagram code provided",
             "validation_error_type": "missing_code",
             "recovery_suggestions": ["Generate diagram code first"],
-            "current_state": "validation_error"
+            "current_state": SessionState.VALIDATION_ERROR
         }
 
     # Try to use provider registry for validation
@@ -627,14 +686,8 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
 
             # Map diagram type to provider
             if provider_id is None:
-                diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
-                # Map to provider: Mermaid -> mermaidv1, D2 -> d2v1, PlantUML -> krokiplantuml
-                provider_map = {
-                    "Mermaid": "mermaidv1",
-                    "D2": "d2v1",
-                    "PlantUML": "krokiplantuml"
-                }
-                provider_id = provider_map.get(diagram_type_str, "mermaidv1")
+                diagram_type_str = get_diagram_type_str(diagram_type)
+                provider_id = PROVIDER_MAP.get(diagram_type_str, "mermaidv1")
 
             provider = registry.get(provider_id)
             if provider:
@@ -649,7 +702,7 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
                         "validation_error_type": "",
                         "recovery_suggestions": [],
                         "provider_id": provider_id,
-                        "current_state": "rendering"
+                        "current_state": SessionState.RENDERING
                     }
                 else:
                     logger.info(f"❌ Code validation failed: {validation_result.error}", 
@@ -660,41 +713,45 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
                         "validation_error_type": "syntax_error",
                         "recovery_suggestions": ["Review the error message and fix the syntax"],
                         "provider_id": provider_id,
-                        "current_state": "validation_error"
+                        "current_state": SessionState.VALIDATION_ERROR
                     }
         except Exception as e:
             logger.warning(f"Provider validation failed: {e}, falling back to basic validation")
 
     # Fallback: basic validation check
     if diagram_type == DiagramType.MERMAID:
-        if "graph" not in diagram_code and "sequenceDiagram" not in diagram_code and "stateDiagram" not in diagram_code:
+        # More specific checks for different Mermaid diagram types
+        mermaid_keywords = ["flowchart", "sequenceDiagram", "gantt", "classDiagram", "stateDiagram", "pie", "erDiagram", "journey"]
+        if not any(keyword in diagram_code for keyword in mermaid_keywords) and "graph" not in diagram_code:
             return {
                 "is_valid": False,
-                "validation_error": "Missing Mermaid diagram type declaration",
+                "validation_error": "Missing or invalid Mermaid diagram type declaration",
                 "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Add 'graph TD', 'sequenceDiagram', or 'stateDiagram' at the beginning"],
+                "recovery_suggestions": ["Start with a valid Mermaid diagram type (e.g., 'flowchart TD', 'sequenceDiagram')."],
                 "provider_id": None,
-                "current_state": "validation_error"
+                "current_state": SessionState.VALIDATION_ERROR
             }
     elif diagram_type == DiagramType.D2:
-        if "->" not in diagram_code and ("<->" not in diagram_code):
+        # Check for connections or shapes
+        if "->" not in diagram_code and "<->" not in diagram_code and "shape:" not in diagram_code:
             return {
                 "is_valid": False,
-                "validation_error": "No connections found in D2 diagram",
+                "validation_error": "Invalid D2 diagram: No connections or shapes found",
                 "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Add connections using '->' or '<->' syntax"],
+                "recovery_suggestions": ["Add connections (e.g., 'a -> b') or define shapes (e.g., 'db: {shape: sql_database}')."],
                 "provider_id": None,
-                "current_state": "validation_error"
+                "current_state": SessionState.VALIDATION_ERROR
             }
     elif diagram_type == DiagramType.PLANTUML:
-        if "@startuml" not in diagram_code or "@enduml" not in diagram_code:
+        plantuml_keywords = ["actor", "participant", "class", "interface", "usecase", "component"]
+        if "@startuml" not in diagram_code or "@enduml" not in diagram_code or not any(keyword in diagram_code for keyword in plantuml_keywords):
             return {
                 "is_valid": False,
-                "validation_error": "Missing PlantUML diagram markers",
+                "validation_error": "Invalid PlantUML diagram: Missing markers or core keywords",
                 "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Add '@startuml' at the beginning and '@enduml' at the end"],
+                "recovery_suggestions": ["Ensure the diagram is wrapped in '@startuml' and '@enduml' and contains valid keywords (e.g., 'actor', 'class')."],
                 "provider_id": None,
-                "current_state": "validation_error"
+                "current_state": SessionState.VALIDATION_ERROR
             }
 
     # If we get here, assume valid (fallback validation)
@@ -704,7 +761,7 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
         "validation_error_type": "",
         "recovery_suggestions": [],
         "provider_id": None,  # No specific provider used in fallback
-        "current_state": "rendering"
+        "current_state": SessionState.RENDERING
     }
 
 
@@ -722,9 +779,17 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     diagram_code = state.get("diagram_code", "")
     validation_error = state.get("validation_error", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
-    diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
+    diagram_type_str = get_diagram_type_str(diagram_type)
     refinement_attempt = state.get("refinement_attempt", 0) + 1
     final_design_summary = state.get("final_design_summary", "")
+
+    if refinement_attempt >= 3:
+        logger.error("Max refinement attempts reached. Unable to fix code.", extra={'session_id': state.get("_session_id")})
+        return {
+            "is_valid": False,
+            "error_message": "Max refinement attempts reached. Unable to fix code.",
+            "current_state": SessionState.ERROR,
+        }
     
     # Get refinement prompt template
     prompt_key = f"refine_{diagram_type_str.lower()}"
@@ -806,7 +871,7 @@ Attempt: {refinement_attempt}"""
         "diagram_code": refined_code,
         "validation_error": "",  # Clear error after refinement
         "refinement_attempt": refinement_attempt,
-        "current_state": "validating"
+        "current_state": SessionState.VALIDATING
     }
 
 
@@ -833,7 +898,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
         return {
             "svg_output": "",
             "error_message": "No diagram code to render",
-            "current_state": "error"
+            "current_state": SessionState.ERROR
         }
 
     # Try to use provider registry for rendering
@@ -843,13 +908,8 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
 
             # Map diagram type to provider if not set
             if provider_id is None:
-                diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
-                provider_map = {
-                    "Mermaid": "mermaidv1",
-                    "D2": "d2v1",
-                    "PlantUML": "krokiplantuml"
-                }
-                provider_id = provider_map.get(diagram_type_str, "mermaidv1")
+                diagram_type_str = get_diagram_type_str(diagram_type)
+                provider_id = PROVIDER_MAP.get(diagram_type_str, "mermaidv1")
 
             provider = registry.get(provider_id)
             if provider:
@@ -867,7 +927,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
                     return {
                         "svg_output": render_result.content,
                         "provider_id": provider_id,
-                        "current_state": "ready"
+                        "current_state": SessionState.READY
                     }
                 else:
                     logger.error(f"❌ SVG rendering failed: {render_result.error}", 
@@ -876,7 +936,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
                         "svg_output": "",
                         "error_message": f"Rendering failed: {render_result.error}",
                         "provider_id": provider_id,
-                        "current_state": "error"
+                        "current_state": SessionState.ERROR
                     }
         except Exception as e:
             logger.warning(f"Provider rendering failed: {e}, falling back to placeholder")
@@ -904,5 +964,5 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     
     return {
         "svg_output": svg_placeholder,
-        "current_state": "ready"
+        "current_state": SessionState.READY
     }

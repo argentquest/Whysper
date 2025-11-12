@@ -19,16 +19,12 @@ class DiagramType(str, Enum):
 class SessionState(str, Enum):
     """Session state throughout the diagram wizard workflow."""
 
-    INITIALIZED = "initialized"
-    INPUT_PHASE = "input_phase"
     CLARIFYING = "clarifying"
     GENERATING = "generating"
     VALIDATING = "validating"
     VALIDATION_ERROR = "validation_error"
     RENDERING = "rendering"
     READY = "ready"
-    EDIT_MODE = "edit_mode"
-    COMPLETED = "completed"
     ERROR = "error"
 
 
@@ -48,7 +44,7 @@ class GraphState(TypedDict, total=False):
 
     # Input phase
     design_prompt: str
-    diagram_type: DiagramType
+    diagram_type: DiagramType  # Determined in determine_diagram_type_node, not user input
     provider_id: Optional[str]
 
     # Clarification loop
@@ -56,6 +52,8 @@ class GraphState(TypedDict, total=False):
     clarity_scores: List[int]
     clarification_timeout: bool
     llm_ready: bool
+    user_confirmed_ready: bool
+    awaiting_user_confirmation: bool
     final_design_summary: str
     question_count: int
 
@@ -74,4 +72,6 @@ class GraphState(TypedDict, total=False):
     # State tracking
     current_state: SessionState
     error_message: Optional[str]
-    user_approved_render: bool
+    clarification_start_time: Optional[float]  # Runtime: tracks clarification start time
+    _session_id: Optional[str]  # Runtime: injected for logging/callbacks
+    _update_callback: Optional[Any]  # Runtime: injected for SSE updates

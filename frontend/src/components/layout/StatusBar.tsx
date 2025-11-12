@@ -65,14 +65,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       ? `${API_BASE_URL}/chat/logs/stream?session_id=${conversationId}`
       : `${API_BASE_URL}/chat/logs/stream`;
 
-    console.log('📡 [STATUS BAR] Connecting to log stream:', url);
-    console.log('📡 [STATUS BAR] Session filter:', conversationId || 'ALL (no filter)');
-
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
 
     eventSource.addEventListener('connected', () => {
-      console.log('✅ [STATUS BAR] Connected to log stream');
       setIsLogConnected(true);
     });
 
@@ -98,7 +94,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     };
 
     return () => {
-      console.log('🛑 [STATUS BAR] Disconnecting from log stream');
       eventSource.close();
       // Clear history when disconnecting
       setLogHistory([]);

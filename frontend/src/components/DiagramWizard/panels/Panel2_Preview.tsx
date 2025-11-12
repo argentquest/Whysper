@@ -121,7 +121,9 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
               width: '100%',
             }}
           >
-            <Spin tip="Generating diagram..." />
+            <Spin tip="Generating diagram...">
+              <div style={{ height: 100 }} />
+            </Spin>
           </div>
         ) : (
           renderPreview()

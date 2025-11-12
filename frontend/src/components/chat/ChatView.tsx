@@ -1371,13 +1371,6 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.info('💬 [ChatView] Messages updated:', messages.length);
-    console.info('💬 [ChatView] Messages:', messages.map(m => ({
-      id: m.id,
-      role: m.role,
-      contentLength: m.content?.length,
-      contentPreview: m.content?.substring(0, 100)
-    })));
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 

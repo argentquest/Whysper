@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, Button, Space, Typography, message, Tabs, Modal as AntModal } from 'antd';
+import { Input, Select, Button, Space, Typography, message, Tabs, Modal as AntModal } from 'antd';
 import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
 import ApiService from '../../services/api';
@@ -35,7 +35,6 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   onClearConversation,
   hasConversationHistory = false,
 }) => {
-  const [form] = Form.useForm();
   const [activeTemplate, setActiveTemplate] = useState<string>(currentAgent);
   const [customMessage, setCustomMessage] = useState(currentSystemMessage);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -62,9 +61,8 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
       loadAgents();
       setCustomMessage(currentSystemMessage);
       setActiveTemplate(currentAgent);
-      form.setFieldValue('systemMessage', currentSystemMessage);
     }
-  }, [open, currentSystemMessage, currentAgent, form]);
+  }, [open, currentSystemMessage, currentAgent]);
 
   const handleTemplateChange = async (agentName: string) => {
     const agent = agents.find(a => a.name === agentName);
@@ -75,7 +73,6 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
         const response = await ApiService.getAgentPrompt(agent.filename);
         if (response.success && response.data) {
           setCustomMessage(response.data.content);
-          form.setFieldValue('systemMessage', response.data.content);
         }
       } catch (error) {
         console.error('Failed to load agent content:', error);
@@ -205,12 +202,12 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
             key: 'custom',
             label: 'Custom',
             children: (
-              <Form form={form} layout="vertical">
-                <Form.Item
-                  label="System Message"
-                  name="systemMessage"
-                  help="This message defines how the AI assistant should behave and respond."
-                >
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-2 font-medium">System Message</label>
+                  <p className="text-sm text-gray-500 mb-2">
+                    This message defines how the AI assistant should behave and respond.
+                  </p>
                   <TextArea
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
@@ -218,7 +215,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                     placeholder="Enter a custom system message..."
                     className="font-mono text-sm"
                   />
-                </Form.Item>
+                </div>
 
                 <div className="flex justify-between items-center">
                   <Space>
@@ -241,7 +238,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                     Copy Message
                   </Button>
                 </div>
-              </Form>
+              </div>
             ),
           },
           {

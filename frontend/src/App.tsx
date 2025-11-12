@@ -26,7 +26,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // Ant Design UI components
-import { Layout, message, Modal, Button } from 'antd';
+import { Layout, Modal, Button, App as AntdApp } from 'antd';
 import { CopyOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
 
 // Layout components
@@ -108,6 +108,9 @@ const { Content } = Layout;
 function App() {
   // Theme management hook for light/dark mode switching
   const { theme, toggleTheme } = useTheme();
+
+  // Get message API from antd App context
+  const { message } = AntdApp.useApp();
   
   // ==================== Core Application State ====================
   
@@ -1365,7 +1368,8 @@ function App() {
   }
 
   return (
-    <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>
+    <AntdApp>
+      <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>
       {/* Header */}
       <Header
         onSetContext={() => setContextModalOpen(true)}
@@ -1637,6 +1641,7 @@ function App() {
         onCancel={() => setD2TesterModalOpen(false)}
       />
     </Layout>
+    </AntdApp>
   );
 }
 

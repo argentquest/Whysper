@@ -218,6 +218,20 @@ class DiagramFactoryService:
             update_data: Dictionary containing update information
         """
         status = self.get_status()
+
+        # Append AI/user messages to the visible history unless explicitly skipped.
+        history_message = update_data.get("message")
+        if history_message and not update_data.get("skip_history"):
+            role = update_data.get("message_role", "assistant")
+            if not self.session.history or self.session.history[-1] != (role, history_message):
+                self.session.history.append((role, history_message))
+                status["history"] = self.session.history
+
+        question_text = update_data.get("question")
+        if question_text:
+            self.session.clarifications.append(question_text)
+            status["clarifications"] = self.session.clarifications
+
         status.update(update_data)
         await self.session.update_queue.put(status)
 
@@ -253,7 +267,8 @@ class DiagramFactoryService:
             self.session.graph_state = initial_state
             await self._push_update({
                 "status": "started", 
-                "message": "Starting diagram analysis..."
+                "message": "Starting diagram analysis...",
+                "message_role": "assistant"
             })
             self.session.graph_task = asyncio.create_task(
                 self._run_graph_workflow(initial_state)
@@ -266,7 +281,11 @@ class DiagramFactoryService:
         except Exception as e:
             logger.error(f"Error: {e}")
             self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
+            await self._push_update({
+                "status": "error",
+                "message": str(e),
+                "message_role": "assistant"
+            })
 
     @log_method_call
     def _assess_information_completeness(
@@ -363,13 +382,31 @@ class DiagramFactoryService:
             if result.get("message") == "__end__":
                 await self._push_update({
                     "status": "completed", 
-                    "message": "Diagram generation completed"
+                    "message": "Diagram generation completed",
+                    "message_role": "assistant"
                 })
+                return
+
+            self.session.graph_state = result
+
+            # If the graph is still waiting for clarification, do not progress further yet.
+            if not result.get("llm_ready"):
+                logger.info(
+                    "LangGraph awaiting additional user clarification before continuing",
+                    extra={'session_id': self.session.session_id}
+                )
+                return
+
+            # If we're waiting on the user to confirm the AI summary, pause as well.
+            if result.get("awaiting_user_confirmation"):
+                logger.info(
+                    "LangGraph ready but waiting for user confirmation to proceed",
+                    extra={'session_id': self.session.session_id}
+                )
                 return
 
             self.session.diagram_code = result.get("diagram_code", "")
             self.session.svg_output = result.get("svg_output", "")
-            self.session.graph_state = result
 
             # Check for AI responses from nodes and display them
             if result.get("ai_response"):
@@ -382,18 +419,24 @@ class DiagramFactoryService:
                 await self._push_update({
                     "status": "ai_response", 
                     "message": ai_message,
-                    "message_type": message_type
+                    "message_type": message_type,
+                    "message_role": "assistant"
                 })
 
             await self._push_update({
                 "status": "completed", 
-                "message": "Diagram generation completed"
+                "message": "Diagram generation completed",
+                "message_role": "assistant"
             })
 
         except Exception as e:
             logger.error(f"Error: {e}")
             self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
+            await self._push_update({
+                "status": "error",
+                "message": str(e),
+                "message_role": "assistant"
+            })
         finally:
             self.session.is_running = False
 
@@ -414,21 +457,19 @@ class DiagramFactoryService:
         """
         try:
             self.session.history.append(("user", response))
-            self.session.clarifications.append(response)
             
             if self.session.graph_state:
                 clarification_history = self.session.graph_state.get(
                     "clarification_history", []
                 )
                 clarification_history.append({"role": "user", "content": response})
-                self.session.graph_state["clarification_history"] = (
-                    clarification_history
-                )
-                self.session.graph_state["llm_ready"] = True
+                self.session.graph_state["clarification_history"] = clarification_history
+                self.session.graph_state["llm_ready"] = False
 
             await self._push_update({
-                "status": "clarification_received", 
-                "message": response
+                "status": "clarification_received",
+                "message_role": "user",
+                "skip_history": True
             })
 
             # Since the graph is paused waiting for user input, we need to resume it
@@ -455,7 +496,8 @@ class DiagramFactoryService:
 
             await self._push_update({
                 "status": "rendering",
-                "message": "User approved render. Starting diagram rendering..."
+                "message": "User approved render. Starting diagram rendering...",
+                "message_role": "assistant"
             })
 
             # Since the graph is paused waiting for user input, we need to resume it
@@ -471,7 +513,11 @@ class DiagramFactoryService:
         except Exception as e:
             logger.error(f"Error: {e}")
             self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
+            await self._push_update({
+                "status": "error",
+                "message": str(e),
+                "message_role": "assistant"
+            })
 
     @log_method_call
     async def render_diagram(self, diagram_code: Optional[str] = None):
@@ -498,8 +544,9 @@ class DiagramFactoryService:
 
             self.session.current_state = {"status": "completed"}
             await self._push_update({
-                "status": "rendered", 
-                "message": "Rendered successfully"
+                "status": "rendered",
+                "message": "Rendered successfully",
+                "message_role": "assistant"
             })
 
         except Exception as e:
