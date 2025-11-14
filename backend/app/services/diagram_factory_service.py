@@ -472,15 +472,8 @@ class DiagramFactoryService:
                 "skip_history": True
             })
 
-            # Since the graph is paused waiting for user input, we need to resume it
-            if self.session.graph_task and not self.session.graph_task.done():
-                # This is a simplified approach. In a real-world scenario, you would
-                # need a more robust way to signal the graph to continue.
-                # For this implementation, we'll re-invoke the graph with the updated state.
-                logger.info("Re-invoking graph workflow after clarification.")
-                self.session.graph_task = asyncio.create_task(
-                    self._run_graph_workflow(self.session.graph_state)
-                )
+            # Resume the LangGraph workflow now that we have more information.
+            self._resume_graph_if_idle("clarification response")
 
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -500,15 +493,8 @@ class DiagramFactoryService:
                 "message_role": "assistant"
             })
 
-            # Since the graph is paused waiting for user input, we need to resume it
-            if self.session.graph_task and not self.session.graph_task.done():
-                # This is a simplified approach. In a real-world scenario, you would
-                # need a more robust way to signal the graph to continue.
-                # For this implementation, we'll re-invoke the graph with the updated state.
-                logger.info("Re-invoking graph workflow after render approval.")
-                self.session.graph_task = asyncio.create_task(
-                    self._run_graph_workflow(self.session.graph_state)
-                )
+            # Ensure the workflow continues now that the user approved rendering.
+            self._resume_graph_if_idle("render approval")
 
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -518,6 +504,31 @@ class DiagramFactoryService:
                 "message": str(e),
                 "message_role": "assistant"
             })
+
+    def _resume_graph_if_idle(self, reason: str):
+        """Resume the LangGraph workflow if no task is currently running."""
+        if not self.session.graph_state:
+            logger.warning(
+                "Cannot resume LangGraph workflow without state",
+                extra={'session_id': self.session.session_id}
+            )
+            return
+
+        if self.session.graph_task and not self.session.graph_task.done():
+            logger.info(
+                "LangGraph workflow already running; skipping resume request.",
+                extra={'session_id': self.session.session_id}
+            )
+            return
+
+        logger.info(
+            "Re-invoking LangGraph workflow (%s)",
+            reason,
+            extra={'session_id': self.session.session_id}
+        )
+        self.session.graph_task = asyncio.create_task(
+            self._run_graph_workflow(self.session.graph_state)
+        )
 
     @log_method_call
     async def render_diagram(self, diagram_code: Optional[str] = None):

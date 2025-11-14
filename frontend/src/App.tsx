@@ -142,14 +142,7 @@ function App() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);        // Settings configuration modal
 
   // Check if this is the first time in this session to show About modal
-  const [aboutModalOpen, setAboutModalOpen] = useState(() => {
-    const hasVisitedThisSession = sessionStorage.getItem('whysper_session_visited');
-    if (!hasVisitedThisSession) {
-      sessionStorage.setItem('whysper_session_visited', 'true');
-      return true; // Show About modal once per session
-    }
-    return false;
-  });
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal

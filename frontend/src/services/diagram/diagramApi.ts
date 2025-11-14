@@ -5,49 +5,48 @@
  * Handles session management, SSE streaming, and all diagram operations.
  */
 
+export interface ScoreInfo {
+  entities: boolean;
+  actions: boolean;
+  structure: boolean;
+  info_score: number;
+  word_count: number;
+  is_detailed_enough: boolean;
+  has_enough_info: boolean;
+  has_minimum_info: boolean;
+  has_good_info: boolean;
+  needed_score: string;
+}
+
 export interface DiagramSession {
   session_id: string;
-  status: {
-    session_id: string;
-    history: Array<[string, string]>;
-    currentState: Record<string, any>;
-    clarifications: string[];
-    diagramCode: string;
-    svgOutput: string;
-    errors: string[];
-    diagramType: string;
-    isRunning: boolean;
-  };
+  status: DiagramStatus;
   message?: string;
 }
 
 export interface DiagramStatus {
   session_id: string;
   history: Array<[string, string]>;
-  currentState: Record<string, any>;
+  currentState: Record<string, unknown>;
   clarifications: string[];
   diagramCode: string;
   svgOutput: string;
   errors: string[];
   diagramType: string;
   isRunning: boolean;
-  jsonRepresentation?: Record<string, any>;
+  jsonRepresentation?: Record<string, unknown>;
+  score?: number;
+  score_info?: ScoreInfo;
+  clarity_score?: number;
+  assessment_score?: number;
 }
 
-export interface DiagramUpdate {
-  session_id: string;
-  history: Array<[string, string]>;
-  currentState: Record<string, any>;
-  clarifications: string[];
-  diagramCode: string;
-  svgOutput: string;
-  errors: string[];
-  diagramType: string;
-  isRunning: boolean;
+export interface DiagramUpdate extends DiagramStatus {
   status?: string;
   message?: string;
   type?: string;
-  jsonRepresentation?: Record<string, any>;
+  question?: string;
+  message_role?: 'assistant' | 'user';
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';

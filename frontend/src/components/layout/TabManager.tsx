@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs, Button, Space, Tooltip, Dropdown } from 'antd';
+import { Tabs, Button, Space, Tooltip, Dropdown, Typography, theme as antdTheme } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -11,6 +11,8 @@ import {
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { Tab } from '../../types';
+import { BrandColors } from 'branding';
+const { Link } = Typography;
 
 interface TabManagerProps {
   tabs: Tab[];
@@ -35,6 +37,12 @@ export const TabManager: React.FC<TabManagerProps> = ({
   onNewArchStudioTab,
   onTabsAction,
 }) => {
+  const { token } = antdTheme.useToken();
+  const brandTokens = token as Record<string, string>;
+  const tabBackground = brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? '#f7b500';
+  const tabBorderColor = brandTokens.colorBorder ?? 'rgba(0, 0, 0, 0.15)';
+  const tabTextColor = brandTokens.colorText ?? BrandColors.text?.primary ?? '#231f20';
+  const tabInactiveBg = brandTokens.colorBrandQuaternary ?? BrandColors.quaternary ?? '#fbd3a4';
 
   const handleTabEdit = (targetKey: React.MouseEvent | React.KeyboardEvent | string, action: 'add' | 'remove') => {
     if (action === 'add') {
@@ -151,15 +159,20 @@ export const TabManager: React.FC<TabManagerProps> = ({
     };
   });
 
+  const containerStyle: React.CSSProperties & Record<string, string> = {
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
+    borderBottom: `1px solid ${tabBorderColor}`,
+    backgroundColor: tabBackground,
+    '--wf-tab-inactive-bg': tabInactiveBg,
+    '--wf-tab-text-color': tabTextColor,
+  };
+
   return (
     <div 
-      className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-      style={{
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
-        borderBottom: '1px solid #f0f0f0'
-      }}
+      className="border-b border-gray-200 dark:border-gray-700"
+      style={containerStyle}
     >
-      <div className="flex items-center justify-between px-6 py-3">
+      <div className="flex items-center justify-between px-6 pt-3 pb-0">
         <Tabs
           type="editable-card"
           activeKey={activeTabId}
@@ -167,37 +180,50 @@ export const TabManager: React.FC<TabManagerProps> = ({
           onEdit={handleTabEdit}
           items={tabItems}
           className="flex-1 !mb-0"
+          rootClassName="wf-tabs"
           size="small"
           hideAdd={true}
           tabBarStyle={{ margin: 0 }}
         />
         
-        <Space className="ml-4">
-          <Dropdown
-            menu={{ items: newTabMenuItems }}
-            trigger={['click']}
-            placement="bottomLeft"
-          >
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              size="small"
-              className="!bg-blue-600 !border-blue-600"
+        <Space className="ml-4" size={16}>
+          <Tooltip title="Open a new tab">
+            <Dropdown
+              menu={{ items: newTabMenuItems }}
+              trigger={['click']}
+              placement="bottomLeft"
             >
-              New Tab
-            </Button>
-          </Dropdown>
+              <Link
+                onClick={(e) => e.preventDefault()}
+                className="font-semibold"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: tabTextColor }}
+              >
+                <PlusOutlined />
+                New Tab
+              </Link>
+            </Dropdown>
+          </Tooltip>
           
-          <Tooltip title="Close Tab">
-            <Button
-              icon={<CloseOutlined />}
-              onClick={() => onTabClose(activeTabId)}
-              size="small"
-              disabled={tabs.length <= 1}
-              danger
+          <Tooltip title={tabs.length <= 1 ? 'At least one tab must remain open' : 'Close the current tab'}>
+            <Link
+              onClick={(e) => {
+                e.preventDefault();
+                if (tabs.length <= 1) return;
+                onTabClose(activeTabId);
+              }}
+              aria-disabled={tabs.length <= 1}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                color: tabs.length <= 1 ? 'rgba(0,0,0,0.35)' : tabTextColor,
+                pointerEvents: tabs.length <= 1 ? 'none' : 'auto',
+                fontWeight: 600,
+              }}
             >
+              <CloseOutlined />
               Close Tab
-            </Button>
+            </Link>
           </Tooltip>
         </Space>
       </div>

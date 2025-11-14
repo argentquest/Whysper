@@ -4,40 +4,86 @@
  */
 
 import React from 'react';
-import { Button, Space, Divider, Typography } from 'antd';
-import { QuestionCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Space, Typography, Divider, theme } from 'antd';
 
-const { Text } = Typography;
+type LinksColumnVariant = 'compact' | 'legal';
 
-export const LinksColumn: React.FC = () => {
-  const handleOpenLink = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
+const compactLinks = [
+  { label: 'Help', url: 'https://www.wellsfargo.com/help/' },
+  { label: 'About Wells Fargo', url: 'https://www.wellsfargo.com/about/' },
+  { label: 'Contact Us', url: 'https://www.wellsfargo.com/help/contact-us/' },
+];
+
+const legalLinks = [
+  { label: 'Privacy, Cookies, and Legal', url: 'https://www.wellsfargo.com/privacy-security/' },
+  { label: 'Online Access Agreement', url: 'https://www.wellsfargo.com/online-banking/online-access-agreement/' },
+  { label: 'Ad Choices', url: 'https://www.wellsfargo.com/privacy-security/online/privacy/#advertising' },
+  { label: 'Give Feedback', url: 'https://www.wellsfargo.com/appointments/' },
+];
+
+interface LinksColumnProps {
+  variant?: LinksColumnVariant;
+  align?: 'left' | 'right' | 'center';
+}
+
+export const LinksColumn: React.FC<LinksColumnProps> = ({
+  variant = 'legal',
+  align = 'right',
+}) => {
+  const items = variant === 'compact' ? compactLinks : legalLinks;
+  const { token } = theme.useToken();
+  const linkColor = (token as Record<string, string>).colorBrandLink ?? token.colorLink ?? '#004c97';
+
+  if (variant === 'compact') {
+    return (
+      <Space
+        size={8}
+        style={{
+          width: '100%',
+          justifyContent: align === 'left' ? 'flex-start' : align === 'center' ? 'center' : 'flex-end',
+        }}
+      >
+        {items.map((item, index) => (
+          <React.Fragment key={item.label}>
+            {index > 0 && <Divider type="vertical" style={{ height: '16px', margin: 0, borderColor: '#e3ded8' }} />}
+            <Typography.Link
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: linkColor, fontWeight: 600, fontSize: 13 }}
+            >
+              {item.label}
+            </Typography.Link>
+          </React.Fragment>
+        ))}
+      </Space>
+    );
+  }
 
   return (
-    <Space direction="vertical" size={0} style={{ width: '100%', textAlign: 'right' }}>
-      <Space size={8}>
-        <Button
-          type="link"
-          size="small"
-          icon={<QuestionCircleOutlined />}
-          onClick={() => handleOpenLink('https://docs.example.com')}
+    <Space
+      size={[16, 8]}
+      wrap
+      style={{
+        width: '100%',
+        justifyContent: align === 'left' ? 'flex-start' : align === 'center' ? 'center' : 'flex-end',
+      }}
+    >
+      {items.map((item) => (
+        <Typography.Link
+          key={item.label}
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: linkColor,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
         >
-          Help
-        </Button>
-        <Divider type="vertical" style={{ height: '16px', margin: 0 }} />
-        <Button
-          type="link"
-          size="small"
-          icon={<InfoCircleOutlined />}
-          onClick={() => handleOpenLink('https://example.com/about')}
-        >
-          About
-        </Button>
-      </Space>
-      <Text type="secondary" style={{ fontSize: '11px' }}>
-        Information was AI Generated
-      </Text>
+          {item.label}
+        </Typography.Link>
+      ))}
     </Space>
   );
 };

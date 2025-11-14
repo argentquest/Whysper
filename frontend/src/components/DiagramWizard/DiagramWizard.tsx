@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Button, Select, Input, Spin, Alert, message, Divider, Space, Steps, Tabs } from 'antd';
+import { Layout, Button, Input, Spin, Alert, message, Divider, Space, Steps, Tabs, Modal } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
@@ -26,6 +26,7 @@ import ChatPanel from './panels/Panel1_Chat';
 import PreviewPanel from './panels/Panel2_Preview';
 import CodeEditorPanel from './panels/Panel3_CodeEditor';
 import styles from './diagram-wizard.module.css';
+import type { ScoreInfo, DiagramUpdate } from '../../services/diagram/diagramApi';
 
 interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
@@ -33,6 +34,23 @@ interface DiagramWizardProps {
 }
 
 type DiagramType = 'Mermaid' | 'D2' | 'PlantUML';
+
+interface AssistantResponseDetail {
+  id: string;
+  messageIndex: number;
+  message?: string;
+  score?: number;
+  scoreInfo?: ScoreInfo;
+  clarityScore?: number;
+  jsonRepresentation?: Record<string, unknown> | null;
+  rawUpdate?: Record<string, unknown>;
+}
+
+type DiagramUpdateWithVariants = DiagramUpdate & {
+  json_representation?: unknown;
+  score_info?: ScoreInfo;
+  scoreInfo?: ScoreInfo;
+};
 
 export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
@@ -45,6 +63,94 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false);
   const [clarificationInput, setClarificationInput] = useState('');
   const [score, setScore] = useState(0);
+  const [assistantResponses, setAssistantResponses] = useState<Record<number, AssistantResponseDetail>>({});
+  const [selectedResponse, setSelectedResponse] = useState<AssistantResponseDetail | null>(null);
+
+  const normalizeJsonRepresentation = (jsonData: unknown): Record<string, unknown> | null => {
+    if (!jsonData) {
+      return null;
+    }
+
+    if (typeof jsonData === 'string') {
+      try {
+        return JSON.parse(jsonData);
+      } catch (err) {
+        console.warn('Failed to parse JSON representation for assistant response', err);
+        return null;
+      }
+    }
+
+    if (typeof jsonData === 'object') {
+      return jsonData as Record<string, unknown>;
+    }
+
+    return null;
+  };
+
+  const getScoreInfo = (payload?: DiagramUpdateWithVariants): ScoreInfo | undefined => {
+    if (!payload) return undefined;
+    if (payload.score_info) return payload.score_info;
+    if (payload.scoreInfo) return payload.scoreInfo;
+    return undefined;
+  };
+
+  const trackAssistantResponse = (update: DiagramUpdateWithVariants) => {
+    const historyLength = update.history?.length ?? 0;
+    if (!historyLength) {
+      return;
+    }
+
+    const latestIndex = historyLength - 1;
+    const latestEntry = update.history?.[latestIndex];
+    if (!latestEntry) {
+      return;
+    }
+
+    const [role, entryContent] = latestEntry;
+    if (role !== 'assistant') {
+      return;
+    }
+
+    const normalizedJson =
+      normalizeJsonRepresentation(update.jsonRepresentation ?? update.json_representation ?? null) ??
+      null;
+
+    setAssistantResponses((prev) => {
+      const existing = prev[latestIndex];
+      const detail: AssistantResponseDetail = {
+        id: existing?.id ?? `${update.session_id}-${latestIndex}`,
+        messageIndex: latestIndex,
+        message: update.message ?? entryContent ?? existing?.message,
+        score:
+          typeof update.score === 'number'
+            ? update.score
+            : typeof update.assessment_score === 'number'
+            ? update.assessment_score
+            : existing?.score,
+        scoreInfo: getScoreInfo(update) ?? existing?.scoreInfo,
+        clarityScore:
+          typeof update.clarity_score === 'number' ? update.clarity_score : existing?.clarityScore,
+        jsonRepresentation: normalizedJson ?? existing?.jsonRepresentation ?? null,
+        rawUpdate: update as Record<string, unknown>,
+      };
+
+      if (
+        existing &&
+        existing.message === detail.message &&
+        existing.score === detail.score &&
+        existing.clarityScore === detail.clarityScore &&
+        existing.scoreInfo === detail.scoreInfo &&
+        existing.jsonRepresentation === detail.jsonRepresentation
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [latestIndex]: detail,
+      };
+    });
+  };
 
   const {
     sessionId,
@@ -60,11 +166,19 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     onUpdate: (update) => {
       // Handle incoming updates from SSE and respect LangGraph phases
       console.log('🔄 LangGraph SSE update received:', update);
-      
-      // Update score if present
-      if (update.score) {
-        setScore(update.score);
+      const latestScore =
+        typeof update.score === 'number'
+          ? update.score
+          : typeof update.assessment_score === 'number'
+          ? update.assessment_score
+          : undefined;
+
+      if (typeof latestScore === 'number') {
+        setScore(latestScore);
       }
+
+      // Cache assistant responses so we can show full details later
+      trackAssistantResponse(update);
 
       // PHASE 1: Information Gathering & Analysis
       if (update.status === 'analyzing') {
@@ -151,6 +265,14 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       console.log('📝 Initial prompt set, waiting for user to start manually');
     }
   }, [initialPrompt, sessionId, isInitializing]);
+
+  useEffect(() => {
+    setAssistantResponses({});
+    setSelectedResponse(null);
+    if (!sessionId) {
+      setScore(0);
+    }
+  }, [sessionId]);
 
   // Handle starting diagram generation - respect phases
   const handleStartDiagram = async () => {
@@ -242,10 +364,37 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     message.success('Diagram code copied to clipboard');
   };
 
+  const handleViewResponseDetails = (messageIndex: number) => {
+    if (!status?.history || status.history.length <= messageIndex) {
+      return;
+    }
+
+    const detail = assistantResponses[messageIndex];
+    if (detail) {
+      setSelectedResponse(detail);
+      return;
+    }
+
+    const [, content] = status.history[messageIndex];
+    setSelectedResponse({
+      id: `${sessionId ?? 'session'}-${messageIndex}`,
+      messageIndex,
+      message: content,
+      score,
+      scoreInfo: status?.score_info,
+      jsonRepresentation: status?.jsonRepresentation ?? null,
+    });
+  };
+
+  const closeResponseModal = () => setSelectedResponse(null);
+
   // Handle diagram type selection during analysis phase
   const handleDiagramTypeSelection = async (selectedType: string) => {
     try {
       setIsInitializing(true);
+      if (['Mermaid', 'D2', 'PlantUML'].includes(selectedType)) {
+        setDiagramType(selectedType as DiagramType);
+      }
       await submitClarification(selectedType);
     } catch (err) {
       message.error(`Failed to submit diagram type selection: ${err}`);
@@ -278,7 +427,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       await endSession();
       setCurrentPhase(0);
       setIsInAnalysisPhase(false);
-      setAnalysisMessage('');
+      setAssistantResponses({});
+      setSelectedResponse(null);
+      setScore(0);
       message.info('Session ended');
     } catch (err) {
       message.error(`Failed to end session: ${err}`);
@@ -308,6 +459,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       icon: <PictureOutlined />
     }
   ];
+
+  const conversationMessages = (status?.history ?? []).map(([role, content]) => ({
+    role: role === 'assistant' ? 'assistant' : 'user',
+    content,
+  }));
 
   return (
     <Layout className={styles.diagramWizard}>
@@ -414,6 +570,16 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
                       <div dangerouslySetInnerHTML={{ 
                         __html: content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
                       }} />
+                      {role === 'assistant' && (
+                        <Button
+                          type="link"
+                          size="small"
+                          style={{ padding: 0, marginTop: 8 }}
+                          onClick={() => handleViewResponseDetails(index)}
+                        >
+                          View full response
+                        </Button>
+                      )}
                     </div>
                   ))}
                   {status?.clarifications?.slice(-1).map((clarification, index) => (
@@ -621,11 +787,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
             <div className={styles.panelRow}>
               <div className={styles.leftPanel}>
                 <ChatPanel
-                  messages={status?.history || []}
+                  messages={conversationMessages}
                   clarifications={status?.clarifications || []}
                   onSubmit={handleSubmitClarification}
                   isLoading={loading}
                   sessionActive={status?.isRunning || false}
+                  onViewResponseDetails={handleViewResponseDetails}
                 />
               </div>
 
@@ -709,6 +876,83 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           </div>
         )}
       </Layout.Content>
+
+      <Modal
+        open={Boolean(selectedResponse)}
+        onCancel={closeResponseModal}
+        footer={null}
+        title="Full AI Assistant Response"
+        width={840}
+        destroyOnClose
+      >
+        {selectedResponse && (
+          <>
+            <div
+              style={{
+                marginBottom: 16,
+                padding: '8px 12px',
+                backgroundColor: '#f6ffed',
+                borderRadius: 6,
+                border: '1px solid #b7eb8f',
+              }}
+            >
+              <div
+                dangerouslySetInnerHTML={{
+                  __html:
+                    (selectedResponse.message || '')
+                      .replace(/\n/g, '<br/>')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') || '<em>No summary available for this turn.</em>',
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 16,
+                marginBottom: 16,
+                fontSize: 14,
+              }}
+            >
+              <span>
+                <strong>AI Score:</strong>{' '}
+                {typeof selectedResponse.score === 'number' ? `${selectedResponse.score}/10` : 'N/A'}
+              </span>
+              {typeof selectedResponse.clarityScore === 'number' && (
+                <span>
+                  <strong>Clarity Score:</strong> {selectedResponse.clarityScore}/10
+                </span>
+              )}
+              {selectedResponse.scoreInfo && (
+                <span>
+                  <strong>Information Score:</strong> {selectedResponse.scoreInfo.info_score}/3 &nbsp;(
+                  {selectedResponse.scoreInfo.word_count} words)
+                </span>
+              )}
+            </div>
+
+            <div
+              style={{
+                backgroundColor: '#0f172a',
+                color: '#e2e8f0',
+                borderRadius: 8,
+                padding: 16,
+                maxHeight: 360,
+                overflow: 'auto',
+                fontFamily: 'Menlo, Consolas, monospace',
+                fontSize: 13,
+              }}
+            >
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {selectedResponse.jsonRepresentation
+                  ? JSON.stringify(selectedResponse.jsonRepresentation, null, 2)
+                  : 'No structured JSON captured for this turn yet.'}
+              </pre>
+            </div>
+          </>
+        )}
+      </Modal>
     </Layout>
   );
 };

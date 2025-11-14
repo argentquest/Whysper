@@ -17,6 +17,7 @@ const activeBrand = import.meta.env.VITE_BRAND || 'WF';
 
 // Import all available brands
 import * as WFBranding from './WF';
+import * as WF2Branding from './WF2';
 // Import other brands here as they are created
 // import * as ACMEBranding from './ACME';
 
@@ -26,6 +27,9 @@ let selectedBrand: typeof WFBranding;
 switch (activeBrand) {
   case 'WF':
     selectedBrand = WFBranding;
+    break;
+  case 'WF2':
+    selectedBrand = WF2Branding;
     break;
   // Add more brands here as needed
   // case 'ACME':

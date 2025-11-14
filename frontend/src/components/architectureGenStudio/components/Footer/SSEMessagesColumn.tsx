@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Badge, Button, Space, Modal, Tag } from 'antd';
+import { Badge, Button, Space, Modal, Tag, theme } from 'antd';
 import type { SSEMessage } from '../../types';
 
 interface SSEMessagesColumnProps {
@@ -18,6 +18,18 @@ export const SSEMessagesColumn: React.FC<SSEMessagesColumnProps> = ({
   isConnected,
   unreadCount,
 }) => {
+  const { token } = theme.useToken();
+  const brandTokens = token as Record<string, string>;
+  const badgeBg = brandTokens.colorBrandBadgeBg ?? token.colorPrimary ?? '#d71e28';
+  const badgeText = brandTokens.colorBrandBadgeText ?? '#ffffff';
+  const linkColor = brandTokens.colorBrandLink ?? token.colorLink ?? '#004c97';
+  const successBg = brandTokens.colorBrandStatusSuccessBg ?? '#e6f3ec';
+  const successBorder = brandTokens.colorBrandStatusSuccessBorder ?? '#8abf9b';
+  const successText = brandTokens.colorBrandStatusSuccessText ?? '#1f4f2f';
+  const errorBg = brandTokens.colorBrandStatusErrorBg ?? '#fbeaea';
+  const errorBorder = brandTokens.colorBrandStatusErrorBorder ?? '#d71e28';
+  const errorText = brandTokens.colorBrandStatusErrorText ?? '#8b0d16';
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,17 +72,31 @@ export const SSEMessagesColumn: React.FC<SSEMessagesColumnProps> = ({
 
   return (
     <Space size={8}>
-      <Badge count={unreadCount} offset={[-4, 4]}>
+      <Badge
+        count={unreadCount}
+        color={badgeBg}
+        style={{ color: badgeText }}
+        offset={[-4, 4]}
+      >
         <Button
           type="text"
           size="small"
           onClick={handleViewMessages}
           title={`${messages.length} messages`}
+          style={{ color: linkColor, fontWeight: 600 }}
         >
           Messages ({messages.length})
         </Button>
       </Badge>
-      <Tag color={isConnected ? 'green' : 'red'}>
+      <Tag
+        style={{
+          borderRadius: 999,
+          border: `1px solid ${isConnected ? successBorder : errorBorder}`,
+          backgroundColor: isConnected ? successBg : errorBg,
+          color: isConnected ? successText : errorText,
+          padding: '2px 12px',
+        }}
+      >
         {isConnected ? 'Connected' : 'Disconnected'}
       </Tag>
     </Space>

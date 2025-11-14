@@ -747,6 +747,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const codeBlocks = detectCodeBlocks(message.content);
+  const userHeaderColor = BrandColors.primary;
+  const assistantHeaderColor = BrandColors.secondary || BrandColors.accent || '#004c97';
+  const isUserMessage = message.role === 'user';
+  const headerBackground = isUserMessage ? userHeaderColor : assistantHeaderColor;
+  const cardShadowColor = `${headerBackground}40`;
 
   // Detect if message contains diagrams
   const hasDiagrams = () => {
@@ -789,9 +794,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Fullscreen Header */}
         <div
           style={{
-            background: message.role === 'user'
-              ? BrandColors.gradients.primary
-              : BrandColors.gradients.secondary,
+            background: headerBackground,
             padding: '12px 14px 10px 14px',
             borderRadius: '20px 20px 0 0',
             marginBottom: '0',
@@ -1057,9 +1060,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           borderRadius: message.role === 'user'
             ? '20px 20px 4px 20px'
             : '20px 20px 20px 4px',
-          boxShadow: message.role === 'user'
-            ? `0 8px 24px ${BrandColors.primary}40`
-            : `0 8px 24px ${BrandColors.secondary}40`,
+          boxShadow: `0 8px 24px ${cardShadowColor}`,
           overflow: 'hidden',
           width: '100%',
           background: 'transparent',
@@ -1076,16 +1077,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
           }
         }}
       >
-        {/* Gradient Header */}
+        {/* Message Header */}
         <div
           style={{
-            background: message.role === 'user'
-              ? BrandColors.gradients.primary
-              : BrandColors.gradients.secondary,
+            background: headerBackground,
             padding: '12px 14px 10px 14px',
-            borderRadius: message.role === 'user'
-              ? '20px 20px 0 0'
-              : '20px 20px 0 0',
+            borderRadius: '20px 20px 0 0',
           }}
         >
           <div className="flex items-center justify-between w-full">
@@ -1369,6 +1366,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 }) => {
   const { theme } = useTheme();
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const assistantHeaderColor = BrandColors.secondary || BrandColors.accent || '#004c97';
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1429,7 +1427,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               style={{
                 border: 'none',
                 borderRadius: '20px 20px 20px 4px',
-                boxShadow: `0 8px 24px ${BrandColors.secondary}40`,
+                boxShadow: `0 8px 24px ${assistantHeaderColor}40`,
                 overflow: 'hidden',
                 width: '100%',
                 background: 'transparent',
@@ -1437,7 +1435,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
               styles={{
                 body: {
                   padding: '14px',
-                  background: BrandColors.gradients.primary,
+                  background: assistantHeaderColor,
                   color: 'white',
                   borderRadius: '20px 20px 20px 4px',
                 }

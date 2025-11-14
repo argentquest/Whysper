@@ -21,6 +21,7 @@ interface Panel1ChatProps {
   onSubmit: (message: string) => Promise<void>;
   isLoading: boolean;
   sessionActive: boolean;
+  onViewResponseDetails?: (messageIndex: number) => void;
 }
 
 const Panel1_Chat: React.FC<Panel1ChatProps> = ({
@@ -29,6 +30,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   onSubmit,
   isLoading,
   sessionActive,
+  onViewResponseDetails,
 }) => {
   const [userResponse, setUserResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -90,21 +92,31 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     }}
                   />
 
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      backgroundColor:
-                        msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    <p style={{ margin: 0, fontSize: 14 }}>{msg.content}</p>
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        backgroundColor:
+                          msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: 14 }}>{msg.content}</p>
+                      {msg.role === 'assistant' && onViewResponseDetails && (
+                        <Button
+                          type="link"
+                          size="small"
+                          style={{ padding: 0, marginTop: 8 }}
+                          onClick={() => onViewResponseDetails(index)}
+                        >
+                          View full response
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </List.Item>
-            )}
-          />
+                </List.Item>
+              )}
+            />
         )}
 
         <div ref={messagesEndRef} />
