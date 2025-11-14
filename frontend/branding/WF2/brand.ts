@@ -4,6 +4,8 @@
  * Contains brand metadata, messaging, and identity elements
  */
 
+import wfLogo from './assets/wf-logo.png';
+
 export const WFBrand = {
   // Brand Identity
   name: 'Wells Fargo AI Architect Helper',
@@ -17,7 +19,7 @@ export const WFBrand = {
   // Logo Configuration
   logo: {
     type: 'image' as const,
-    src: 'https://www17.wellsfargomedia.com/assets/images/rwd/wf_logo_220x23.png',
+    src: wfLogo,
     backgroundColor: '#b31e30',
     alt: 'Wells Fargo Logo',
   },

@@ -335,7 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-3">
             <nav
               aria-label="Quick Actions"
-              className="hidden lg:flex"
+              className="wf-header-actions"
               style={{
                 alignItems: 'center',
                 gap: 16,
@@ -343,6 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
                 fontWeight: 600,
                 flexWrap: 'wrap',
                 justifyContent: 'flex-end',
+                display: 'flex',
               }}
             >
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>

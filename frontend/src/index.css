@@ -72,6 +72,16 @@ body {
   font-weight: 600;
 }
 
+.wf-header-actions {
+  display: flex;
+}
+
+@media (max-width: 1023px) {
+  .wf-header-actions {
+    display: none !important;
+  }
+}
+
 [data-theme="dark"] {
   /* Primary Brand Colors for Dark Mode */
   --brand-primary: #b31e30;

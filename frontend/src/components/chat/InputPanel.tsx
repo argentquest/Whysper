@@ -206,18 +206,26 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const panelBorder = BrandColors.neutral?.stroke ?? '#e3ded8';
 
   return (
-    <div className="w-full px-6">
+    <div
+      className="w-full"
+      style={{
+        background: panelBackground,
+        margin: 0,
+        padding: 0,
+      }}
+    >
       <div
-        className="rounded-2xl shadow-sm"
+        className="shadow-sm"
         style={{          
-          background: BrandColors.quaternary ?? '#fbd3a4',
-          border: `1px solid ${panelBorder}`,
-          padding: '6px 0',
-          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.05)',
+          background: panelBackground,
+          borderTop: `1px solid ${panelBorder}`,
+          borderBottom: `1px solid ${panelBorder}`,
+          padding: 0,
+          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.04)',
         }}
       >
         {/* First Row: Subagent Commands + Submit/Clear Buttons */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
             Inject Command:
           </span>
@@ -314,17 +322,17 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           <div
             className="relative"
             style={{
-              borderRadius: '16px',
-              border: '2px solid #e2e8f0',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              borderRadius: 0,
+              border: `1px solid ${panelBorder}`,
+              boxShadow: 'none',
               overflow: 'hidden',
+              background: panelBackground,
               minHeight: `${currentHeight}px`,
               height: `${currentHeight}px`,
               maxHeight: '400px',
             }}
           >
-            <div style={{ padding: '0 10px' }}>
-              <Editor
+            <Editor
               height={`${currentHeight}px`}
               defaultLanguage="markdown"
               value={message}
@@ -363,7 +371,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 acceptSuggestionOnEnter: 'off',
               }}
             />
-            </div>
 
             {/* Resize buttons in top-right corner */}
             <div

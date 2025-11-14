@@ -274,6 +274,9 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
 
   // Use enhanced detection for mixed HTML content
   const { originalHtml, diagrams } = processMixedHtmlContent(htmlContent);
+  const normalizeCode = (code: string) =>
+    code.replace(/\s+/g, ' ').trim();
+  const processedDiagramCodes = new Set(diagrams.map(diagram => normalizeCode(diagram.code)));
 
   // If no diagrams detected, return original HTML
   if (diagrams.length === 0) {
@@ -389,6 +392,12 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
     if (isMermaid || isD2) {
       const diagramType = isMermaid ? 'mermaid' : 'd2';
       const decodedCode = isMermaid ? decodedMermaid : decodedD2;
+      const normalizedDecodedCode = normalizeCode(decodedCode);
+
+      if (processedDiagramCodes.has(normalizedDecodedCode)) {
+        lastIndex = match.index + match[0].length;
+        continue;
+      }
       
       // This is a new diagram not caught by enhanced detection
       diagramCount++;
