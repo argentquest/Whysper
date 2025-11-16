@@ -8,8 +8,8 @@
  * - Code editor panel for manual edits
  */
 
-import React, { useState, useEffect } from 'react';
-import { Layout, Button, Input, Spin, Alert, message, Divider, Space, Steps, Tabs, Modal } from 'antd';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Layout, Button, Input, Spin, Alert, message, Divider, Space, Steps, Tabs, Modal, Badge } from 'antd';
 import {
   SendOutlined,
   ClearOutlined,
@@ -22,11 +22,16 @@ import {
   PictureOutlined,
 } from '@ant-design/icons';
 import { useDiagramSession } from './hooks/useDiagramSession';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import ChatPanel from './panels/Panel1_Chat';
 import PreviewPanel from './panels/Panel2_Preview';
 import CodeEditorPanel from './panels/Panel3_CodeEditor';
+import ExportModal from './components/ExportModal';
+import Footer from './components/Footer';
 import styles from './diagram-wizard.module.css';
 import type { ScoreInfo, DiagramUpdate } from '../../services/diagram/diagramApi';
+import type { DiagramWizardPersistedState, SavedSession } from './types/persistence';
+import { getInitialPersistedState } from './types/persistence';
 
 interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
@@ -56,7 +61,18 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
   initialPrompt,
 }) => {
-  const [diagramType, setDiagramType] = useState<DiagramType>('Mermaid');
+  // localStorage persistence
+  const [persistedState, setPersistedState] = useLocalStorage<DiagramWizardPersistedState>(
+    'diagramWizard.v2',
+    getInitialPersistedState()
+  );
+
+  // Local state - initialized with persisted preferences
+  const [diagramType, setDiagramType] = useState<DiagramType>(
+    (persistedState.preferences.defaultDiagramType === 'auto'
+      ? 'Mermaid'
+      : persistedState.preferences.defaultDiagramType) as DiagramType
+  );
   const [userInput, setUserInput] = useState('');
   const [isInitializing, setIsInitializing] = useState(false);
   const [currentPhase, setCurrentPhase] = useState(0);
@@ -65,6 +81,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [score, setScore] = useState(0);
   const [assistantResponses, setAssistantResponses] = useState<Record<number, AssistantResponseDetail>>({});
   const [selectedResponse, setSelectedResponse] = useState<AssistantResponseDetail | null>(null);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
+
+  // Ref for preview container (used for export)
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   const normalizeJsonRepresentation = (jsonData: unknown): Record<string, unknown> | null => {
     if (!jsonData) {
@@ -131,7 +151,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         clarityScore:
           typeof update.clarity_score === 'number' ? update.clarity_score : existing?.clarityScore,
         jsonRepresentation: normalizedJson ?? existing?.jsonRepresentation ?? null,
-        rawUpdate: update as Record<string, unknown>,
+        rawUpdate: update as unknown as Record<string, unknown>,
       };
 
       if (
@@ -152,11 +172,39 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     });
   };
 
+  // Save session to localStorage history
+  const saveSessionToHistory = useCallback(
+    (session: SavedSession) => {
+      if (!persistedState.preferences.keepSessionHistory) return;
+
+      setPersistedState((prev) => {
+        const newHistory = [session, ...prev.sessionHistory].slice(
+          0,
+          prev.preferences.maxHistoryItems
+        );
+
+        return {
+          ...prev,
+          sessionHistory: newHistory,
+          lastSession: session,
+          stats: {
+            ...prev.stats,
+            totalSessions: prev.stats.totalSessions + 1,
+            successfulGenerations: prev.stats.successfulGenerations + 1,
+            lastUsed: Date.now(),
+          },
+        };
+      });
+    },
+    [persistedState.preferences, setPersistedState]
+  );
+
   const {
     sessionId,
     status,
     loading,
     error,
+    sseConnected,
     startSession,
     submitClarification,
     renderDiagram,
@@ -180,75 +228,115 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // Cache assistant responses so we can show full details later
       trackAssistantResponse(update);
 
-      // PHASE 1: Information Gathering & Analysis
-      if (update.status === 'analyzing') {
-        setCurrentPhase(1);
-        setIsInAnalysisPhase(true);
-        message.info('🔍 AI is analyzing your system description...');
-        
-      } else if (update.status === 'clarifying') {
-        setCurrentPhase(1);
-        setIsInAnalysisPhase(true);
-        if (status && update.message) {
-          status.history.push(['assistant', update.message]);
+      const statusValue = update.status;
+      switch (statusValue) {
+        case 'started':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.info('AI received your request and is starting the analysis...');
+          break;
+        case 'analyzing':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.info('AI is analyzing your system description...');
+          break;
+        case 'analysis_complete':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.success('Analysis complete - review the assistant response.');
+          break;
+        case 'clarifying':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.info('AI needs more information - please provide additional details');
+          break;
+        case 'clarification_ready':
+        case 'can_proceed':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.success('AI has sufficient information - ready to proceed!');
+          break;
+        case 'type_selection':
+          setCurrentPhase(1);
+          setIsInAnalysisPhase(true);
+          message.info('AI analysis complete - please select diagram type');
+          break;
+        case 'clarification_received':
+          message.info('Clarification received, AI is processing...');
+          break;
+        case 'diagram_type_determined': {
+          const inferredType =
+            (update.diagram_type as DiagramType) ||
+            (update.diagramType as DiagramType) ||
+            diagramType;
+          setDiagramType(inferredType);
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.success(`Using ${inferredType} for the initial diagram - generating code...`);
+          break;
         }
-        message.info('❓ AI needs more information - please provide additional details');
-        
-      } else if (update.status === 'can_proceed') {
-        setCurrentPhase(1);
-        setIsInAnalysisPhase(true);
-        if (status && update.message) {
-          status.history.push(['assistant', update.message]);
-        }
-        message.success('✅ AI has sufficient information - ready to proceed!');
-        
-      } else if (update.status === 'type_selection') {
-        setCurrentPhase(1);
-        setIsInAnalysisPhase(true);
-        if (status && update.message) {
-          status.history.push(['assistant', update.message]);
-        }
-        message.info('🎯 AI analysis complete - please select diagram type');
-        
-      } else if (update.status === 'ai_thinking') {
-        // AI is processing - show thinking state but don't change phase
-        if (status && update.message) {
-          status.history.push(['assistant', update.message]);
-        }
-        message.loading('🧠 AI is thinking...');
-        
-      } else if (update.status === 'ai_response') {
-        // AI has responded but still in same phase - update message only
-        if (status && update.message) {
-          status.history.push(['assistant', update.message]);
-        }
-        
-      } else if (update.status === 'clarification_received') {
-        // User provided clarification - wait for AI to process
-        message.info('📝 Clarification received, AI is processing...');
-        
-      // PHASE 2: Diagram Generation (only advance when LLM actually starts)
-      } else if (update.status === 'started') {
-        setCurrentPhase(2);
-        setIsInAnalysisPhase(false);
-        message.info('🚀 Starting diagram generation...');
-        
-      } else if (update.status === 'generating') {
-        setCurrentPhase(2);
-        setIsInAnalysisPhase(false);
-        message.loading('⚡ AI is generating diagram code...');
-        
-      // PHASE 3: Completion (only when actually done)
-      } else if (update.status === 'completed') {
-        setCurrentPhase(3);
-        setIsInAnalysisPhase(false);
-        message.success('🎉 Diagram generated successfully!');
-        if (onDiagramGenerated && status) {
-          onDiagramGenerated(status.diagramCode, status.svgOutput);
-        }
-      } else if (update.status === 'error') {
-        setIsInAnalysisPhase(false);
-        message.error(`Error: ${update.message || 'Unknown error occurred'}`);
+        case 'generating':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.loading('AI is generating diagram code...');
+          break;
+        case 'code_generated':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.success('Initial diagram code is ready - review or render it.');
+          break;
+        case 'refining':
+        case 'fallback_fix':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.warning('AI is refining the diagram code for better accuracy...');
+          break;
+        case 'code_refined':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.success('Refinements applied - code ready for preview.');
+          break;
+        case 'generating_json':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.loading('AI is preparing the structured representation...');
+          break;
+        case 'json_generated':
+          setCurrentPhase(2);
+          setIsInAnalysisPhase(false);
+          message.success('JSON representation ready - moving to code.');
+          break;
+        case 'completed':
+          setCurrentPhase(3);
+          setIsInAnalysisPhase(false);
+          message.success('dYZ% Diagram generated successfully!');
+
+          if (persistedState.preferences.autoSave && sessionId && status) {
+            const savedSession: SavedSession = {
+              sessionId,
+              timestamp: Date.now(),
+              initialPrompt: userInput,
+              diagramType: diagramType,
+              diagramCode: status.diagramCode || '',
+              svgOutput: status.svgOutput || '',
+              conversationHistory: status.history || [],
+              score: score,
+              scoreInfo: status.score_info,
+            };
+            saveSessionToHistory(savedSession);
+            message.success('Session saved to history');
+          }
+
+          if (onDiagramGenerated && status) {
+            onDiagramGenerated(status.diagramCode, status.svgOutput);
+          }
+          break;
+        case 'error':
+          setIsInAnalysisPhase(false);
+          message.error(`Error: ${update.message || 'Unknown error occurred'}`);
+          break;
+        default:
+          break;
       }
     },
     onError: (err) => {
@@ -337,20 +425,13 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
   };
 
-  // Handle downloading SVG
-  const handleDownloadSVG = () => {
+  // Handle opening export modal
+  const handleExport = () => {
     if (!status?.svgOutput) {
-      message.warning('No SVG output available');
+      message.warning('No diagram available to export');
       return;
     }
-
-    const element = document.createElement('a');
-    const file = new Blob([status.svgOutput], { type: 'image/svg+xml' });
-    element.href = URL.createObjectURL(file);
-    element.download = `diagram_${Date.now()}.svg`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    setExportModalVisible(true);
   };
 
   // Handle copying code
@@ -461,9 +542,15 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   ];
 
   const conversationMessages = (status?.history ?? []).map(([role, content]) => ({
-    role: role === 'assistant' ? 'assistant' : 'user',
+    role: (role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
     content,
   }));
+
+  const isTypeSelectionStatus =
+    status?.status === 'type_selection' || status?.status === 'diagram_type_determined';
+
+  const canProceedStatus =
+    status?.status === 'can_proceed' || status?.status === 'clarification_ready';
 
   return (
     <Layout className={styles.diagramWizard}>
@@ -474,6 +561,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           {sessionId && (
             <Space>
               <span className={styles.sessionId}>Session: {sessionId.substring(0, 8)}...</span>
+              <Badge
+                status={sseConnected ? 'success' : 'error'}
+                text={sseConnected ? 'Connected' : 'Disconnected'}
+              />
               {status?.isRunning && <Spin size="small" />}
             </Space>
           )}
@@ -630,10 +721,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
                 flexDirection: 'column'
               }}>
                 <h4 style={{ marginTop: 0, marginBottom: 16 }}>
-                  {status?.status === 'type_selection' ? '📊 Ready to Generate' : '💭 Your Response'}
+                  {isTypeSelectionStatus ? '📊 Ready to Generate' : '💭 Your Response'}
                 </h4>
                 
-                {status?.status === 'type_selection' ? (
+                {isTypeSelectionStatus ? (
                   // Diagram type selection
                   <div style={{ flex: 1 }}>
                     <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f9ff', borderRadius: 6 }}>
@@ -717,7 +808,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
                       </div>
                     )}
                     
-                    {status?.status === 'can_proceed' ? (
+                    {canProceedStatus ? (
                       // Show both options when ready to proceed
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <Button
@@ -801,11 +892,13 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
               <div className={styles.rightPanel}>
                 <Tabs defaultActiveKey="1" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Tabs.TabPane tab="Preview" key="1" style={{ height: '100%', overflow: 'auto' }}>
-                    <PreviewPanel
-                      svgOutput={status?.svgOutput || ''}
-                      diagramType={diagramType}
-                      isLoading={loading || status?.isRunning}
-                    />
+                    <div ref={previewContainerRef} style={{ height: '100%' }}>
+                      <PreviewPanel
+                        svgOutput={status?.svgOutput || ''}
+                        diagramType={diagramType}
+                        isLoading={loading || !!status?.isRunning}
+                      />
+                    </div>
                   </Tabs.TabPane>
                   <Tabs.TabPane tab="Code" key="2" style={{ height: '100%' }}>
                     <CodeEditorPanel
@@ -819,6 +912,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
                     <CodeEditorPanel
                       code={JSON.stringify(status?.jsonRepresentation, null, 2) || ''}
                       diagramType="json"
+                      onChange={async () => {}}
                       isLoading={loading}
                     />
                   </Tabs.TabPane>
@@ -843,10 +937,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
                 <Button
                   icon={<DownloadOutlined />}
-                  onClick={handleDownloadSVG}
+                  onClick={handleExport}
                   disabled={!status?.svgOutput}
                 >
-                  Download SVG
+                  Export
                 </Button>
 
                 <Button
@@ -953,8 +1047,27 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           </>
         )}
       </Modal>
+
+      {/* Footer */}
+      <Footer
+        sessionId={sessionId}
+        sseConnected={sseConnected}
+        currentStatus={status?.status}
+        totalSessions={persistedState.stats.totalSessions}
+        successfulGenerations={persistedState.stats.successfulGenerations}
+        lastMessage={status?.message}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        visible={exportModalVisible}
+        onClose={() => setExportModalVisible(false)}
+        svgContainerRef={previewContainerRef}
+        defaultFilename={`diagram_${Date.now()}`}
+      />
     </Layout>
   );
 };
 
 export default DiagramWizard;
+

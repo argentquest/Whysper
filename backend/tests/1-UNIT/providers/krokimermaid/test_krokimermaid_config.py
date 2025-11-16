@@ -15,8 +15,8 @@ from diagrams.provider_config import get_config_loader
 def test_krokimermaid_config():
     """Test Kroki Mermaid provider configuration loading"""
     loader = get_config_loader()
-    diagrams_root = Path(__file__).parent.parent.parent
-    provider_folder = diagrams_root / "krokimermaid"
+    backend_root = Path(__file__).parent.parent.parent.parent.parent
+    provider_folder = backend_root / "diagrams" / "krokimermaid"
 
     config = loader.load_provider_config(provider_folder)
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import React, { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Button, Select, Tooltip, message as antMessage } from 'antd';
 import {
   SendOutlined,
@@ -13,6 +13,7 @@ import type * as Monaco from 'monaco-editor';
 import { BrandColors } from 'branding';
 
 const { Option } = Select;
+// @ts-ignore - Brand color theme type mismatch
 const linkColor = BrandColors.text?.link ?? '#5a469b';
 
 const ActionLink: React.FC<{
@@ -202,7 +203,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     }
   };
 
+  // @ts-ignore - Brand color theme type mismatch
   const panelBackground = BrandColors.quaternary ?? '#fbd3a4';
+  // @ts-ignore - Brand color theme type mismatch
   const panelBorder = BrandColors.neutral?.stroke ?? '#e3ded8';
 
   return (

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(nul)",
-      "Bash(dir /s /b C:Code2025Whysperbackendappmain.py)"
+      "Bash(dir /s /b C:Code2025Whysperbackendappmain.py)",
+      "Bash(dir /s /b C:Code2025WhysperfrontendsrccomponentsArchitecture*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -653,115 +653,43 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     """
     Validation node.
 
-    Validates diagram code using the provider registry.
-    Supports D2, Mermaid (mmdc), and PlantUML via registered providers.
+    Validates diagram code using the provider system directly.
+    No fallback logic - simplified approach requires provider system.
 
     Returns:
         - is_valid: True if code is valid
         - validation_error: Error message if invalid
-        - validation_error_type: Classification of error
-        - recovery_suggestions: List of suggestions to fix
+        - validation_details: Full validation result from provider
     """
     diagram_code = state.get("diagram_code", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
-    provider_id = state.get("provider_id")
     session_id = state.get("_session_id")
-    
-    logger.info(f"🔍 Validating {diagram_type} diagram code ({len(diagram_code)} chars)", 
-               extra={'session_id': session_id} if session_id else {})
+
+    logger.info(f"🔍 Validating {diagram_type} diagram code using provider system",
+                extra={'session_id': session_id} if session_id else {})
 
     if not diagram_code.strip():
         return {
             "is_valid": False,
             "validation_error": "No diagram code provided",
-            "validation_error_type": "missing_code",
-            "recovery_suggestions": ["Generate diagram code first"],
+            "validation_details": None,
             "current_state": SessionState.VALIDATION_ERROR
         }
 
-    # Try to use provider registry for validation
-    if PROVIDER_AVAILABLE:
-        try:
-            registry = get_registry()
+    # Direct provider system call - no fallback
+    provider_registry = get_registry()
+    provider = provider_registry.get_provider_for_type(diagram_type.value)
 
-            # Map diagram type to provider
-            if provider_id is None:
-                diagram_type_str = get_diagram_type_str(diagram_type)
-                provider_id = PROVIDER_MAP.get(diagram_type_str, "mermaidv1")
+    if not provider:
+        raise ValueError(f"No provider available for {diagram_type.value}")
 
-            provider = registry.get(provider_id)
-            if provider:
-                validation_result = provider.validate_code(diagram_code)
+    result = await provider.validate_code(diagram_code)
 
-                if validation_result.is_valid:
-                    logger.info(f"✅ Code validation successful using provider {provider_id}", 
-                               extra={'session_id': session_id} if session_id else {})
-                    return {
-                        "is_valid": True,
-                        "validation_error": "",
-                        "validation_error_type": "",
-                        "recovery_suggestions": [],
-                        "provider_id": provider_id,
-                        "current_state": SessionState.RENDERING
-                    }
-                else:
-                    logger.info(f"❌ Code validation failed: {validation_result.error}", 
-                               extra={'session_id': session_id} if session_id else {})
-                    return {
-                        "is_valid": False,
-                        "validation_error": validation_result.error or "Code validation failed",
-                        "validation_error_type": "syntax_error",
-                        "recovery_suggestions": ["Review the error message and fix the syntax"],
-                        "provider_id": provider_id,
-                        "current_state": SessionState.VALIDATION_ERROR
-                    }
-        except Exception as e:
-            logger.warning(f"Provider validation failed: {e}, falling back to basic validation")
-
-    # Fallback: basic validation check
-    if diagram_type == DiagramType.MERMAID:
-        # More specific checks for different Mermaid diagram types
-        mermaid_keywords = ["flowchart", "sequenceDiagram", "gantt", "classDiagram", "stateDiagram", "pie", "erDiagram", "journey"]
-        if not any(keyword in diagram_code for keyword in mermaid_keywords) and "graph" not in diagram_code:
-            return {
-                "is_valid": False,
-                "validation_error": "Missing or invalid Mermaid diagram type declaration",
-                "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Start with a valid Mermaid diagram type (e.g., 'flowchart TD', 'sequenceDiagram')."],
-                "provider_id": None,
-                "current_state": SessionState.VALIDATION_ERROR
-            }
-    elif diagram_type == DiagramType.D2:
-        # Check for connections or shapes
-        if "->" not in diagram_code and "<->" not in diagram_code and "shape:" not in diagram_code:
-            return {
-                "is_valid": False,
-                "validation_error": "Invalid D2 diagram: No connections or shapes found",
-                "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Add connections (e.g., 'a -> b') or define shapes (e.g., 'db: {shape: sql_database}')."],
-                "provider_id": None,
-                "current_state": SessionState.VALIDATION_ERROR
-            }
-    elif diagram_type == DiagramType.PLANTUML:
-        plantuml_keywords = ["actor", "participant", "class", "interface", "usecase", "component"]
-        if "@startuml" not in diagram_code or "@enduml" not in diagram_code or not any(keyword in diagram_code for keyword in plantuml_keywords):
-            return {
-                "is_valid": False,
-                "validation_error": "Invalid PlantUML diagram: Missing markers or core keywords",
-                "validation_error_type": "syntax_error",
-                "recovery_suggestions": ["Ensure the diagram is wrapped in '@startuml' and '@enduml' and contains valid keywords (e.g., 'actor', 'class')."],
-                "provider_id": None,
-                "current_state": SessionState.VALIDATION_ERROR
-            }
-
-    # If we get here, assume valid (fallback validation)
     return {
-        "is_valid": True,
-        "validation_error": "",
-        "validation_error_type": "",
-        "recovery_suggestions": [],
-        "provider_id": None,  # No specific provider used in fallback
-        "current_state": SessionState.RENDERING
+        "is_valid": result.is_valid,
+        "validation_error": "; ".join([e.message for e in result.errors]) if not result.is_valid else None,
+        "validation_details": result,
+        "current_state": SessionState.RENDERING if result.is_valid else SessionState.VALIDATION_ERROR
     }
 
 
@@ -880,19 +808,18 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     """
     Rendering node.
 
-    Renders valid diagram code to SVG format using provider registry.
-    Uses appropriate provider based on diagram type.
+    Renders valid diagram code to SVG format using provider system directly.
+    No fallback logic - simplified approach requires provider system.
 
     Returns:
         svg_output: SVG representation of diagram
     """
     diagram_code = state.get("diagram_code", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
-    provider_id = state.get("provider_id")
     session_id = state.get("_session_id")
-    
-    logger.info(f"🎨 Rendering {diagram_type} diagram to SVG using provider {provider_id or 'fallback'}", 
-               extra={'session_id': session_id} if session_id else {})
+
+    logger.info(f"🎨 Rendering {diagram_type} diagram to SVG using provider system",
+                extra={'session_id': session_id} if session_id else {})
 
     if not diagram_code.strip():
         return {
@@ -901,68 +828,28 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
             "current_state": SessionState.ERROR
         }
 
-    # Try to use provider registry for rendering
-    if PROVIDER_AVAILABLE:
-        try:
-            registry = get_registry()
+    # Direct provider system call - no fallback
+    provider_registry = get_registry()
+    provider = provider_registry.get_provider_for_type(diagram_type.value)
 
-            # Map diagram type to provider if not set
-            if provider_id is None:
-                diagram_type_str = get_diagram_type_str(diagram_type)
-                provider_id = PROVIDER_MAP.get(diagram_type_str, "mermaidv1")
+    if not provider:
+        raise ValueError(f"No provider available for {diagram_type.value}")
 
-            provider = registry.get(provider_id)
-            if provider:
-                # Use render_with_validation to leverage the provider's error correction
-                render_result = provider.render_with_validation(
-                    code=diagram_code,
-                    output_format="svg",
-                    auto_fix=True,
-                    llm_correction=False  # Already done by wizard
-                )
+    result = await provider.render_with_validation(
+        code=diagram_code,
+        output_format="svg",
+        auto_fix=False,  # Validation already done
+        llm_correction=False
+    )
 
-                if render_result.success:
-                    logger.info(f"✅ SVG rendering successful ({len(render_result.content)} chars)", 
-                               extra={'session_id': session_id} if session_id else {})
-                    return {
-                        "svg_output": render_result.content,
-                        "provider_id": provider_id,
-                        "current_state": SessionState.READY
-                    }
-                else:
-                    logger.error(f"❌ SVG rendering failed: {render_result.error}", 
-                                extra={'session_id': session_id} if session_id else {})
-                    return {
-                        "svg_output": "",
-                        "error_message": f"Rendering failed: {render_result.error}",
-                        "provider_id": provider_id,
-                        "current_state": SessionState.ERROR
-                    }
-        except Exception as e:
-            logger.warning(f"Provider rendering failed: {e}, falling back to placeholder")
-
-    # Fallback: create a simple SVG placeholder with code
-    diagram_type_str = diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
-    svg_placeholder = f"""<svg width="500" height="400" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100%" height="100%" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
-    <rect x="20" y="20" width="460" height="80" fill="#e8f4f8" stroke="#0288d1" stroke-width="2" rx="4"/>
-    <text x="50%" y="45" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#0288d1">
-        {diagram_type_str} Diagram
-    </text>
-    <text x="50%" y="75" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="12" fill="#666">
-        Provider rendering unavailable - code preview below
-    </text>
-    <rect x="20" y="120" width="460" height="260" fill="#fff" stroke="#ccc" stroke-width="1" rx="2"/>
-    <text x="30" y="140" font-family="monospace" font-size="11" fill="#333">Code:</text>
-    <text x="30" y="165" font-family="monospace" font-size="10" fill="#666">
-        {diagram_code[:60]}...
-    </text>
-</svg>"""
-
-    logger.info(f"📋 Using fallback SVG placeholder for {diagram_type_str} diagram", 
-               extra={'session_id': session_id} if session_id else {})
-    
-    return {
-        "svg_output": svg_placeholder,
-        "current_state": SessionState.READY
-    }
+    if result.success:
+        return {
+            "svg_output": result.content,
+            "current_state": SessionState.READY
+        }
+    else:
+        return {
+            "svg_output": "",
+            "error_message": f"Rendering failed: {result.error}",
+            "current_state": SessionState.ERROR
+        }

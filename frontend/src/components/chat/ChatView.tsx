@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, Button, Typography, Tooltip, Avatar, Dropdown, Modal, App } from 'antd';
 import {

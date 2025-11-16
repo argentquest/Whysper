@@ -21,8 +21,10 @@ import * as WF2Branding from './WF2';
 // Import other brands here as they are created
 // import * as ACMEBranding from './ACME';
 
+type BrandModule = typeof WFBranding | typeof WF2Branding;
+
 // Select the active brand based on environment variable
-let selectedBrand: typeof WFBranding;
+let selectedBrand: BrandModule;
 
 switch (activeBrand) {
   case 'WF':
@@ -69,6 +71,12 @@ export const ACTIVE_BRAND = activeBrand;
 if (import.meta.env.DEV) {
   console.log(`🎨 Active Brand: ${activeBrand}`);
   console.log(`🎨 Brand Colors:`, BrandColors);
-  console.log(`🎨 Default Light Theme Primary:`, DefaultLightTheme.token.colorPrimary);
-  console.log(`🎨 Default Dark Theme Primary:`, DefaultDarkTheme.token.colorPrimary);
+
+  if (DefaultLightTheme?.token) {
+    console.log(`🎨 Default Light Theme Primary:`, DefaultLightTheme.token.colorPrimary);
+  }
+
+  if (DefaultDarkTheme?.token) {
+    console.log(`🎨 Default Dark Theme Primary:`, DefaultDarkTheme.token.colorPrimary);
+  }
 }

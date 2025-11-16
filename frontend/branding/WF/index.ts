@@ -7,7 +7,7 @@
 import { WFColors } from './colors';
 import { WFTypography } from './typography';
 import { WFBrand } from './brand';
-import { wfThemes, wfLightTheme, wfDarkTheme } from './theme';
+import { wfThemes } from './theme';
 
 export { WFColors } from './colors';
 export type { WFColorPalette } from './colors';

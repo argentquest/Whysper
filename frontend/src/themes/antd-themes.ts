@@ -454,7 +454,7 @@ export const themes = {
 export type ThemeKey = keyof typeof themes;
 export type ThemeMode = ThemeKey; // Updated to support all theme keys
 
-export const getThemeConfig = (themeKey: ThemeKey) => {
+export const getThemeConfig = (themeKey: ThemeKey): any => {
   const selectedTheme = themes[themeKey];
   if (!selectedTheme) {
     console.error(`🎨 getThemeConfig: Theme "${themeKey}" not found in themes object`);

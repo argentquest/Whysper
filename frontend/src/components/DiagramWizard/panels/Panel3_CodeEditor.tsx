@@ -2,18 +2,28 @@
  * Panel3_CodeEditor Component
  *
  * Provides a code editor for viewing and editing diagram source code.
- * Supports syntax highlighting and manual re-rendering.
+ * Supports syntax highlighting, manual re-rendering, and real-time validation.
+ *
+ * Enhanced with:
+ * - Real-time code validation
+ * - Error/warning display
+ * - Auto-fix suggestions
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Space, Input, Spin, message, Tooltip } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Button, Space, Input, Spin, message, Tooltip, Tabs, Badge } from 'antd';
 import {
   CopyOutlined,
   CheckOutlined,
   EditOutlined,
   SaveOutlined,
   CloseOutlined,
+  WarningOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
+import { validateDiagramCode, debounce } from '../../../services/diagram/validationService';
+import type { ValidationResult } from '../../../services/diagram/validationService';
+import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
 
 interface Panel3CodeEditorProps {
@@ -33,10 +43,45 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     setEditedCode(code);
+    // Validate when code changes
+    if (code && code.trim()) {
+      performValidation(code);
+    }
   }, [code]);
+
+  // Debounced validation function
+  const performValidation = useCallback(
+    debounce(async (codeToValidate: string) => {
+      if (!codeToValidate || !codeToValidate.trim()) {
+        setValidationResult(null);
+        return;
+      }
+
+      setIsValidating(true);
+      try {
+        const result = await validateDiagramCode(codeToValidate, diagramType);
+        setValidationResult(result);
+      } catch (error) {
+        console.error('Validation error:', error);
+      } finally {
+        setIsValidating(false);
+      }
+    }, 500),
+    [diagramType]
+  );
+
+  // Handle code change in editor
+  const handleCodeChange = (value: string) => {
+    setEditedCode(value);
+    if (isEditing) {
+      performValidation(value);
+    }
+  };
 
   const handleCopy = async () => {
     try {
@@ -73,9 +118,38 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     setIsEditing(false);
   };
 
+  // Get validation status icon
+  const getValidationStatus = () => {
+    if (isValidating) {
+      return <Spin size="small" />;
+    }
+    if (!validationResult) {
+      return null;
+    }
+    if (validationResult.isValid) {
+      return (
+        <Tooltip title="No errors">
+          <CheckCircleOutlined style={{ color: '#52c41a' }} />
+        </Tooltip>
+      );
+    }
+    return (
+      <Tooltip title={`${validationResult.errors.length} error(s)`}>
+        <Badge count={validationResult.errors.length} offset={[5, 0]}>
+          <WarningOutlined style={{ color: '#ff4d4f' }} />
+        </Badge>
+      </Tooltip>
+    );
+  };
+
   return (
     <Card
-      title={`${diagramType} Code`}
+      title={
+        <Space>
+          {`${diagramType} Code`}
+          {getValidationStatus()}
+        </Space>
+      }
       className={styles.codePanel}
       extra={
         <Space>
@@ -148,37 +222,74 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
             No code generated yet
           </div>
         ) : (
-          <Input.TextArea
-            value={isEditing ? editedCode : code}
-            onChange={(e) => setEditedCode(e.target.value)}
-            disabled={!isEditing || isLoading}
-            readOnly={!isEditing}
-            style={{
-              fontFamily: 'monospace',
-              fontSize: 12,
-              height: '100%',
-              border: 'none',
-              backgroundColor: '#f5f5f5',
-            }}
-            rows={20}
+          <Tabs
+            defaultActiveKey="code"
+            items={[
+              {
+                key: 'code',
+                label: 'Code',
+                children: (
+                  <>
+                    <Input.TextArea
+                      value={isEditing ? editedCode : code}
+                      onChange={(e) => handleCodeChange(e.target.value)}
+                      disabled={!isEditing || isLoading}
+                      readOnly={!isEditing}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        height: '400px',
+                        border: 'none',
+                        backgroundColor: '#f5f5f5',
+                      }}
+                    />
+                    {isEditing && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: 8,
+                          backgroundColor: '#fff7e6',
+                          borderRadius: 4,
+                          fontSize: 12,
+                          color: '#666',
+                        }}
+                      >
+                        Edit the code above and click Save to update the diagram.
+                      </div>
+                    )}
+                  </>
+                ),
+              },
+              {
+                key: 'errors',
+                label: (
+                  <Badge
+                    count={
+                      validationResult
+                        ? validationResult.errors.length + validationResult.warnings.length
+                        : 0
+                    }
+                    offset={[10, 0]}
+                  >
+                    <span>Validation</span>
+                  </Badge>
+                ),
+                children: validationResult ? (
+                  <ErrorPanel
+                    errors={validationResult.errors}
+                    warnings={validationResult.warnings}
+                    suggestions={validationResult.suggestions}
+                  />
+                ) : (
+                  <div style={{ padding: '16px', textAlign: 'center', color: '#999' }}>
+                    No validation results
+                  </div>
+                ),
+              },
+            ]}
           />
         )}
       </div>
-
-      {isEditing && (
-        <div
-          style={{
-            marginTop: 8,
-            padding: 8,
-            backgroundColor: '#fff7e6',
-            borderRadius: 4,
-            fontSize: 12,
-            color: '#666',
-          }}
-        >
-          Edit the code above and click Save to update the diagram.
-        </div>
-      )}
     </Card>
   );
 };

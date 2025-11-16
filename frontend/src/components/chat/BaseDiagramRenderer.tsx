@@ -11,7 +11,7 @@
  * - Provider integration
  */
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { message as antMessage } from 'antd';
 import diagramProviderService, {
   type DiagramType,
@@ -60,7 +60,7 @@ export interface BaseDiagramRendererProps {
  * Abstract base class for diagram renderers
  * All specific diagram components (Mermaid, D2, etc.) should extend this class
  */
-export abstract class BaseDiagramRenderer<Props extends BaseDiagramRendererProps> {
+export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProps = BaseDiagramRendererProps> {
   /**
    * Get the diagram type this renderer handles
    * Must be implemented by subclasses

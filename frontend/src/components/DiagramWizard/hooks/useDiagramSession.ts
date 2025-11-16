@@ -3,13 +3,16 @@
  *
  * Manages the lifecycle of a diagram generation session.
  * Handles initialization, updates, and cleanup.
+ *
+ * UPDATED: Now uses enhanced SSE hook with automatic reconnection
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import DiagramApi from '../../../services/diagram/diagramApi';
-import type { DiagramStatus, DiagramUpdate } from '../../../services/diagram/diagramApi';
+import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
+import { useSSE } from '../../../hooks/useSSE';
 
-interface UseDiagramSessionOptions {
+export interface UseDiagramSessionOptions {
   onUpdate?: (update: DiagramUpdate) => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
@@ -17,15 +20,67 @@ interface UseDiagramSessionOptions {
 
 export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [status, setStatus] = useState<DiagramStatus | null>(null);
+  const [status, setStatus] = useState<DiagramUpdate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [cleanupFn, setCleanupFn] = useState<(() => void) | null>(null);
   const lastStatusRef = useRef<string | null>(null);
+
   const logEvent = useCallback((label: string, payload?: unknown) => {
     // eslint-disable-next-line no-console
     console.log(`[DiagramSession] ${label}`, payload ?? '');
   }, []);
+
+  // Enhanced SSE hook with automatic reconnection
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
+  const {
+    isConnected: sseConnected,
+    error: sseError,
+    messages: sseMessages,
+    clearMessages: clearSSEMessages,
+  } = useSSE<DiagramUpdate>({
+    url: sessionId ? `${API_BASE}/diagram/stream/${sessionId}` : '',
+    enabled: !!sessionId,
+    onMessage: (message) => {
+      const update = message.data;
+
+      logEvent('SSE update', update);
+
+      // Ignore keep-alive pings that don't include a session payload
+      if (!update.session_id) {
+        return;
+      }
+
+      // Update status
+      setStatus((prev) => ({ ...(prev ?? {}), ...update }));
+
+      // Call user's onUpdate callback
+      options.onUpdate?.(update);
+
+      // Track last status
+      lastStatusRef.current = update.status ?? lastStatusRef.current;
+
+      // Check for completion
+      if (update.status === 'completed' || update.status === 'error') {
+        logEvent('SSE completed', update.status);
+        options.onComplete?.();
+      }
+    },
+    onError: (err) => {
+      logEvent('SSE error', err);
+      setError(err);
+      options.onError?.(err);
+    },
+    onConnect: () => {
+      logEvent('SSE connected');
+    },
+    onDisconnect: () => {
+      logEvent('SSE disconnected');
+    },
+    maxReconnectAttempts: 5,
+    reconnectInterval: 2000,
+    keepAliveTimeout: 30000,
+    autoClose: true,
+  });
 
   // Start a new diagram generation session
   const startSession = useCallback(
@@ -35,41 +90,15 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         setLoading(true);
         setError(null);
         lastStatusRef.current = null; // Reset on new session
+        clearSSEMessages(); // Clear previous messages
 
         // Start the diagram generation
         const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType);
         setSessionId(result.session_id);
-        setStatus(result.status);
+        setStatus(result.status as DiagramUpdate);
         logEvent('Session started', result.status);
-        lastStatusRef.current = result.status.status;
 
-        // Start streaming updates
-        const cleanup = DiagramApi.streamDiagramUpdates(
-          result.session_id,
-          (update) => {
-            logEvent('SSE update', update);
-
-            // Ignore keep-alive pings that don't include a session payload.
-            if (!update.session_id) {
-              return;
-            }
-
-            setStatus(prev => ({ ...(prev ?? {}), ...update }));
-            options.onUpdate?.(update);
-            lastStatusRef.current = update.status ?? lastStatusRef.current;
-          },
-          (err) => {
-            logEvent('SSE error', err);
-            setError(err);
-            options.onError?.(err);
-          },
-          () => {
-            logEvent('SSE completed');
-            options.onComplete?.();
-          }
-        );
-
-        setCleanupFn(() => cleanup);
+        // SSE connection will auto-start via useSSE hook when sessionId is set
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Failed to start session');
         setError(error);
@@ -79,7 +108,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         setLoading(false);
       }
     },
-    [logEvent, options]
+    [logEvent, options, clearSSEMessages]
   );
 
   // Submit a clarification response
@@ -184,40 +213,36 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     if (!sessionId) return;
 
     try {
-      // Clean up SSE connection
       logEvent('Ending session', { sessionId });
-      cleanupFn?.();
 
       // Delete session from backend
       await DiagramApi.deleteDiagramSession(sessionId);
 
+      // Reset state (SSE will auto-disconnect when sessionId becomes null)
       setSessionId(null);
       setStatus(null);
       setError(null);
-      setCleanupFn(null);
+      clearSSEMessages();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to end session');
       setError(error);
     }
-  }, [sessionId, cleanupFn]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      cleanupFn?.();
-    };
-  }, [cleanupFn]);
+  }, [sessionId, clearSSEMessages, logEvent]);
 
   return {
     sessionId,
     status,
     loading,
     error,
+    sseConnected,
+    sseMessages,
+    sseError,
     startSession,
     submitClarification,
     renderDiagram,
     approveRender,
     refreshStatus,
     endSession,
+    clearSSEMessages,
   };
 }

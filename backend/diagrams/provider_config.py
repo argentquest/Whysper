@@ -35,6 +35,7 @@ class LLMCorrectionConfig(BaseModel):
     max_retries: int = Field(default=3, ge=0, le=10)
     temperature: float = Field(default=0.3, ge=0.0, le=2.0)
     model_override: Optional[str] = None
+    max_tokens: Optional[int] = Field(default=4000, ge=100, le=100000)
 
 
 class PatternCorrectionConfig(BaseModel):

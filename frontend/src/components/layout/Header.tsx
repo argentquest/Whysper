@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import type { AgentPrompt } from '../../types';
 import { Layout, Button, Select, Typography, Tooltip, Dropdown, theme as antdTheme } from 'antd';

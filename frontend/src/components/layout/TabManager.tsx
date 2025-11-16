@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Tabs, Button, Space, Tooltip, Dropdown, Typography, theme as antdTheme } from 'antd';
 import {

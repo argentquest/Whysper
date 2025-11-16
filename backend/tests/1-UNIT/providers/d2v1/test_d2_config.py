@@ -15,8 +15,8 @@ from diagrams.provider_config import get_config_loader
 def test_d2v1_config():
     """Test d2v1 provider configuration loading"""
     loader = get_config_loader()
-    diagrams_root = Path(__file__).parent.parent.parent
-    provider_folder = diagrams_root / "d2v1"
+    backend_root = Path(__file__).parent.parent.parent.parent.parent
+    provider_folder = backend_root / "diagrams" / "d2v1"
 
     config = loader.load_provider_config(provider_folder)
 

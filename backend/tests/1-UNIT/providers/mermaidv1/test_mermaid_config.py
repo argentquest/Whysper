@@ -15,8 +15,8 @@ from diagrams.provider_config import get_config_loader
 def test_mermaidv1_config():
     """Test mermaidv1 provider configuration loading"""
     loader = get_config_loader()
-    diagrams_root = Path(__file__).parent.parent.parent
-    provider_folder = diagrams_root / "mermaidv1"
+    backend_root = Path(__file__).parent.parent.parent.parent.parent
+    provider_folder = backend_root / "diagrams" / "mermaidv1"
 
     config = loader.load_provider_config(provider_folder)
 

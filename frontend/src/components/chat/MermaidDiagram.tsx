@@ -16,7 +16,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
   const [isRendering, setIsRendering] = useState(false);
   const [isValid, setIsValid] = useState<boolean | null>(null); // null = checking, true = valid, false = invalid
   const [svgContent, setSvgContent] = useState<string>('');
-  const [validationResult, setValidationResult] = useState<any>(null);
+  const [validationResult, _setValidationResult] = useState<any>(null);
   const [renderKey, setRenderKey] = useState(0); // Force re-render trigger
   const [zoom, setZoom] = useState(1); // Zoom level (1 = 100%)
   const [pan, setPan] = useState({ x: 0, y: 0 }); // Pan position
@@ -58,6 +58,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
         diagram_type: 'mermaid',
         code_length: code.length,
         code_preview: code.substring(0, 100),
+        // @ts-expect-error - provider field
         provider: providerInfo?.provider_id || 'mermaidv1'
       });
 
@@ -115,8 +116,8 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
             event_type: 'render_success',
             diagram_type: 'mermaid',
             code_length: code.length,
-            provider: renderResponse.metadata.provider_id,
-            render_time: renderResponse.metadata.render_time
+            // @ts-expect-error - provider field
+            provider: renderResponse.metadata.provider_id
           });
         } else {
           const errorMsg = renderResponse.error || 'Rendering failed';

@@ -41,8 +41,8 @@ def test_root_config():
 def test_provider_config(provider_name: str):
     """Test loading provider configuration"""
     loader = get_config_loader()
-    diagrams_root = Path(__file__).parent.parent
-    provider_folder = diagrams_root / provider_name
+    backend_root = Path(__file__).parent.parent.parent.parent
+    provider_folder = backend_root / "diagrams" / provider_name
 
     # Provider folder should exist
     assert provider_folder.exists(), \
@@ -75,10 +75,10 @@ def test_config_comparison():
 
     loader = get_config_loader()
     root_config = loader.get_root_config()
-    diagrams_root = Path(__file__).parent.parent
+    backend_root = Path(__file__).parent.parent.parent.parent
 
     for provider_name in ["mermaidv1", "d2v1"]:
-        provider_folder = diagrams_root / provider_name
+        provider_folder = backend_root / "diagrams" / provider_name
         if not provider_folder.exists():
             continue
 
@@ -125,10 +125,10 @@ def test_extract_overrides():
     print("=" * 60)
 
     loader = get_config_loader()
-    diagrams_root = Path(__file__).parent.parent
+    backend_root = Path(__file__).parent.parent.parent.parent
 
     for provider_name in ["mermaidv1", "d2v1"]:
-        provider_folder = diagrams_root / provider_name
+        provider_folder = backend_root / "diagrams" / provider_name
         if not provider_folder.exists():
             continue
 
