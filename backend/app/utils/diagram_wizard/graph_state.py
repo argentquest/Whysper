@@ -46,6 +46,7 @@ class GraphState(TypedDict, total=False):
     design_prompt: str
     diagram_type: DiagramType  # Determined in determine_diagram_type_node, not user input
     provider_id: Optional[str]
+    model_id: Optional[str]  # AI model to use (gpt5, grok, claude, gemini)
 
     # Clarification loop
     clarification_history: List[Dict[str, str]]

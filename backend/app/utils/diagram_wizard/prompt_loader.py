@@ -45,10 +45,16 @@ def load_prompts() -> Dict[str, str]:
                 clarify_path, "Universal Clarification Prompt"
             )
 
-    # Load JSON generation prompt (full file content)
+    # Load JSON generation prompts (base + model-specific versions)
     json_gen_path = prompt_dir / "JSON_GENERATION_PROMPT.md"
     if json_gen_path.exists():
         _prompt_cache["json_generation"] = _load_full_file(json_gen_path)
+
+    # Load model-specific JSON generation prompts
+    for model in ["gpt5", "grok", "sonet45", "gemini25pro"]:
+        model_json_path = prompt_dir / f"JSON_GENERATION_{model}.md"
+        if model_json_path.exists():
+            _prompt_cache[f"json_generation_{model}"] = _load_full_file(model_json_path)
 
     # Load generation prompts
     generate_path = prompt_dir / "GENERATE_PROMPTS.md"
@@ -79,17 +85,28 @@ def load_prompts() -> Dict[str, str]:
     return _prompt_cache
 
 
-def get_prompt(prompt_name: str) -> Optional[str]:
+def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str]:
     """
-    Get a specific prompt by name.
+    Get a specific prompt by name, with optional model-specific version.
 
     Args:
-        prompt_name: Name of the prompt (e.g., "clarify_mermaid")
+        prompt_name: Name of the prompt (e.g., "json_generation")
+        model_id: Optional model ID (e.g., "gpt5", "grok", "sonet45", "gemini25pro")
+                 If provided and model-specific prompt exists, returns that version.
+                 Otherwise, falls back to base prompt.
 
     Returns:
         Prompt content or None if not found
     """
     prompts = load_prompts()
+
+    # If model_id provided, try model-specific version first
+    if model_id:
+        model_specific_key = f"{prompt_name}_{model_id}"
+        if model_specific_key in prompts:
+            return prompts.get(model_specific_key)
+
+    # Fall back to base prompt
     return prompts.get(prompt_name)
 
 

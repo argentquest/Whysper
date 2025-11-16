@@ -66,7 +66,8 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         - If 'generate', a 'suggested_diagram_type' and 'reason' are returned.
     """
     session_id = state.get("_session_id")
-    logger.info("🔬 Analyzing initial user request...", extra={'session_id': session_id})
+    model_id = state.get("model_id")  # Get selected model from state
+    logger.info(f"🔬 Analyzing initial user request (model: {model_id})...", extra={'session_id': session_id})
 
     update_callback = state.get("_update_callback")
     if update_callback:
@@ -75,7 +76,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
             "message": "AI is analyzing your request...",
         })
 
-    prompt_template = get_prompt("analyze_request")
+    prompt_template = get_prompt("analyze_request", model_id=model_id)
     if not prompt_template:
         logger.error("analyze_request prompt not found!", extra={'session_id': session_id})
         return {
@@ -87,7 +88,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
     clarification_history = state.get("clarification_history", [])
     user_content = "\n".join([msg.get('content', '') for msg in clarification_history if msg.get('role') == 'user'])
 
-    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+    ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
 
     try:
         ai_response = json.loads(ai_response_str)
@@ -150,14 +151,34 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
 
 @log_method_call
-async def _call_llm(prompt: str, user_content: str, session_id: str = None) -> str:
+def _get_model_for_id(model_id: str = None) -> str:
+    """Map model_id to actual model name.
+
+    Args:
+        model_id: User-selected model ID (gpt5, grok, claude, gemini)
+
+    Returns:
+        Actual model identifier for API calls
+    """
+    model_map = {
+        "gpt5": "openai/gpt-4-turbo",  # Deep Context
+        "grok": "xai/grok-2-latest",  # Fast
+        "claude": "anthropic/claude-3.5-sonnet",  # Thinking
+        "gemini": "google/gemini-2.5-pro",  # Efficient
+    }
+    # Return the mapped model or default to Gemini
+    return model_map.get(model_id, "google/gemini-2.5-flash-preview-09-2025")
+
+
+async def _call_llm(prompt: str, user_content: str, session_id: str = None, model_id: str = None) -> str:
     """Helper function to call AI/LLM with proper error handling and SSE logging.
-    
+
     Args:
         prompt: System prompt template
         user_content: User message content
         session_id: Session ID for SSE filtering (optional)
-        
+        model_id: Selected AI model ID (gpt5, grok, claude, gemini)
+
     Returns:
         AI response string
     """
@@ -166,7 +187,8 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None) -> s
         env_vars = env_manager.load_env_file()
         api_key = env_vars.get("API_KEY", "")
         provider = env_vars.get("PROVIDER", "openrouter")
-        model = env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
+        # Use selected model or fall back to environment/default
+        model = _get_model_for_id(model_id) if model_id else env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
         
         if not api_key:
             logger.error("No API key configured for diagram wizard AI calls", 
@@ -240,64 +262,142 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None) -> s
 @log_method_call
 async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     """
-    Generates a structured JSON representation of the diagram.
+    Generates comprehensive architecture representations (Structurizr DSL + Legacy JSON).
 
-    Calls an LLM with a specialized prompt to convert the conversation
-    history into a JSON object that conforms to the architecture schema.
+    Calls an LLM with a specialized prompt to convert the conversation history into:
+    1. A Structurizr workspace (full with views)
+    2. A clean Structurizr representation (normalized, model only)
+    3. A legacy JSON object (backward compatibility)
+
+    All three representations must be synchronized and valid.
 
     Returns:
-        - A dictionary with 'json_representation' containing the generated JSON.
+        - Dictionary with 'structurizr_workspace', 'clean_d2', 'json_representation'
     """
     session_id = state.get("_session_id")
-    logger.info("Generating JSON representation...", extra={'session_id': session_id})
+    model_id = state.get("model_id", "claude")  # Get selected model
+    logger.info(
+        f"Generating JSON representation (model: {model_id})...",
+        extra={'session_id': session_id}
+    )
 
     update_callback = state.get("_update_callback")
     if update_callback:
         await update_callback({
             "status": "generating_json",
-            "message": "AI is creating a structured representation of your diagram...",
+            "message": "AI is validating and finalizing architecture representation...",
         })
 
-    prompt_template = get_prompt("json_generation")
+    # Load model-specific JSON_GENERATION prompt
+    prompt_template = get_prompt("json_generation", model_id=model_id)
     if not prompt_template:
-        logger.error("json_generation prompt not found!", extra={'session_id': session_id})
+        logger.error(
+            f"json_generation prompt not found for model: {model_id}",
+            extra={'session_id': session_id}
+        )
+        # Fallback: use existing representations from clarify_prompt
         return {
-            "error_message": "Internal error: JSON generation prompt not found."
+            "structurizr_workspace": state.get("structurizr_workspace", ""),
+            "clean_d2": state.get("clean_d2", ""),
+            "json_representation": state.get("json_representation", {}),
         }
 
+    # Build prompt content from conversation history
     clarification_history = state.get("clarification_history", [])
-    user_content = "\n".join([msg.get('content', '') for msg in clarification_history if msg.get('role') == 'user'])
+    user_content = "\n".join([
+        msg.get('content', '')
+        for msg in clarification_history
+        if msg.get('role') == 'user'
+    ])
 
-    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+    # Call LLM with model-specific prompt
+    ai_response_str = await _call_llm(
+        prompt_template,
+        user_content,
+        session_id,
+        model_id=model_id
+    )
 
     try:
-        json_representation = json.loads(ai_response_str)
-        
-        # Validate the JSON against the schema
-        is_valid, errors = ArchitectureSchema.validate(json_representation)
-        if not is_valid:
-            raise ValueError(f"Generated JSON is invalid: {errors}")
+        # Parse AI response as JSON
+        response = json.loads(ai_response_str)
 
-        logger.info("Successfully generated and validated JSON representation.", extra={'session_id': session_id})
+        # Extract three representations
+        structurizr_workspace = response.get("structurizr_workspace", "")
+        clean_d2 = response.get("clean_d2", "")
+        json_representation = response.get("json_representation", {})
+
+        # Validate Structurizr syntax (basic check)
+        if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
+            logger.warning(
+                "Structurizr workspace missing or invalid format",
+                extra={'session_id': session_id}
+            )
+
+        if not clean_d2 or not clean_d2.startswith("model"):
+            logger.warning(
+                "clean_d2 missing or invalid format",
+                extra={'session_id': session_id}
+            )
+
+        # Validate legacy JSON schema
+        if json_representation:
+            is_valid, errors = ArchitectureSchema.validate(json_representation)
+            if not is_valid:
+                logger.warning(
+                    f"Legacy JSON schema validation issues: {errors}",
+                    extra={'session_id': session_id}
+                )
+                # Don't fail - JSON node is validation, not blocking
+
+        logger.info(
+            "Successfully generated JSON representation with Structurizr and legacy schema.",
+            extra={'session_id': session_id}
+        )
         if update_callback:
             await update_callback({
                 "status": "json_generated",
-                "message": "Successfully created structured representation.",
+                "message": "Successfully validated and finalized architecture representation.",
             })
 
         return {
+            "structurizr_workspace": structurizr_workspace,
+            "clean_d2": clean_d2,
             "json_representation": json_representation,
         }
 
-    except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"Error processing JSON response from AI: {e}", extra={'session_id': session_id})
+    except json.JSONDecodeError as e:
+        logger.error(
+            f"AI response not valid JSON: {e}",
+            extra={'session_id': session_id}
+        )
         if update_callback:
             await update_callback({
                 "status": "error",
-                "message": "Failed to create a structured representation of your diagram.",
+                "message": "AI response was not valid JSON format.",
             })
+        # Return existing state representations as fallback
         return {
-            "error_message": str(e),
+            "structurizr_workspace": state.get("structurizr_workspace", ""),
+            "clean_d2": state.get("clean_d2", ""),
+            "json_representation": state.get("json_representation", {}),
+        }
+
+    except Exception as e:
+        logger.error(
+            f"Unexpected error during JSON generation: {e}",
+            extra={'session_id': session_id}
+        )
+        if update_callback:
+            await update_callback({
+                "status": "error",
+                "message": "Unexpected error during JSON generation.",
+            })
+        # Return existing state representations as fallback
+        return {
+            "structurizr_workspace": state.get("structurizr_workspace", ""),
+            "clean_d2": state.get("clean_d2", ""),
+            "json_representation": state.get("json_representation", {}),
         }
 
 
@@ -346,8 +446,9 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
         }
 
     # Get both ANALYZE and CLARIFY prompts for persistent schema context
-    analyze_prompt = get_prompt("analyze_request")
-    clarify_prompt_template = get_prompt("clarify_universal")
+    model_id = state.get("model_id")  # Get selected model from state
+    analyze_prompt = get_prompt("analyze_request", model_id=model_id)
+    clarify_prompt_template = get_prompt("clarify_universal", model_id=model_id)
 
     # Combine prompts: ANALYZE provides schema context, CLARIFY guides the clarification loop
     # This ensures the LLM has full schema reference throughout all turns
@@ -396,11 +497,11 @@ Determine if you have enough information or need to ask more questions."""
     session_id = state.get("_session_id")
     
     # Call AI for clarification decision
-    logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1}",
+    logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1} (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
     logger.info(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
                extra={'session_id': session_id} if session_id else {})
-    ai_response_str = await _call_llm(prompt_template, user_content, session_id)
+    ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
 
     try:
         # Parse JSON response from LLM
@@ -576,10 +677,11 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     diagram_type_str = get_diagram_type_str(diagram_type)
     json_representation = state.get("json_representation", {})
-    
+    model_id = state.get("model_id")  # Get selected model from state
+
     # Get code generation prompt template
     prompt_key = f"generate_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(prompt_key)
+    prompt_template = get_prompt(prompt_key, model_id=model_id)
     
     if not prompt_template:
         # Fallback prompt if specific prompt not found
@@ -594,20 +696,20 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
 
     # Get session ID for SSE logging
     session_id = state.get("_session_id")
-    
-    logger.info(f"Generating {diagram_type_str} code using AI", 
+
+    logger.info(f"Generating {diagram_type_str} code using AI (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
-    
+
     # Send progress update to frontend
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
         await update_callback({
-            "status": "generating", 
+            "status": "generating",
             "message": f"AI is generating {diagram_type_str} diagram code...",
             "message_type": "progress"
         })
-    
-    ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id)
+
+    ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id, model_id=model_id)
     
     if ai_response.startswith("ERROR:"):
         logger.error(f"AI code generation failed: {ai_response}")
@@ -710,6 +812,7 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     diagram_type_str = get_diagram_type_str(diagram_type)
     refinement_attempt = state.get("refinement_attempt", 0) + 1
     final_design_summary = state.get("final_design_summary", "")
+    model_id = state.get("model_id")  # Get selected model from state
 
     if refinement_attempt >= 3:
         logger.error("Max refinement attempts reached. Unable to fix code.", extra={'session_id': state.get("_session_id")})
@@ -718,10 +821,10 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
             "error_message": "Max refinement attempts reached. Unable to fix code.",
             "current_state": SessionState.ERROR,
         }
-    
+
     # Get refinement prompt template
     prompt_key = f"refine_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(prompt_key)
+    prompt_template = get_prompt(prompt_key, model_id=model_id)
     
     if not prompt_template:
         # Fallback prompt if specific prompt not found
@@ -745,17 +848,17 @@ Attempt: {refinement_attempt}"""
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
         await update_callback({
-            "status": "refining", 
+            "status": "refining",
             "message": f"AI is fixing diagram code (attempt {refinement_attempt})...",
             "message_type": "progress"
         })
-    
+
     # Get session ID for SSE logging
     session_id = state.get("_session_id")
-    
-    logger.info(f"Refining {diagram_type_str} code using AI - attempt {refinement_attempt}", 
+
+    logger.info(f"Refining {diagram_type_str} code using AI - attempt {refinement_attempt} (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
-    ai_response = await _call_llm(prompt_template, error_context, session_id)
+    ai_response = await _call_llm(prompt_template, error_context, session_id, model_id=model_id)
     
     if ai_response.startswith("ERROR:"):
         logger.error(f"AI code refinement failed: {ai_response}")

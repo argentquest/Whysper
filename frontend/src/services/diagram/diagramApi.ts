@@ -53,21 +53,29 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
 
 export class DiagramApi {
   /**
-   * Start a new diagram generation session
+   * Start a new diagram generation session with optional model selection
    */
   static async startDiagramGeneration(
     initialPrompt: string,
-    diagramType: string = 'Mermaid'
+    diagramType: string = 'Mermaid',
+    modelId?: string
   ): Promise<DiagramSession> {
+    const body: Record<string, unknown> = {
+      initial_prompt: initialPrompt,
+      diagram_type: diagramType,
+    };
+
+    // Include model_id if provided (for model selection feature)
+    if (modelId) {
+      body.model_id = modelId;
+    }
+
     const response = await fetch(`${API_BASE}/diagram/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        initial_prompt: initialPrompt,
-        diagram_type: diagramType,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {

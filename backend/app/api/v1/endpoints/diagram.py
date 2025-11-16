@@ -20,10 +20,16 @@ router = APIRouter()
 async def start_diagram_generation(
     initial_prompt: str = Body(..., embed=True),
     diagram_type: str = Body("Mermaid", embed=True),
+    model_id: str = Body(None, embed=True),
 ):
     """
     Starts a new diagram generation session.
-    
+
+    Args:
+        initial_prompt: The system description to analyze
+        diagram_type: Type of diagram to generate (default: Mermaid)
+        model_id: Optional AI model to use (gpt5, grok, claude, gemini)
+
     Returns:
         - session_id: Unique session identifier
         - status: Initial session status
@@ -31,7 +37,8 @@ async def start_diagram_generation(
     try:
         session = DiagramSessionStore.create_session()
         service = DiagramFactoryService(session)
-        await service.start_generation(initial_prompt, diagram_type)
+        # Pass model_id to the service if provided
+        await service.start_generation(initial_prompt, diagram_type, model_id)
         
         return {
             "session_id": session.session_id,
@@ -57,8 +64,9 @@ async def stream_diagram_updates(session_id: str):
         try:
             while True:
                 try:
-                    # Wait for an update from the service with 30 second timeout
-                    update = await asyncio.wait_for(session.update_queue.get(), timeout=30)
+                    # Wait for an update from the service with 3 second timeout
+                    # (short timeout allows frequent "waiting" status updates for UX feedback)
+                    update = await asyncio.wait_for(session.update_queue.get(), timeout=3)
                     # Serialize to JSON
                     yield f"data: {json.dumps(update)}\n\n"
 
@@ -67,8 +75,16 @@ async def stream_diagram_updates(session_id: str):
                         break
 
                 except asyncio.TimeoutError:
-                    # Send keep-alive message
-                    yield 'data: {"type": "keep-alive"}\n\n'
+                    # Send "waiting" status indicating LLM is processing
+                    # This is better than keep-alive because it gives meaningful feedback
+                    waiting_status = {
+                        "type": "status",
+                        "status": "waiting",
+                        "message": "AI is processing your request... (no response yet)",
+                        "session_id": session_id,
+                    }
+                    logger.info(f"[SSE] Sending waiting status for session {session_id}")
+                    yield f"data: {json.dumps(waiting_status)}\n\n"
                 except asyncio.CancelledError:
                     # Handle client disconnection
                     logger.info(f"Client disconnected from stream: {session_id}")

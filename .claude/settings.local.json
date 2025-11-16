@@ -1,10 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(nul)",
-      "Bash(dir /s /b C:Code2025Whysperbackendappmain.py)",
-      "Bash(dir /s /b C:Code2025WhysperfrontendsrccomponentsArchitecture*)",
-      "Bash(npm run build:*)"
+      "Bash(findstr:*)",
+      "Bash(python:*)",
+      "Bash(find:*)",
+      "Bash(npm test:*)",
+      "Bash(for file in \"/c/Code2025/Whysper/frontend/src/components/DiagramWizard/screens/\"*.test.tsx \"/c/Code2025/Whysper/frontend/src/components/DiagramWizard/\"*.test.tsx \"/c/Code2025/Whysper/frontend/src/test/example.test.ts\")",
+      "Bash(done)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

@@ -82,18 +82,18 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     autoClose: true,
   });
 
-  // Start a new diagram generation session
+  // Start a new diagram generation session with optional model selection
   const startSession = useCallback(
-    async (initialPrompt: string, diagramType: string = 'Mermaid') => {
+    async (initialPrompt: string, diagramType: string = 'Mermaid', modelId?: string) => {
       try {
-        logEvent('Starting session', { initialPrompt, diagramType });
+        logEvent('Starting session', { initialPrompt, diagramType, modelId });
         setLoading(true);
         setError(null);
         lastStatusRef.current = null; // Reset on new session
         clearSSEMessages(); // Clear previous messages
 
-        // Start the diagram generation
-        const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType);
+        // Start the diagram generation with model_id if provided
+        const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType, modelId);
         setSessionId(result.session_id);
         setStatus(result.status as DiagramUpdate);
         logEvent('Session started', result.status);

@@ -236,17 +236,19 @@ class DiagramFactoryService:
         await self.session.update_queue.put(status)
 
     @log_method_call
-    async def start_generation(self, initial_prompt: str, 
-                              diagram_type: str = "Mermaid"):
+    async def start_generation(self, initial_prompt: str,
+                              diagram_type: str = "Mermaid",
+                              model_id: Optional[str] = None):
         """Start the diagram generation process.
-        
+
         This is the entry point for diagram generation. It handles two modes:
         1. Auto mode: Analyzes the system description first
         2. Direct mode: Uses the specified diagram type immediately
-        
+
         Args:
             initial_prompt: User's system description
             diagram_type: Requested diagram type or "auto" for analysis
+            model_id: Optional AI model to use (gpt5, grok, claude, gemini)
         """
         try:
             self.session.history.append(("user", initial_prompt))
@@ -261,7 +263,8 @@ class DiagramFactoryService:
                 "llm_ready": False,
                 "question_count": 0,
                 "refinement_attempt": 0,
-                "current_state": "analyzing"
+                "current_state": "analyzing",
+                "model_id": model_id,  # Store selected model for use in nodes
             }
 
             self.session.graph_state = initial_state

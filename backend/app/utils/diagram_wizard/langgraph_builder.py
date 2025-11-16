@@ -10,6 +10,7 @@ from .graph_state import GraphState
 from .nodes import (
     analyze_request,
     clarify_prompt,
+    generate_json_representation,
     determine_diagram_type_node,
     generate_code,
     validate_code,
@@ -54,6 +55,7 @@ def build_diagram_factory_graph(service) -> StateGraph:
     # Add nodes
     workflow.add_node("analyze_request", partial(analyze_request, service=service))
     workflow.add_node("clarify_prompt", clarify_prompt)
+    workflow.add_node("generate_json_representation", generate_json_representation)
     workflow.add_node("determine_diagram_type", determine_diagram_type_node)
     workflow.add_node("generate_code", generate_code)
     workflow.add_node("validate_code", validate_code)
@@ -73,11 +75,15 @@ def build_diagram_factory_graph(service) -> StateGraph:
     # ANALYZE always routes to CLARIFY (which is the first clarification turn)
     workflow.add_edge("analyze_request", "clarify_prompt")
 
+    # CLARIFY routes to JSON_GENERATION when ready (llm_ready=True), or END if waiting for user
     workflow.add_conditional_edges(
         "clarify_prompt",
         route_to_diagram_type_determination,
-        {"generate_code": "determine_diagram_type", END: END},
+        {"generate_code": "generate_json_representation", END: END},
     )
+
+    # JSON_GENERATION always routes to DETERMINE_DIAGRAM_TYPE
+    workflow.add_edge("generate_json_representation", "determine_diagram_type")
 
     workflow.add_conditional_edges(
         "validate_code",

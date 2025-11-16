@@ -139,12 +139,13 @@ export function useSSE<T = any>({
         try {
           const data = JSON.parse(event.data);
 
-          // Handle keep-alive messages
+          // Handle keep-alive messages (old style)
           if (data.type === 'keep-alive' || data.type === 'ping') {
             console.log('[useSSE] Keep-alive received');
             return;
           }
 
+          // Always process messages (including "waiting" status updates)
           const message: SSEMessage<T> = {
             id: data.id || `msg-${Date.now()}-${Math.random()}`,
             type: data.type || data.status || 'message',
@@ -155,6 +156,11 @@ export function useSSE<T = any>({
 
           setMessages((prev) => [...prev, message]);
           onMessage?.(message);
+
+          // Log waiting status for debugging
+          if (data.status === 'waiting') {
+            console.log('[useSSE] Server is waiting for LLM response:', data.message);
+          }
 
           // Auto-close on terminal states if enabled
           if (autoClose && (data.status === 'completed' || data.status === 'error')) {

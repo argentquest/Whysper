@@ -1,0 +1,181 @@
+════════════════════════════════════════════════════════════════════════════════
+  SSE STATUS → FRONTEND LABEL QUICK REFERENCE
+════════════════════════════════════════════════════════════════════════════════
+
+PHASE 1: ANALYSIS & CLARIFICATION
+─────────────────────────────────────────────────────────────────────────────
+
+Status                    │ Label                  │ Message Type         │ Display
+──────────────────────────┼────────────────────────┼──────────────────────┼─────────
+started                   │ Starting Analysis      │ ℹ️  Info             │ Phase 1
+analyzing                 │ Analyzing System       │ ℹ️  Info             │ Phase 1
+analysis_complete         │ Analysis Complete      │ ✅ Success           │ Phase 1
+                          │                        │                      │
+clarifying                │ Needs Clarification    │ ℹ️  Info             │ Phase 1
+clarification_received    │ Processing Input       │ ℹ️  Info             │ Phase 1
+clarification_ready       │ Ready for More         │ ✅ Success           │ Phase 1
+can_proceed               │ Ready to Proceed       │ ✅ Success           │ Phase 1
+                          │                        │                      │
+waiting                   │ Processing...          │ 🔇 Console log only  │ Phase 1
+                          │ (⏳ AI is processing)  │ NO UI MESSAGE        │ (hidden)
+
+PHASE 1.5: ARCHITECTURE PARSING
+─────────────────────────────────────────────────────────────────────────────
+
+Status                    │ Label                  │ Message Type         │ Display
+──────────────────────────┼────────────────────────┼──────────────────────┼─────────
+generating_json           │ Preparing Data         │ ⏳ Loading            │ Phase 1.5
+json_generated            │ Data Ready             │ ✅ Success           │ Phase 1.5
+                          │                        │                      │
+type_selection            │ Select Diagram Type    │ ℹ️  Info             │ Phase 1
+diagram_type_determined   │ Type Selected          │ ✅ Success           │ Phase 2
+
+PHASE 2: CODE GENERATION & VALIDATION
+─────────────────────────────────────────────────────────────────────────────
+
+Status                    │ Label                  │ Message Type         │ Display
+──────────────────────────┼────────────────────────┼──────────────────────┼─────────
+generating                │ Generating Code        │ ⏳ Loading            │ Phase 2
+code_generated            │ Code Ready             │ ✅ Success           │ Phase 2
+                          │                        │                      │
+validating                │ Validating Code        │ 🔇 Silent            │ Phase 2
+                          │                        │ NO MESSAGE           │ (hidden)
+refining                  │ Refining Code          │ ⚠️  Warning          │ Phase 2
+fallback_fix              │ Fixing Errors          │ ⚠️  Warning          │ Phase 2
+code_refined              │ Code Fixed             │ ✅ Success           │ Phase 2
+
+PHASE 3: RENDERING
+─────────────────────────────────────────────────────────────────────────────
+
+Status                    │ Label                  │ Message Type         │ Display
+──────────────────────────┼────────────────────────┼──────────────────────┼─────────
+rendering                 │ Rendering SVG          │ 🔇 Silent            │ Phase 3
+                          │                        │ NO MESSAGE           │ (hidden)
+rendered                  │ Preview Ready          │ 🔇 Silent            │ Phase 3
+                          │                        │ NO MESSAGE           │ (hidden)
+
+TERMINAL STATES
+─────────────────────────────────────────────────────────────────────────────
+
+Status                    │ Label                  │ Message Type         │ Display
+──────────────────────────┼────────────────────────┼──────────────────────┼─────────
+completed                 │ Complete! ✅           │ ✅ Success           │ Phase 3
+                          │                        │ + Save session       │ (FINAL)
+error                     │ Error ❌               │ ❌ Error             │ Alert
+                          │ + Error message        │                      │ (FINAL)
+
+════════════════════════════════════════════════════════════════════════════════
+
+MESSAGE TYPES VISUAL GUIDE
+─────────────────────────────────────────────────────────────────────────────
+
+ℹ️  INFO MESSAGE (Blue)
+    • Blue info icon
+    • Auto-dismisses after 3 seconds
+    • Used for: started, analyzing, clarifying, type_selection
+
+⏳ LOADING MESSAGE (with spinner)
+    • Spinner animation
+    • Stays visible (doesn't auto-dismiss)
+    • Used for: generating, generating_json
+
+✅ SUCCESS MESSAGE (Green)
+    • Green check icon
+    • Auto-dismisses after 3 seconds
+    • Used for: analysis_complete, code_generated, completed, etc.
+
+⚠️  WARNING MESSAGE (Orange)
+    • Orange warning icon
+    • Auto-dismisses after 3 seconds
+    • Used for: refining, fallback_fix
+
+❌ ERROR MESSAGE (Red)
+    • Red X icon
+    • Stays visible (user must dismiss)
+    • Shows error details
+    • Used for: error status
+
+🔇 SILENT (No UI Message)
+    • No notification shown
+    • Only console logging
+    • System continues silently
+    • Used for: waiting, validating, rendering, rendered
+
+════════════════════════════════════════════════════════════════════════════════
+
+QUICK LOOKUP BY PHASE
+─────────────────────────────────────────────────────────────────────────────
+
+PHASE 1 (ANALYSIS & CLARIFICATION):
+  started, analyzing, analysis_complete
+  clarifying, clarification_ready, clarification_received, can_proceed
+  type_selection
+  waiting (periodic, console only)
+
+PHASE 2 (CODE GENERATION):
+  diagram_type_determined
+  generating, code_generated
+  validating (silent), refining, fallback_fix, code_refined
+
+PHASE 1.5 (ARCHITECTURE):
+  generating_json, json_generated
+
+PHASE 3 (RENDERING):
+  rendering (silent), rendered (silent)
+
+TERMINAL:
+  completed ✅ (SUCCESS)
+  error ❌ (FAILURE)
+
+════════════════════════════════════════════════════════════════════════════════
+
+COMMON QUESTIONS
+─────────────────────────────────────────────────────────────────────────────
+
+Q: Why doesn't "waiting" show a message?
+A: It occurs every 60 seconds during LLM processing. Showing a message would
+   spam the UI. Console log is for monitoring/debugging only.
+
+Q: Why don't "validating" and "rendering" show messages?
+A: These are fast, silent operations that don't require user action. The UI
+   updates automatically when done (code appears, SVG renders).
+
+Q: What if the status is not in the list?
+A: Falls through to default case (no action taken). Status flows through the
+   main switch statement at DiagramWizard.tsx:232-345
+
+Q: How long does each phase typically take?
+A:
+  - Analysis: 5-30 seconds
+  - Clarification: User dependent
+  - Generation: 10-60 seconds
+  - Validation: 1-5 seconds
+  - Rendering: <1 second
+
+Q: What if I see multiple "waiting" messages in console?
+A: Normal! That's the "waiting" status sent every 3 seconds while LLM is
+   processing. It means the system is working correctly and provides frequent
+   UI updates about processing progress.
+
+════════════════════════════════════════════════════════════════════════════════
+
+FRONTEND CODE LOCATION
+─────────────────────────────────────────────────────────────────────────────
+
+Main Status Handler:
+  File: frontend/src/components/DiagramWizard/DiagramWizard.tsx
+  Lines: 232-345 (status switch statement)
+
+SSE Hook:
+  File: frontend/src/hooks/useSSE.ts
+  Lines: 136-175 (message handling)
+
+Message Display Examples:
+  file: frontend/src/components/DiagramWizard/DiagramWizard.tsx
+  - message.info()   → ℹ️  Blue info notification
+  - message.loading() → ⏳ Spinner + message
+  - message.success() → ✅ Green success notification
+  - message.warning() → ⚠️  Orange warning notification
+  - message.error()  → ❌ Red error alert
+
+════════════════════════════════════════════════════════════════════════════════

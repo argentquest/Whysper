@@ -63,6 +63,11 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
+// Mock Element.prototype.scrollIntoView
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
 // Mock EventSource for SSE testing
 global.EventSource = class EventSource {
   url: string;
