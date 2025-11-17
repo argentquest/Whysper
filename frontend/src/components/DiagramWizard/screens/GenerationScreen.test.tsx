@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GenerationScreen } from './GenerationScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
@@ -219,7 +219,6 @@ describe('GenerationScreen', () => {
     });
 
     it('should close export modal when onExportModalClose called', async () => {
-      const user = userEvent.setup();
       render(<GenerationScreen {...mockProps} exportModalOpen={true} />);
       // Modal would be visible when open
       expect(mockProps.exportModalOpen).toBe(true);
@@ -380,7 +379,6 @@ describe('GenerationScreen', () => {
 
   describe('Multiple Interactions', () => {
     it('should handle sequential actions', async () => {
-      const user = userEvent.setup();
       render(
         <GenerationScreen
           {...mockProps}

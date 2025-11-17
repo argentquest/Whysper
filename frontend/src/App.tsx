@@ -1438,6 +1438,9 @@ function App() {
         ) : activeTab?.type === 'diagramWizard' ? (
           // Diagram Wizard View
           <DiagramWizard
+            key={activeTab.id}
+            tabId={activeTab.id}
+            sessionId={activeTab.sessionId}
             onDiagramGenerated={(code: string, svg: string) => {
               console.log('Diagram generated:', { code, svg });
               message.success('Diagram generated successfully!');

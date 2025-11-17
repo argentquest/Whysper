@@ -22,6 +22,8 @@ interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
   initialPrompt?: string;
   onClose?: () => void;
+  tabId?: string; // UI tab identifier
+  sessionId?: string; // Pre-assigned session ID from tab
 }
 
 type DiagramType = 'Mermaid' | 'D2' | 'PlantUML';
@@ -37,6 +39,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
   initialPrompt,
   onClose,
+  tabId,
+  sessionId: initialSessionId,
 }) => {
   // ============ State Management ============
 
@@ -83,7 +87,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     startSession,
     submitClarification,
     confirmReady,
+    endSession,
   } = useDiagramSession({
+    initialSessionId,
     onUpdate: (update) => {
       const statusValue = update.status;
 
@@ -376,6 +382,18 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       setScore(0);
     }
   }, [sessionId]);
+
+  // Cleanup session when component unmounts (tab is closed)
+  useEffect(() => {
+    return () => {
+      // Clean up the backend session when the tab is closed
+      if (sessionId) {
+        endSession().catch(err => {
+          console.error('Error cleaning up diagram session:', err);
+        });
+      }
+    };
+  }, [sessionId, endSession]);
 
   // ============ Render ============
 

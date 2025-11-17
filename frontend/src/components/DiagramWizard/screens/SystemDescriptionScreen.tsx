@@ -13,7 +13,6 @@ import styles from '../diagram-wizard.module.css';
 import ChatPanel from '../panels/Panel1_Chat';
 import type { ModelId } from './ModelSelectionScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
-import type { ScoreInfo } from '../../../services/diagram/diagramApi';
 
 interface SystemDescriptionScreenProps {
   selectedModel: ModelId;

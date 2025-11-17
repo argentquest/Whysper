@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Card, Button, Row, Col, Space, Typography, Badge, Tooltip } from 'antd';
+import { Card, Button, Row, Col, Space, Typography } from 'antd';
 import {
   BulbOutlined,
   ThunderboltOutlined,

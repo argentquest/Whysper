@@ -5,13 +5,13 @@
  * Verifies model display, selection handling, and user interactions.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ModelSelectionScreen, type ModelId } from './ModelSelectionScreen';
 
 describe('ModelSelectionScreen', () => {
-  let mockOnSelect: ReturnType<typeof vi.fn>;
+  let mockOnSelect: Mock;
 
   beforeEach(() => {
     mockOnSelect = vi.fn();

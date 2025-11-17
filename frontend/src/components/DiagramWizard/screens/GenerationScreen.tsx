@@ -8,15 +8,10 @@
  * - Right: Code editor for manual edits
  */
 
-import React, { useState } from 'react';
-import { Layout, Button, Spin, Alert, Space, Tabs, Modal, Badge, Tag, message } from 'antd';
+import React from 'react';
+import { Layout, Button, Spin, Alert, Space, Badge, Tag, message } from 'antd';
 import {
-  SendOutlined,
-  ClearOutlined,
-  DownloadOutlined,
   CopyOutlined,
-  DeleteOutlined,
-  LeftOutlined,
 } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 import ChatPanel from '../panels/Panel1_Chat';
@@ -25,7 +20,7 @@ import CodeEditorPanel from '../panels/Panel3_CodeEditor';
 import ExportModal from '../components/ExportModal';
 import Footer from '../components/Footer';
 import type { ModelId } from './ModelSelectionScreen';
-import type { DiagramUpdate, ScoreInfo } from '../../../services/diagram/diagramApi';
+import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
 
 interface GenerationScreenProps {
   selectedModel: ModelId;
@@ -64,15 +59,10 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   clarifications,
   sseConnected,
   exportModalOpen,
-  onChangeModel,
-  onNewDiagram,
-  onExportClick,
   onExportModalClose,
-  onExportSubmit,
   onCodeChange,
   error,
 }) => {
-  const [exportLoading, setExportLoading] = useState(false);
   const isComplete = status?.status === 'completed';
   const isError = status?.status === 'error' || status?.status === 'failed';
   const isValidationIssue = status?.status === 'refining' || status?.status === 'fallback_fix';
@@ -80,30 +70,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   const handleCopyCode = () => {
     navigator.clipboard.writeText(diagramCode);
     message.success('Diagram code copied to clipboard!');
-  };
-
-  const handleExport = async (filename: string, format: string) => {
-    try {
-      setExportLoading(true);
-      await onExportSubmit(filename, format);
-      message.success('Diagram exported successfully!');
-    } catch (err) {
-      message.error('Export failed. Please try again.');
-    } finally {
-      setExportLoading(false);
-    }
-  };
-
-  const handleChangeModel = () => {
-    Modal.confirm({
-      title: 'Start New Diagram?',
-      content: 'Starting a new diagram will reset your current session. Continue?',
-      okText: 'Yes, New Diagram',
-      cancelText: 'Cancel',
-      onOk() {
-        onChangeModel();
-      },
-    });
   };
 
   return (
@@ -199,7 +165,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 isClarifying={false}
                 canConfirmReady={false}
                 onConfirmReady={() => {}}
-                readOnly={true}
               />
             </div>
           </div>
@@ -210,8 +175,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
               <h4 style={{ marginBottom: '12px' }}>Preview</h4>
               <PreviewPanel
                 svgOutput={svgOutput}
-                loading={loading && !svgOutput}
-                diagramCode={diagramCode}
+                isLoading={loading && !svgOutput}
+                diagramType="Mermaid"
               />
             </div>
           </div>
@@ -233,8 +198,9 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
               </div>
               <CodeEditorPanel
                 code={diagramCode}
-                onChange={onCodeChange}
-                readOnly={!isComplete}
+                onChange={async (code: string) => onCodeChange?.(code)}
+                diagramType="Mermaid"
+                isLoading={loading}
               />
             </div>
           </div>
@@ -242,25 +208,17 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
 
         {/* Footer with Actions */}
         <Footer
-          isComplete={isComplete}
-          isError={isError}
           sessionId={sessionId}
-          onExport={onExportClick}
-          onNewDiagram={onNewDiagram}
-          onChangeModel={handleChangeModel}
-          diagramCode={diagramCode}
-          svgOutput={svgOutput}
+          sseConnected={sseConnected}
+          currentStatus={status?.status}
         />
       </Layout.Content>
 
       {/* Export Modal */}
       <ExportModal
-        open={exportModalOpen}
+        visible={exportModalOpen}
         onClose={onExportModalClose}
-        onSubmit={handleExport}
-        loading={exportLoading}
-        diagramCode={diagramCode}
-        svgOutput={svgOutput}
+        svgContainerRef={{ current: null }}
       />
     </Layout>
   );

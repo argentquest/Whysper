@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SystemDescriptionScreen } from './SystemDescriptionScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
@@ -179,7 +179,7 @@ describe('SystemDescriptionScreen', () => {
   describe('Textarea Behavior', () => {
     it('should have proper placeholder text', () => {
       render(<SystemDescriptionScreen {...mockProps} />);
-      const textarea = screen.getByPlaceholderText(/Describe the system/);
+      const textarea = screen.getByPlaceholderText(/Describe the system/) as HTMLTextAreaElement;
       expect(textarea.textContent || textarea.placeholder).toContain('E-commerce platform');
     });
 
@@ -241,7 +241,6 @@ describe('SystemDescriptionScreen', () => {
 
   describe('Clarification Handling', () => {
     it('should call onSubmitClarification with user input', async () => {
-      const user = userEvent.setup();
       render(
         <SystemDescriptionScreen
           {...mockProps}

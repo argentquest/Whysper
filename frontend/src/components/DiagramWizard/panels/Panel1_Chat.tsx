@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Card, List, Input, Button, Empty, Spin, Avatar, Space, Tag, Collapse, Tooltip, Badge } from 'antd';
+import { Card, List, Input, Button, Empty, Spin, Avatar, Space, Tag, Collapse, Tooltip } from 'antd';
 import { UserOutlined, RobotOutlined, SendOutlined, EyeOutlined, CodeOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
@@ -32,7 +32,6 @@ interface Panel1ChatProps {
 
 const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   messages,
-  clarifications,
   onSubmitClarification,
   onSubmit,
   isLoading = false,

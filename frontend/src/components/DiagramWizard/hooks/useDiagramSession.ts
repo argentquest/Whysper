@@ -16,10 +16,11 @@ export interface UseDiagramSessionOptions {
   onUpdate?: (update: DiagramUpdate) => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
+  initialSessionId?: string; // Pre-assigned session ID from tab
 }
 
 export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(options.initialSessionId ?? null);
   const [status, setStatus] = useState<DiagramUpdate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
