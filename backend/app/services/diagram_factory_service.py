@@ -460,7 +460,7 @@ class DiagramFactoryService:
         """
         try:
             self.session.history.append(("user", response))
-            
+
             if self.session.graph_state:
                 clarification_history = self.session.graph_state.get(
                     "clarification_history", []
@@ -471,8 +471,9 @@ class DiagramFactoryService:
 
             await self._push_update({
                 "status": "clarification_received",
+                "message": response,
                 "message_role": "user",
-                "skip_history": True
+                "skip_history": False
             })
 
             # Resume the LangGraph workflow now that we have more information.

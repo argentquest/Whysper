@@ -8,15 +8,13 @@
  * 3. GenerationScreen - Code generation, validation, rendering
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { message, Modal } from 'antd';
 import { useDiagramSession } from './hooks/useDiagramSession';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ModelSelectionScreen, type ModelId } from './screens/ModelSelectionScreen';
 import { SystemDescriptionScreen } from './screens/SystemDescriptionScreen';
 import { GenerationScreen } from './screens/GenerationScreen';
-import styles from './diagram-wizard.module.css';
-import type { ScoreInfo, DiagramUpdate } from '../../services/diagram/diagramApi';
 import type { DiagramWizardPersistedState, SavedSession } from './types/persistence';
 import { getInitialPersistedState } from './types/persistence';
 
@@ -27,23 +25,6 @@ interface DiagramWizardProps {
 }
 
 type DiagramType = 'Mermaid' | 'D2' | 'PlantUML';
-
-interface AssistantResponseDetail {
-  id: string;
-  messageIndex: number;
-  message?: string;
-  score?: number;
-  scoreInfo?: ScoreInfo;
-  clarityScore?: number;
-  jsonRepresentation?: Record<string, unknown> | null;
-  rawUpdate?: Record<string, unknown>;
-}
-
-type DiagramUpdateWithVariants = DiagramUpdate & {
-  json_representation?: unknown;
-  score_info?: ScoreInfo;
-  scoreInfo?: ScoreInfo;
-};
 
 const phases = [
   { title: 'Analysis', description: 'Understanding your system', icon: '🔍' },
@@ -78,7 +59,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // User input
   const [userInput, setUserInput] = useState('');
-  const [clarificationInput, setClarificationInput] = useState('');
   const [diagramType] = useState<DiagramType>('Mermaid');
 
   // Session state
@@ -86,14 +66,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [currentPhase, setCurrentPhase] = useState(0);
   const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false);
   const [score, setScore] = useState(0);
-  const [assistantResponses, setAssistantResponses] = useState<Record<number, AssistantResponseDetail>>({});
-  const [selectedResponse, setSelectedResponse] = useState<AssistantResponseDetail | null>(null);
 
   // UI state
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorDetails, setErrorDetails] = useState({ title: '', message: '' });
-  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // ============ Diagram Session Hook ============
 
@@ -101,10 +78,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     sessionId,
     status,
     error,
-    chatHistory,
-    diagramCode,
-    svgOutput,
-    clarifications,
     loading,
     sseConnected,
     startSession,
@@ -123,9 +96,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       if (typeof latestScore === 'number') {
         setScore(latestScore);
       }
-
-      // Track assistant responses
-      trackAssistantResponse(update);
 
       // Handle status changes
       switch (statusValue) {
@@ -193,13 +163,15 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // Save session
           if (sessionId && diagramCode && svgOutput) {
             saveSessionToHistory({
-              id: sessionId,
+              sessionId: sessionId,
               timestamp: Date.now(),
-              model: selectedModel || 'default',
-              prompt: userInput,
+              initialPrompt: userInput,
+              diagramType: diagramType,
               diagramCode,
               svgOutput,
-            } as SavedSession);
+              conversationHistory: chatHistory,
+              score: score,
+            });
             onDiagramGenerated?.(diagramCode, svgOutput);
           }
           break;
@@ -222,82 +194,43 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     },
   });
 
+  // Extract data from status
+  // Convert history from tuples [role, content] to message objects
+  const rawHistory = status?.history ?? [];
+  const chatHistory = rawHistory.map((item, index) => {
+    const [role, content] = Array.isArray(item) ? item : [item.role, item.content];
+
+    // Add score and JSON data for the latest assistant message
+    const messageObj: any = {
+      role: role as 'user' | 'assistant',
+      content: content || '',
+    };
+
+    // Only show score/JSON on the latest assistant message
+    const isLatestAssistantMessage = role === 'assistant' &&
+      index === rawHistory.length - 1;
+
+    if (isLatestAssistantMessage) {
+      // Include score if available in status
+      if (typeof status?.clarity_score === 'number') {
+        messageObj.score = status.clarity_score;
+      }
+
+      // Include JSON representation if available
+      if (status?.jsonRepresentation && Object.keys(status.jsonRepresentation).length > 0) {
+        messageObj.jsonData = status.jsonRepresentation;
+      }
+    }
+
+    return messageObj;
+  });
+  const diagramCode = status?.diagramCode ?? '';
+  const svgOutput = status?.svgOutput ?? '';
+  const clarifications = (status?.clarifications ?? []).map(q =>
+    typeof q === 'string' ? { question: q } : q
+  );
+
   // ============ Helper Functions ============
-
-  const normalizeJsonRepresentation = (jsonData: unknown): Record<string, unknown> | null => {
-    if (!jsonData) return null;
-    if (typeof jsonData === 'string') {
-      try {
-        return JSON.parse(jsonData);
-      } catch (err) {
-        console.warn('Failed to parse JSON representation', err);
-        return null;
-      }
-    }
-    if (typeof jsonData === 'object') {
-      return jsonData as Record<string, unknown>;
-    }
-    return null;
-  };
-
-  const getScoreInfo = (payload?: DiagramUpdateWithVariants): ScoreInfo | undefined => {
-    if (!payload) return undefined;
-    if (payload.score_info) return payload.score_info;
-    if (payload.scoreInfo) return payload.scoreInfo;
-    return undefined;
-  };
-
-  const trackAssistantResponse = (update: DiagramUpdateWithVariants) => {
-    const historyLength = update.history?.length ?? 0;
-    if (!historyLength) return;
-
-    const latestIndex = historyLength - 1;
-    const latestEntry = update.history?.[latestIndex];
-    if (!latestEntry) return;
-
-    const [role, entryContent] = latestEntry;
-    if (role !== 'assistant') return;
-
-    const normalizedJson = normalizeJsonRepresentation(
-      update.jsonRepresentation ?? update.json_representation ?? null
-    ) ?? null;
-
-    setAssistantResponses((prev) => {
-      const existing = prev[latestIndex];
-      const detail: AssistantResponseDetail = {
-        id: existing?.id ?? `${update.session_id}-${latestIndex}`,
-        messageIndex: latestIndex,
-        message: update.message ?? entryContent ?? existing?.message,
-        score:
-          typeof update.score === 'number'
-            ? update.score
-            : typeof update.assessment_score === 'number'
-            ? update.assessment_score
-            : existing?.score,
-        scoreInfo: getScoreInfo(update) ?? existing?.scoreInfo,
-        clarityScore:
-          typeof update.clarity_score === 'number' ? update.clarity_score : existing?.clarityScore,
-        jsonRepresentation: normalizedJson ?? existing?.jsonRepresentation ?? null,
-        rawUpdate: update as unknown as Record<string, unknown>,
-      };
-
-      if (
-        existing &&
-        existing.message === detail.message &&
-        existing.score === detail.score &&
-        existing.clarityScore === detail.clarityScore &&
-        existing.scoreInfo === detail.scoreInfo &&
-        existing.jsonRepresentation === detail.jsonRepresentation
-      ) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [latestIndex]: detail,
-      };
-    });
-  };
 
   const saveSessionToHistory = useCallback(
     (session: SavedSession) => {
@@ -342,7 +275,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setCurrentScreen('model');
     setSelectedModel(null);
     setUserInput('');
-    setClarificationInput('');
     setCurrentPhase(0);
     setIsInAnalysisPhase(false);
     localStorage.removeItem('diagramWizard.selectedModel');
@@ -365,6 +297,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     try {
       setIsInitializing(true);
       setCurrentPhase(0);
+      setScore(0); // Clear score when starting new diagram
       console.log('🚀 Starting new diagram session with model:', selectedModel);
       await startSession(prompt, diagramType, selectedModel);
       console.log('✅ Session started, waiting for AI analysis...');
@@ -389,8 +322,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
 
     try {
-      await submitClarification(sessionId, clarification);
-      setClarificationInput('');
+      await submitClarification(clarification);
     } catch (err) {
       console.error('Clarification submission failed:', err);
       message.error('Failed to submit clarification');
@@ -404,7 +336,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
 
     try {
-      await confirmReady(sessionId);
+      await confirmReady();
       setCurrentScreen('generation');
     } catch (err) {
       console.error('Confirm ready failed:', err);
@@ -424,11 +356,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setCurrentScreen('model');
     setSelectedModel(null);
     setUserInput('');
-    setClarificationInput('');
     setCurrentPhase(0);
     setIsInAnalysisPhase(false);
     setScore(0);
-    setAssistantResponses({});
     localStorage.removeItem('diagramWizard.selectedModel');
   };
 
@@ -442,8 +372,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   }, [initialPrompt, sessionId, isInitializing]);
 
   useEffect(() => {
-    setAssistantResponses({});
-    setSelectedResponse(null);
     if (!sessionId) {
       setScore(0);
     }
@@ -500,7 +428,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onInputChange={setUserInput}
         onSubmitClarification={handleSubmitClarification}
         onConfirmReady={handleConfirmReady}
-        error={error}
+        error={error ? { message: error.message } : undefined}
       />
     );
   }
@@ -529,7 +457,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // TODO: Implement export logic
           console.log('Export:', { filename, format, diagramCode, svgOutput });
         }}
-        error={error}
+        error={error ? { message: error.message } : undefined}
       />
     );
   }
