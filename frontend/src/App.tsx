@@ -360,6 +360,17 @@ function App() {
     const storedAuth = sessionStorage.getItem('whysper_authenticated');
     if (storedAuth === 'true') {
       setIsAuthenticated(true);
+    } else {
+      // Check if authentication is required
+      const checkAuth = async () => {
+        const result = await ApiService.checkAuthRequired();
+        if (result.success && result.data?.auth_disabled) {
+          // Authentication is disabled (ACCESS_KEY is blank), auto-authenticate
+          sessionStorage.setItem('whysper_authenticated', 'true');
+          setIsAuthenticated(true);
+        }
+      };
+      checkAuth();
     }
 
     // Reset message history: Clear any in-memory state from previous sessions
@@ -1432,6 +1443,7 @@ function App() {
               message.success('Diagram generated successfully!');
             }}
             initialPrompt=""
+            onClose={() => handleTabClose(activeTabId)}
           />
         ) : activeTab?.type === 'archStudio' ? (
           // Architecture Studio View

@@ -74,7 +74,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
 }) => {
   const [exportLoading, setExportLoading] = useState(false);
   const isComplete = status?.status === 'completed';
-  const isError = status?.status === 'error';
+  const isError = status?.status === 'error' || status?.status === 'failed';
   const isValidationIssue = status?.status === 'refining' || status?.status === 'fallback_fix';
 
   const handleCopyCode = () => {

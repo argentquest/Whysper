@@ -47,6 +47,7 @@ export interface DiagramUpdate extends DiagramStatus {
   type?: string;
   question?: string;
   message_role?: 'assistant' | 'user';
+  error?: string;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
@@ -144,6 +145,26 @@ export class DiagramApi {
 
     if (!resp.ok) {
       throw new Error(`Failed to submit clarification: ${resp.statusText}`);
+    }
+
+    return resp.json();
+  }
+  /**
+   * Confirm that the user is ready to proceed with diagram generation
+   */
+  static async confirmReady(sessionId: string): Promise<DiagramStatus> {
+    const resp = await fetch(`${API_BASE}/diagram/confirm_ready`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Failed to confirm ready: ${resp.statusText}`);
     }
 
     return resp.json();

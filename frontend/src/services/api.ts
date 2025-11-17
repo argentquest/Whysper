@@ -614,6 +614,25 @@ export class ApiService {
       };
     }
   }
+
+  /**
+   * Check if authentication is required
+   * Returns whether ACCESS_KEY is configured on the backend
+   */
+  static async checkAuthRequired(): Promise<ApiResponse<{auth_required: boolean, auth_disabled: boolean}>> {
+    try {
+      const response = await api.get('/auth/check');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Failed to check authentication status.',
+      };
+    }
+  }
 }
 
 export default ApiService;

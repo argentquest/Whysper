@@ -123,6 +123,28 @@ async def submit_clarification(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/confirm_ready")
+@log_method_call
+async def confirm_ready(
+    session_id: str = Body(..., embed=True),
+):
+    """
+    User confirms they are ready to proceed with diagram generation.
+    This is called when the user clicks "Confirm Ready" after clarification.
+    """
+    session = DiagramSessionStore.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        service = DiagramFactoryService(session)
+        await service.confirm_ready()
+        return service.get_status()
+    except Exception as e:
+        logger.error(f"Error confirming ready: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/approve_render")
 @log_method_call
 async def approve_render(

@@ -484,6 +484,35 @@ class DiagramFactoryService:
             await self._push_update({"status": "error", "message": str(e)})
 
     @log_method_call
+    async def confirm_ready(self):
+        """
+        User confirms they are ready to proceed with diagram generation.
+        Sets the user_confirmed_ready flag and resumes the graph workflow.
+        """
+        try:
+            if self.session.graph_state:
+                self.session.graph_state["user_confirmed_ready"] = True
+                self.session.graph_state["llm_ready"] = True
+
+            await self._push_update({
+                "status": "confirmed_ready",
+                "message": "User confirmed ready. Proceeding with diagram generation...",
+                "message_role": "assistant"
+            })
+
+            # Resume the workflow now that the user confirmed they're ready
+            self._resume_graph_if_idle("user confirmed ready")
+
+        except Exception as e:
+            logger.error(f"Error confirming ready: {e}")
+            self.session.errors.append(str(e))
+            await self._push_update({
+                "status": "error",
+                "message": str(e),
+                "message_role": "assistant"
+            })
+
+    @log_method_call
     async def approve_render(self):
         """Approve the diagram for rendering."""
         try:

@@ -1,8 +1,20 @@
 # DiagramWizard: Master Documentation Index
 
-**Last Updated:** November 15, 2025
+**Last Updated:** 2025-11-17
 **Status:** ✅ Production Ready
 **Build Status:** All tests passing (44/44 ✅)
+**Documentation Version:** 2.1 (with canonical references)
+
+---
+
+## 🆕 What's New (2025-11-17)
+
+**Major Documentation Improvements:**
+- ✅ Created 3 canonical reference documents (Architecture, SSE, Testing)
+- ✅ Standardized date formatting (YYYY-MM-DD)
+- ✅ Added cross-references between all major docs
+- ✅ Fixed outdated component references
+- ✅ Reduced duplication with single source of truth
 
 ---
 
@@ -21,6 +33,23 @@
 3. **[DIAGRAMWIZARD_COMPLETE.md](../../../DIAGRAMWIZARD_COMPLETE.md)** (20 min read)
    - Comprehensive technical documentation
    - Architecture, APIs, testing, deployment
+
+### 🆕 Canonical References (Single Source of Truth)
+
+4. **[ARCHITECTURE_CANONICAL.md](../../../ARCHITECTURE_CANONICAL.md)** (10 min read) ⭐
+   - Official architecture reference
+   - 3-screen pattern, LangGraph, providers
+   - **Update this first when architecture changes**
+
+5. **[SSE_CANONICAL.md](../../../SSE_CANONICAL.md)** (10 min read) ⭐
+   - Official SSE implementation reference
+   - Frontend useSSE hook, backend streaming
+   - **Update this first when SSE changes**
+
+6. **[TESTING_CANONICAL.md](../../../TESTING_CANONICAL.md)** (10 min read) ⭐
+   - Official testing strategy reference
+   - Vitest, Pytest, coverage targets
+   - **Update this first when testing changes**
 
 ### Understand the System
 
@@ -341,6 +370,18 @@ python -m pytest tests/1-UNIT/providers/ -v  # Verify backend tests (44/44)
 
 ---
 
-**Last Updated**: November 15, 2025
-**Status**: ✅ Production Ready
-**Next Steps**: Implement remaining tests using specifications in frontend/TESTING_GUIDE.md
+**Last Updated:** 2025-11-17
+**Status:** ✅ Production Ready
+**Documentation Version:** 2.1 (with canonical references)
+**Next Steps:** Implement remaining tests using specifications in [TESTING_CANONICAL.md](../../../TESTING_CANONICAL.md)
+
+---
+
+## 📚 Documentation Updates History
+
+| Date | Version | Changes |
+|------|---------|---------|
+| 2025-11-17 | 2.1 | Added canonical references, standardized dates, cross-references |
+| 2025-11-15 | 2.0 | Complete documentation consolidation, all features implemented |
+| 2025-11-10 | 1.5 | Added Provider Integration, removed ArchitectureGenStudio |
+| 2025-11-01 | 1.0 | Initial DiagramWizard implementation |

@@ -13,12 +13,28 @@ class VerifyAccessKeyRequest(BaseModel):
 async def verify_access_key(request: VerifyAccessKeyRequest):
     """
     Verify the access key.
+    If ACCESS_KEY is not configured (blank), authentication is disabled.
     """
-    correct_key = os.getenv("ACCESS_KEY")
+    correct_key = os.getenv("ACCESS_KEY", "").strip()
+
+    # If ACCESS_KEY is blank or not set, authentication is disabled - allow all
     if not correct_key:
-        raise HTTPException(status_code=500, detail="Access key not configured on the server.")
+        return {"success": True, "auth_disabled": True}
 
     if request.access_key == correct_key:
-        return {"success": True}
+        return {"success": True, "auth_disabled": False}
     else:
         raise HTTPException(status_code=401, detail="Invalid access key.")
+
+@router.get("/check")
+@log_method_call
+async def check_auth_required():
+    """
+    Check if authentication is required.
+    Returns whether ACCESS_KEY is configured.
+    """
+    correct_key = os.getenv("ACCESS_KEY", "").strip()
+    return {
+        "auth_required": bool(correct_key),
+        "auth_disabled": not bool(correct_key)
+    }

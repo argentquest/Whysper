@@ -1,8 +1,19 @@
 # DiagramWizard: Complete Documentation
 
 **Version:** 2.0
-**Last Updated:** November 15, 2025
+**Last Updated:** 2025-11-17
 **Status:** ✅ PRODUCTION READY
+
+---
+
+## Related Documents
+
+- **Quick Reference:** [DIAGRAMWIZARD_QUICK_REFERENCE.md](./DIAGRAMWIZARD_QUICK_REFERENCE.md)
+- **Quick Start:** [DIAGRAMWIZARD_QUICK_START.md](./DIAGRAMWIZARD_QUICK_START.md)
+- **Architecture (Canonical):** [ARCHITECTURE_CANONICAL.md](./ARCHITECTURE_CANONICAL.md)
+- **SSE Reference (Canonical):** [SSE_CANONICAL.md](./SSE_CANONICAL.md)
+- **Testing Reference (Canonical):** [TESTING_CANONICAL.md](./TESTING_CANONICAL.md)
+- **Master Index:** [3-DIAGRAM_SYSTEM/DIAGRAM_WIZARD/DIAGRAMWIZARD_MASTER_INDEX.md](./3-DIAGRAM_SYSTEM/DIAGRAM_WIZARD/DIAGRAMWIZARD_MASTER_INDEX.md)
 
 ---
 

@@ -1,8 +1,20 @@
 # ConsolidatedDiagramWizard - Single Component Architecture
 
+**Last Updated:** 2025-11-17
+**Status:** ✅ Complete
+
 ## Summary
 
-Successfully consolidated the DiagramWizard implementation to use **only** the refactored modular architecture. The old monolithic component has been replaced with the new refactored version.
+Successfully consolidated the DiagramWizard implementation to use **only** the refactored modular architecture. The old monolithic component (DiagramWizard.tsx) has been replaced with the new refactored version (DiagramWizardRefactored.tsx).
+
+---
+
+## Related Documents
+
+- **Architecture Reference:** [ARCHITECTURE_CANONICAL.md](./ARCHITECTURE_CANONICAL.md)
+- **Refactored Architecture:** [DIAGRAMWIZARD_REFACTORED_ARCHITECTURE.md](./DIAGRAMWIZARD_REFACTORED_ARCHITECTURE.md)
+- **Before/After Comparison:** [DIAGRAMWIZARD_BEFORE_AFTER_COMPARISON.md](./DIAGRAMWIZARD_BEFORE_AFTER_COMPARISON.md)
+- **Master Index:** [3-DIAGRAM_SYSTEM/DIAGRAM_WIZARD/DIAGRAMWIZARD_MASTER_INDEX.md](./3-DIAGRAM_SYSTEM/DIAGRAM_WIZARD/DIAGRAMWIZARD_MASTER_INDEX.md)
 
 ---
 
@@ -185,6 +197,7 @@ grep -r "from.*DiagramWizard/DiagramWizard" frontend/src/
 ---
 
 **Status:** ✅ Consolidated - Single DiagramWizard architecture in use
-**Date:** November 16, 2025
-**Active Component:** DiagramWizardRefactored.tsx
+**Date:** 2025-11-16
+**Active Component:** `frontend/src/components/DiagramWizard/DiagramWizardRefactored.tsx`
+**Legacy Component:** `frontend/src/components/DiagramWizard/DiagramWizard.tsx` (DEPRECATED - not imported)
 

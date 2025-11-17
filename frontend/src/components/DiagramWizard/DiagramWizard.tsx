@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 import { useDiagramSession } from './hooks/useDiagramSession';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ModelSelectionScreen, type ModelId } from './screens/ModelSelectionScreen';
@@ -23,6 +23,7 @@ import { getInitialPersistedState } from './types/persistence';
 interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
   initialPrompt?: string;
+  onClose?: () => void;
 }
 
 type DiagramType = 'Mermaid' | 'D2' | 'PlantUML';
@@ -54,6 +55,7 @@ const phases = [
 export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
   initialPrompt,
+  onClose,
 }) => {
   // ============ State Management ============
 
@@ -89,6 +91,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // UI state
   const [exportModalVisible, setExportModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorDetails, setErrorDetails] = useState({ title: '', message: '' });
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   // ============ Diagram Session Hook ============
@@ -201,6 +205,14 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break;
         case 'error':
           message.error(`Error: ${update.message || 'Unknown error occurred'}`);
+          break;
+        case 'failed':
+          // Show error modal popup
+          setErrorDetails({
+            title: 'Diagram Generation Failed',
+            message: update.error || update.message || 'An unexpected error occurred during diagram generation. Please check your configuration and try again.',
+          });
+          setErrorModalVisible(true);
           break;
       }
     },
@@ -439,19 +451,36 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // ============ Render ============
 
+  // Handler for error modal OK button - close the Whysper tab
+  const handleErrorModalOk = () => {
+    setErrorModalVisible(false);
+    // Close the Whysper tab if callback provided
+    if (onClose) {
+      onClose();
+    } else {
+      // Fallback: close browser tab
+      window.close();
+      setTimeout(() => {
+        window.location.href = 'about:blank';
+      }, 100);
+    }
+  };
+
+  // Render the appropriate screen
+  let screenContent;
+
   // Screen 1: Model Selection
   if (!selectedModel || currentScreen === 'model') {
-    return (
+    screenContent = (
       <ModelSelectionScreen
         onSelect={handleModelSelect}
         loading={loading || isInitializing}
       />
     );
   }
-
   // Screen 2: System Description + Analysis + Clarification
-  if (currentScreen === 'description' || (!sessionId && selectedModel)) {
-    return (
+  else if (currentScreen === 'description' || (!sessionId && selectedModel)) {
+    screenContent = (
       <SystemDescriptionScreen
         selectedModel={selectedModel}
         currentPhase={currentPhase}
@@ -475,33 +504,62 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       />
     );
   }
-
   // Screen 3: Generation + Rendering
+  else {
+    screenContent = (
+      <GenerationScreen
+        selectedModel={selectedModel}
+        currentPhase={currentPhase}
+        phases={phases}
+        loading={loading}
+        sessionId={sessionId}
+        status={status}
+        score={score}
+        diagramCode={diagramCode}
+        svgOutput={svgOutput}
+        chatHistory={chatHistory}
+        clarifications={clarifications}
+        sseConnected={sseConnected}
+        exportModalOpen={exportModalVisible}
+        onChangeModel={handleChangeModel}
+        onNewDiagram={handleNewDiagram}
+        onExportClick={handleExportClick}
+        onExportModalClose={handleExportModalClose}
+        onExportSubmit={async (filename, format) => {
+          // TODO: Implement export logic
+          console.log('Export:', { filename, format, diagramCode, svgOutput });
+        }}
+        error={error}
+      />
+    );
+  }
+
   return (
-    <GenerationScreen
-      selectedModel={selectedModel}
-      currentPhase={currentPhase}
-      phases={phases}
-      loading={loading}
-      sessionId={sessionId}
-      status={status}
-      score={score}
-      diagramCode={diagramCode}
-      svgOutput={svgOutput}
-      chatHistory={chatHistory}
-      clarifications={clarifications}
-      sseConnected={sseConnected}
-      exportModalOpen={exportModalVisible}
-      onChangeModel={handleChangeModel}
-      onNewDiagram={handleNewDiagram}
-      onExportClick={handleExportClick}
-      onExportModalClose={handleExportModalClose}
-      onExportSubmit={async (filename, format) => {
-        // TODO: Implement export logic
-        console.log('Export:', { filename, format, diagramCode, svgOutput });
-      }}
-      error={error}
-    />
+    <>
+      {screenContent}
+
+      {/* Error Modal - Shows when diagram generation fails */}
+      <Modal
+        title={errorDetails.title}
+        open={errorModalVisible}
+        onOk={handleErrorModalOk}
+        onCancel={handleErrorModalOk}
+        closable={false}
+        maskClosable={false}
+        okText="OK"
+        cancelButtonProps={{ style: { display: 'none' } }}
+        centered
+      >
+        <div style={{ padding: '20px 0' }}>
+          <p style={{ fontSize: '14px', marginBottom: '16px' }}>
+            {errorDetails.message}
+          </p>
+          <p style={{ fontSize: '12px', color: '#999' }}>
+            Click OK to close this tab.
+          </p>
+        </div>
+      </Modal>
+    </>
   );
 };
 

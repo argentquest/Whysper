@@ -67,6 +67,16 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
     """
     session_id = state.get("_session_id")
     model_id = state.get("model_id")  # Get selected model from state
+
+    # IMPORTANT: Skip re-analysis if we've already analyzed the request
+    # This prevents infinite loops when resuming the graph after clarification
+    if state.get("analysis_complete", False):
+        logger.info(f"⏭️ Skipping re-analysis - already completed", extra={'session_id': session_id})
+        return {
+            "next_action": "clarify",
+            "skip_analysis": True
+        }
+
     logger.info(f"🔬 Analyzing initial user request (model: {model_id})...", extra={'session_id': session_id})
 
     update_callback = state.get("_update_callback")
@@ -88,7 +98,22 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
     clarification_history = state.get("clarification_history", [])
     user_content = "\n".join([msg.get('content', '') for msg in clarification_history if msg.get('role') == 'user'])
 
-    ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
+    try:
+        ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"AI call failed in analyze_request: {error_message}", extra={'session_id': session_id})
+        if update_callback:
+            await update_callback({
+                "status": "failed",
+                "message": f"AI analysis failed: {error_message}",
+                "error": error_message,
+            })
+        return {
+            "next_action": "error",
+            "error_message": error_message,
+            "current_state": "failed",
+        }
 
     try:
         ai_response = json.loads(ai_response_str)
@@ -126,12 +151,18 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                 "question": follow_up_question,
             })
 
+        # Mark analysis as complete to prevent re-analysis
         return {
             "next_action": "clarify",
             "assessment_score": assessment_score,
             "json_representation": state.get("json_representation", {}),
-            "clarification_history": clarification_history + [{"role": "assistant", "content": analysis_summary or ""}],
+            "clarification_history": clarification_history + [
+                {"role": "assistant", "content": analysis_summary or ""},
+                {"role": "assistant", "content": f"QUESTION: {follow_up_question}"}
+            ],
             "current_state": SessionState.CLARIFYING,
+            "analysis_complete": True,  # Flag to prevent re-analysis
+            "first_question_asked": True,  # Flag to skip clarify_prompt on first run
         }
 
     except (json.JSONDecodeError, ValueError) as e:
@@ -181,6 +212,9 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
 
     Returns:
         AI response string
+
+    Raises:
+        Exception: When AI call fails with descriptive error message
     """
     try:
         # Load environment configuration
@@ -189,30 +223,30 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
         provider = env_vars.get("PROVIDER", "openrouter")
         # Use selected model or fall back to environment/default
         model = _get_model_for_id(model_id) if model_id else env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
-        
+
         if not api_key:
-            logger.error("No API key configured for diagram wizard AI calls", 
+            logger.error("No API key configured for diagram wizard AI calls",
                         extra={'session_id': session_id} if session_id else {})
-            return "ERROR: No API key configured"
-        
+            raise Exception("No API key configured. Please configure your AI provider API key in settings.")
+
         # Log AI call initiation (visible via SSE)
-        logger.info(f"🤖 Starting AI call for diagram generation", 
+        logger.info(f"🤖 Starting AI call for diagram generation",
                    extra={'session_id': session_id} if session_id else {})
-        logger.info(f"📋 Model: {model} | Provider: {provider}", 
+        logger.info(f"📋 Model: {model} | Provider: {provider}",
                    extra={'session_id': session_id} if session_id else {})
-            
+
         # Create AI processor
         processor = create_ai_processor(api_key=api_key, provider=provider)
-        
+
         # Format conversation for AI call
         conversation_history = [
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_content}
         ]
-        
-        logger.info(f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {len(prompt)} chars, content: {len(user_content)} chars)", 
+
+        logger.info(f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {len(prompt)} chars, content: {len(user_content)} chars)",
                    extra={'session_id': session_id} if session_id else {})
-        
+
         # Make the AI call
         result = processor.process_question(
             question=user_content,
@@ -222,7 +256,7 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
             max_tokens=2000,      # Reasonable token limit for diagram generation
             temperature=0.7       # Balance creativity and consistency
         )
-        
+
         # Handle both string and dict return types
         if isinstance(result, str):
             response = result
@@ -232,31 +266,35 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
             response = result.get("response", "")
             tokens_used = result.get("tokens_used", 0)
             processing_time = result.get("processing_time", 0.0)
-        
+
         # Log successful AI response (visible via SSE)
-        logger.info(f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s", 
+        logger.info(f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s",
                    extra={'session_id': session_id} if session_id else {})
-        
+
         # Log a preview of the response for debugging
         preview = response[:200].replace('\n', ' ').strip()
         if len(response) > 200:
             preview += "..."
-        logger.info(f"📄 LLM RESPONSE CONTENT: {preview}", 
+        logger.info(f"📄 LLM RESPONSE CONTENT: {preview}",
                    extra={'session_id': session_id} if session_id else {})
-        
+
         return response
     except httpx.RequestError as e:
-        logger.error(f"❌ AI call failed due to a network error: {e}", 
+        error_msg = f"Network error during AI call: {str(e)}. Please check your internet connection and try again."
+        logger.error(f"❌ AI call failed due to a network error: {e}",
                     extra={'session_id': session_id} if session_id else {})
-        return f"ERROR: AI call failed due to a network error - {str(e)}"
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ Failed to parse AI response as JSON: {e}", 
-                    extra={'session_id': session_id} if session_id else {})
-        return f"ERROR: Failed to parse AI response as JSON - {str(e)}"
+        raise Exception(error_msg)
     except Exception as e:
-        logger.error(f"❌ An unexpected error occurred during the AI call: {e}", 
+        # Check if it's an API key error from the error message
+        error_str = str(e).lower()
+        if "api key" in error_str or "invalid" in error_str or "expired" in error_str or "unauthorized" in error_str:
+            error_msg = f"API key error: {str(e)}. Please check your AI provider API key in settings."
+        else:
+            error_msg = f"AI call failed: {str(e)}"
+
+        logger.error(f"❌ An error occurred during the AI call: {e}",
                     extra={'session_id': session_id} if session_id else {})
-        return f"ERROR: An unexpected error occurred during the AI call - {str(e)}"
+        raise Exception(error_msg)
 
 
 @log_method_call
@@ -311,12 +349,29 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     ])
 
     # Call LLM with model-specific prompt
-    ai_response_str = await _call_llm(
-        prompt_template,
-        user_content,
-        session_id,
-        model_id=model_id
-    )
+    try:
+        ai_response_str = await _call_llm(
+            prompt_template,
+            user_content,
+            session_id,
+            model_id=model_id
+        )
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
+        if update_callback:
+            await update_callback({
+                "status": "failed",
+                "message": f"Failed to generate JSON representation: {error_message}",
+                "error": error_message,
+            })
+        # Return existing state representations as fallback
+        return {
+            "structurizr_workspace": state.get("structurizr_workspace", ""),
+            "clean_d2": state.get("clean_d2", ""),
+            "json_representation": state.get("json_representation", {}),
+            "error_message": error_message,
+        }
 
     try:
         # Parse AI response as JSON
@@ -413,12 +468,24 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
         - If llm_ready: True, returns final_design_summary
         - If llm_ready: False, returns next question via SSE
     """
+    session_id = state.get("_session_id")
+
+    # IMPORTANT: Skip clarify_prompt on first run (analyze_request already asked a question)
+    # This prevents asking TWO questions immediately after analysis
+    if state.get("first_question_asked", False) and state.get("question_count", 0) == 0:
+        logger.info("⏭️ Skipping clarify_prompt - analyze_request already asked first question, waiting for user response",
+                   extra={'session_id': session_id} if session_id else {})
+        return {
+            "llm_ready": False,
+            "first_question_asked": False,  # Reset flag for next time
+            "question_count": 1,  # Mark that first question has been asked
+        }
+
     # Check if we're already ready to proceed (skip clarification)
     # BUT only if user explicitly confirmed readiness, not AI-determined
     if (state.get("llm_ready", False) and
         state.get("final_design_summary") and
         state.get("user_confirmed_ready", False)):
-        session_id = state.get("_session_id")
         logger.info("🎯 Skipping clarification - user confirmed ready with complete design summary",
                    extra={'session_id': session_id} if session_id else {})
         return {
@@ -426,7 +493,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
             "final_design_summary": state.get("final_design_summary"),
             "current_state": "generating"
         }
-    
+
     clarification_history = state.get("clarification_history", [])
     clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
@@ -501,7 +568,24 @@ Determine if you have enough information or need to ask more questions."""
                extra={'session_id': session_id} if session_id else {})
     logger.info(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
                extra={'session_id': session_id} if session_id else {})
-    ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
+
+    try:
+        ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
+        update_callback = state.get("_update_callback")
+        if update_callback:
+            await update_callback({
+                "status": "failed",
+                "message": f"Clarification failed: {error_message}",
+                "error": error_message,
+            })
+        return {
+            "llm_ready": False,
+            "error_message": error_message,
+            "current_state": "failed",
+        }
 
     try:
         # Parse JSON response from LLM
@@ -709,20 +793,21 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
             "message_type": "progress"
         })
 
-    ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id, model_id=model_id)
-    
-    if ai_response.startswith("ERROR:"):
-        logger.error(f"AI code generation failed: {ai_response}")
+    try:
+        ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id, model_id=model_id)
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
-                "status": "error", 
-                "message": f"Code generation failed: {ai_response}",
-                "message_type": "error"
+                "status": "failed",
+                "message": f"Code generation failed: {error_message}",
+                "error": error_message,
             })
         return {
             "diagram_code": "",
-            "current_state": SessionState.ERROR,
-            "error_message": ai_response
+            "error_message": error_message,
+            "current_state": "failed",
         }
     
     # Clean up the response (remove any markdown formatting)
@@ -858,42 +943,39 @@ Attempt: {refinement_attempt}"""
 
     logger.info(f"Refining {diagram_type_str} code using AI - attempt {refinement_attempt} (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
-    ai_response = await _call_llm(prompt_template, error_context, session_id, model_id=model_id)
-    
-    if ai_response.startswith("ERROR:"):
-        logger.error(f"AI code refinement failed: {ai_response}")
-        # Fallback to simple rule-based fixes
-        refined_code = diagram_code
-        error_type = state.get("validation_error_type", "unknown")
-        
-        if error_type == "syntax_error":
-            if diagram_type_str == "Mermaid" and "graph" not in refined_code:
-                refined_code = "graph TD\n" + refined_code
-            elif diagram_type_str == "D2" and "->" not in refined_code:
-                refined_code = refined_code.replace("-", "->")
-            elif diagram_type_str == "PlantUML" and "@startuml" not in refined_code:
-                refined_code = "@startuml\n" + refined_code + "\n@enduml"
-        
+
+    try:
+        ai_response = await _call_llm(prompt_template, error_context, session_id, model_id=model_id)
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"AI call failed in refine_code: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
-                "status": "fallback_fix", 
-                "message": f"⚠️ AI refinement failed, applied basic syntax fixes",
-                "message_type": "warning"
+                "status": "failed",
+                "message": f"Code refinement failed: {error_message}",
+                "error": error_message,
             })
-    else:
-        # Clean up AI response (remove markdown formatting)
-        refined_code = ai_response.strip()
-        if refined_code.startswith("```"):
-            lines = refined_code.split('\n')
-            if lines[0].startswith("```") and lines[-1].strip() == "```":
-                refined_code = '\n'.join(lines[1:-1])
-        
-        if update_callback:
-            await update_callback({
-                "status": "code_refined", 
-                "message": f"✅ AI fixed diagram code (attempt {refinement_attempt})",
-                "message_type": "success"
-            })
+        return {
+            "diagram_code": diagram_code,
+            "is_valid": False,
+            "error_message": error_message,
+            "current_state": "failed",
+            "refinement_attempt": refinement_attempt
+        }
+
+    # Clean up AI response (remove markdown formatting)
+    refined_code = ai_response.strip()
+    if refined_code.startswith("```"):
+        lines = refined_code.split('\n')
+        if lines[0].startswith("```") and lines[-1].strip() == "```":
+            refined_code = '\n'.join(lines[1:-1])
+
+    if update_callback:
+        await update_callback({
+            "status": "code_refined",
+            "message": f"✅ AI fixed diagram code (attempt {refinement_attempt})",
+            "message_type": "success"
+        })
     
     logger.info(f"🔧 Refined {diagram_type_str} code - attempt {refinement_attempt} complete", 
                extra={'session_id': session_id} if session_id else {})

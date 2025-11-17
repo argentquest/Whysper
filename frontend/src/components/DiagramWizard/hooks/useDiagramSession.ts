@@ -59,10 +59,18 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
       // Track last status
       lastStatusRef.current = update.status ?? lastStatusRef.current;
 
-      // Check for completion
-      if (update.status === 'completed' || update.status === 'error') {
-        logEvent('SSE completed', update.status);
+      // Check for completion or failure
+      if (update.status === 'completed' || update.status === 'error' || update.status === 'failed') {
+        logEvent('SSE completed/failed', update.status);
         options.onComplete?.();
+
+        // If failed, treat it as an error
+        if (update.status === 'failed') {
+          const errorMessage = update.error || update.message || 'Diagram generation failed';
+          const failedError = new Error(errorMessage);
+          setError(failedError);
+          options.onError?.(failedError);
+        }
       }
     },
     onError: (err) => {
@@ -189,6 +197,30 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     }
   }, [logEvent, sessionId]);
 
+  // Confirm ready to proceed with diagram generation
+  const confirmReady = useCallback(async () => {
+    if (!sessionId) {
+      throw new Error('No active session');
+    }
+
+    try {
+      logEvent('Confirming ready', { sessionId });
+      setLoading(true);
+      setError(null);
+
+      const result = await DiagramApi.confirmReady(sessionId);
+      setStatus(result);
+      logEvent('Confirm ready response', result);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to confirm ready');
+      setError(error);
+      logEvent('Confirm ready failed', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [logEvent, sessionId]);
+
   // Refresh the current session status
   const refreshStatus = useCallback(async () => {
     if (!sessionId) {
@@ -239,6 +271,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     sseError,
     startSession,
     submitClarification,
+    confirmReady,
     renderDiagram,
     approveRender,
     refreshStatus,
