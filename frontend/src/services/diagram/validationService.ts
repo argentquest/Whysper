@@ -1,8 +1,9 @@
 Here's the TypeScript code with inline comments explaining the logic:
 
+```typescript
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'; // Define base API endpoint, with fallback to localhost
 
 export interface ValidationError {
   line?: number;
@@ -18,10 +19,6 @@ export interface ValidationResult {
   suggestions?: string[];
 }
 
-/**
- * Validate diagram code by sending request to backend API
- * Fallback to client-side validation if API call fails
- */
 export async function validateDiagramCode(
   code: string,
   diagramType: string
@@ -47,10 +44,6 @@ export async function validateDiagramCode(
   }
 }
 
-/**
- * Perform lightweight client-side validation when backend is unavailable
- * Checks basic structural requirements for different diagram types
- */
 function performBasicValidation(code: string, diagramType: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
@@ -84,10 +77,6 @@ function performBasicValidation(code: string, diagramType: string): ValidationRe
   }
 }
 
-/**
- * Validate Mermaid diagrams by checking for required keywords
- * Ensures diagram type is explicitly declared
- */
 function validateMermaid(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
@@ -124,10 +113,6 @@ function validateMermaid(code: string): ValidationResult {
   };
 }
 
-/**
- * Validate D2 diagrams by checking for connections or shape definitions
- * Ensures diagram contains meaningful structural elements
- */
 function validateD2(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
@@ -152,10 +137,6 @@ function validateD2(code: string): ValidationResult {
   };
 }
 
-/**
- * Validate PlantUML diagrams by checking for start and end markers
- * Ensures diagram follows PlantUML syntax requirements
- */
 function validatePlantUML(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
@@ -184,10 +165,6 @@ function validatePlantUML(code: string): ValidationResult {
   };
 }
 
-/**
- * Debounce utility to limit function call frequency
- * Prevents excessive validation calls during rapid typing
- */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number

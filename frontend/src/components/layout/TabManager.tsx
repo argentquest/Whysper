@@ -1,8 +1,6 @@
-/**
- * TabManager Component
- * 
- * This module exports the TabManager component for the application.
- */
+Here's the TypeScript code with inline comments explaining the logic:
+
+```typescript
 // @ts-nocheck
 import React from 'react';
 import { Tabs, Button, Space, Tooltip, Dropdown, Typography, theme as antdTheme } from 'antd';
@@ -20,11 +18,7 @@ import type { Tab } from '../../types';
 import { BrandColors } from 'branding';
 const { Link } = Typography;
 
-/**
- * TabManagerProps type definition
- * 
- * Describes the structure and properties of TabManagerProps
- */
+// Define the props interface for the TabManager component with all necessary callback functions
 interface TabManagerProps {
   tabs: Tab[];
   activeTabId: string;
@@ -37,9 +31,6 @@ interface TabManagerProps {
   onTabsAction?: (action: string, tabId?: string) => void;
 }
 
-/**
- * TabManager component
- */
 export const TabManager: React.FC<TabManagerProps> = ({
   tabs,
   activeTabId,
@@ -51,13 +42,17 @@ export const TabManager: React.FC<TabManagerProps> = ({
   onNewArchStudioTab,
   onTabsAction,
 }) => {
+  // Use Ant Design theme tokens for consistent styling across the application
   const { token } = antdTheme.useToken();
   const brandTokens = token as Record<string, string>;
+  
+  // Set color variables with fallback to brand colors or defaults
   const tabBackground = brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? '#f7b500';
   const tabBorderColor = brandTokens.colorBorder ?? 'rgba(0, 0, 0, 0.15)';
   const tabTextColor = brandTokens.colorText ?? BrandColors.text?.primary ?? '#231f20';
   const tabInactiveBg = brandTokens.colorBrandQuaternary ?? BrandColors.quaternary ?? '#fbd3a4';
 
+  // Handle tab editing (adding or removing tabs)
   const handleTabEdit = (targetKey: React.MouseEvent | React.KeyboardEvent | string, action: 'add' | 'remove') => {
     if (action === 'add') {
       onNewTab();
@@ -66,6 +61,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     }
   };
 
+  // Generate dropdown menu items for each tab with save, duplicate, and close options
   const getTabMenuItems = (tab: Tab): MenuProps['items'] => [
     {
       key: 'save',
@@ -101,7 +97,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     },
   ];
 
-  // New Tab Menu Items
+  // Define menu items for creating new tabs with different types
   const newTabMenuItems: MenuProps['items'] = [
     {
       key: 'chat',
@@ -125,6 +121,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     },
   ];
 
+  // Map tabs to Ant Design Tabs items with custom rendering for each tab
   const tabItems = tabs.map((tab) => {
     const isDirty = tab.isDirty;
     
@@ -132,11 +129,13 @@ export const TabManager: React.FC<TabManagerProps> = ({
       key: tab.id,
       label: (
         <div className="flex items-center gap-2 min-w-0">
+          {/* Render tab title with dirty state indicator */}
           <span className="truncate max-w-[120px]">
             {tab.title}
             {isDirty && <span className="text-orange-500">*</span>}
           </span>
           
+          {/* Render save and more options for each tab */}
           <div className="flex items-center gap-1 ml-auto">
             {isDirty && (
               <Tooltip title="Save Tab">
@@ -153,6 +152,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
               </Tooltip>
             )}
             
+            {/* Dropdown menu for additional tab actions */}
             <Dropdown
               menu={{ items: getTabMenuItems(tab) }}
               trigger={['click']}
@@ -173,6 +173,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
     };
   });
 
+  // Create container style with dynamic colors and shadow
   const containerStyle: React.CSSProperties & Record<string, string> = {
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
     borderBottom: `1px solid ${tabBorderColor}`,
@@ -186,6 +187,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
       className="border-b border-gray-200 dark:border-gray-700"
       style={containerStyle}
     >
+      {/* Render tabs with edit capabilities and additional actions */}
       <div className="flex items-center justify-between px-6 pt-3 pb-0">
         <Tabs
           type="editable-card"
@@ -200,6 +202,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
           tabBarStyle={{ margin: 0 }}
         />
         
+        {/* Render additional tab management actions */}
         <Space className="ml-4" size={16}>
           <Tooltip title="Open a new tab">
             <Dropdown
@@ -218,6 +221,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
             </Dropdown>
           </Tooltip>
           
+          {/* Close tab action with disabled state when only one tab exists */}
           <Tooltip title={tabs.length <= 1 ? 'At least one tab must remain open' : 'Close the current tab'}>
             <Link
               onClick={(e) => {

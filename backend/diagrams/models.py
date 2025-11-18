@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 class ProviderCapability(str, Enum):
-    """Capabilities that a provider can support"""
+    # Enumerate possible capabilities that a diagram provider can support
     VALIDATE = "validate"              # Can validate syntax
     RENDER_SVG = "render_svg"          # Can render to SVG
     RENDER_PNG = "render_png"          # Can render to PNG
@@ -24,55 +24,55 @@ class ProviderCapability(str, Enum):
 
 
 class ValidationResult(BaseModel):
-    """Result of diagram validation"""
-    is_valid: bool
-    error: Optional[str] = None
-    warnings: List[str] = Field(default_factory=list)
-    auto_fixed: bool = False
-    llm_corrected: bool = False
-    fixed_code: Optional[str] = None
-    code_length: int = 0
-    correction_method: Optional[str] = None  # "pattern", "llm", "cli"
+    # Model to represent the result of diagram validation
+    is_valid: bool  # Whether the diagram passed validation
+    error: Optional[str] = None  # Optional error message if validation fails
+    warnings: List[str] = Field(default_factory=list)  # List of warnings
+    auto_fixed: bool = False  # Whether auto-fix was applied
+    llm_corrected: bool = False  # Whether LLM correction was used
+    fixed_code: Optional[str] = None  # Corrected code if fixes applied
+    code_length: int = 0  # Length of the original/corrected code
+    correction_method: Optional[str] = None  # Method used for correction
 
 
 class RenderResult(BaseModel):
-    """Result of diagram rendering"""
-    success: bool
+    # Model to represent the result of diagram rendering
+    success: bool  # Whether rendering was successful
     content: Optional[str] = None          # SVG/PNG content or converted code
-    output_format: str                     # Format of the content
-    validation: ValidationResult
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    error: Optional[str] = None
-    file_path: Optional[str] = None
+    output_format: str                     # Format of the rendered content
+    validation: ValidationResult  # Validation details for the render
+    metadata: Dict[str, Any] = Field(default_factory=dict)  # Additional metadata
+    error: Optional[str] = None  # Error message if rendering failed
+    file_path: Optional[str] = None  # Path to rendered file if applicable
 
 
 class ProviderMetadata(BaseModel):
-    """Metadata about a diagram provider"""
-    provider_id: str                       # e.g., "mermaidv1", "d2v1"
+    # Model to store metadata about a diagram provider
+    provider_id: str                       # Unique identifier for provider
     provider_name: str                     # Human-readable name
-    diagram_type: str                      # Primary diagram type (mermaid, d2, etc.)
-    supported_output_formats: List[str]    # Formats this provider can output
-    capabilities: List[ProviderCapability]
+    diagram_type: str                      # Type of diagram (mermaid, d2, etc.)
+    supported_output_formats: List[str]    # Possible output formats
+    capabilities: List[ProviderCapability]  # List of provider capabilities
     version: Optional[str]                 # Provider version
-    available: bool                        # Is provider available/installed
+    available: bool                        # Is provider installed/available
     description: Optional[str]             # Description of the provider
-    requires_llm: bool = False             # Does this provider require LLM access?
+    requires_llm: bool = False             # Needs LLM access to function
 
 
 class CorrectionAttemptType(str, Enum):
-    """Type of correction attempt"""
-    PATTERN = "pattern"
-    LLM = "llm"
-    USER = "user"
-    ORIGINAL = "original"
+    # Enumerate possible types of correction attempts
+    PATTERN = "pattern"  # Correction using pattern matching
+    LLM = "llm"          # Correction using language model
+    USER = "user"        # Manual user correction
+    ORIGINAL = "original"  # No correction attempted
 
 
 class CorrectionAttempt(BaseModel):
-    """Record of a single correction attempt"""
-    attempt_number: int
-    attempt_type: CorrectionAttemptType
-    code: str
-    timestamp: datetime
-    is_valid: bool
-    error: Optional[str] = None
-    success: bool
+    # Model to track individual correction attempts
+    attempt_number: int  # Which attempt number this is
+    attempt_type: CorrectionAttemptType  # Type of correction attempt
+    code: str  # The code being corrected
+    timestamp: datetime  # When the correction was attempted
+    is_valid: bool  # Whether the correction was successful
+    error: Optional[str] = None  # Error message if correction failed
+    success: bool  # Overall success of the correction attempt

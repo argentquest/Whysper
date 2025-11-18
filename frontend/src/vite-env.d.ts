@@ -1,5 +1,3 @@
-Here's the TypeScript code with inline comments explaining the logic:
-
 /// <reference types="vite/client" /> // Reference Vite's client type definitions for environment support
 
 // Define an interface for environment variables with type safety

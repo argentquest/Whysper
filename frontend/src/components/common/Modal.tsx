@@ -1,10 +1,11 @@
-Here's the code with inline comments explaining the logic:
+Here's the TypeScript code with inline comments:
 
+```typescript
 import React from 'react';
 import { Modal as AntModal, Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 
-// Define the structure and properties for the Modal component
+// Define props structure for flexible modal component configuration
 interface ModalProps {
   title: string | React.ReactNode;
   open: boolean;
@@ -22,7 +23,7 @@ interface ModalProps {
   className?: string;
 }
 
-// Modal component with flexible configuration options
+// Create a reusable modal component with default and customizable behaviors
 export const Modal: React.FC<ModalProps> = ({
   title,
   open,
@@ -39,13 +40,13 @@ export const Modal: React.FC<ModalProps> = ({
   centered = true,
   className = '',
 }) => {
-  // Determine footer content: custom, default, or null
-  // Provides flexibility in modal footer rendering
+  // Generate footer based on custom or default configuration
+  // Allows for complete footer customization or automatic button generation
   const defaultFooter = footer === null ? null : footer || (
     <div className="flex justify-end gap-2">
-      {/* Cancel button with configurable text */}
+      // Render cancel button with configurable text
       <Button onClick={onCancel}>{cancelText}</Button>
-      {/* Conditional OK button with loading state */}
+      // Conditionally render OK button with optional loading state
       {onOk && (
         <Button 
           type="primary" 
@@ -59,13 +60,13 @@ export const Modal: React.FC<ModalProps> = ({
   );
 
   return (
-    // Ant Design Modal with customized title and behavior
+    // Use Ant Design Modal with enhanced customization
     <AntModal
-      // Custom title with dynamic content and close button
+      // Create a custom title layout with dynamic content and close button
       title={
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold">{title}</div>
-          {/* Inline close button using CloseOutlined icon */}
+          // Inline close button using CloseOutlined icon
           <Button
             type="text"
             icon={<CloseOutlined />}
@@ -78,14 +79,14 @@ export const Modal: React.FC<ModalProps> = ({
       onCancel={onCancel}
       footer={defaultFooter}
       width={width}
-      // Configurable modal behavior and styling
+      // Configure modal behavior and appearance through props
       destroyOnHidden={destroyOnClose}
       maskClosable={maskClosable}
       centered={centered}
       className={`Whysper-modal ${className}`}
-      closable={false} // We handle close button in custom title
+      closable={false} // Manual close button management in custom title
     >
-      {/* Modal content wrapper with padding */}
+      // Wrap modal content with consistent padding
       <div className="py-4">
         {children}
       </div>

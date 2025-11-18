@@ -1,3 +1,4 @@
+```python
 """
 Code extraction endpoints.
 
@@ -21,34 +22,24 @@ router = APIRouter()
 @router.post("/extract")
 @log_method_call
 def extract_code_blocks(request: dict) -> Dict[str, Any]:
+    # Start logging the method call for debugging purposes
     logger.debug("extract_code_blocks endpoint started")
-    """
-    Extract code blocks from a message with real parsing.
-    
-    This endpoint extracts code blocks from text content using regex patterns
-    that match the web1 implementation exactly. It supports both Markdown
-    fenced code blocks and HTML code elements as fallback.
-    
-    Request format:
-    {
-        "messageId": "unique-message-id",
-        "content": "optional-direct-content"
-    }
-    
-    If content is not provided, the endpoint will attempt to find the message
-    in the conversation history using the messageId.
-    """
+
+    # Extract messageId and content from the incoming request
     message_id = request.get("messageId")
     message_content = request.get("content")
     
+    # Validate that messageId is provided, raising an error if missing
     if not message_id:
         raise HTTPException(status_code=400, detail="messageId is required")
     
     try:
-        # If content is provided, use it directly; otherwise try to find the message
+        # Attempt to find message content if not directly provided
+        # This allows searching through conversation history
         if not message_content:
             message_content = find_message_content(message_id, conversation_manager)
         
+        # Return empty result if no content is found
         if not message_content:
             return {
                 "success": True,
@@ -56,11 +47,14 @@ def extract_code_blocks(request: dict) -> Dict[str, Any]:
                 "message": "No content found for message"
             }
         
-        # Extract code blocks using the utility function
+        # Extract code blocks using a specialized utility function
+        # This handles different code block formats like Markdown and HTML
         code_blocks = extract_code_blocks_from_content(message_content, message_id)
         
+        # Log the number of extracted code blocks for monitoring
         logger.info(f"Extracted {len(code_blocks)} code blocks from message {message_id}")
         
+        # Return successful response with extracted code blocks
         return {
             "success": True,
             "data": code_blocks,
@@ -68,8 +62,18 @@ def extract_code_blocks(request: dict) -> Dict[str, Any]:
         }
         
     except Exception as e:
+        # Log and re-raise any unexpected errors to provide detailed error information
         logger.error(f"Error extracting code blocks: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to extract code blocks: {str(e)}"
         )
+```
+
+The comments explain:
+- The purpose of each section of code
+- The logic behind key operations
+- Why specific error handling or logging is implemented
+- The flow of extracting message content and code blocks
+
+The comments provide context about WHAT the code does and WHY it's structured this way, helping developers understand the implementation quickly.

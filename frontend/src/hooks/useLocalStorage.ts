@@ -8,41 +8,40 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void, () => void] {
-  // Initialize state with value from localStorage or fallback to initial value
+  // Initialize state with safe value retrieval from localStorage
   const [storedValue, setStoredValue] = useState<T>(() => {
-    // Check if running in browser environment
+    // Prevent localStorage access during server-side rendering
     if (typeof window === 'undefined') {
       return initialValue;
     }
 
     try {
-      // Attempt to retrieve existing value from localStorage
+      // Retrieve and parse existing value or use initial value
       const item = window.localStorage.getItem(key);
-      // Parse stored value or use initial value if no item exists
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      // Log any parsing errors and return initial value
+      // Handle parsing errors gracefully
       console.error(`Error loading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
 
-  // Create a setter function that persists values to localStorage
+  // Create a setter function that safely stores values in localStorage
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
-        // Support both direct values and function updates
+        // Support functional and direct value updates
         const valueToStore = value instanceof Function ? value(storedValue) : value;
 
-        // Update local state
+        // Update local state immediately
         setStoredValue(valueToStore);
 
-        // Persist to localStorage if in browser environment
+        // Persist to localStorage only in browser environment
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
-        // Log any storage errors
+        // Log any storage-related errors
         console.error(`Error saving localStorage key "${key}":`, error);
       }
     },
@@ -52,9 +51,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
   // Create a function to remove the value from localStorage
   const removeValue = useCallback(() => {
     try {
-      // Reset to initial value
+      // Reset to initial state
       setStoredValue(initialValue);
-      // Remove item from localStorage if in browser environment
+      // Remove item from localStorage if possible
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(key);
       }
@@ -64,33 +63,32 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     }
   }, [key, initialValue]);
 
-  // Sync state across different tabs/windows
+  // Implement cross-tab/window state synchronization
   useEffect(() => {
-    // Only run in browser environment
+    // Skip synchronization during server-side rendering
     if (typeof window === 'undefined') {
       return;
     }
 
-    // Handle storage events from other tabs/windows
+    // Listen for storage changes from other tabs/windows
     const handleStorageChange = (e: StorageEvent) => {
-      // Check if event is for this specific key
+      // Ensure event is for this specific key
       if (e.key === key && e.newValue) {
         try {
           // Update local state with new value from storage event
           setStoredValue(JSON.parse(e.newValue));
         } catch (error) {
-          // Log any parsing errors
+          // Log parsing errors for storage events
           console.error(`Error parsing storage event for key "${key}":`, error);
         }
       }
     };
 
-    // Add event listener for storage changes
+    // Add and cleanup storage event listener
     window.addEventListener('storage', handleStorageChange);
-    // Cleanup listener on component unmount
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [key]);
 
-  // Return tuple with stored value, setter, and remove function
+  // Return tuple with stored value, setter, and removal function
   return [storedValue, setValue, removeValue];
 }

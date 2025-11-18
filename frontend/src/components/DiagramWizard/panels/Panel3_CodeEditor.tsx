@@ -1,3 +1,4 @@
+```typescript
 /**
  * Panel3_CodeEditor Component
  *
@@ -26,11 +27,7 @@ import type { ValidationResult } from '../../../services/diagram/validationServi
 import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
 
-/**
- * Panel3CodeEditorProps type definition
- * 
- * Describes the structure and properties of Panel3CodeEditorProps
- */
+// Define props interface for strongly typed component props
 interface Panel3CodeEditorProps {
   code: string;
   diagramType: string;
@@ -38,15 +35,13 @@ interface Panel3CodeEditorProps {
   isLoading: boolean;
 }
 
-/**
- * Panel3_CodeEditor component
- */
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
   diagramType,
   onChange,
   isLoading,
 }) => {
+  // Manage component state for editing, validation, and code manipulation
   const [editedCode, setEditedCode] = useState(code);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,6 +49,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
+  // Sync code and trigger validation when input code changes
   useEffect(() => {
     setEditedCode(code);
     // Validate when code changes
@@ -62,14 +58,16 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     }
   }, [code]);
 
-  // Debounced validation function
+  // Debounced validation to prevent excessive API calls during typing
   const performValidation = useCallback(
     debounce(async (codeToValidate: string) => {
+      // Skip validation for empty code
       if (!codeToValidate || !codeToValidate.trim()) {
         setValidationResult(null);
         return;
       }
 
+      // Perform async code validation
       setIsValidating(true);
       try {
         const result = await validateDiagramCode(codeToValidate, diagramType);
@@ -83,7 +81,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     [diagramType]
   );
 
-  // Handle code change in editor
+  // Handle code changes during editing and trigger validation
   const handleCodeChange = (value: string) => {
     setEditedCode(value);
     if (isEditing) {
@@ -91,6 +89,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     }
   };
 
+  // Copy code to clipboard with feedback
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(editedCode || code);
@@ -102,13 +101,16 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     }
   };
 
+  // Save edited code and handle success/error states
   const handleSave = async () => {
+    // Prevent saving if no changes detected
     if (editedCode === code) {
       message.info('No changes to save');
       setIsEditing(false);
       return;
     }
 
+    // Attempt to save changes with loading and error handling
     try {
       setIsSaving(true);
       await onChange(editedCode);
@@ -121,12 +123,13 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     }
   };
 
+  // Cancel editing and revert to original code
   const handleCancel = () => {
     setEditedCode(code);
     setIsEditing(false);
   };
 
-  // Get validation status icon
+  // Render validation status icon based on current validation state
   const getValidationStatus = () => {
     if (isValidating) {
       return <Spin size="small" />;
@@ -150,6 +153,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     );
   };
 
+  // Render the code editor with dynamic actions and validation
   return (
     <Card
       title={
@@ -161,8 +165,10 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
       className={styles.codePanel}
       extra={
         <Space>
+          {/* Render different action buttons based on editing state */}
           {!isEditing ? (
             <>
+              {/* Copy and Edit buttons when not editing */}
               <Tooltip title="Copy code">
                 <Button
                   size="small"
@@ -183,6 +189,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
             </>
           ) : (
             <>
+              {/* Save and Cancel buttons when editing */}
               <Button
                 size="small"
                 icon={<SaveOutlined />}
@@ -207,6 +214,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
       }
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
+      {/* Render code editor with loading and validation tabs */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {isLoading ? (
           <div
@@ -234,6 +242,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
             defaultActiveKey="code"
             items={[
               {
+                // Code editing tab
                 key: 'code',
                 label: 'Code',
                 children: (
@@ -269,6 +278,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
                 ),
               },
               {
+                // Validation errors and warnings tab
                 key: 'errors',
                 label: (
                   <Badge

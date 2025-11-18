@@ -1,12 +1,5 @@
-Here's the code with inline comments added:
-
-/**
- * ErrorPanel Component
- *
- * Displays validation errors and warnings for diagram code.
- * Provides actionable suggestions and allows jumping to error lines.
- */
-
+```typescript
+// Import necessary React and Ant Design components for UI rendering
 import React from 'react';
 import { Alert, List, Tag, Space, Empty, Button } from 'antd';
 import {
@@ -17,11 +10,7 @@ import {
 } from '@ant-design/icons';
 import type { ValidationError } from '../../../services/diagram/validationService';
 
-/**
- * ErrorPanelProps type definition
- * 
- * Describes the structure and properties of ErrorPanelProps
- */
+// Define the properties interface for the ErrorPanel component
 interface ErrorPanelProps {
   errors: ValidationError[];
   warnings: ValidationError[];
@@ -31,9 +20,7 @@ interface ErrorPanelProps {
   autoFixAvailable?: boolean;
 }
 
-/**
- * ErrorPanel component
- */
+// Main component to display validation errors, warnings, and suggestions
 const ErrorPanel: React.FC<ErrorPanelProps> = ({
   errors,
   warnings,
@@ -42,12 +29,12 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
   onAutoFix,
   autoFixAvailable = false,
 }) => {
-  // Check if there are any validation issues or suggestions
+  // Determine if there are any validation issues to display
   const hasErrors = errors.length > 0;
   const hasWarnings = warnings.length > 0;
   const hasSuggestions = suggestions && suggestions.length > 0;
 
-  // If no errors, warnings, or suggestions, show an empty state
+  // Show empty state if no errors, warnings, or suggestions exist
   if (!hasErrors && !hasWarnings && !hasSuggestions) {
     return (
       <div style={{ padding: '16px', textAlign: 'center' }}>
@@ -59,7 +46,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
     );
   }
 
-  // Function to get the appropriate icon based on severity
+  // Determine icon based on error/warning severity for visual representation
   const getSeverityIcon = (severity: ValidationError['severity']) => {
     switch (severity) {
       case 'error':
@@ -73,7 +60,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
     }
   };
 
-  // Function to get the color tag based on severity
+  // Get color tag for different severity levels
   const getSeverityColor = (severity: ValidationError['severity']) => {
     switch (severity) {
       case 'error':
@@ -89,7 +76,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
 
   return (
     <div style={{ padding: '8px' }}>
-      {/* Summary Alert for errors with optional auto-fix button */}
+      {/* Display summary alert for errors with optional auto-fix functionality */}
       {hasErrors && (
         <Alert
           message={`${errors.length} error${errors.length > 1 ? 's' : ''} found`}
@@ -97,6 +84,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
           showIcon
           style={{ marginBottom: '8px' }}
           action={
+            // Render auto-fix button if available and callback provided
             autoFixAvailable && onAutoFix ? (
               <Button
                 size="small"
@@ -111,13 +99,14 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Render list of errors with clickable line navigation */}
+      {/* Render list of errors with line navigation and detailed information */}
       {hasErrors && (
         <List
           size="small"
           dataSource={errors}
           style={{ marginBottom: '8px' }}
           renderItem={(error) => (
+            // Create clickable error items that can navigate to specific lines
             <List.Item
               style={{
                 padding: '8px 12px',
@@ -128,6 +117,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
               }}
               onClick={() => error.line && onJumpToLine && onJumpToLine(error.line)}
             >
+              {/* Display error details with severity icon and line number */}
               <Space direction="vertical" size="small" style={{ width: '100%' }}>
                 <Space>
                   {getSeverityIcon(error.severity)}
@@ -144,7 +134,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Render list of warnings with clickable line navigation */}
+      {/* Similar rendering logic for warnings with different styling */}
       {hasWarnings && (
         <List
           size="small"
@@ -177,7 +167,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Render suggestions if available */}
+      {/* Display additional suggestions if available */}
       {hasSuggestions && (
         <Alert
           message="Suggestions"

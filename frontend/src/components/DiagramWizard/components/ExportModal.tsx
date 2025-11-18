@@ -1,5 +1,3 @@
-Here's the TypeScript code with inline comments explaining the logic:
-
 import React, { useState } from 'react';
 import { Modal, Radio, Input, InputNumber, Form, message, Space, Alert } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
@@ -19,7 +17,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
   svgContainerRef,
   defaultFilename = 'diagram',
 }) => {
-  // State management for export configuration
+  // Initialize state variables for export configuration and tracking
   const [format, setFormat] = useState<ExportFormat>('svg');
   const [filename, setFilename] = useState(defaultFilename);
   const [scale, setScale] = useState(2);
@@ -27,23 +25,23 @@ const ExportModal: React.FC<ExportModalProps> = ({
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
-    // Validate SVG container exists before export
+    // Verify SVG container exists before attempting export
     if (!svgContainerRef.current) {
       message.error('No diagram to export');
       return;
     }
 
-    // Extract SVG element for export
+    // Extract SVG element to be exported
     const svgElement = getSVGElement(svgContainerRef.current);
     if (!svgElement) {
       message.error('SVG element not found');
       return;
     }
 
-    // Start export process and manage loading state
+    // Begin export process and manage loading state
     setExporting(true);
     try {
-      // Attempt to export diagram with selected configuration
+      // Execute diagram export with selected configuration
       await exportDiagram(svgElement, {
         format,
         filename,
@@ -51,22 +49,22 @@ const ExportModal: React.FC<ExportModalProps> = ({
         backgroundColor,
       });
       
-      // Show success message and close modal on successful export
+      // Display success message and close modal on successful export
       message.success(`Diagram exported as ${format.toUpperCase()}`);
       onClose();
     } catch (error) {
-      // Handle and display export errors
+      // Handle and log any export errors
       console.error('Export failed:', error);
       message.error(`Failed to export diagram: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      // Reset exporting state regardless of export outcome
+      // Reset exporting state after export attempt
       setExporting(false);
     }
   };
 
   return (
     <Modal
-      // Modal configuration with export settings
+      // Configure modal with export settings and interactions
       title={
         <Space>
           <DownloadOutlined />
@@ -81,7 +79,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
       width={500}
     >
       <Form layout="vertical" style={{ marginTop: '16px' }}>
-        {/* Export format selection radio buttons */}
+        {/* Allow user to select export file format */}
         <Form.Item label="Export Format">
           <Radio.Group
             value={format}
@@ -94,7 +92,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </Radio.Group>
         </Form.Item>
 
-        {/* Filename input with dynamic file extension */}
+        {/* Enable filename input with dynamic extension */}
         <Form.Item label="Filename">
           <Input
             value={filename}
@@ -104,10 +102,10 @@ const ExportModal: React.FC<ExportModalProps> = ({
           />
         </Form.Item>
 
-        {/* Conditional rendering for raster format options */}
+        {/* Render additional options for raster formats */}
         {(format === 'png' || format === 'pdf') && (
           <>
-            {/* Background color selection for PNG and PDF */}
+            {/* Allow background color customization for raster exports */}
             <Form.Item
               label="Background Color"
               extra="Set background color for the exported image"
@@ -128,7 +126,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
               </Space>
             </Form.Item>
 
-            {/* Scale/quality input for PNG format */}
+            {/* Provide scale/quality control for PNG format */}
             {format === 'png' && (
               <Form.Item
                 label="Quality (Scale)"
@@ -146,7 +144,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </>
         )}
 
-        {/* Informative alert with format-specific details */}
+        {/* Display informative alert about selected export format */}
         <Alert
           message="Export Information"
           description={

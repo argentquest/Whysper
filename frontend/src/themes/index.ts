@@ -3,6 +3,6 @@
  * 
  * Theme-related configuration and utilities for the application.
  */
-export { ThemeProvider } from './ThemeProvider'; // Export the theme context provider for wrapping components
-export { useTheme } from './useTheme'; // Export custom hook for accessing theme state and methods
-export { themes, getThemeConfig, getThemeList, type ThemeKey, type ThemeMode } from './antd-themes'; // Export theme-related types and utility functions for theme management
+export { ThemeProvider } from './ThemeProvider'; // Exports theme context provider to manage global theme state across application
+export { useTheme } from './useTheme'; // Exports custom hook for easily accessing and manipulating theme settings in components
+export { themes, getThemeConfig, getThemeList, type ThemeKey, type ThemeMode } from './antd-themes'; // Exports core theme utilities and type definitions for theme management and switching

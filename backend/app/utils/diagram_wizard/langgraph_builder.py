@@ -20,12 +20,8 @@ from .nodes import (
 
 
 def route_to_diagram_type_determination(state: GraphState) -> str:
-    """
-    Route from clarification node based on llm_ready flag.
-
-    If llm_ready is True, proceed to determine diagram type.
-    If False, end and wait for user response.
-    """
+    # Determine routing based on LLM readiness
+    # If LLM is ready, proceed to code generation, otherwise wait for user
     if state.get("llm_ready", False):
         return "generate_code"
     else:
@@ -33,12 +29,8 @@ def route_to_diagram_type_determination(state: GraphState) -> str:
 
 
 def route_validation(state: GraphState) -> str:
-    """
-    Route from validation node based on is_valid flag.
-
-    If valid, proceed to rendering.
-    If invalid, proceed to refinement.
-    """
+    # Validate generated code and route to next step
+    # If code is valid, render diagram; if invalid, refine code
     if state.get("is_valid", False):
         return "render_diagram"
     else:
@@ -46,13 +38,12 @@ def route_validation(state: GraphState) -> str:
 
 
 def build_diagram_factory_graph(service) -> StateGraph:
-    """
-    Build and compile the diagram factory LangGraph state machine.
-    """
-    # Create state graph
+    # Initialize state graph for diagram generation workflow
+    # Creates a structured workflow with multiple nodes and conditional routing
     workflow = StateGraph(GraphState)
 
-    # Add nodes
+    # Add nodes representing different stages of diagram generation
+    # Each node is a specific function with a clear responsibility
     workflow.add_node("analyze_request", partial(analyze_request, service=service))
     workflow.add_node("clarify_prompt", clarify_prompt)
     workflow.add_node("generate_json_representation", generate_json_representation)
@@ -62,27 +53,26 @@ def build_diagram_factory_graph(service) -> StateGraph:
     workflow.add_node("refine_code", refine_code)
     workflow.add_node("render_diagram", render_diagram)
 
-    # Set entry point
+    # Set the initial entry point for the workflow
     workflow.set_entry_point("analyze_request")
 
-    # Add edges
+    # Define deterministic edges between nodes
+    # These represent guaranteed transitions in the workflow
     workflow.add_edge("determine_diagram_type", "generate_code")
     workflow.add_edge("generate_code", "validate_code")
     workflow.add_edge("refine_code", "validate_code")
     workflow.add_edge("render_diagram", END)
 
-    # Add conditional edges
-    # ANALYZE always routes to CLARIFY (which is the first clarification turn)
+    # Add conditional routing between nodes
+    # Uses custom routing functions to dynamically determine next steps
     workflow.add_edge("analyze_request", "clarify_prompt")
 
-    # CLARIFY routes to JSON_GENERATION when ready (llm_ready=True), or END if waiting for user
     workflow.add_conditional_edges(
         "clarify_prompt",
         route_to_diagram_type_determination,
         {"generate_code": "generate_json_representation", END: END},
     )
 
-    # JSON_GENERATION always routes to DETERMINE_DIAGRAM_TYPE
     workflow.add_edge("generate_json_representation", "determine_diagram_type")
 
     workflow.add_conditional_edges(
@@ -91,20 +81,17 @@ def build_diagram_factory_graph(service) -> StateGraph:
         {"render_diagram": "render_diagram", "refine_code": "refine_code"},
     )
 
-    # Compile and return
+    # Compile the workflow into an executable graph
     return workflow.compile()
 
 
-# Lazy load compiled graph
+# Use lazy loading to cache compiled graph and avoid repeated compilation
 _compiled_graph = None
 
 
 def get_diagram_factory_graph(service):
-    """
-    Get or create the compiled diagram factory graph.
-
-    Uses lazy loading to avoid recompiling on every import.
-    """
+    # Retrieve or create compiled graph, implementing singleton-like behavior
+    # Ensures graph is only compiled once and reused across calls
     global _compiled_graph
     if _compiled_graph is None:
         _compiled_graph = build_diagram_factory_graph(service)

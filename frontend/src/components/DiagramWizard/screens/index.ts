@@ -4,14 +4,14 @@
  * Exports all three screen components for the DiagramWizard
  */
 
-// Exports the ModelSelectionScreen component and ModelId type
-// Allows other parts of the application to import and use these specific screen and type
+// Export ModelSelectionScreen to make the model selection component reusable
+// Provides access to screen for selecting model configurations
 export { ModelSelectionScreen, type ModelId } from './ModelSelectionScreen';
 
-// Exports the SystemDescriptionScreen component
-// Enables importing this screen component in other modules
+// Export SystemDescriptionScreen to enable dynamic importing of system description stage
+// Allows flexible wizard navigation and component rendering
 export { SystemDescriptionScreen } from './SystemDescriptionScreen';
 
-// Exports the GenerationScreen component
-// Provides access to this screen for other parts of the application
+// Export GenerationScreen to complete the wizard's component export set
+// Provides final screen for displaying generation results and outputs
 export { GenerationScreen } from './GenerationScreen';

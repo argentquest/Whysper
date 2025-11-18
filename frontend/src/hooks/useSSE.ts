@@ -1,8 +1,7 @@
-Here's the code with inline comments explaining the logic:
-
+```typescript
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Define the structure of a Server-Sent Event message with generic type support
+// Define the structure for Server-Sent Event messages with generic type support
 export interface SSEMessage<T = any> {
   id: string;
   type: string;
@@ -11,7 +10,7 @@ export interface SSEMessage<T = any> {
   isRead: boolean;
 }
 
-// Define configuration options for the SSE hook
+// Configure options for the SSE hook with flexible connection management
 export interface UseSSEOptions<T = any> {
   url: string;
   enabled?: boolean;
@@ -22,10 +21,10 @@ export interface UseSSEOptions<T = any> {
   maxReconnectAttempts?: number;
   reconnectInterval?: number;
   keepAliveTimeout?: number;
-  autoClose?: boolean; // Auto-close on completed/error status
+  autoClose?: boolean; // Automatically close connection on terminal states
 }
 
-// Define the return type for the SSE hook
+// Define return type with methods for managing SSE connection
 export interface UseSSEReturn<T = any> {
   messages: SSEMessage<T>[];
   isConnected: boolean;
@@ -49,32 +48,32 @@ export function useSSE<T = any>({
   keepAliveTimeout = 30000,
   autoClose = true,
 }: UseSSEOptions<T>): UseSSEReturn<T> {
-  // Initialize state variables for connection status, messages, and errors
+  // Create state variables to track connection status, messages, and errors
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<SSEMessage<T>[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
-  // Create refs to manage EventSource, reconnection, and keep-alive timers
+  // Use refs to manage connection lifecycle and prevent memory leaks
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Disconnect method to close the connection and clean up timers
+  // Disconnect method to cleanly close the server connection
   const disconnect = useCallback(() => {
-    // Close existing EventSource if it exists
+    // Close existing EventSource and clear all timers
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
 
-    // Clear reconnection timeout
+    // Clear reconnection and keep-alive timers to prevent memory leaks
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
 
-    // Clear keep-alive timer
+    // Reset connection status and trigger disconnect callback
     if (keepAliveTimerRef.current) {
       clearTimeout(keepAliveTimerRef.current);
       keepAliveTimerRef.current = null;
@@ -85,7 +84,7 @@ export function useSSE<T = any>({
     onDisconnect?.();
   }, [onDisconnect]);
 
-  // Clear the keep-alive timer
+  // Clear keep-alive timer to prevent stale connections
   const clearKeepAliveTimer = useCallback(() => {
     if (keepAliveTimerRef.current) {
       clearTimeout(keepAliveTimerRef.current);
@@ -93,7 +92,7 @@ export function useSSE<T = any>({
     }
   }, []);
 
-  // Reset keep-alive timer with a timeout to detect connection staleness
+  // Reset keep-alive timer to detect connection staleness
   const resetKeepAliveTimer = useCallback(() => {
     clearKeepAliveTimer();
     keepAliveTimerRef.current = setTimeout(() => {
@@ -102,15 +101,15 @@ export function useSSE<T = any>({
     }, keepAliveTimeout);
   }, [keepAliveTimeout, clearKeepAliveTimer, disconnect]);
 
-  // Connect method to establish Server-Sent Events connection
+  // Establish Server-Sent Events connection with robust error handling
   const connect = useCallback(() => {
-    // Skip connection if not enabled or no URL provided
+    // Prevent connection if not enabled or missing URL
     if (!enabled || !url) {
       console.log('[useSSE] Connection skipped - enabled:', enabled, 'url:', url);
       return;
     }
 
-    // Close any existing connection
+    // Close any existing connection before creating new one
     disconnect();
 
     try {
@@ -118,7 +117,7 @@ export function useSSE<T = any>({
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
 
-      // Handle successful connection
+      // Handle successful connection establishment
       eventSource.addEventListener('open', () => {
         console.log('[useSSE] SSE connection opened');
         setIsConnected(true);
@@ -128,20 +127,20 @@ export function useSSE<T = any>({
         onConnect?.();
       });
 
-      // Handle incoming messages
+      // Process incoming messages from server
       eventSource.addEventListener('message', (event) => {
         resetKeepAliveTimer();
 
         try {
           const data = JSON.parse(event.data);
 
-          // Ignore keep-alive messages
+          // Skip keep-alive messages to reduce noise
           if (data.type === 'keep-alive' || data.type === 'ping') {
             console.log('[useSSE] Keep-alive received');
             return;
           }
 
-          // Create standardized message object
+          // Create standardized message object for consistent handling
           const message: SSEMessage<T> = {
             id: data.id || `msg-${Date.now()}-${Math.random()}`,
             type: data.type || data.status || 'message',
@@ -150,16 +149,16 @@ export function useSSE<T = any>({
             isRead: false,
           };
 
-          // Add message to state and call onMessage callback
+          // Update messages state and trigger onMessage callback
           setMessages((prev) => [...prev, message]);
           onMessage?.(message);
 
-          // Log waiting status for debugging
+          // Log server waiting status for debugging
           if (data.status === 'waiting') {
             console.log('[useSSE] Server is waiting for LLM response:', data.message);
           }
 
-          // Auto-close connection on terminal states if enabled
+          // Automatically close connection on terminal states if enabled
           if (autoClose && (data.status === 'completed' || data.status === 'error')) {
             console.log('[useSSE] Terminal status received, closing connection');
             setTimeout(() => {
@@ -171,7 +170,7 @@ export function useSSE<T = any>({
         }
       });
 
-      // Handle connection errors with reconnection strategy
+      // Handle connection errors with intelligent reconnection strategy
       eventSource.addEventListener('error', (event) => {
         const es = event.target as EventSource;
         console.error('[useSSE] SSE error occurred, readyState:', es.readyState);
@@ -184,7 +183,7 @@ export function useSSE<T = any>({
           setError(err);
           onError?.(err);
 
-          // Attempt reconnection with exponential backoff
+          // Implement exponential backoff for reconnection attempts
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const delay = reconnectInterval * Math.pow(2, reconnectAttempts.current - 1);
@@ -224,7 +223,7 @@ export function useSSE<T = any>({
     autoClose,
   ]);
 
-  // Automatically connect on mount and when dependencies change
+  // Manage connection lifecycle with automatic connection and cleanup
   useEffect(() => {
     if (enabled && url) {
       connect();
@@ -235,7 +234,7 @@ export function useSSE<T = any>({
     };
   }, [url, enabled, connect, disconnect]);
 
-  // Methods to manage messages
+  // Utility methods for managing messages
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, []);
@@ -250,7 +249,7 @@ export function useSSE<T = any>({
     setMessages((prev) => prev.map((msg) => ({ ...msg, isRead: true })));
   }, []);
 
-  // Return hook API with messages, connection status, and utility methods
+  // Expose hook API with messages, connection status, and utility methods
   return {
     messages,
     isConnected,

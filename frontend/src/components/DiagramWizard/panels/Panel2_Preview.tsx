@@ -1,5 +1,6 @@
-Here's the TypeScript code with inline comments explaining the logic:
+Here's the TypeScript code with added inline comments:
 
+```typescript
 /**
  * Panel2_Preview Component
  *
@@ -34,7 +35,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   diagramType,
   isLoading,
 }) => {
-  // State management for zoom, position, and dragging
+  // State management for zoom, position, and dragging interactions
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -42,29 +43,29 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   const [renderError, _setRenderError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Zoom in function with max limit of 3x
+  // Zoom in function with controlled maximum scale limit
   const handleZoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 0.1, 3));
   }, []);
 
-  // Zoom out function with min limit of 0.5x
+  // Zoom out function with controlled minimum scale limit
   const handleZoomOut = useCallback(() => {
     setScale((prev) => Math.max(prev - 0.1, 0.5));
   }, []);
 
-  // Reset zoom and position to default
+  // Reset zoom and position to default state
   const handleReset = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
   }, []);
 
-  // Handle mouse wheel zooming with Ctrl key
+  // Handle mouse wheel zooming with Ctrl key modifier
   const handleWheel = useCallback((e: React.WheelEvent) => {
     // Prevent default scrolling and allow zoom with Ctrl key
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      // Constrain zoom between 0.5x and 3x
+      // Constrain zoom between predefined min and max values
       setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
     }
   }, []);
@@ -92,7 +93,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       }
     };
 
-    // Add and remove event listener
+    // Add and remove event listener for keyboard interactions
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [svgOutput, handleZoomIn, handleZoomOut, handleReset]);
@@ -108,7 +109,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
     }
   }, [svgOutput, scale, position]);
 
-  // Update position while dragging
+  // Update position while mouse is moving during drag
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
       // Update position based on mouse movement
@@ -129,7 +130,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
     setIsDragging(false);
   }, []);
 
-  // Render the preview content
+  // Render the preview content with various states
   const renderPreview = () => {
     // Show empty state if no SVG is generated
     if (!svgOutput) {
@@ -149,7 +150,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       );
     }
 
-    // Render SVG with zoom and pan capabilities
+    // Render SVG with interactive zoom and pan capabilities
     return (
       <div
         ref={containerRef}
@@ -159,7 +160,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         style={{
-          // Styling for container with dynamic cursor and overflow
+          // Styling for container with dynamic cursor and overflow handling
           overflow: 'auto',
           display: 'flex',
           alignItems: 'center',
@@ -171,7 +172,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       >
         <div
           style={{
-            // Apply zoom and pan transformations
+            // Apply zoom and pan transformations dynamically
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: 'center',
             transition: isDragging ? 'none' : 'transform 0.2s ease',

@@ -1,16 +1,3 @@
-/**
- * useKeyboardNavigation Hook
- *
- * Provides keyboard navigation support for the application.
- * Implements WCAG 2.1 AA keyboard accessibility requirements.
- *
- * Features:
- * - Tab navigation
- * - Escape key handling
- * - Arrow key navigation
- * - Enter/Space activation
- */
-
 import { useEffect, useCallback } from 'react';
 
 export interface KeyboardNavigationOptions {
@@ -24,7 +11,7 @@ export interface KeyboardNavigationOptions {
 }
 
 export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
-  // Destructure options with default enabled state
+  // Destructure options with default settings to simplify configuration
   const {
     onEscape,
     onEnter,
@@ -35,16 +22,16 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
     enabled = true,
   } = options;
 
-  // Create a memoized key handler to prevent unnecessary re-renders
+  // Create a memoized key handler to optimize performance and prevent unnecessary re-renders
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Exit if keyboard navigation is disabled
+      // Immediately exit if keyboard navigation is globally disabled
       if (!enabled) return;
 
-      // Switch statement to handle different keyboard events
+      // Switch statement provides clean, centralized key event handling
       switch (event.key) {
         case 'Escape':
-          // Prevent default and call Escape handler if provided
+          // Prevent default browser behavior and call custom escape handler
           if (onEscape) {
             event.preventDefault();
             onEscape();
@@ -52,7 +39,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
 
         case 'Enter':
-          // Prevent default and call Enter handler if provided
+          // Prevent default and call enter handler if configured
           if (onEnter) {
             event.preventDefault();
             onEnter();
@@ -60,7 +47,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
 
         case 'ArrowUp':
-          // Prevent default and call ArrowUp handler if provided
+          // Prevent default browser scroll and call up navigation handler
           if (onArrowUp) {
             event.preventDefault();
             onArrowUp();
@@ -68,7 +55,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
 
         case 'ArrowDown':
-          // Prevent default and call ArrowDown handler if provided
+          // Prevent default browser scroll and call down navigation handler
           if (onArrowDown) {
             event.preventDefault();
             onArrowDown();
@@ -76,7 +63,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
 
         case 'ArrowLeft':
-          // Prevent default and call ArrowLeft handler if provided
+          // Prevent default browser scroll and call left navigation handler
           if (onArrowLeft) {
             event.preventDefault();
             onArrowLeft();
@@ -84,7 +71,7 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
           break;
 
         case 'ArrowRight':
-          // Prevent default and call ArrowRight handler if provided
+          // Prevent default browser scroll and call right navigation handler
           if (onArrowRight) {
             event.preventDefault();
             onArrowRight();
@@ -98,70 +85,64 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
     [enabled, onEscape, onEnter, onArrowUp, onArrowDown, onArrowLeft, onArrowRight]
   );
 
-  // Add and remove global keydown event listener based on enabled state
+  // Use effect to add/remove global keyboard event listener based on enabled state
   useEffect(() => {
-    // Exit if keyboard navigation is disabled
+    // Skip event listener if navigation is disabled
     if (!enabled) return;
 
-    // Add global keydown listener
+    // Attach global keydown listener for entire application
     window.addEventListener('keydown', handleKeyDown);
-    // Clean up listener on unmount or state change
+    // Clean up listener to prevent memory leaks
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [enabled, handleKeyDown]);
 }
 
-/**
- * Focus management utilities
- */
+// Utility functions for managing focus in complex UI interactions
 export const focusUtils = {
-  /**
-   * Focus the first focusable element in a container
-   */
+  // Find and focus the first interactive element in a given container
   focusFirst: (container: HTMLElement | null) => {
-    // Exit if no container provided
+    // Validate container exists before proceeding
     if (!container) return;
 
-    // Select all focusable elements
+    // Select wide range of focusable elements using CSS selectors
     const focusable = container.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
 
-    // Focus the first focusable element if available
+    // Focus first element if any are found
     if (focusable.length > 0) {
       focusable[0].focus();
     }
   },
 
-  /**
-   * Trap focus within a container (for modals, dialogs)
-   */
+  // Create circular focus navigation within a specific container
   trapFocus: (container: HTMLElement, event: KeyboardEvent) => {
-    // Only handle Tab key events
+    // Only process Tab key events for focus trapping
     if (event.key !== 'Tab') return;
 
-    // Select all focusable and non-disabled elements
+    // Find all focusable and non-disabled elements in container
     const focusable = Array.from(
       container.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
       )
     );
 
-    // Exit if no focusable elements
+    // Exit if no focusable elements are present
     if (focusable.length === 0) return;
 
-    // Get first and last focusable elements
+    // Identify first and last focusable elements for circular navigation
     const firstFocusable = focusable[0];
     const lastFocusable = focusable[focusable.length - 1];
 
-    // Handle circular focus navigation
+    // Implement circular focus navigation with Shift+Tab and Tab
     if (event.shiftKey) {
-      // Shift + Tab: if on first element, wrap to last
+      // Wrap focus to last element when Shift+Tabbing from first element
       if (document.activeElement === firstFocusable) {
         event.preventDefault();
         lastFocusable.focus();
       }
     } else {
-      // Tab: if on last element, wrap to first
+      // Wrap focus to first element when Tabbing from last element
       if (document.activeElement === lastFocusable) {
         event.preventDefault();
         firstFocusable.focus();
@@ -169,11 +150,9 @@ export const focusUtils = {
     }
   },
 
-  /**
-   * Restore focus to previous element
-   */
+  // Safely restore focus to a previously stored element
   restoreFocus: (element: HTMLElement | null) => {
-    // Restore focus only if element exists in document
+    // Ensure element exists and is still in the document before focusing
     if (element && document.body.contains(element)) {
       element.focus();
     }

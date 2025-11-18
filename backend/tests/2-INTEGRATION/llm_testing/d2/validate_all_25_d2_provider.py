@@ -1,3 +1,4 @@
+```python
 """
 Validate all 25 D2 tests using the Provider System (d2v1 provider)
 
@@ -18,64 +19,59 @@ import os
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
+# Add parent directory to path for imports to support module resolution
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from provider_test_helper import DiagramTestRunner
 
 
 def load_test_cases(test_file: str = "test25.json") -> list:
-    """
-    Load test cases from test25.json file.
-
-    Args:
-        test_file: Path to test file
-
-    Returns:
-        List of test case dictionaries
-    """
+    # Determine the full path to the test file
     script_dir = Path(__file__).parent
     test_path = script_dir / test_file
 
+    # Check if test file exists before attempting to load
     if not test_path.exists():
         print(f"Error: Test file not found: {test_path}")
         return []
 
     try:
+        # Open and parse JSON test file with UTF-8 encoding
         with open(test_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        # Handle both dict and list formats
+        # Handle different JSON structures (dict or list)
         if isinstance(data, dict):
-            # D2 tests use d2_capability_tests key
+            # Use specific key for D2 tests if data is a dictionary
             tests = data.get('d2_capability_tests', [])
         else:
             tests = data
 
-        # Convert test data to expected format
+        # Normalize test cases with consistent structure
         test_cases = []
         for i, test in enumerate(tests[:25], 1):
             test_cases.append({
-                'id': test.get('id', i),
-                'description': test.get('description', f'Test {i}'),
-                'code': test.get('code', ''),
-                'name': test.get('name', f'Test {i}')
+                'id': test.get('id', i),  # Use index as fallback ID
+                'description': test.get('description', f'Test {i}'),  # Default description
+                'code': test.get('code', ''),  # Ensure code exists
+                'name': test.get('name', f'Test {i}')  # Default name
             })
 
         return test_cases
 
     except json.JSONDecodeError as e:
+        # Catch and report JSON parsing errors
         print(f"Error parsing test file: {e}")
         return []
 
 
 def main():
-    """Main test runner"""
+    # Print header to indicate start of test suite
     print("\n" + "=" * 80)
     print("D2 Provider Tests - Using d2v1 provider from provider system")
     print("=" * 80)
 
-    # Load test cases
+    # Load test cases from JSON file
     test_cases = load_test_cases()
     if not test_cases:
         print("No test cases found. Exiting.")
@@ -83,20 +79,20 @@ def main():
 
     print(f"Loaded {len(test_cases)} test cases\n")
 
-    # Create test runner for d2v1 provider
+    # Initialize test runner with specific provider configuration
     runner = DiagramTestRunner(
-        provider_id="d2v1",
-        diagram_type="d2",
-        test_output_dir="test_results_25"
+        provider_id="d2v1",  # Specify D2 v1 provider
+        diagram_type="d2",   # Set diagram type
+        test_output_dir="test_results_25"  # Directory for test results
     )
 
-    # Run all tests
+    # Execute all test cases and collect summary
     summary = runner.run_tests(
         test_cases=test_cases,
         test_name="LLM D2 Tests (d2v1 Provider)"
     )
 
-    # Print detailed summary
+    # Print detailed test execution summary
     print("\n" + "=" * 80)
     print("TEST SUMMARY")
     print("=" * 80)
@@ -112,5 +108,9 @@ def main():
 
 
 if __name__ == "__main__":
+    # Run main test suite and exit with appropriate status code
     success_rate = main()
     sys.exit(0 if success_rate >= 80 else 1)
+```
+
+The comments explain the logic for key sections, including file loading, test case normalization, test runner configuration, and result reporting.

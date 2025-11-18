@@ -1,3 +1,4 @@
+```python
 """
 Diagram Provider System
 
@@ -11,6 +12,7 @@ New modular architecture for diagram rendering with:
 This runs in parallel with existing mermaid/d2 services.
 """
 
+# Import critical models defining the core data structures and types for diagram providers
 from .models import (
     ProviderCapability,
     ValidationResult,
@@ -20,6 +22,7 @@ from .models import (
     CorrectionAttempt
 )
 
+# Import configuration management modules for loading and managing provider settings
 from .provider_config import (
     ProviderConfig,
     RootConfig,
@@ -28,10 +31,12 @@ from .provider_config import (
     get_config_loader
 )
 
+# Import base abstract class for defining common diagram provider interface
 from .base_diagram import BaseDiagramProvider
 
+# Explicitly define the public API for this module, controlling what can be imported
 __all__ = [
-    # Models
+    # Models exposed for external use
     'ProviderCapability',
     'ValidationResult',
     'RenderResult',
@@ -39,15 +44,23 @@ __all__ = [
     'CorrectionAttemptType',
     'CorrectionAttempt',
 
-    # Config
+    # Configuration classes and utility functions
     'ProviderConfig',
     'RootConfig',
     'CorrectionStrategy',
     'load_provider_config',
     'get_config_loader',
 
-    # Base
+    # Base provider class for inheritance
     'BaseDiagramProvider',
 ]
 
+# Semantic versioning for the module, allowing version tracking and compatibility checks
 __version__ = "1.0.0"
+```
+
+The comments explain:
+- The purpose of each import section
+- The role of `__all__` in controlling module exports
+- The significance of the version number
+- High-level context for each code block

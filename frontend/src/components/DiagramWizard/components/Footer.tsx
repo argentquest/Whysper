@@ -1,15 +1,4 @@
-Here's the code with added inline comments explaining the logic:
-
-/**
- * Footer Component
- *
- * Displays status information at the bottom of the DiagramWizard:
- * - Current session status
- * - SSE connection state
- * - Recent messages/notifications
- * - Usage statistics
- */
-
+```typescript
 import React from 'react';
 import { Space, Badge, Tooltip, Typography } from 'antd';
 import {
@@ -23,11 +12,7 @@ import {
 
 const { Text } = Typography;
 
-/**
- * FooterProps type definition
- * 
- * Describes the structure and properties of FooterProps
- */
+// Define the structure of props for the Footer component
 interface FooterProps {
   sessionId?: string | null;
   sseConnected: boolean;
@@ -37,9 +22,6 @@ interface FooterProps {
   lastMessage?: string;
 }
 
-/**
- * Footer component
- */
 const Footer: React.FC<FooterProps> = ({
   sessionId,
   sseConnected,

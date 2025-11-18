@@ -1,5 +1,3 @@
-Here's the code with added inline comments explaining the logic:
-
 // Base configuration for API endpoint, using environment variable or localhost fallback
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
 

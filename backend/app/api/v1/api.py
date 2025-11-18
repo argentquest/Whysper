@@ -29,91 +29,88 @@ from mvp_diagram_generator import (
     rendering_api as diagram_generator_api
 )
 
-# Main API router for the application
-# This router includes all other routers for different functionalities
+# Create the main API router to aggregate all endpoint routers
+# Serves as a centralized routing mechanism for the entire application
 api_router = APIRouter()
 
 # =============================================================================
 # Whysper Core API Endpoints
+# Systematically include routers for different functional domains
+# Each router is added with a specific prefix and tagged for documentation
 # =============================================================================
 
-# Include routers from the different endpoint modules
-# These are organized by their functionality (chat, code, files, etc.)
-
-# Chat-related endpoints
+# Include chat-related endpoints with '/chat' prefix for conversational features
 api_router.include_router(
     chat.router,
     prefix="/chat",
     tags=["chat"]
 )
 
-# Code-related endpoints (e.g., code extraction)
+# Include code-related endpoints for code processing and analysis
 api_router.include_router(
     code.router,
     prefix="/code",
     tags=["code"]
 )
 
-# File system endpoints
+# Include file system endpoints for file management operations
 api_router.include_router(
     files.router,
     prefix="/files",
     tags=["files"]
 )
 
-# Application settings endpoints
+# Include application settings endpoints for user configuration
 api_router.include_router(
     settings.router,
     prefix="/settings",
     tags=["settings"]
 )
 
-# System-level endpoints (e.g., health checks)
+# Include system-level endpoints for health checks and system information
 api_router.include_router(
     system.router,
     prefix="/system",
     tags=["system"]
 )
 
-# ==================== Diagram Wizard Endpoints ====================
+# Include diagram wizard endpoints for creating and managing diagrams
 api_router.include_router(
     diagram_wizard.router,
     prefix="/diagram",
     tags=["diagram-wizard"],
 )
 
-# ==================== Diagram Event Logging Endpoints ====================
-# Simple event logging for diagram operations (debugging and analytics)
+# Include diagram event logging endpoints for tracking diagram-related activities
 api_router.include_router(
     diagram_events.router,
     prefix="/diagrams",
     tags=["diagrams", "logging"],
 )
 
-# ==================== NEW: Unified Diagram Provider Endpoints ====================
-# Modern provider-based diagram system (Mermaid, D2, PlantUML, etc.)
-# Available at: /api/v1/diagrams/v2/* (render, validate, providers)
+# Include modern diagram provider endpoints with versioned prefix
+# Supports multiple diagram rendering providers and formats
 api_router.include_router(
     diagram_provider.router,
     prefix="/diagrams/v2",  # v2 to avoid conflict with existing
     tags=["diagrams-v2", "providers"],
 )
 
-# ==================== MVP Diagram Generator Endpoints ====================
+# Include MVP diagram generator endpoints for basic diagram generation
 api_router.include_router(
     diagram_generator_api.router,
     prefix="/diagrams",
     tags=["diagrams"],
 )
 
-# ==================== Documentation Generator Endpoints ====================
+# Include documentation generation endpoints
 api_router.include_router(
     documentation.router,
     prefix="/documentation",
     tags=["documentation"],
 )
 
-# ==================== Auth Endpoints ====================
+# Include authentication endpoints for user management
 api_router.include_router(
     auth.router,
     prefix="/auth",

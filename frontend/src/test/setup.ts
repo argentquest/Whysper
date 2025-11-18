@@ -7,12 +7,12 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
-// Cleanup React testing library after each test to prevent side effects
+// Cleanup React testing library after each test to prevent state leakage between tests
 afterEach(() => {
   cleanup();
 });
 
-// Mock window.matchMedia to simulate media query behavior in tests
+// Mock window.matchMedia to simulate media query behavior in tests without a real browser environment
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
@@ -27,7 +27,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock IntersectionObserver to simulate browser intersection detection without actual DOM
+// Create a mock IntersectionObserver to simulate browser intersection detection without actual DOM rendering
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
@@ -38,7 +38,7 @@ global.IntersectionObserver = class IntersectionObserver {
   unobserve() {}
 } as any;
 
-// Mock ResizeObserver to simulate browser resize detection without actual DOM
+// Create a mock ResizeObserver to simulate browser resize detection without actual DOM rendering
 global.ResizeObserver = class ResizeObserver {
   constructor() {}
   disconnect() {}
@@ -46,7 +46,7 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
 } as any;
 
-// Create a mock localStorage implementation for testing storage interactions
+// Create a mock localStorage implementation to simulate browser storage interactions during testing
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
 
@@ -68,17 +68,17 @@ const localStorageMock = (() => {
   };
 })();
 
-// Replace browser's localStorage with mock implementation
+// Replace browser's localStorage with mock implementation for consistent testing
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
-// Add scrollIntoView mock if not natively supported to prevent errors in tests
+// Add scrollIntoView mock if not natively supported to prevent test errors when scrolling is called
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = vi.fn();
 }
 
-// Mock EventSource for simulating Server-Sent Events (SSE) in tests
+// Mock EventSource to simulate Server-Sent Events (SSE) interactions during testing
 global.EventSource = class EventSource {
   url: string;
   onopen: ((this: EventSource, ev: Event) => any) | null = null;
@@ -98,5 +98,5 @@ global.EventSource = class EventSource {
   }
 } as any;
 
-// Optional: Suppress console errors during testing to reduce noise
+// Optional: Suppress console errors during testing to reduce noise in test output
 // vi.spyOn(console, 'error').mockImplementation(() => {});

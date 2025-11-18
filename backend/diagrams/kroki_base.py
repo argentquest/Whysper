@@ -1,3 +1,6 @@
+Here's the Python code with added inline comments explaining the logic:
+
+```python
 """
 Kroki Base Provider - Common functionality for all Kroki-based diagram providers
 
@@ -32,36 +35,23 @@ logger = logging.getLogger(__name__)
 class KrokiBaseProvider(BaseDiagramProvider):
     """
     Base class for all Kroki-based diagram providers.
-
-    Subclasses should override:
-    - provider_id: Unique identifier (e.g., 'krokid2')
-    - provider_name: Human-readable name (e.g., 'Kroki D2 Renderer')
-    - diagram_type: Primary diagram type (e.g., 'd2')
-    - diagram_endpoint: Kroki API endpoint (e.g., 'd2', 'mermaid')
-    - get_llm_correction_rules(): Language-specific rules
-
-    Configuration (from config.json custom settings):
-    - server_url: Kroki server URL (default: http://localhost:8000)
-    - diagram_endpoint: API endpoint for diagram type
-    - timeout_seconds: Request timeout (default: 30)
-    - max_retries: Max retries for failed requests (default: 3)
     """
 
     @property
     def diagram_endpoint(self) -> str:
-        """Kroki API endpoint for this diagram type (e.g., 'd2', 'mermaid')"""
+        # Enforce that subclasses must define their specific Kroki API endpoint
         raise NotImplementedError(
             "Subclasses must define diagram_endpoint property"
         )
 
     @property
     def supported_output_formats(self) -> List[str]:
-        """Output formats: SVG (fast, vector) and PNG (rasterized)"""
+        # Define standard output formats that support vector and raster graphics
         return ["svg", "png"]
 
     @property
     def capabilities(self) -> List[ProviderCapability]:
-        """All Kroki providers support: validation, rendering, auto-fix, LLM correction"""
+        # Define universal capabilities for all Kroki providers
         return [
             ProviderCapability.VALIDATE,
             ProviderCapability.RENDER_SVG,
@@ -72,15 +62,10 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
     @log_method_call
     def __init__(self, provider_folder: Path):
-        """
-        Initialize Kroki base provider.
-
-        Args:
-            provider_folder: Path to provider folder containing config.json
-        """
+        # Initialize base provider and configure Kroki server settings
         super().__init__(provider_folder)
 
-        # Get server configuration from config.json custom settings
+        # Extract custom server configuration with sensible defaults
         custom_settings = self.config.custom or {}
         self.server_url = custom_settings.get(
             "server_url", "http://localhost:8000"
@@ -88,7 +73,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
         self.timeout = custom_settings.get("timeout_seconds", 30)
         self.max_retries = custom_settings.get("max_retries", 3)
 
-        # Cache server availability
+        # Cache server availability to reduce unnecessary network calls
         self._server_available = None
 
         self.logger.info(
@@ -98,14 +83,16 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
     @log_method_call
     def is_available(self) -> bool:
-        """Check if Kroki server is available"""
+        # Check and cache Kroki server availability via health endpoint
         if self._server_available is None:
             try:
+                # Perform quick health check
                 response = requests.get(
                     f"{self.server_url}/health",
                     timeout=5
                 )
 
+                # Set availability based on HTTP status
                 self._server_available = response.status_code == 200
                 if self._server_available:
                     self.logger.info(
@@ -117,6 +104,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                         f"{response.status_code}"
                     )
             except Exception as e:
+                # Handle network errors and mark server as unavailable
                 self.logger.warning(f"Kroki server not reachable: {e}")
                 self._server_available = False
 
@@ -124,16 +112,18 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
     @log_method_call
     def get_version(self) -> Optional[str]:
-        """Get Kroki service version"""
+        # Retrieve Kroki service version if available
         if not self.is_available():
             return None
 
         try:
+            # Request version from server
             response = requests.get(
                 f"{self.server_url}/version",
                 timeout=5
             )
 
+            # Return version or generic placeholder
             if response.status_code == 200:
                 return response.text.strip()
             return "Unknown"
@@ -142,12 +132,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
 
     @log_method_call
     def validate_code(self, code: str, **options) -> ValidationResult:
-        """
-        Validate diagram code using Kroki service.
-
-        This is the same across all Kroki providers - they all use
-        the same HTTP endpoint validation mechanism.
-        """
+        # Validate diagram code using Kroki service's API
         if not self.is_available():
             return ValidationResult(
                 is_valid=False,
@@ -160,8 +145,8 @@ class KrokiBaseProvider(BaseDiagramProvider):
         )
 
         try:
-            # Try to render to SVG for validation
-            # Kroki will return error in response if syntax is invalid
+            # Use SVG rendering as a validation mechanism
+            # Kroki returns errors if syntax is invalid
             response = requests.post(
                 f"{self.server_url}/{self.diagram_endpoint}/svg",
                 data=code,
@@ -175,7 +160,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     code_length=len(code)
                 )
             else:
-                # Extract error message from response
+                # Process and format error messages from Kroki
                 error_msg = response.text
                 if response.status_code == 400:
                     error_msg = (
@@ -198,6 +183,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 code_length=len(code)
             )
         except Exception as e:
+            # Capture and log unexpected validation errors
             error_msg = f"Validation exception: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return ValidationResult(
@@ -210,20 +196,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
     def auto_fix_pattern_based(
         self, code: str, error_message: str, **options
     ) -> ValidationResult:
-        """
-        Attempt pattern-based auto-fix for common syntax errors.
-
-        This implements general fixes that work across all Kroki diagram types.
-        Subclasses can override this to add diagram-specific fixes.
-
-        Args:
-            code: The invalid code
-            error_message: The error message from validation
-            **options: Provider-specific options
-
-        Returns:
-            ValidationResult with fixed code if successful
-        """
+        # Attempt generic pattern-based fixes for common syntax errors
         self.logger.info(
             f"Attempting pattern-based auto-fix for {self.diagram_type}..."
         )
@@ -231,7 +204,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
         fixed_code = code
         corrections = []
 
-        # General fix: Add missing braces for containers
+        # General fix: Balance missing container braces
         if '{' in fixed_code:
             open_count = fixed_code.count('{')
             close_count = fixed_code.count('}')
@@ -242,9 +215,10 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     f'Added {missing_braces} missing closing brace(s)'
                 )
 
-        # Validate fixed code
+        # Validate the fixed code
         validation_result = self.validate_code(fixed_code, **options)
 
+        # Attach auto-fix metadata if successful
         if validation_result.is_valid:
             validation_result.auto_fixed = True
             validation_result.fixed_code = fixed_code
@@ -262,12 +236,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
     def render(
         self, code: str, output_format: str = "svg", **options
     ) -> RenderResult:
-        """
-        Render diagram to specified format using Kroki.
-
-        This is the same across all Kroki providers - they all use
-        the same HTTP rendering mechanism.
-        """
+        # Render diagram using Kroki's HTTP API
         if not self.is_available():
             return RenderResult(
                 success=False,
@@ -282,7 +251,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 error="Kroki server not available"
             )
 
-        # Validate supported format
+        # Validate requested output format
         if output_format.lower() not in ["svg", "png"]:
             return RenderResult(
                 success=False,
@@ -302,7 +271,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
         )
 
         try:
-            # Render via Kroki API
+            # Perform diagram rendering via Kroki API
             response = requests.post(
                 f"{self.server_url}/{self.diagram_endpoint}/{output_format}",
                 data=code,
@@ -311,7 +280,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
             )
 
             if response.status_code == 200:
-                # SVG is text, PNG is binary
+                # Handle text (SVG) and binary (PNG) content differently
                 if output_format == 'svg':
                     content = response.text
                     output_size = len(content)
@@ -337,6 +306,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     }
                 )
             else:
+                # Handle rendering errors
                 error_msg = response.text
                 self.logger.error(f"Rendering failed: {error_msg[:200]}")
                 return RenderResult(
@@ -352,6 +322,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                     error=error_msg
                 )
         except requests.exceptions.Timeout:
+            # Handle timeout scenarios
             error_msg = (
                 f"Rendering request timed out after {self.timeout} seconds"
             )
@@ -369,6 +340,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 error=error_msg
             )
         except Exception as e:
+            # Capture and log unexpected rendering errors
             error_msg = f"Rendering exception: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
             return RenderResult(
@@ -383,3 +355,6 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 metadata={"server_url": self.server_url},
                 error=error_msg
             )
+```
+
+The comments explain the logic, purpose, and key mechanisms behind each method and block of code. They highlight the core functionalities like server availability checking, validation, auto-fixing, and rendering, while maintaining the original code's structure.

@@ -1,3 +1,4 @@
+```python
 """
 Diagram tool configuration and safe execution.
 
@@ -27,23 +28,24 @@ class DiagramTool(str, Enum):
 class DiagramToolConfig:
     """Configuration for diagram rendering tools."""
 
+    # Centralized configuration dictionary for different diagram tools
     CONFIGS: Dict[str, Dict[str, Any]] = {
         "D2": {
             "tool_name": "d2",
-            "validator_cmd": ["d2", "--check"],  # args format, not shell
-            "renderer_cmd": ["d2"],  # render to SVG
+            "validator_cmd": ["d2", "--check"],  # Command to check D2 tool validity
+            "renderer_cmd": ["d2"],  # Render to SVG
             "extension": ".d2",
         },
         "Mermaid": {
             "tool_name": "mmdc",
-            "validator_cmd": ["mmdc", "--validate"],
-            "renderer_cmd": ["mmdc", "-i", "{input}", "-o", "{output}"],
+            "validator_cmd": ["mmdc", "--validate"],  # Validate Mermaid file
+            "renderer_cmd": ["mmdc", "-i", "{input}", "-o", "{output}"],  # Render with input/output
             "extension": ".mmd",
         },
         "PlantUML": {
             "tool_name": "plantuml",
             "validator_cmd": None,  # PlantUML validates on render
-            "renderer_cmd": ["plantuml", "-tsvg"],
+            "renderer_cmd": ["plantuml", "-tsvg"],  # Render to SVG
             "extension": ".puml",
         },
     }
@@ -51,6 +53,7 @@ class DiagramToolConfig:
     @staticmethod
     def get_config(diagram_type: str) -> Dict[str, Any]:
         """Get configuration for a specific diagram type."""
+        # Validate and retrieve tool configuration
         if diagram_type not in DiagramToolConfig.CONFIGS:
             raise ValueError(f"Unknown diagram type: {diagram_type}")
         return DiagramToolConfig.CONFIGS[diagram_type]
@@ -59,6 +62,7 @@ class DiagramToolConfig:
 class DiagramToolRunner:
     """Safely executes diagram rendering tools."""
 
+    # Predefined timeout values for different tools
     TOOL_TIMEOUTS = {
         "d2": 30,
         "mmdc": 30,
@@ -69,36 +73,27 @@ class DiagramToolRunner:
     def is_tool_available(tool_name: str) -> bool:
         """
         Check if a tool is available in the system PATH.
-
-        Args:
-            tool_name: Tool name (d2, mmdc, plantuml)
-
-        Returns:
-            True if tool is available and executable
         """
         try:
+            # Attempt to run tool with version check
             result = subprocess.run(
                 [tool_name, "--version"],
                 capture_output=True,
-                timeout=5,
+                timeout=5,  # Short timeout for availability check
             )
-            return result.returncode == 0
+            return result.returncode == 0  # Success if return code is 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
-            return False
+            return False  # Tool not found or timeout occurred
 
     @staticmethod
     def validate_arguments(args: List[str]) -> bool:
         """
         Validate that arguments don't contain shell metacharacters.
-
-        Args:
-            args: List of command arguments
-
-        Returns:
-            True if all arguments are safe
         """
+        # List of forbidden characters to prevent shell injection
         forbidden_chars = ["$", "`", "|", ";", "&", ">", "<", "\n", "\r"]
         for arg in args:
+            # Check if any forbidden character is in the argument
             if any(char in arg for char in forbidden_chars):
                 return False
         return True
@@ -113,41 +108,33 @@ class DiagramToolRunner:
     ) -> Tuple[bool, str]:
         """
         Safely execute a diagram tool.
-
-        Args:
-            tool: Tool name (d2, mmdc, plantuml)
-            args: List of command arguments
-            input_file: Optional input file path
-            output_file: Optional output file path
-            timeout: Execution timeout in seconds
-
-        Returns:
-            Tuple of (success: bool, output: str)
         """
-        # Validate arguments
+        # Validate arguments to prevent shell injection
         if not DiagramToolRunner.validate_arguments(args):
             return False, "Invalid characters in arguments"
 
-        # Check tool is available
+        # Check if tool is available before execution
         if not DiagramToolRunner.is_tool_available(tool):
             return False, f"Tool not available: {tool}"
 
-        # Determine timeout
+        # Determine timeout, use default if not specified
         if timeout is None:
             timeout = DiagramToolRunner.TOOL_TIMEOUTS.get(tool, 30)
 
-        # Build command
+        # Build the full command
         command = [tool] + args
 
         try:
+            # Run subprocess with controlled environment
             result = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=tempfile.gettempdir(),
+                cwd=tempfile.gettempdir(),  # Run in temp directory
             )
 
+            # Check execution status
             if result.returncode == 0:
                 return True, result.stdout
             else:
@@ -163,3 +150,11 @@ class ToolValidationError(Exception):
     """Raised when tool validation fails."""
 
     pass
+```
+
+The comments explain:
+- The purpose of configuration dictionaries
+- Validation strategies
+- Timeout mechanisms
+- Shell injection prevention
+- Subprocess execution details

@@ -1,3 +1,4 @@
+```python
 """
 Validate all 25 Structurizr tests using the Kroki Structurizr Provider Endpoint
 """
@@ -10,8 +11,9 @@ from datetime import datetime
 from typing import Dict, List, Any, Tuple
 
 def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "structurizr", provider: str = "krokistructurizr") -> Tuple[bool, str, str]:
-    """Generate and render diagram using the MVP Diagram Generation Endpoint"""
+    # Send request to diagram generation API to create a Structurizr diagram
     try:
+        # Make POST request to generate diagram with specified parameters
         response = requests.post(
             "http://localhost:8003/api/v1/diagrams/generate",
             json={
@@ -23,18 +25,20 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "st
             timeout=120
         )
 
+        # Check if API request was unsuccessful
         if response.status_code != 200:
             return (False, f"API error: {response.status_code}", "HTTP Error")
 
+        # Parse JSON response
         data = response.json()
 
-        # Check if generation was successful
+        # Check for generation errors in the response
         error_info = data.get('error_info', {})
         if error_info.get('has_error', False):
             error = error_info.get('error_message', 'Unknown error')
             return (False, error, error)
 
-        # Get SVG content from response
+        # Extract image data from response
         image_data = data.get('image_data', '')
         if not image_data:
             return (False, "No image data in response", "Invalid response")
@@ -43,8 +47,10 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "st
             import base64
             import gzip
 
+            # Complex decoding logic to handle various SVG content formats
             if isinstance(image_data, str):
                 try:
+                    # Attempt to decode base64 and handle potential gzip compression
                     decoded_bytes = base64.b64decode(image_data)
                     if decoded_bytes[:2] == b'\x1f\x8b':
                         svg_content = gzip.decompress(decoded_bytes).decode('utf-8')
@@ -53,6 +59,7 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "st
                 except:
                     svg_content = image_data
             else:
+                # Handle byte content decoding
                 if isinstance(image_data, bytes):
                     if image_data[:2] == b'\x1f\x8b':
                         svg_content = gzip.decompress(image_data).decode('utf-8')
@@ -64,6 +71,7 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "st
                 else:
                     svg_content = str(image_data)
 
+            # Validate that the decoded content is an SVG
             if '<svg' not in svg_content:
                 return (False, "Generated content is not valid SVG", "Invalid SVG")
             return (True, svg_content, "")
@@ -71,11 +79,11 @@ def generate_diagram_with_llm(prompt: str, test_id: int, diagram_type: str = "st
             return (False, f"Failed to decode SVG: {str(decode_error)}", str(decode_error))
 
     except Exception as e:
+        # Catch and return any unexpected errors during diagram generation
         return (False, f"Generation error: {str(e)}", str(e))
 
 def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, provider: str) -> Dict[str, Any]:
-    """Process a single test case"""
-
+    # Initialize result dictionary to track test processing
     result = {
         "test_id": test_case["id"],
         "test_name": test_case["name"],
@@ -89,8 +97,10 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
 
     print(f"  Rendering diagram via provider endpoint...")
 
+    # Use test description as prompt for diagram generation
     prompt = test_case["description"]
 
+    # Attempt to generate diagram using LLM endpoint
     success, svg_or_error, validation_error = generate_diagram_with_llm(
         prompt,
         test_case["id"],
@@ -98,6 +108,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
         provider
     )
 
+    # Handle diagram generation failure
     if not success:
         result["is_valid"] = False
         result["validation_error"] = svg_or_error
@@ -105,15 +116,18 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
         print(f"  [FAIL] Rendering failed: {svg_or_error[:100]}..." if len(svg_or_error) > 100 else f"  [FAIL] Rendering failed: {svg_or_error}")
         return result
 
+    # Sanitize filename to remove invalid characters
     svg_content = svg_or_error
     safe_test_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in result['test_name'])
     safe_test_name = safe_test_name.replace(' ', '_')
     svg_filename = f"test_{result['test_id']:03d}_{safe_test_name}.svg"
     svg_path = os.path.join(os.path.dirname(output_dir), "svg", svg_filename)
 
+    # Ensure SVG output directory exists
     os.makedirs(os.path.dirname(svg_path), exist_ok=True)
 
     try:
+        # Additional decoding and handling of SVG content
         if isinstance(svg_content, bytes):
             if svg_content[:2] == b'\x1f\x8b':
                 import gzip
@@ -126,6 +140,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
         elif isinstance(svg_content, str):
             svg_content = svg_content.encode('utf-8', errors='replace').decode('utf-8')
 
+        # Write SVG content to file
         with open(svg_path, 'w', encoding='utf-8') as f:
             f.write(svg_content)
         result["has_svg"] = True
@@ -135,6 +150,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
         print(f"  [SVG ERROR] Failed to save: {e}")
         result["svg_file"] = ""
 
+    # Mark test as valid
     result["is_valid"] = True
     result["validation_error"] = validation_error if validation_error else "Structurizr Syntax is Valid"
 
@@ -143,7 +159,7 @@ def process_test(test_case: Dict[str, Any], output_dir: str, script_dir: str, pr
     return result
 
 def save_error_file(result: Dict[str, Any], output_dir: str) -> str:
-    """Save error details to a file"""
+    # Create an error log file for failed tests with detailed information
     error_filename = f"test_{result['test_id']:03d}_error.txt"
     error_path = os.path.join(output_dir, error_filename)
 
@@ -157,11 +173,11 @@ def save_error_file(result: Dict[str, Any], output_dir: str) -> str:
     return error_filename
 
 def main():
-    """Main function to process all tests"""
-
+    # Determine which test file to process based on command line argument
     test_file = None
     test_label = ""
 
+    # Handle command line arguments for test set selection
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
         if arg in ['25', 'test25']:
@@ -178,12 +194,11 @@ def main():
         test_file = "test25.json"
         test_label = "25"
 
+    # Set up paths for test file and results
     script_dir = os.path.dirname(os.path.abspath(__file__))
     test_file_path = os.path.join(script_dir, test_file)
 
-    print(f"Kroki Structurizr Provider Renderer - Processing test{test_label} tests")
-    print("=" * 60)
-
+    # Health check for backend service
     try:
         response = requests.get(
             "http://localhost:8003/api/v1/diagrams/v2/health",
@@ -198,6 +213,7 @@ def main():
         print("Make sure the backend is running at http://localhost:8003")
         return
 
+    # Load test cases from JSON file
     if not os.path.exists(test_file_path):
         print(f"\nERROR: Test file not found: {test_file_path}")
         return
@@ -207,14 +223,17 @@ def main():
     with open(test_file_path, 'r') as f:
         test_data = json.load(f)
 
+    # Create output directory for results
     output_dir = os.path.join(script_dir, f"test_results_{test_label}", "errors")
     os.makedirs(output_dir, exist_ok=True)
 
+    # Process each test case
     results: List[Dict[str, Any]] = []
     test_cases = test_data["structurizr_capability_tests"]
 
     print(f"\nProcessing {len(test_cases)} tests...")
 
+    # Iterate through test cases and process individually
     for test_case in test_cases:
         print(f"\n{'='*60}")
         print(f"Test {test_case['id']}: {test_case['name']}")
@@ -223,24 +242,29 @@ def main():
         result = process_test(test_case, output_dir, script_dir, "krokistructurizr")
         results.append(result)
 
+    # Generate and display validation summary
     print("\n" + "=" * 60)
     print("VALIDATION SUMMARY")
     print("=" * 60)
 
+    # Calculate test statistics
     total_tests = len(results)
     tests_with_svg = sum(1 for r in results if r["has_svg"])
     tests_valid = sum(1 for r in results if r["is_valid"])
     tests_invalid = total_tests - tests_valid
 
+    # Print summary statistics
     print(f"\nTotal tests: {total_tests}")
     print(f"Tests with SVG: {tests_with_svg}")
     print(f"Tests valid: {tests_valid}")
     print(f"Tests invalid: {tests_invalid}")
 
+    # Calculate success rate
     if total_tests > 0:
         success_rate = (tests_valid / total_tests) * 100
         print(f"\nSuccess rate: {success_rate:.1f}%")
 
+    # Save detailed results to JSON file
     results_file = os.path.join(output_dir, "validation_results.json")
     with open(results_file, 'w') as f:
         json.dump({
@@ -255,6 +279,7 @@ def main():
             "results": results
         }, f, indent=2)
 
+    # Print final summary and handle failed tests
     print(f"\nDetailed results saved to: {results_file}")
 
     if tests_invalid > 0:

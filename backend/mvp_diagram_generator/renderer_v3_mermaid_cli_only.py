@@ -1,3 +1,4 @@
+```python
 """
 Mermaid CLI-Only Renderer - Version 3
 
@@ -20,9 +21,10 @@ from pathlib import Path
 from typing import Literal
 from common.logger import get_logger
 
+# Initialize logger for tracking and debugging rendering process
 logger = get_logger(__name__)
 
-# Mermaid CLI executable name
+# Define constants for Mermaid CLI executable and timeout
 MMDC_EXECUTABLE = "mmdc"
 MMDC_TIMEOUT = 120  # seconds
 
@@ -33,101 +35,60 @@ def render_diagram(
     output_format: str = "svg",
     **kwargs
 ) -> str:
-    """
-    Render a diagram using Mermaid CLI (mmdc) only.
-
-    Args:
-        diagram_code: The diagram source code
-        diagram_type: Type of diagram ('mermaid', 'd2', or 'c4')
-        output_format: Output format ('svg' or 'png')
-        **kwargs: Additional arguments (ignored, for compatibility)
-
-    Returns:
-        str: Rendered diagram (SVG string or base64-encoded PNG)
-
-    Raises:
-        Exception: If rendering fails
-    """
+    # Log the start of diagram rendering with type and format
     logger.info(f"Rendering {diagram_type} diagram to {output_format} using Mermaid CLI")
 
-    # Validate output format
+    # Validate that output format is either SVG or PNG
     if output_format not in ("svg", "png"):
         raise ValueError(f"Unsupported output format: {output_format}")
 
-    # Normalize diagram code to Mermaid syntax
+    # Convert non-mermaid diagram types to mermaid syntax
     if diagram_type in ("d2", "c4"):
         logger.info(f"Converting {diagram_type} to Mermaid syntax")
         diagram_code = convert_to_mermaid(diagram_code, diagram_type)
     elif diagram_type != "mermaid":
         raise ValueError(f"Unsupported diagram type: {diagram_type}")
 
-    # Render using Mermaid CLI
+    # Render the diagram using Mermaid CLI and return the result
     return render_with_mmdc(diagram_code, output_format)
 
 
 def convert_to_mermaid(diagram_code: str, diagram_type: str) -> str:
-    """
-    Convert D2 or C4 diagrams to Mermaid syntax.
-
-    For now, returns the code as-is. In production, this would:
-    - Parse D2 syntax and convert to Mermaid flowchart
-    - Parse C4 syntax and convert to Mermaid diagram
-
-    Args:
-        diagram_code: The diagram code
-        diagram_type: 'd2' or 'c4'
-
-    Returns:
-        str: Mermaid-compatible diagram code
-    """
+    # Placeholder for future conversion logic from D2 or C4 to Mermaid syntax
     logger.debug(f"Converting {diagram_type} to Mermaid (currently returns as-is)")
     # TODO: Implement actual D2->Mermaid and C4->Mermaid conversion
-    # For now, assume input is already valid Mermaid or compatible
     return diagram_code
 
 
 def render_with_mmdc(diagram_code: str, output_format: str) -> str:
-    """
-    Render using Mermaid CLI (mmdc) executable.
-
-    Args:
-        diagram_code: The Mermaid diagram code
-        output_format: 'svg' or 'png'
-
-    Returns:
-        str: SVG string or base64-encoded PNG
-
-    Raises:
-        Exception: If mmdc is not available or rendering fails
-    """
-
-    # Check if mmdc is available
+    # Verify Mermaid CLI is available before attempting to render
     if not is_mmdc_available():
         raise Exception(
             "Mermaid CLI (mmdc) is not available on this system. "
             "Please install with: npm install -g @mermaid-js/mermaid-cli"
         )
 
-    # Create temporary files
+    # Use temporary directory to store input and output files
     with tempfile.TemporaryDirectory() as tmpdir:
         input_file = Path(tmpdir) / "diagram.mmd"
         output_file = Path(tmpdir) / f"diagram.{output_format}"
 
         try:
-            # Write diagram code to input file
+            # Write diagram code to temporary input file
             input_file.write_text(diagram_code, encoding="utf-8")
             logger.debug(f"Wrote diagram to: {input_file}")
 
-            # Run mmdc command
+            # Prepare mmdc command with input and output file specifications
             cmd = [
                 MMDC_EXECUTABLE,
                 "-i", str(input_file),
                 "-o", str(output_file),
-                "-f", output_format.upper(),  # mmdc expects SVG or PNG
+                "-f", output_format.upper(),  # mmdc expects uppercase format
             ]
 
             logger.debug(f"Running command: {' '.join(cmd)}")
 
+            # Execute mmdc command with timeout and shell support for Windows
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -136,25 +97,25 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
                 shell=True  # Use shell on Windows to find .cmd files
             )
 
+            # Check if command execution was successful
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout or "Unknown error"
                 raise Exception(f"mmdc rendering failed: {error_msg}")
 
             logger.debug(f"mmdc completed successfully")
 
-            # Read output file
+            # Verify output file was created
             if not output_file.exists():
                 raise Exception(f"Output file not created: {output_file}")
 
+            # Read output file contents
             output_data = output_file.read_bytes()
 
-            # Return based on format
+            # Return diagram based on output format
             if output_format == "svg":
-                # Return SVG as string
-                return output_data.decode("utf-8")
+                return output_data.decode("utf-8")  # Return SVG as string
             elif output_format == "png":
-                # Return PNG as base64
-                return base64.b64encode(output_data).decode("utf-8")
+                return base64.b64encode(output_data).decode("utf-8")  # Return PNG as base64
 
         except subprocess.TimeoutExpired:
             raise Exception(f"mmdc timed out after {MMDC_TIMEOUT} seconds")
@@ -164,12 +125,7 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
 
 
 def is_mmdc_available() -> bool:
-    """
-    Check if Mermaid CLI (mmdc) is available on the system.
-
-    Returns:
-        bool: True if mmdc is available, False otherwise
-    """
+    # Check if Mermaid CLI is installed and accessible
     try:
         result = subprocess.run(
             [MMDC_EXECUTABLE, "--version"],
@@ -178,6 +134,7 @@ def is_mmdc_available() -> bool:
             timeout=5,
             shell=True  # Use shell on Windows
         )
+        # Determine availability based on return code
         available = result.returncode == 0
         if available:
             logger.debug(f"mmdc is available: {result.stdout.strip()}")
@@ -187,3 +144,6 @@ def is_mmdc_available() -> bool:
     except Exception as e:
         logger.warning(f"Could not check mmdc availability: {str(e)}")
         return False
+```
+
+The comments explain the key logic, purpose, and flow of each function and significant code block, focusing on what the code is doing and why, without changing the underlying implementation.

@@ -1,20 +1,19 @@
-/**
- * ThemeContext Theme Configuration
- * 
- * Theme-related configuration and utilities for the application.
- */
 import { createContext } from 'react';
 import { type ThemeKey } from './antd-themes';
 
-/**
- * ThemeContextType defines the shape of theme management context
- * Provides type safety and ensures consistent theme interaction methods
- */
+// Define the contract for theme management with type safety
 export interface ThemeContextType {
   theme: ThemeKey; // Current active theme identifier
   toggleTheme: () => void; // Method to switch between light/dark themes
   setTheme: (theme: ThemeKey) => void; // Method to explicitly set a specific theme
 }
 
-// Create a context for theme management with optional initial value
+// Initialize a React context for theme management with optional undefined initial state
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+```
+
+Key changes:
+- Added concise inline comments explaining the purpose of each section
+- Kept all original code structure and types intact
+- Used // style comments
+- Focused on explaining the logical intent of the code

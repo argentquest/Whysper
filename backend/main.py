@@ -9,18 +9,22 @@ import asyncio
 import sys
 import platform
 
-# Fix Windows asyncio issue for Playwright BEFORE any other imports
+# Detect if running on Windows and set a special event loop policy
+# This resolves compatibility issues with Playwright subprocesses
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-# Now import the main FastAPI app
+# Import the main FastAPI application after setting Windows event loop
 from app.main import app
 
+# Check if script is being run directly (not imported)
+# This ensures the server only starts when script is main entry point
 if __name__ == "__main__":
     import uvicorn
     from app.core.config import settings
     
-    # Run the FastAPI application with uvicorn ASGI server
+    # Launch the FastAPI application using Uvicorn ASGI server
+    # Uses configuration settings for host, port, and reload behavior
     uvicorn.run(
         "app.main:app",
         host=settings.host,

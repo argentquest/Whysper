@@ -1,3 +1,4 @@
+```python
 """
 Kroki Structurizr Provider Implementation
 
@@ -14,86 +15,51 @@ from diagrams.models import ValidationResult
 
 
 class KrokiStructurizrProvider(KrokiBaseProvider):
-    """
-    Kroki Structurizr Provider - Structurizr/C4 diagrams via Kroki
-
-    This provider uses Kroki (https://kroki.io) to render Structurizr diagrams
-    via HTTP API calls to a local Kroki server.
-
-    Architecture:
-    - HTTP-based: Sends diagram code to Kroki server via POST
-    - No local dependencies: All rendering happens on Kroki server
-    - Fast response: Direct API calls without CLI overhead
-    - Error handling: Parses Kroki error responses
-
-    Supported Diagrams:
-    - C4 System Context diagrams
-    - C4 Container diagrams
-    - C4 Component diagrams
-    - C4 Code diagrams
-    - Structurizr DSL diagrams
-
-    Capabilities:
-    - VALIDATE: Check Structurizr syntax via Kroki
-    - RENDER_SVG: Generate SVG output
-    - RENDER_PNG: Generate PNG output
-    - AUTO_FIX: Pattern-based syntax correction
-    - LLM_CORRECTION: AI-powered diagram correction
-
-    Configuration:
-    - server_url: Kroki server URL (default: http://localhost:8000)
-    - timeout_seconds: Request timeout (default: 30)
-    - diagram_endpoint: API endpoint for Structurizr (structurizr)
-
-    Installation:
-    - Requires local Kroki server running at configured URL
-    - No additional dependencies beyond requests library
-    """
+    # Define provider-specific metadata for identification and configuration
 
     @property
     def provider_id(self) -> str:
-        """Unique identifier matching folder name: 'krokistructurizr'"""
+        # Return unique identifier matching folder name for internal tracking
         return "krokistructurizr"
 
     @property
     def provider_name(self) -> str:
-        """Human-readable name shown in UI"""
+        # Return human-readable name for user-facing displays
         return "Kroki Structurizr Renderer"
 
     @property
     def diagram_type(self) -> str:
-        """Primary diagram type: 'structurizr'"""
+        # Specify the primary diagram type for routing and processing
         return "structurizr"
 
     @property
     def diagram_endpoint(self) -> str:
-        """Kroki API endpoint for Structurizr diagrams"""
+        # Define the specific Kroki API endpoint for Structurizr diagrams
         return "structurizr"
 
     def auto_fix_pattern_based(
         self, code: str, error_message: str, **options
     ) -> ValidationResult:
-        """
-        Attempt pattern-based auto-fix for Structurizr syntax.
-
-        Includes Structurizr-specific fixes in addition to generic fixes.
-        """
+        # Implement automated syntax correction for Structurizr diagrams
+        
+        # Log the start of auto-fix process
         self.logger.info("Attempting pattern-based auto-fix for Structurizr...")
 
+        # Initialize variables for code fixing
         fixed_code = code
         corrections = []
 
-        # Structurizr-specific fix 1: Add missing workspace declaration
+        # Check and add missing workspace declaration if not present
         if not code.strip().startswith('workspace'):
             fixed_code = 'workspace {\n' + fixed_code + '\n}'
             corrections.append('Added missing workspace declaration')
 
-        # Structurizr-specific fix 2: Fix model syntax
+        # Add model block if missing but required elements are present
         if 'model {' in fixed_code:
-            # Already has model block
+            # Already has model block, no action needed
             pass
         elif '->' in fixed_code or 'person ' in fixed_code:
-            # Likely missing model block
+            # Likely missing model block, so insert it
             fixed_code = fixed_code.replace(
                 'workspace {',
                 'workspace {\n  model {'
@@ -101,7 +67,7 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
             fixed_code = fixed_code.rstrip('}') + '\n  }\n}'
             corrections.append('Added missing model block')
 
-        # Generic fix: Add missing braces
+        # Ensure balanced braces by adding missing closing braces
         if '{' in fixed_code:
             open_count = fixed_code.count('{')
             close_count = fixed_code.count('}')
@@ -112,9 +78,10 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
                     f'Added {missing_braces} missing closing brace(s)'
                 )
 
-        # Validate fixed code
+        # Validate the corrected code
         validation_result = self.validate_code(fixed_code, **options)
 
+        # Process and log validation results
         if validation_result.is_valid:
             validation_result.auto_fixed = True
             validation_result.fixed_code = fixed_code
@@ -131,7 +98,7 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
         return validation_result
 
     def get_llm_correction_rules(self) -> Optional[str]:
-        """Provide Structurizr-specific rules for LLM correction"""
+        # Provide structured rules for AI-based diagram correction
         return """
 STRUCTURIZR-SPECIFIC RULES:
 - Start with: workspace { ... }
@@ -148,3 +115,6 @@ STRUCTURIZR-SPECIFIC RULES:
 - Use systemContext, container, component for view types
 - Keep syntax simple and standard Structurizr format
 """.strip()
+```
+
+The comments explain the purpose and logic of each method and key code block, focusing on the auto-fix mechanism and provider configuration.

@@ -1,5 +1,3 @@
-Here's the code with inline comments:
-
 // Type definitions for DiagramWizard's persistence and state management
 // Provides structured interfaces for storing application preferences and session data
 
@@ -48,12 +46,12 @@ export interface DiagramWizardPersistedState {
 
 // Default configuration for initial app state
 export const DEFAULT_PREFERENCES: DiagramWizardPreferences = {
-  defaultDiagramType: 'auto',
-  autoSave: true,
-  keepSessionHistory: true,
-  maxHistoryItems: 10,
-  theme: 'auto',
-  showScoreInfo: true,
+  defaultDiagramType: 'auto', // Default to automatic diagram type selection
+  autoSave: true, // Enable automatic saving by default
+  keepSessionHistory: true, // Preserve session history
+  maxHistoryItems: 10, // Keep up to 10 historical sessions
+  theme: 'auto', // Match system theme by default
+  showScoreInfo: true, // Show detailed generation scoring
 };
 
 // Factory function to create initial persisted state

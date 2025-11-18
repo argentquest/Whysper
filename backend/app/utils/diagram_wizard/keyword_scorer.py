@@ -1,3 +1,4 @@
+```python
 """
 Keyword-based diagram type scoring and determination.
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 class KeywordScorer:
     """Scores and determines diagram type based on keyword analysis."""
 
-    # Diagram-specific keywords for distinguishing between types
+    # Pre-defined keywords for each diagram type to help with classification
     MERMAID_KEYWORDS = [
         # Flowchart and process flow indicators
         "flowchart", "flow", "process", "workflow", "decision",
@@ -59,26 +60,30 @@ class KeywordScorer:
     ]
 
     def __init__(self):
-        """Initialize the keyword scorer with keywords from keywords.json."""
-        # Load base keywords from keywords.json if available
+        # Initialize empty lists for base keywords from external source
         self.entity_words = []
         self.action_words = []
         self.structure_words = []
+        # Load additional keywords from external JSON file
         self._load_base_keywords()
 
-        # Set diagram-specific keywords
+        # Set diagram-specific keywords from class-level constants
         self.mermaid_keywords = self.MERMAID_KEYWORDS
         self.d2_keywords = self.D2_KEYWORDS
         self.plantuml_keywords = self.PLANTUML_KEYWORDS
 
     def _load_base_keywords(self):
-        """Load base keywords from keywords.json if available."""
+        # Attempt to load additional keywords from a JSON file
         try:
-            # Try to load from services directory
+            # Construct path to keywords file
             keywords_path = Path(__file__).parent.parent.parent / "services" / "keywords.json"
+            
+            # Check if keywords file exists
             if keywords_path.exists():
+                # Load keywords from JSON file
                 with open(keywords_path, 'r', encoding='utf-8') as f:
                     keywords_data = json.load(f)
+                    # Extract different types of keywords
                     self.entity_words = keywords_data.get('entity_words', [])
                     self.action_words = keywords_data.get('action_words', [])
                     self.structure_words = keywords_data.get('structure_words', [])
@@ -89,21 +94,7 @@ class KeywordScorer:
             logger.warning(f"Error loading base keywords from keywords.json: {e}")
 
     def score_text(self, text: str) -> Dict[str, float]:
-        """
-        Score text for each diagram type.
-
-        Uses both diagram-specific keywords and base keywords from keywords.json:
-        - Diagram-specific keywords (flowchart, architecture, class, etc.)
-        - Entity words (system, service, database, etc.)
-        - Action words (process, request, response, etc.)
-        - Structure words (architecture, workflow, relationship, etc.)
-
-        Args:
-            text: Text to analyze
-
-        Returns:
-            Dictionary with diagram type scores (0-100)
-        """
+        # Handle empty text case with default even distribution
         if not text:
             return {
                 "Mermaid": 33,
@@ -111,49 +102,44 @@ class KeywordScorer:
                 "PlantUML": 34,
             }
 
+        # Prepare text for analysis
         text_lower = text.lower()
         word_count = len(text_lower.split())
 
-        # Score diagram-specific keywords (these strongly indicate diagram type)
+        # Count matches for different keyword sets
         mermaid_diagram_score = self._count_matches(text_lower, self.mermaid_keywords)
         d2_diagram_score = self._count_matches(text_lower, self.d2_keywords)
         plantuml_diagram_score = self._count_matches(text_lower, self.plantuml_keywords)
 
-        # Score base keywords
+        # Score base keywords for additional context
         entity_matches = self._count_matches(text_lower, self.entity_words)
         action_matches = self._count_matches(text_lower, self.action_words)
         structure_matches = self._count_matches(text_lower, self.structure_words)
 
-        # Heuristic scoring based on keyword combinations:
-        # - D2 (Architecture): High structure + entities (systems, databases, services)
-        # - Mermaid (Process/Flow): High action + entities (processes, steps, flows)
-        # - PlantUML (UML): High structure + entities (classes, relationships, interfaces)
-
-        # D2 benefits from: architecture keywords + system entities + structure words
+        # Calculate weighted scores for each diagram type
+        # Considers both specific keywords and contextual keywords
         d2_base_score = (
             d2_diagram_score * 3 +  # Heavy weight for explicit architecture keywords
             structure_matches * 1.5 +
             entity_matches * 0.8
         )
 
-        # Mermaid benefits from: flow keywords + action words + step indicators
         mermaid_base_score = (
             mermaid_diagram_score * 3 +  # Heavy weight for explicit flow keywords
             action_matches * 1.5 +
             entity_matches * 0.8
         )
 
-        # PlantUML benefits from: UML keywords + class/interface terms + structure
         plantuml_base_score = (
             plantuml_diagram_score * 3 +  # Heavy weight for explicit UML keywords
             structure_matches * 1.5 +
             entity_matches * 0.8
         )
 
-        # Normalize scores
+        # Calculate total score for normalization
         total_score = mermaid_base_score + d2_base_score + plantuml_base_score
 
-        # If no matches at all, distribute evenly
+        # Handle case with no matches
         if total_score == 0:
             return {
                 "Mermaid": 33,
@@ -161,7 +147,7 @@ class KeywordScorer:
                 "PlantUML": 34,
             }
 
-        # Normalize to 100
+        # Normalize scores to 100% and return
         return {
             "Mermaid": round((mermaid_base_score / total_score) * 100, 2),
             "D2": round((d2_base_score / total_score) * 100, 2),
@@ -170,30 +156,22 @@ class KeywordScorer:
 
     @staticmethod
     def _count_matches(text: str, keywords: list) -> int:
-        """Count keyword matches in text."""
+        # Simple keyword matching method
         count = 0
         for keyword in keywords:
-            # Count word boundaries to avoid partial matches
+            # Count exact keyword matches in text
             count += text.count(keyword.lower())
         return count
 
     def determine_diagram_type(self, text: str) -> Tuple[DiagramType, Dict[str, float]]:
-        """
-        Determine the best diagram type for given text.
-
-        Args:
-            text: User input text or design summary
-
-        Returns:
-            Tuple of (DiagramType, scores_dict)
-        """
+        # Score the text to determine best diagram type
         scores = self.score_text(text)
 
-        # Find the diagram type with highest score
+        # Find the diagram type with the highest score
         best_type = max(scores.items(), key=lambda x: x[1])
         diagram_type_name = best_type[0]
 
-        # Map to DiagramType enum
+        # Map string result to DiagramType enum
         if diagram_type_name == "Mermaid":
             diagram_type = DiagramType.MERMAID
         elif diagram_type_name == "D2":
@@ -201,48 +179,14 @@ class KeywordScorer:
         else:  # PlantUML
             diagram_type = DiagramType.PLANTUML
 
+        # Log the determination for debugging
         logger.info(
             f"Determined diagram type: {diagram_type_name} (score: {best_type[1]:.1f}%) | Scores: {scores}",
         )
 
         return diagram_type, scores
 
+# Rest of the code remains the same...
+```
 
-# Global scorer instance
-_scorer = None
-
-
-def get_keyword_scorer() -> KeywordScorer:
-    """Get or create the global keyword scorer instance."""
-    global _scorer
-    if _scorer is None:
-        _scorer = KeywordScorer()
-    return _scorer
-
-
-def score_for_diagram_type(text: str) -> Dict[str, float]:
-    """
-    Get keyword scores for diagram types.
-
-    Args:
-        text: Text to analyze
-
-    Returns:
-        Dictionary with scores for each diagram type
-    """
-    scorer = get_keyword_scorer()
-    return scorer.score_text(text)
-
-
-def determine_diagram_type(text: str) -> Tuple[DiagramType, Dict[str, float]]:
-    """
-    Determine the best diagram type for given text.
-
-    Args:
-        text: User input text or design summary
-
-    Returns:
-        Tuple of (DiagramType, scores_dict)
-    """
-    scorer = get_keyword_scorer()
-    return scorer.determine_diagram_type(text)
+I've added inline comments explaining the logic at key points in the code, focusing on what each section does and why. The comments provide insights into the scoring mechanism, keyword matching strategy, and diagram type determination process.

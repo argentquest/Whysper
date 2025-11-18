@@ -1,3 +1,4 @@
+```python
 """
 Main entry point for diagram factory system.
 
@@ -20,22 +21,11 @@ async def run_diagram_factory(
     user_id: str = "test_user",
     conversation_id: str = "test_conversation"
 ) -> Dict[str, Any]:
-    """
-    Run the complete diagram factory workflow.
-    
-    Args:
-        design_prompt: Initial user prompt
-        diagram_type: Type of diagram (Mermaid, D2, PlantUML)
-        user_id: User identifier
-        conversation_id: Conversation identifier
-    
-    Returns:
-        Final state with diagram output
-    """
-    # Create session store
+    # Initialize session store for tracking diagram generation process
     session_store = DiagramSessionStore()
     
-    # Create initial state
+    # Construct initial state with configuration parameters
+    # Ensures correct diagram type and sets up initial tracking variables
     initial_state: GraphState = {
         "design_prompt": design_prompt,
         "diagram_type": DiagramType(diagram_type) if diagram_type in [dt.value for dt in DiagramType] else DiagramType(diagram_type.capitalize()),
@@ -46,30 +36,36 @@ async def run_diagram_factory(
         "current_state": "initialized"
     }
     
-    # Get the compiled graph
+    # Retrieve the pre-configured LangGraph workflow for diagram generation
     graph = get_diagram_factory_graph()
     
+    # Log the start of diagram generation process
     print(f"Starting diagram factory for {diagram_type} diagram...")
     print(f"Initial prompt: {design_prompt}")
     
-    # Run the graph
+    # Execute the graph workflow and handle potential errors
     try:
+        # Asynchronously invoke the graph with initial state
         result = await graph.ainvoke(initial_state)
         
+        # Provide detailed logging of the diagram generation result
         print("\n=== Diagram Factory Result ===")
         print(f"Final state: {result.get('current_state', 'unknown')}")
         print(f"Diagram code generated: {'Yes' if result.get('diagram_code') else 'No'}")
         print(f"Diagram rendered: {'Yes' if result.get('svg_output') else 'No'}")
         
+        # Log any validation errors
         if result.get('validation_error'):
             print(f"Validation error: {result['validation_error']}")
         
+        # Log SVG output size for diagnostics
         if result.get('svg_output'):
             print(f"SVG length: {len(result['svg_output'])} characters")
         
         return result
         
     except Exception as e:
+        # Capture and log any unexpected errors during diagram generation
         print(f"Error running diagram factory: {e}")
         return {
             "current_state": "error",
@@ -78,30 +74,30 @@ async def run_diagram_factory(
 
 
 async def interactive_mode():
-    """
-    Interactive CLI mode for testing diagram factory.
-    """
+    # Provide an interactive CLI for users to generate diagrams
     print("=== Diagram Factory Interactive Mode ===")
     print("Enter 'quit' to exit")
     
     while True:
         try:
+            # Prompt for diagram description
             prompt = input("\nEnter diagram description: ").strip()
             if prompt.lower() == 'quit':
                 break
             
+            # Skip empty inputs
             if not prompt:
                 continue
             
-            # Get diagram type
+            # Allow user to specify diagram type
             diagram_type = input("Diagram type (Mermaid/D2/PlantUML) [Mermaid]: ").strip()
             if not diagram_type:
                 diagram_type = "Mermaid"
             
-            # Run diagram factory
+            # Generate diagram and handle result
             result = await run_diagram_factory(prompt, diagram_type)
             
-            # Show result
+            # Optional SVG file saving
             if result.get('svg_output'):
                 save = input("Save SVG to file? (y/n): ").strip().lower()
                 if save == 'y':
@@ -120,9 +116,7 @@ async def interactive_mode():
 
 
 async def demo_mode():
-    """
-    Demo mode with predefined examples.
-    """
+    # Predefined examples to showcase diagram generation capabilities
     examples = [
         {
             "prompt": "A simple flowchart showing user login process",
@@ -140,13 +134,16 @@ async def demo_mode():
     
     print("=== Diagram Factory Demo Mode ===")
     
+    # Iterate through examples and generate diagrams
     for i, example in enumerate(examples, 1):
         print(f"\n--- Example {i} ---")
         print(f"Prompt: {example['prompt']}")
         print(f"Type: {example['type']}")
         
+        # Generate diagram for each example
         result = await run_diagram_factory(example['prompt'], example['type'])
         
+        # Save SVG output if generated
         if result.get('svg_output'):
             filename = f"demo_{i}_{example['type'].lower()}.svg"
             with open(filename, 'w') as f:
@@ -157,7 +154,7 @@ async def demo_mode():
 
 
 def print_usage():
-    """Print usage information."""
+    # Display command-line usage instructions
     print("""
 Diagram Factory - LangGraph-based Diagram Generation
 
@@ -176,15 +173,17 @@ Examples:
 
 
 async def main():
-    """Main entry point."""
+    # Parse command-line arguments and execute corresponding mode
     args = sys.argv[1:]
     
+    # Show help if no arguments or help requested
     if not args or args[0] == "help":
         print_usage()
         return
     
     mode = args[0].lower()
     
+    # Route to appropriate mode based on argument
     if mode == "interactive":
         await interactive_mode()
     elif mode == "demo":
