@@ -1,8 +1,59 @@
 /**
- * Panel1_Chat Component
+ * Panel1_Chat Component - Interactive Chat Interface
  *
- * Displays conversation history and provides interface for user responses
- * to clarification questions from the LLM.
+ * Core component for displaying the conversational interface between user and AI.
+ * Renders conversation history, AI clarification questions, clarity scores,
+ * and provides input field for user responses.
+ *
+ * ## Features
+ * - **Conversation Display**: Shows all messages with role avatars (user/assistant)
+ * - **Score Badges**: Displays clarity_score on assistant messages (color-coded)
+ * - **JSON Viewer**: Collapsible section showing structured architecture data
+ * - **Auto-scroll**: Automatically scrolls to latest message
+ * - **Responsive Messages**: Color-coded backgrounds (user: light blue, assistant: light green)
+ * - **Confirmation Button**: Shows when user is ready to proceed to generation
+ * - **Error Handling**: Safe scroll handling with fallback for browser compatibility
+ * - **Loading State**: Shows spinner while awaiting response
+ *
+ * ## Layout
+ * ```
+ * Messages Container (scrollable):
+ *   For each message:
+ *     [Avatar] [Content] [Score Badge] [JSON]
+ *
+ * Input Section:
+ *   Textarea for user response
+ *   Submit Button
+ *   Confirm Ready Button (optional)
+ *
+ * Connection Status:
+ *   Loading spinner if submitting
+ * ```
+ *
+ * ## Message Scoring
+ * - Green Badge (≥8): System is well understood, ready to proceed
+ * - Blue Badge (6-7): Good understanding, may need minor clarifications
+ * - Orange Badge (<6): Incomplete understanding, more questions needed
+ *
+ * ## Props Flow
+ * ```
+ * Parent passes:
+ *   - messages: Conversation history
+ *   - clarifications: List of AI questions
+ *   - isClarifying: Whether in clarification phase
+ *
+ * Child calls:
+ *   - onSubmitClarification: When user submits response
+ *   - onConfirmReady: When user confirms they're done
+ * ```
+ *
+ * ## Auto-scroll Behavior
+ * Scrolls to bottom when:
+ * - New messages arrive
+ * - Component mounts
+ * - User submits response
+ *
+ * Scroll error handling ensures compatibility across browsers (scrollIntoView check).
  */
 
 import React, { useRef, useEffect, useState } from 'react';
@@ -10,6 +61,15 @@ import { Card, List, Input, Button, Empty, Spin, Avatar, Space, Tag, Collapse, T
 import { UserOutlined, RobotOutlined, SendOutlined, EyeOutlined, CodeOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
+/**
+ * Represents a single message in the conversation
+ *
+ * @interface ConversationMessage
+ * @property {string} role - Message originator: 'user' or 'assistant'
+ * @property {string} content - The message text content
+ * @property {number} [score] - Optional clarity_score (1-10) from AI assessment (only on assistant messages)
+ * @property {Object} [jsonData] - Optional structured data (only on latest assistant message during clarification)
+ */
 interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -17,6 +77,27 @@ interface ConversationMessage {
   jsonData?: Record<string, unknown>;
 }
 
+/**
+ * Props for Panel1_Chat component
+ *
+ * @interface Panel1ChatProps
+ * @property {ConversationMessage[]} messages - Array of conversation messages in chronological order
+ * @property {Array} clarifications - List of clarification questions from AI
+ * @property {Function} [onSubmitClarification] - Callback when user submits response to clarification.
+ *                                               Receives the user's response as string parameter.
+ * @property {Function} [onSubmit] - Alternative callback for generic message submission
+ * @property {boolean} [isLoading=false] - Whether waiting for response from AI
+ * @property {boolean} [sessionActive=false] - Whether session is currently active
+ * @property {Function} [onViewResponseDetails] - Callback to view details of specific message (index parameter)
+ * @property {boolean} [isClarifying=false] - Whether currently in clarification phase (shows input field)
+ * @property {boolean} [canConfirmReady=false] - Whether to show "Confirm Ready" button to proceed to generation
+ * @property {Function} [onConfirmReady] - Callback when user clicks "Confirm Ready" button
+ *
+ * ## Callback Behavior
+ * - `onSubmitClarification`: Required during clarification phase for user responses
+ * - `onConfirmReady`: Called when user is satisfied with clarifications and ready to generate
+ * - Both callbacks should handle async operations (AI processing)
+ */
 interface Panel1ChatProps {
   messages: ConversationMessage[];
   clarifications: any[];

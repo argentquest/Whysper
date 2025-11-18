@@ -1,11 +1,51 @@
 /**
- * DiagramWizard Component (Refactored)
+ * DiagramWizard Component
  *
- * Main component for the diagram generation wizard interface.
- * Orchestrates three distinct screens:
- * 1. ModelSelectionScreen - User picks AI model
- * 2. SystemDescriptionScreen - User enters description + clarification
- * 3. GenerationScreen - Code generation, validation, rendering
+ * A comprehensive wizard interface for generating system architecture diagrams using AI.
+ * This component orchestrates the entire diagram generation workflow across multiple screens.
+ *
+ * ## Workflow Phases
+ * 1. **Model Selection**: User selects an AI model (gpt5, grok, claude, gemini)
+ * 2. **System Description**: User describes their system and engages in clarification Q&A
+ * 3. **Generation**: AI generates diagram code (Mermaid/D2/PlantUML)
+ * 4. **Rendering**: Diagram is rendered and displayed for preview/export
+ *
+ * ## Key Features
+ * - Multi-tab support: Each tab maintains independent session
+ * - Real-time SSE updates: Server-sent events for live processing updates
+ * - Clarification loop: AI asks targeted questions to refine understanding
+ * - Multiple diagram types: Mermaid, D2, PlantUML support
+ * - Session persistence: Completed diagrams saved to local history
+ * - Export functionality: Save diagrams as code, SVG, PNG, etc.
+ *
+ * ## Props
+ * @property {Function} onDiagramGenerated - Callback when diagram generation succeeds
+ * @property {string} initialPrompt - Pre-filled system description (optional)
+ * @property {Function} onClose - Callback when wizard is closed
+ * @property {string} tabId - UI tab identifier for session tracking
+ * @property {string} sessionId - Pre-assigned backend session ID from tab
+ *
+ * ## State Management
+ * - **Screen Navigation**: Tracks which screen is currently displayed (model/description/generation)
+ * - **Session State**: Manages AI model selection, user input, and processing state
+ * - **Score Tracking**: Stores clarity scores from AI assessment
+ * - **UI State**: Controls modal visibility and error display
+ * - **Persistence**: Uses localStorage for session history and preferences
+ *
+ * ## Session Lifecycle
+ * 1. Component mounts with optional pre-assigned sessionId from tab
+ * 2. Session created on backend when user clicks "Start Conversation"
+ * 3. SSE connection established for real-time updates
+ * 4. User clarifies system details through Q&A loop
+ * 5. AI generates and refines diagram code
+ * 6. User reviews and exports diagram
+ * 7. Session cleaned up on component unmount (tab close)
+ *
+ * ## Integration Points
+ * - useDiagramSession: Custom hook managing session lifecycle and API communication
+ * - useLocalStorage: Persistence for user preferences and session history
+ * - Server-Sent Events: Real-time updates from backend processing
+ * - App context: Tab management and session binding
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -18,12 +58,25 @@ import { GenerationScreen } from './screens/GenerationScreen';
 import type { DiagramWizardPersistedState, SavedSession } from './types/persistence';
 import { getInitialPersistedState } from './types/persistence';
 
+/**
+ * Props for the DiagramWizard component
+ *
+ * @interface DiagramWizardProps
+ * @property {Function} [onDiagramGenerated] - Callback invoked when diagram generation completes successfully.
+ *                                            Receives generated diagram code and SVG rendering.
+ * @property {string} [initialPrompt] - Pre-filled system description to initialize user input
+ * @property {Function} [onClose] - Callback invoked when user closes the wizard (via tab close or error modal)
+ * @property {string} [tabId] - Unique identifier for the UI tab containing this wizard instance.
+ *                              Used for session tracking and multi-tab support.
+ * @property {string} [sessionId] - Pre-assigned backend session ID from the parent tab.
+ *                                  Allows session lifecycle to be bound to tab lifecycle.
+ */
 interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
   initialPrompt?: string;
   onClose?: () => void;
-  tabId?: string; // UI tab identifier
-  sessionId?: string; // Pre-assigned session ID from tab
+  tabId?: string;
+  sessionId?: string;
 }
 
 type DiagramType = 'Mermaid' | 'D2' | 'PlantUML';

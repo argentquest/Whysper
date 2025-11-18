@@ -459,14 +459,56 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 @log_method_call
 async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     """
-    Clarification loop node.
+    Iterative clarification loop node for refining system understanding.
 
-    Interviews user to build a final design summary.
-    Calls LLM with clarification prompts specific to diagram type.
+    This node implements the interactive clarification phase where the AI asks
+    targeted questions about the system architecture to gather missing details.
+    It uses a conversational approach with scoring to track progress.
 
-    Returns:
-        - If llm_ready: True, returns final_design_summary
-        - If llm_ready: False, returns next question via SSE
+    ## Workflow
+    1. Check if clarification is needed (clarity_score < 8)
+    2. Call LLM with combined ANALYZE + CLARIFY prompts for full context
+    3. Extract clarity_score and next question from LLM response
+    4. If clarity_score >= 8, mark ready and return design summary
+    5. If clarity_score < 8, add question to history and ask user
+    6. Track all scores and questions for audit trail
+
+    ## Features
+    - **Smart Skipping**: Skips first execution to avoid duplicate questions
+    - **Timeout Protection**: Max 10 questions or 5 minutes per session
+    - **Scoring**: Tracks clarity_score (1-10) for each turn
+    - **Persistent Context**: Combines analyze + clarify prompts for continuity
+    - **JSON Building**: Progressively builds json_representation with each response
+    - **User Confirmation**: Waits for explicit user confirmation before proceeding
+
+    ## Parameters
+    state (GraphState): Current workflow state containing:
+        - clarification_history: List of all conversation turns
+        - clarity_scores: List of scores from each LLM evaluation
+        - question_count: Number of questions asked so far
+        - llm_ready: Boolean indicating if AI has enough info
+        - user_confirmed_ready: Whether user explicitly confirmed readiness
+
+    ## Returns
+    Dict[str, Any]: Updated state with:
+        - llm_ready: True if proceeding to generation, False if more questions
+        - clarity_scores: Updated list of scores
+        - clarification_history: Updated conversation history
+        - json_representation: Progressively refined system architecture JSON
+        - final_design_summary: Design summary when ready
+        - question_count: Incremented question counter
+
+    ## Example Flow
+    1. User: "A web application with API backend"
+    2. AI clarification_score: 3/10 → "What database technologies?"
+    3. User: "PostgreSQL and Redis"
+    4. AI clarity_score: 6/10 → "Any external services?"
+    5. User: "AWS S3 for file storage"
+    6. AI clarity_score: 8/10 → "Ready!" → Proceed to generation
+
+    ## Timeout Behavior
+    If max questions (10) or max time (5 minutes) reached, proceeds with
+    available information rather than indefinitely clarifying.
     """
     session_id = state.get("_session_id")
 

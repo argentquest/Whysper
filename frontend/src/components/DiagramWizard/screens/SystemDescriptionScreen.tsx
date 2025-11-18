@@ -1,9 +1,58 @@
 /**
  * SystemDescriptionScreen Component
  *
- * Second screen of DiagramWizard: User enters system description
- * and initiates the analysis. Also handles the clarification phase
- * where the AI asks questions to better understand the system.
+ * Second screen of DiagramWizard workflow: Handles system description input,
+ * analysis initiation, and interactive clarification phase.
+ *
+ * ## Screen Phases
+ * 1. **Input Phase**: User enters system description and clicks "Start Conversation"
+ * 2. **Analysis Phase**: AI analyzes description, provides initial score and questions
+ * 3. **Clarification Phase**: Interactive Q&A loop where AI asks targeted questions
+ * 4. **Ready Phase**: User confirms they're done, AI generates diagram code
+ *
+ * ## Key Features
+ * - **Real-time Scoring**: Shows clarity_score (1-10) with color coding
+ * - **JSON Representation**: Displays structured architecture data as diagram progresses
+ * - **Live Chat Panel**: Shows conversation history with both user and AI messages
+ * - **Score Tracking**: Color-coded badges (green ≥8, blue 6-7, orange <6)
+ * - **Session Status**: Displays connected/disconnected state for SSE connection
+ * - **Progress Indicator**: Shows current phase in multi-step wizard
+ * - **Confirmation Button**: Appears when AI determines system is understood
+ *
+ * ## Layout
+ * ```
+ * Header (Model, Session ID, Connection Status)
+ *   ↓
+ * Progress Steps (Analysis → Clarification → Generation → Rendering)
+ *   ↓
+ * Conditional Content:
+ *   If Input Phase:
+ *     - Text area for system description
+ *     - "Start Conversation" button
+ *     - "Clear" button
+ *   If Analysis/Clarification Phase:
+ *     - Score display with badge
+ *     - JSON Representation (collapsible)
+ *     - Chat Panel with message history
+ *     - Input field for responses
+ * ```
+ *
+ * ## Data Flow
+ * User Input → onStartDiagram() → Backend Analysis → SSE Updates → Score Display
+ * AI Question → Chat Panel Display → User Response → onSubmitClarification() → AI Evaluation
+ *
+ * ## Props Integration
+ * - `userInput`, `onInputChange`: Control textarea value
+ * - `status`: Contains latest analysis results (score, json_representation)
+ * - `chatHistory`: Displays conversation between user and AI
+ * - `score`: Clarity score from AI assessment (0-10)
+ * - `clarifications`: List of AI questions asked
+ *
+ * ## Session Management
+ * - Session starts when user clicks "Start Conversation"
+ * - sessionId provided by parent component (tied to tab)
+ * - SSE connection shows real-time status updates
+ * - Cleanup happens automatically when tab closes
  */
 
 import React from 'react';
@@ -14,6 +63,30 @@ import ChatPanel from '../panels/Panel1_Chat';
 import type { ModelId } from './ModelSelectionScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
 
+/**
+ * Props for SystemDescriptionScreen component
+ *
+ * @interface SystemDescriptionScreenProps
+ * @property {ModelId} selectedModel - Currently selected AI model (gpt5, grok, claude, gemini)
+ * @property {number} currentPhase - Current phase index (0-3) for progress indicator
+ * @property {Array} phases - Array of phase objects with title, description, and icon
+ * @property {string} userInput - Current value of system description textarea
+ * @property {boolean} loading - Whether a request is being processed
+ * @property {boolean} isInAnalysisPhase - Whether currently in analysis/clarification phase
+ * @property {string | null} sessionId - Unique session ID from backend (null if not started)
+ * @property {DiagramUpdate | null} status - Latest status update from backend (includes scores, json_representation)
+ * @property {number} score - Current clarity_score (0-10) from AI assessment
+ * @property {Array} clarifications - List of clarification questions asked by AI
+ * @property {Array} chatHistory - Array of message objects with role, content, and optional score/jsonData
+ * @property {boolean} sseConnected - Whether SSE connection to backend is active
+ * @property {Function} onChangeModel - Callback to return to model selection screen
+ * @property {Function} onStartDiagram - Callback when user clicks "Start Conversation" with system description
+ * @property {Function} onClearInput - Callback to clear textarea content
+ * @property {Function} onInputChange - Callback when textarea content changes (value parameter)
+ * @property {Function} onSubmitClarification - Callback when user submits response to clarification question
+ * @property {Function} onConfirmReady - Callback when user confirms they're done with clarifications
+ * @property {Object} [error] - Optional error object with message property for displaying errors
+ */
 interface SystemDescriptionScreenProps {
   selectedModel: ModelId;
   currentPhase: number;
