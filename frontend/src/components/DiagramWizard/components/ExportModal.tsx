@@ -1,9 +1,4 @@
-/**
- * ExportModal Component
- *
- * Provides UI for exporting diagrams in various formats (SVG, PNG, PDF).
- * Allows users to customize export options.
- */
+Here's the TypeScript code with inline comments explaining the logic:
 
 import React, { useState } from 'react';
 import { Modal, Radio, Input, InputNumber, Form, message, Space, Alert } from 'antd';
@@ -11,11 +6,6 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { exportDiagram, getSVGElement } from '@/services/diagram/exportService';
 import type { ExportFormat } from '@/services/diagram/exportService';
 
-/**
- * ExportModalProps type definition
- * 
- * Describes the structure and properties of ExportModalProps
- */
 interface ExportModalProps {
   visible: boolean;
   onClose: () => void;
@@ -23,15 +13,13 @@ interface ExportModalProps {
   defaultFilename?: string;
 }
 
-/**
- * ExportModal component
- */
 const ExportModal: React.FC<ExportModalProps> = ({
   visible,
   onClose,
   svgContainerRef,
   defaultFilename = 'diagram',
 }) => {
+  // State management for export configuration
   const [format, setFormat] = useState<ExportFormat>('svg');
   const [filename, setFilename] = useState(defaultFilename);
   const [scale, setScale] = useState(2);
@@ -39,37 +27,46 @@ const ExportModal: React.FC<ExportModalProps> = ({
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
+    // Validate SVG container exists before export
     if (!svgContainerRef.current) {
       message.error('No diagram to export');
       return;
     }
 
+    // Extract SVG element for export
     const svgElement = getSVGElement(svgContainerRef.current);
     if (!svgElement) {
       message.error('SVG element not found');
       return;
     }
 
+    // Start export process and manage loading state
     setExporting(true);
     try {
+      // Attempt to export diagram with selected configuration
       await exportDiagram(svgElement, {
         format,
         filename,
         scale,
         backgroundColor,
       });
+      
+      // Show success message and close modal on successful export
       message.success(`Diagram exported as ${format.toUpperCase()}`);
       onClose();
     } catch (error) {
+      // Handle and display export errors
       console.error('Export failed:', error);
       message.error(`Failed to export diagram: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
+      // Reset exporting state regardless of export outcome
       setExporting(false);
     }
   };
 
   return (
     <Modal
+      // Modal configuration with export settings
       title={
         <Space>
           <DownloadOutlined />
@@ -84,6 +81,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
       width={500}
     >
       <Form layout="vertical" style={{ marginTop: '16px' }}>
+        {/* Export format selection radio buttons */}
         <Form.Item label="Export Format">
           <Radio.Group
             value={format}
@@ -96,6 +94,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </Radio.Group>
         </Form.Item>
 
+        {/* Filename input with dynamic file extension */}
         <Form.Item label="Filename">
           <Input
             value={filename}
@@ -105,8 +104,10 @@ const ExportModal: React.FC<ExportModalProps> = ({
           />
         </Form.Item>
 
+        {/* Conditional rendering for raster format options */}
         {(format === 'png' || format === 'pdf') && (
           <>
+            {/* Background color selection for PNG and PDF */}
             <Form.Item
               label="Background Color"
               extra="Set background color for the exported image"
@@ -127,6 +128,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
               </Space>
             </Form.Item>
 
+            {/* Scale/quality input for PNG format */}
             {format === 'png' && (
               <Form.Item
                 label="Quality (Scale)"
@@ -144,6 +146,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </>
         )}
 
+        {/* Informative alert with format-specific details */}
         <Alert
           message="Export Information"
           description={

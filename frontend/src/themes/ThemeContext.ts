@@ -7,14 +7,14 @@ import { createContext } from 'react';
 import { type ThemeKey } from './antd-themes';
 
 /**
- * ThemeContextType type definition
- * 
- * Describes the structure and properties of ThemeContextType
+ * ThemeContextType defines the shape of theme management context
+ * Provides type safety and ensures consistent theme interaction methods
  */
 export interface ThemeContextType {
-  theme: ThemeKey;
-  toggleTheme: () => void;
-  setTheme: (theme: ThemeKey) => void;
+  theme: ThemeKey; // Current active theme identifier
+  toggleTheme: () => void; // Method to switch between light/dark themes
+  setTheme: (theme: ThemeKey) => void; // Method to explicitly set a specific theme
 }
 
+// Create a context for theme management with optional initial value
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

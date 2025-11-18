@@ -1,3 +1,5 @@
+Here's the TypeScript code with inline comments explaining the logic:
+
 /**
  * Panel2_Preview Component
  *
@@ -20,25 +22,19 @@ import {
 } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
-/**
- * Panel2PreviewProps type definition
- * 
- * Describes the structure and properties of Panel2PreviewProps
- */
+// Define the props structure for the preview component
 interface Panel2PreviewProps {
   svgOutput: string;
   diagramType: string;
   isLoading: boolean;
 }
 
-/**
- * Panel2_Preview component
- */
 const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   svgOutput,
   diagramType,
   isLoading,
 }) => {
+  // State management for zoom, position, and dragging
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -46,60 +42,76 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   const [renderError, _setRenderError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Zoom in function with max limit of 3x
   const handleZoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 0.1, 3));
   }, []);
 
+  // Zoom out function with min limit of 0.5x
   const handleZoomOut = useCallback(() => {
     setScale((prev) => Math.max(prev - 0.1, 0.5));
   }, []);
 
+  // Reset zoom and position to default
   const handleReset = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
   }, []);
 
-  // Mouse wheel zoom (with Ctrl key)
+  // Handle mouse wheel zooming with Ctrl key
   const handleWheel = useCallback((e: React.WheelEvent) => {
+    // Prevent default scrolling and allow zoom with Ctrl key
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      // Constrain zoom between 0.5x and 3x
       setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
     }
   }, []);
 
-  // Keyboard shortcuts (Ctrl+/-/0)
+  // Add keyboard shortcuts for zooming and resetting
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Ctrl key is pressed and SVG is available
       if ((e.ctrlKey || e.metaKey) && svgOutput) {
+        // Zoom in on Ctrl + = or +
         if (e.key === '=' || e.key === '+') {
           e.preventDefault();
           handleZoomIn();
-        } else if (e.key === '-' || e.key === '_') {
+        } 
+        // Zoom out on Ctrl + - or _
+        else if (e.key === '-' || e.key === '_') {
           e.preventDefault();
           handleZoomOut();
-        } else if (e.key === '0') {
+        } 
+        // Reset zoom on Ctrl + 0
+        else if (e.key === '0') {
           e.preventDefault();
           handleReset();
         }
       }
     };
 
+    // Add and remove event listener
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [svgOutput, handleZoomIn, handleZoomOut, handleReset]);
 
-  // Pan/drag functionality
+  // Start dragging when mouse is pressed
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only allow dragging when SVG is loaded and not at default zoom
     if (svgOutput && scale !== 1) {
       setIsDragging(true);
+      // Calculate drag start position relative to current position
       setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
       e.preventDefault();
     }
   }, [svgOutput, scale, position]);
 
+  // Update position while dragging
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
+      // Update position based on mouse movement
       setPosition({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
@@ -107,19 +119,24 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
     }
   }, [isDragging, dragStart]);
 
+  // Stop dragging when mouse is released
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
+  // Stop dragging if mouse leaves the component
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false);
   }, []);
 
+  // Render the preview content
   const renderPreview = () => {
+    // Show empty state if no SVG is generated
     if (!svgOutput) {
       return <Empty description="No diagram generated yet" />;
     }
 
+    // Show error state if rendering failed
     if (renderError) {
       return (
         <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -132,7 +149,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       );
     }
 
-    // For SVG content, render it directly
+    // Render SVG with zoom and pan capabilities
     return (
       <div
         ref={containerRef}
@@ -142,6 +159,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         style={{
+          // Styling for container with dynamic cursor and overflow
           overflow: 'auto',
           display: 'flex',
           alignItems: 'center',
@@ -153,6 +171,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       >
         <div
           style={{
+            // Apply zoom and pan transformations
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: 'center',
             transition: isDragging ? 'none' : 'transform 0.2s ease',
@@ -164,12 +183,14 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
     );
   };
 
+  // Render the full preview component with zoom controls
   return (
     <Card
       title="Preview"
       className={styles.previewPanel}
       extra={
         svgOutput && (
+          // Render zoom control buttons when SVG is available
           <Space>
             <span style={{ fontSize: '12px', color: '#666', marginRight: '8px' }}>
               {Math.round(scale * 100)}%
@@ -209,6 +230,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       <div style={{ flex: 1, overflow: 'auto', display: 'flex' }}>
+        {/* Show loading spinner while diagram is generating */}
         {isLoading ? (
           <div
             style={{
@@ -223,6 +245,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
             </Spin>
           </div>
         ) : (
+          // Render the preview content when not loading
           renderPreview()
         )}
       </div>

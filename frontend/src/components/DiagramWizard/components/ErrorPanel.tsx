@@ -1,3 +1,5 @@
+Here's the code with inline comments added:
+
 /**
  * ErrorPanel Component
  *
@@ -40,10 +42,12 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
   onAutoFix,
   autoFixAvailable = false,
 }) => {
+  // Check if there are any validation issues or suggestions
   const hasErrors = errors.length > 0;
   const hasWarnings = warnings.length > 0;
   const hasSuggestions = suggestions && suggestions.length > 0;
 
+  // If no errors, warnings, or suggestions, show an empty state
   if (!hasErrors && !hasWarnings && !hasSuggestions) {
     return (
       <div style={{ padding: '16px', textAlign: 'center' }}>
@@ -55,6 +59,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
     );
   }
 
+  // Function to get the appropriate icon based on severity
   const getSeverityIcon = (severity: ValidationError['severity']) => {
     switch (severity) {
       case 'error':
@@ -68,6 +73,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
     }
   };
 
+  // Function to get the color tag based on severity
   const getSeverityColor = (severity: ValidationError['severity']) => {
     switch (severity) {
       case 'error':
@@ -83,7 +89,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
 
   return (
     <div style={{ padding: '8px' }}>
-      {/* Summary Alert */}
+      {/* Summary Alert for errors with optional auto-fix button */}
       {hasErrors && (
         <Alert
           message={`${errors.length} error${errors.length > 1 ? 's' : ''} found`}
@@ -105,7 +111,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Errors List */}
+      {/* Render list of errors with clickable line navigation */}
       {hasErrors && (
         <List
           size="small"
@@ -138,7 +144,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Warnings List */}
+      {/* Render list of warnings with clickable line navigation */}
       {hasWarnings && (
         <List
           size="small"
@@ -171,7 +177,7 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
         />
       )}
 
-      {/* Suggestions */}
+      {/* Render suggestions if available */}
       {hasSuggestions && (
         <Alert
           message="Suggestions"

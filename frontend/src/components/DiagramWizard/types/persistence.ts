@@ -1,37 +1,29 @@
-/**
- * DiagramWizard Persistence Types
- * Defines the structure for persisted state in localStorage
- */
+Here's the code with inline comments:
 
-/**
- * DiagramWizardPreferences type definition
- * 
- * Describes the structure and properties of DiagramWizardPreferences
- */
+// Type definitions for DiagramWizard's persistence and state management
+// Provides structured interfaces for storing application preferences and session data
+
+// Defines user preferences for diagram generation and app behavior
 export interface DiagramWizardPreferences {
-  defaultDiagramType: 'Mermaid' | 'D2' | 'PlantUML' | 'auto';
-  autoSave: boolean;
-  keepSessionHistory: boolean;
-  maxHistoryItems: number;
-  theme: 'light' | 'dark' | 'auto';
-  showScoreInfo: boolean;
+  defaultDiagramType: 'Mermaid' | 'D2' | 'PlantUML' | 'auto'; // Specifies default diagram rendering engine
+  autoSave: boolean; // Automatically save session state
+  keepSessionHistory: boolean; // Retain history of previous sessions
+  maxHistoryItems: number; // Limit number of stored historical sessions
+  theme: 'light' | 'dark' | 'auto'; // UI theme selection
+  showScoreInfo: boolean; // Toggle display of diagram generation quality metrics
 }
 
-/**
- * SavedSession type definition
- * 
- * Describes the structure and properties of SavedSession
- */
+// Represents a single saved diagram generation session
 export interface SavedSession {
-  sessionId: string;
-  timestamp: number;
-  initialPrompt: string;
-  diagramType: string;
-  diagramCode: string;
-  svgOutput: string;
-  conversationHistory: Array<[string, string]>;
-  score: number;
-  scoreInfo?: {
+  sessionId: string; // Unique identifier for the session
+  timestamp: number; // Unix timestamp of session creation
+  initialPrompt: string; // Original user input that generated the diagram
+  diagramType: string; // Type of diagram generated
+  diagramCode: string; // Source code/markup for the diagram
+  svgOutput: string; // Rendered diagram as SVG
+  conversationHistory: Array<[string, string]>; // Interaction log between user and system
+  score: number; // Overall quality/relevance score
+  scoreInfo?: { // Optional detailed scoring breakdown
     entities: boolean;
     actions: boolean;
     structure: boolean;
@@ -42,22 +34,19 @@ export interface SavedSession {
   };
 }
 
-/**
- * DiagramWizardPersistedState type definition
- * 
- * Describes the structure and properties of DiagramWizardPersistedState
- */
+// Complete persisted state structure for the entire application
 export interface DiagramWizardPersistedState {
-  preferences: DiagramWizardPreferences;
-  sessionHistory: SavedSession[];
-  lastSession?: SavedSession;
-  stats: {
+  preferences: DiagramWizardPreferences; // User's app-wide preferences
+  sessionHistory: SavedSession[]; // Array of past diagram generation sessions
+  lastSession?: SavedSession; // Most recently created session
+  stats: { // Usage and generation statistics
     totalSessions: number;
     successfulGenerations: number;
     lastUsed: number;
   };
 }
 
+// Default configuration for initial app state
 export const DEFAULT_PREFERENCES: DiagramWizardPreferences = {
   defaultDiagramType: 'auto',
   autoSave: true,
@@ -67,12 +56,13 @@ export const DEFAULT_PREFERENCES: DiagramWizardPreferences = {
   showScoreInfo: true,
 };
 
+// Factory function to create initial persisted state
 export const getInitialPersistedState = (): DiagramWizardPersistedState => ({
-  preferences: DEFAULT_PREFERENCES,
-  sessionHistory: [],
+  preferences: DEFAULT_PREFERENCES, // Start with default preferences
+  sessionHistory: [], // Empty session history
   stats: {
-    totalSessions: 0,
+    totalSessions: 0, // Initialize session counters to zero
     successfulGenerations: 0,
-    lastUsed: Date.now(),
+    lastUsed: Date.now(), // Record current timestamp as last used
   },
 });

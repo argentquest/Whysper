@@ -1,3 +1,5 @@
+Here's the code with added inline comments explaining the logic:
+
 /**
  * Footer Component
  *
@@ -46,8 +48,10 @@ const Footer: React.FC<FooterProps> = ({
   successfulGenerations = 0,
   lastMessage,
 }) => {
-  // Status badge configuration
+  // Determine the status configuration based on current session state
+  // Provides visual and textual representation of the current process
   const getStatusConfig = () => {
+    // Handle case when no active session exists
     if (!sessionId) {
       return {
         status: 'default' as const,
@@ -56,6 +60,8 @@ const Footer: React.FC<FooterProps> = ({
       };
     }
 
+    // Map different status states to visual representations
+    // Provides dynamic status indication based on current process stage
     switch (currentStatus) {
       case 'completed':
         return {
@@ -89,6 +95,7 @@ const Footer: React.FC<FooterProps> = ({
     }
   };
 
+  // Compute status configuration for current session
   const statusConfig = getStatusConfig();
 
   return (
@@ -103,9 +110,9 @@ const Footer: React.FC<FooterProps> = ({
         fontSize: '12px',
       }}
     >
-      {/* Left: Session and SSE status */}
+      {/* Left section: Display session and connection status */}
       <Space size="large">
-        {/* Session Status */}
+        {/* Show current session status with tooltip */}
         <Tooltip title={sessionId ? `Session ID: ${sessionId}` : 'No active session'}>
           <Space size="small">
             {statusConfig.icon}
@@ -113,7 +120,7 @@ const Footer: React.FC<FooterProps> = ({
           </Space>
         </Tooltip>
 
-        {/* SSE Connection */}
+        {/* Display Server-Sent Events (SSE) connection status */}
         <Tooltip title={sseConnected ? 'Real-time updates active' : 'Not connected'}>
           <Space size="small">
             <ApiOutlined style={{ color: sseConnected ? '#52c41a' : '#d9d9d9' }} />
@@ -123,7 +130,7 @@ const Footer: React.FC<FooterProps> = ({
           </Space>
         </Tooltip>
 
-        {/* Last Message */}
+        {/* Show the most recent message if available */}
         {lastMessage && (
           <Tooltip title="Latest update">
             <Text
@@ -137,9 +144,9 @@ const Footer: React.FC<FooterProps> = ({
         )}
       </Space>
 
-      {/* Right: Statistics */}
+      {/* Right section: Display usage statistics */}
       <Space size="large">
-        {/* Total Sessions */}
+        {/* Total number of sessions created */}
         <Tooltip title="Total sessions created">
           <Space size="small">
             <HistoryOutlined />
@@ -147,7 +154,7 @@ const Footer: React.FC<FooterProps> = ({
           </Space>
         </Tooltip>
 
-        {/* Successful Generations */}
+        {/* Number of successfully completed diagrams */}
         <Tooltip title="Successfully completed diagrams">
           <Space size="small">
             <RocketOutlined />
@@ -155,12 +162,13 @@ const Footer: React.FC<FooterProps> = ({
           </Space>
         </Tooltip>
 
-        {/* Success Rate */}
+        {/* Calculate and display success rate if sessions exist */}
         {totalSessions > 0 && (
           <Tooltip title="Success rate">
             <Badge
               count={`${Math.round((successfulGenerations / totalSessions) * 100)}%`}
               style={{
+                // Color-code success rate: green for high, yellow for moderate
                 backgroundColor:
                   successfulGenerations / totalSessions > 0.7 ? '#52c41a' : '#faad14',
               }}
