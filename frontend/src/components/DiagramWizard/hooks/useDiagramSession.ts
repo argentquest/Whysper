@@ -89,52 +89,76 @@ export interface UseDiagramSessionOptions {
 }
 
 export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
+  // Backend session UUID - null until startSession() creates a session
+  // Can be initialized from options.initialSessionId for session-tab binding
   const [sessionId, setSessionId] = useState<string | null>(options.initialSessionId ?? null);
+
+  // Latest session status update received via SSE
+  // Contains: status, history, clarifications, diagramCode, svgOutput, scores, etc.
   const [status, setStatus] = useState<DiagramUpdate | null>(null);
+
+  // Loading state during API requests (startSession, submitClarification, etc.)
   const [loading, setLoading] = useState(false);
+
+  // Error state if any operation fails (API calls, SSE connection, etc.)
   const [error, setError] = useState<Error | null>(null);
+
+  // Track previous status value to detect transitions
+  // Used ref instead of state to avoid triggering re-renders
   const lastStatusRef = useRef<string | null>(null);
 
+  // Utility function to log session events with consistent formatting
   const logEvent = useCallback((label: string, payload?: unknown) => {
     // eslint-disable-next-line no-console
     console.log(`[DiagramSession] ${label}`, payload ?? '');
   }, []);
 
-  // Enhanced SSE hook with automatic reconnection
+  // Configure SSE connection for real-time backend updates
+  // Automatically connects when sessionId is set, disconnects when cleared
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
+
   const {
-    isConnected: sseConnected,
-    error: sseError,
-    messages: sseMessages,
-    clearMessages: clearSSEMessages,
+    isConnected: sseConnected,      // Boolean: true when connection is active
+    error: sseError,                 // Error object if SSE connection fails
+    messages: sseMessages,           // Array of received SSE messages (for debugging)
+    clearMessages: clearSSEMessages, // Function to clear message history
   } = useSSE<DiagramUpdate>({
+    // Construct SSE endpoint URL using session ID
     url: sessionId ? `${API_BASE}/diagram/stream/${sessionId}` : '',
+
+    // Only connect when sessionId exists (prevents premature connections)
     enabled: !!sessionId,
+
+    // Handle incoming SSE messages
     onMessage: (message) => {
+      // Extract update payload from SSE message
       const update = message.data;
 
       logEvent('SSE update', update);
 
-      // Ignore keep-alive pings that don't include a session payload
+      // Ignore keep-alive pings that don't contain session data
+      // Backend sends periodic pings to keep connection alive
       if (!update.session_id) {
         return;
       }
 
-      // Update status
+      // Merge new update with existing status (preserves fields not in current update)
       setStatus((prev) => ({ ...(prev ?? {}), ...update }));
 
-      // Call user's onUpdate callback
+      // Notify parent component of the update
       options.onUpdate?.(update);
 
-      // Track last status
+      // Store status value for transition detection
       lastStatusRef.current = update.status ?? lastStatusRef.current;
 
-      // Check for completion or failure
+      // Check if processing has reached terminal state
       if (update.status === 'completed' || update.status === 'error' || update.status === 'failed') {
         logEvent('SSE completed/failed', update.status);
+
+        // Notify parent that processing is complete
         options.onComplete?.();
 
-        // If failed, treat it as an error
+        // Convert 'failed' status into an error for proper error handling
         if (update.status === 'failed') {
           const errorMessage = update.error || update.message || 'Diagram generation failed';
           const failedError = new Error(errorMessage);
@@ -143,21 +167,29 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         }
       }
     },
+
+    // Handle SSE connection errors
     onError: (err) => {
       logEvent('SSE error', err);
       setError(err);
       options.onError?.(err);
     },
+
+    // Log when SSE connection is established
     onConnect: () => {
       logEvent('SSE connected');
     },
+
+    // Log when SSE connection is lost
     onDisconnect: () => {
       logEvent('SSE disconnected');
     },
-    maxReconnectAttempts: 5,
-    reconnectInterval: 2000,
-    keepAliveTimeout: 30000,
-    autoClose: true,
+
+    // Reconnection configuration
+    maxReconnectAttempts: 5,    // Try reconnecting 5 times before giving up
+    reconnectInterval: 2000,     // Wait 2 seconds before first retry (exponential backoff applied)
+    keepAliveTimeout: 30000,     // Consider connection dead if no message for 30 seconds
+    autoClose: true,             // Automatically close connection when component unmounts
   });
 
   /**
@@ -190,24 +222,42 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     async (initialPrompt: string, diagramType: string = 'Mermaid', modelId?: string) => {
       try {
         logEvent('Starting session', { initialPrompt, diagramType, modelId });
-        setLoading(true);
-        setError(null);
-        lastStatusRef.current = null; // Reset on new session
-        clearSSEMessages(); // Clear previous messages
 
-        // Start the diagram generation with model_id if provided
+        // Set loading state to show UI spinner
+        setLoading(true);
+
+        // Clear any previous error state from last session
+        setError(null);
+
+        // Reset status tracking for new session
+        lastStatusRef.current = null;
+
+        // Clear old SSE messages from previous session
+        clearSSEMessages();
+
+        // Call backend API to create new session and begin AI analysis
+        // Backend returns session_id and initial status
         const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType, modelId);
+
+        // Store session ID - this triggers SSE connection via useSSE hook
         setSessionId(result.session_id);
+
+        // Store initial status from session creation response
         setStatus(result.status as DiagramUpdate);
+
         logEvent('Session started', result.status);
 
-        // SSE connection will auto-start via useSSE hook when sessionId is set
+        // SSE connection will automatically establish when sessionId changes
       } catch (err) {
+        // Handle session creation failure
         const error = err instanceof Error ? err : new Error('Failed to start session');
         setError(error);
         logEvent('Start session failed', error);
+
+        // Notify parent component of the error
         options.onError?.(error);
       } finally {
+        // Clear loading state regardless of success/failure
         setLoading(false);
       }
     },

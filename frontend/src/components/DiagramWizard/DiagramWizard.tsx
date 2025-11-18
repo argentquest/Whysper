@@ -105,129 +105,162 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 }) => {
   // ============ State Management ============
 
-  // localStorage persistence
+  // localStorage persistence - stores user preferences, session history, and stats
+  // Uses versioned key 'diagramWizard.v2' to allow schema migrations
   const [persistedState, setPersistedState] = useLocalStorage<DiagramWizardPersistedState>(
     'diagramWizard.v2',
     getInitialPersistedState()
   );
 
-  // Screen navigation
+  // Screen navigation - controls which UI screen is visible to user
+  // Possible values: 'model' (AI selection), 'description' (input/clarification), 'generation' (result display)
   const [currentScreen, setCurrentScreen] = useState<'model' | 'description' | 'generation'>('model');
+
+  // Selected AI model - initialized from localStorage to remember user's last choice
   const [selectedModel, setSelectedModel] = useState<ModelId | null>(() => {
     try {
+      // Attempt to restore previously selected model from localStorage
       const saved = localStorage.getItem('diagramWizard.selectedModel');
       return (saved as ModelId) || null;
     } catch {
+      // If localStorage read fails, start with no selection
       return null;
     }
   });
 
-  // User input
+  // User input - stores the system description text before session starts
   const [userInput, setUserInput] = useState('');
+
+  // Diagram type - currently hardcoded to Mermaid (future: user selectable)
   const [diagramType] = useState<DiagramType>('Mermaid');
 
-  // Session state
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [currentPhase, setCurrentPhase] = useState(0);
-  const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false);
-  const [score, setScore] = useState(0);
+  // Session state - tracks initialization and processing phases
+  const [isInitializing, setIsInitializing] = useState(false); // True while startSession API call is pending
+  const [currentPhase, setCurrentPhase] = useState(0); // 0-4 index into phases array (Analysis -> Clarification -> Generation -> Rendering)
+  const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false); // True when AI is analyzing initial description
+  const [score, setScore] = useState(0); // Clarity score (0-100) from AI assessment
 
-  // UI state
-  const [exportModalVisible, setExportModalVisible] = useState(false);
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [errorDetails, setErrorDetails] = useState({ title: '', message: '' });
+  // UI state - controls modal visibility and error display
+  const [exportModalVisible, setExportModalVisible] = useState(false); // Export options modal
+  const [errorModalVisible, setErrorModalVisible] = useState(false); // Critical error modal (closes tab)
+  const [errorDetails, setErrorDetails] = useState({ title: '', message: '' }); // Error content for modal
 
   // ============ Diagram Session Hook ============
 
+  // Custom hook that manages the entire diagram session lifecycle
+  // Provides: session state, API methods, SSE connection status, error handling
   const {
-    sessionId,
-    status,
-    error,
-    loading,
-    sseConnected,
-    startSession,
-    submitClarification,
-    confirmReady,
-    endSession,
+    sessionId,          // Backend session UUID (null until session starts)
+    status,            // Current session status object with history, clarifications, diagram code, etc.
+    error,             // Error object if session fails
+    loading,           // True when API request is in flight
+    sseConnected,      // True when Server-Sent Events connection is active
+    startSession,      // Function to initiate new diagram session with user's prompt
+    submitClarification, // Function to send clarification responses back to AI
+    confirmReady,      // Function to signal readiness to proceed with diagram generation
+    endSession,        // Function to cleanup session on backend (called on unmount)
   } = useDiagramSession({
-    initialSessionId,
+    initialSessionId,  // Pre-assigned session ID from tab (enables session-tab binding)
     onUpdate: (update) => {
+      // Callback triggered whenever SSE sends status update from backend
       const statusValue = update.status;
 
-      // Track score
+      // Extract and update clarity score from multiple possible fields
+      // Backend may send 'score' or 'assessment_score' depending on processing stage
       const latestScore = typeof update.score === 'number'
         ? update.score
         : typeof update.assessment_score === 'number'
         ? update.assessment_score
         : undefined;
       if (typeof latestScore === 'number') {
+        // Update UI score display (0-100 scale)
         setScore(latestScore);
       }
 
-      // Handle status changes
+      // Handle different session status values and update UI accordingly
+      // Status transitions: started -> analyzing -> clarifying -> generating -> rendering -> completed
       switch (statusValue) {
         case 'waiting':
+          // AI is processing the request - no UI update needed, just log
           console.log('⏳ AI is processing... waiting for response');
           break;
         case 'started':
-          setCurrentPhase(1);
-          setIsInAnalysisPhase(true);
+          // Session has been created, AI beginning analysis of user's description
+          setCurrentPhase(1); // Move to "Analysis" phase in UI
+          setIsInAnalysisPhase(true); // Enable analysis UI indicators
           message.info('AI received your request and is starting the analysis...');
           break;
         case 'analyzing':
-          setCurrentPhase(1);
+          // AI actively analyzing system description for clarity and completeness
+          setCurrentPhase(1); // Stay in "Analysis" phase
           message.info('Analyzing your system description...');
           break;
         case 'analysis_complete':
+          // AI has finished initial analysis, may proceed to clarification or generation
           message.success('Analysis complete!');
           break;
         case 'clarifying':
-          setCurrentPhase(2);
+          // AI is formulating clarification questions based on gaps in description
+          setCurrentPhase(2); // Move to "Clarification" phase in UI
           message.info('AI is asking clarifying questions...');
           break;
         case 'clarification_ready':
+          // User submitted clarification response, AI processing it
           message.success('Clarification received. Processing...');
           break;
         case 'can_proceed':
+          // AI determined it has sufficient information to generate diagram
           message.success('Ready to proceed with diagram generation!');
           break;
         case 'diagram_type_determined':
+          // AI selected the optimal diagram type (Mermaid/D2/PlantUML) for the system
           message.success('Diagram type selected');
           break;
         case 'generating_json':
-          setCurrentPhase(2);
+          // AI creating structured JSON representation of system architecture
+          setCurrentPhase(2); // Stay in preparation phase
           message.loading('Preparing structured data...');
           break;
         case 'generating':
-          setCurrentPhase(3);
+          // AI actively generating diagram code from structured data
+          setCurrentPhase(3); // Move to "Generation" phase in UI
           message.loading('Generating diagram code...');
           break;
         case 'code_generated':
+          // Diagram code has been successfully generated
           message.success('Code generated!');
           break;
         case 'refining':
+          // Diagram code had validation errors, AI attempting to fix them
           message.warning('Refining code...');
           break;
         case 'fallback_fix':
+          // Primary refinement failed, attempting fallback fix strategy
           message.warning('Attempting fallback fix...');
           break;
         case 'code_refined':
+          // Validation errors resolved, code is now valid
           message.success('Code fixed!');
           break;
         case 'rendering':
+          // Backend rendering diagram code to SVG using appropriate renderer
           message.loading('Rendering SVG...');
           break;
         case 'rendered':
+          // SVG successfully generated and ready for display
           message.success('Preview ready!');
           break;
         case 'completed':
-          setCurrentPhase(4);
+          // Entire workflow complete: analysis -> clarification -> generation -> rendering
+          setCurrentPhase(4); // Move to final "Rendering" phase
           message.success('Complete! ✅');
-          // Move to generation screen if still in analysis
+
+          // Navigate to generation screen if user is still on description screen
           if (currentScreen === 'description') {
             setCurrentScreen('generation');
           }
-          // Save session
+
+          // Persist completed session to localStorage for history/replay
           if (sessionId && diagramCode && svgOutput) {
             saveSessionToHistory({
               sessionId: sessionId,
@@ -239,14 +272,17 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
               conversationHistory: chatHistory,
               score: score,
             });
+
+            // Notify parent component (if provided) that diagram is ready
             onDiagramGenerated?.(diagramCode, svgOutput);
           }
           break;
         case 'error':
+          // Recoverable error occurred during processing
           message.error(`Error: ${update.message || 'Unknown error occurred'}`);
           break;
         case 'failed':
-          // Show error modal popup
+          // Critical failure - show error modal and allow user to close tab
           setErrorDetails({
             title: 'Diagram Generation Failed',
             message: update.error || update.message || 'An unexpected error occurred during diagram generation. Please check your configuration and try again.',
@@ -256,34 +292,41 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       }
     },
     onError: (err) => {
+      // Handle session-level errors (network failures, SSE disconnections, etc.)
       console.error('Session error:', err);
       message.error(`Session error: ${err.message}`);
     },
   });
 
-  // Extract data from status
-  // Convert history from tuples [role, content] to message objects
+  // ============ Data Extraction from Session Status ============
+
+  // Extract conversation history from session status
+  // Backend sends history as array of [role, content] tuples
   const rawHistory = status?.history ?? [];
+
+  // Transform tuples into properly typed message objects for UI display
   const chatHistory = rawHistory.map((item, index) => {
+    // Handle both tuple format [role, content] and object format {role, content}
     const [role, content] = Array.isArray(item) ? item : [item.role, item.content];
 
-    // Add score and JSON data for the latest assistant message
+    // Create base message object with role and content
     const messageObj: any = {
       role: role as 'user' | 'assistant',
       content: content || '',
     };
 
-    // Only show score/JSON on the latest assistant message
+    // Determine if this is the most recent AI response
     const isLatestAssistantMessage = role === 'assistant' &&
       index === rawHistory.length - 1;
 
+    // Attach additional metadata only to the latest AI message
     if (isLatestAssistantMessage) {
-      // Include score if available in status
+      // Include clarity score if AI provided assessment
       if (typeof status?.clarity_score === 'number') {
         messageObj.score = status.clarity_score;
       }
 
-      // Include JSON representation if available
+      // Include structured JSON representation if AI extracted system architecture
       if (status?.jsonRepresentation && Object.keys(status.jsonRepresentation).length > 0) {
         messageObj.jsonData = status.jsonRepresentation;
       }
@@ -291,33 +334,43 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
     return messageObj;
   });
+
+  // Extract generated diagram code (Mermaid/D2/PlantUML syntax)
   const diagramCode = status?.diagramCode ?? '';
+
+  // Extract rendered SVG output (ready for display/export)
   const svgOutput = status?.svgOutput ?? '';
+
+  // Extract clarification questions from AI, normalizing to object format
   const clarifications = (status?.clarifications ?? []).map(q =>
     typeof q === 'string' ? { question: q } : q
   );
 
   // ============ Helper Functions ============
 
+  // Persist completed session to localStorage for history/replay functionality
   const saveSessionToHistory = useCallback(
     (session: SavedSession) => {
+      // Respect user's privacy preference - don't save if disabled
       if (!persistedState.preferences.keepSessionHistory) return;
 
       setPersistedState((prev) => {
+        // Add new session to front of history array, limit to max items
         const newHistory = [session, ...prev.sessionHistory].slice(
           0,
           prev.preferences.maxHistoryItems
         );
 
+        // Update persisted state with new history and updated stats
         return {
           ...prev,
-          sessionHistory: newHistory,
-          lastSession: session,
+          sessionHistory: newHistory, // Updated history array
+          lastSession: session,        // Quick access to most recent session
           stats: {
             ...prev.stats,
-            totalSessions: prev.stats.totalSessions + 1,
-            successfulGenerations: prev.stats.successfulGenerations + 1,
-            lastUsed: Date.now(),
+            totalSessions: prev.stats.totalSessions + 1,                   // Increment total counter
+            successfulGenerations: prev.stats.successfulGenerations + 1,   // Increment success counter
+            lastUsed: Date.now(),                                          // Update timestamp
           },
         };
       });
@@ -327,68 +380,102 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // ============ Event Handlers ============
 
+  // Handle AI model selection from ModelSelectionScreen
   const handleModelSelect = (modelId: ModelId) => {
+    // Store selected model in component state
     setSelectedModel(modelId);
+
+    // Persist model choice to localStorage for next session
     try {
       localStorage.setItem('diagramWizard.selectedModel', modelId);
     } catch (err) {
       console.warn('Failed to save model preference to localStorage:', err);
     }
+
+    // Navigate to system description screen
     setCurrentScreen('description');
+
+    // Show success feedback to user
     message.success(`Selected ${modelId} - ready to start!`);
   };
 
+  // Handle user requesting to change AI model (reset workflow)
   const handleChangeModel = () => {
+    // Navigate back to model selection screen
     setCurrentScreen('model');
+
+    // Clear all session state to start fresh
     setSelectedModel(null);
     setUserInput('');
     setCurrentPhase(0);
     setIsInAnalysisPhase(false);
+
+    // Remove persisted model preference
     localStorage.removeItem('diagramWizard.selectedModel');
   };
 
+  // Handle user clicking "Start Conversation" to begin diagram generation
   const handleStartDiagram = async (prompt: string) => {
+    // Validate user input is not empty
     if (!prompt.trim()) {
       message.warning('Please enter a system description');
       return;
     }
+
+    // Ensure model was selected
     if (!selectedModel) {
       message.warning('Please select an AI model first');
       return;
     }
+
+    // Prevent multiple concurrent sessions
     if (sessionId || isInitializing || loading) {
       message.warning('Session already in progress');
       return;
     }
 
     try {
+      // Set loading state to show spinner
       setIsInitializing(true);
+
+      // Reset phase and score for new session
       setCurrentPhase(0);
-      setScore(0); // Clear score when starting new diagram
+      setScore(0);
+
       console.log('🚀 Starting new diagram session with model:', selectedModel);
+
+      // Call API to create session and begin AI analysis
       await startSession(prompt, diagramType, selectedModel);
+
       console.log('✅ Session started, waiting for AI analysis...');
     } catch (err) {
+      // Handle session creation failure
       console.error('❌ Failed to start session:', err);
       message.error(`Failed to start AI analysis: ${err}`);
       setCurrentPhase(0);
     } finally {
+      // Clear loading state and input field
       setIsInitializing(false);
       setUserInput('');
     }
   };
 
+  // Handle user submitting clarification response to AI's questions
   const handleSubmitClarification = async (clarification: string) => {
+    // Validate clarification is not empty
     if (!clarification.trim()) {
       message.warning('Please provide clarification details');
       return;
     }
+
+    // Ensure session is active
     if (!sessionId) {
       message.error('No active session');
       return;
     }
 
     try {
+      // Send clarification to backend, which triggers AI processing
       await submitClarification(clarification);
     } catch (err) {
       console.error('Clarification submission failed:', err);
@@ -396,14 +483,19 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
   };
 
+  // Handle user clicking "Ready to Generate" to skip further clarifications
   const handleConfirmReady = async () => {
+    // Ensure session is active
     if (!sessionId) {
       message.error('No active session');
       return;
     }
 
     try {
+      // Signal backend that user is satisfied with clarification
       await confirmReady();
+
+      // Navigate to generation screen to show diagram code/preview
       setCurrentScreen('generation');
     } catch (err) {
       console.error('Confirm ready failed:', err);
@@ -411,44 +503,59 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
   };
 
+  // Handle user clicking export button
   const handleExportClick = () => {
+    // Show export modal with format options
     setExportModalVisible(true);
   };
 
+  // Handle closing export modal
   const handleExportModalClose = () => {
+    // Hide export modal
     setExportModalVisible(false);
   };
 
+  // Handle user clicking "New Diagram" to start completely fresh
   const handleNewDiagram = () => {
+    // Navigate back to model selection
     setCurrentScreen('model');
+
+    // Reset all state to initial values
     setSelectedModel(null);
     setUserInput('');
     setCurrentPhase(0);
     setIsInAnalysisPhase(false);
     setScore(0);
+
+    // Clear persisted model preference
     localStorage.removeItem('diagramWizard.selectedModel');
   };
 
   // ============ Effects ============
 
+  // Effect: Populate input field with initialPrompt prop if provided
   useEffect(() => {
     if (initialPrompt && !sessionId && !isInitializing) {
+      // Set user input to pre-filled prompt (doesn't auto-start session)
       setUserInput(initialPrompt);
       console.log('📝 Initial prompt set, waiting for user to start manually');
     }
   }, [initialPrompt, sessionId, isInitializing]);
 
+  // Effect: Reset score when session ends
   useEffect(() => {
     if (!sessionId) {
+      // No active session means no valid score - reset to 0
       setScore(0);
     }
   }, [sessionId]);
 
-  // Cleanup session when component unmounts (tab is closed)
+  // Effect: Cleanup backend session when component unmounts (tab closed)
   useEffect(() => {
     return () => {
-      // Clean up the backend session when the tab is closed
+      // Cleanup function runs when component is destroyed
       if (sessionId) {
+        // Tell backend to cleanup session resources (memory, SSE connection, etc.)
         endSession().catch(err => {
           console.error('Error cleaning up diagram session:', err);
         });
@@ -458,25 +565,30 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // ============ Render ============
 
-  // Handler for error modal OK button - close the Whysper tab
+  // Handle error modal OK button - close the Whysper tab on critical failure
   const handleErrorModalOk = () => {
+    // Hide error modal
     setErrorModalVisible(false);
-    // Close the Whysper tab if callback provided
+
+    // Attempt to close the Whysper tab using onClose callback
     if (onClose) {
       onClose();
     } else {
-      // Fallback: close browser tab
+      // Fallback: try to close browser tab programmatically
       window.close();
+
+      // If close() fails (can only close tabs opened by script), redirect
       setTimeout(() => {
         window.location.href = 'about:blank';
       }, 100);
     }
   };
 
-  // Render the appropriate screen
+  // Determine which screen to render based on current state
   let screenContent;
 
   // Screen 1: Model Selection
+  // Show if no model selected OR user explicitly navigated back
   if (!selectedModel || currentScreen === 'model') {
     screenContent = (
       <ModelSelectionScreen
@@ -486,6 +598,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     );
   }
   // Screen 2: System Description + Analysis + Clarification
+  // Show if model selected but no session started OR explicit description screen navigation
   else if (currentScreen === 'description' || (!sessionId && selectedModel)) {
     screenContent = (
       <SystemDescriptionScreen
@@ -512,6 +625,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     );
   }
   // Screen 3: Generation + Rendering
+  // Show once session is active and user has moved to generation phase
   else {
     screenContent = (
       <GenerationScreen
@@ -533,7 +647,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}
         onExportSubmit={async (filename, format) => {
-          // TODO: Implement export logic
+          // TODO: Implement export logic (download diagram as file)
           console.log('Export:', { filename, format, diagramCode, svgOutput });
         }}
         error={error ? { message: error.message } : undefined}
