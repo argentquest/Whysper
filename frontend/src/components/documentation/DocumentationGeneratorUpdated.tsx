@@ -14,11 +14,21 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+/**
+ * DocumentationGeneratorProps type definition
+ * 
+ * Describes the structure and properties of DocumentationGeneratorProps
+ */
 interface DocumentationGeneratorProps {
   selectedFiles: string[];
   onDocumentationGenerated?: (content: string) => void;
 }
 
+/**
+ * DocumentationRequest type definition
+ * 
+ * Describes the structure and properties of DocumentationRequest
+ */
 interface DocumentationRequest {
   file_paths: string[];
   documentation_type: string;
@@ -30,6 +40,11 @@ interface DocumentationRequest {
   language?: string;
 }
 
+/**
+ * ExportFormatOption type definition
+ * 
+ * Describes the structure and properties of ExportFormatOption
+ */
 interface ExportFormatOption {
   value: string;
   label: string;
@@ -37,6 +52,9 @@ interface ExportFormatOption {
   options?: Record<string, any>;
 }
 
+/**
+ * DocumentationGenerator component
+ */
 const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
   selectedFiles,
   onDocumentationGenerated

@@ -1,3 +1,8 @@
+/**
+ * DocumentationView Components
+ * 
+ * This module contains component definitions and exports for DocumentationView.
+ */
 import React from 'react';
 import { Card, Typography, Divider, Button } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
@@ -6,12 +11,20 @@ import remarkGfm from 'remark-gfm';
 
 const { Title, Paragraph } = Typography;
 
+/**
+ * DocumentationViewProps type definition
+ * 
+ * Describes the structure and properties of DocumentationViewProps
+ */
 interface DocumentationViewProps {
   content: string;
   metadata: Record<string, any>;
   onDownload: (session_guid: string) => void; // Pass session_guid
 }
 
+/**
+ * DocumentationView component
+ */
 export const DocumentationView: React.FC<DocumentationViewProps> = ({ content, metadata, onDownload }) => {
   const session_guid = metadata.session_guid;
 

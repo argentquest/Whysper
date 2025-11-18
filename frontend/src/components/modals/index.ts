@@ -1,3 +1,8 @@
+/**
+ * index Components
+ * 
+ * This module contains component definitions and exports for index.
+ */
 export { default as Modal } from '../common/Modal';
 export { default as ContextModal } from './ContextModal';
 export { default as FileTreeModal } from './FileTreeModal';

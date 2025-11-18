@@ -1,3 +1,8 @@
+/**
+ * Header Component
+ * 
+ * This module exports the Header component for the application.
+ */
 // @ts-nocheck
 import React from 'react';
 import type { AgentPrompt } from '../../types';
@@ -21,6 +26,11 @@ const { Header: AntHeader } = Layout;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/**
+ * HeaderProps type definition
+ * 
+ * Describes the structure and properties of HeaderProps
+ */
 interface HeaderProps {
   onSetContext: () => void;
   onNewConversation: () => void;
@@ -44,6 +54,9 @@ interface HeaderProps {
   agentPrompts?: AgentPrompt[];
 }
 
+/**
+ * Header component
+ */
 export const Header: React.FC<HeaderProps> = ({
   onSetContext,
   onNewConversation,

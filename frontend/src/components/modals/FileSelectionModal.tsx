@@ -1,3 +1,8 @@
+/**
+ * FileSelectionModal Component
+ * 
+ * This module exports the FileSelectionModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Button, Input, Space, Typography, Spin, message } from 'antd';
 import {
@@ -14,6 +19,11 @@ import ApiService from '../../services/api';
 const { Search } = Input;
 const { Text } = Typography;
 
+/**
+ * FileSelectionModalProps type definition
+ * 
+ * Describes the structure and properties of FileSelectionModalProps
+ */
 interface FileSelectionModalProps {
   open: boolean;
   onCancel: () => void;
@@ -21,6 +31,9 @@ interface FileSelectionModalProps {
   onCreateNewFile: () => void;
 }
 
+/**
+ * FileSelectionModal component
+ */
 export const FileSelectionModal: React.FC<FileSelectionModalProps> = ({
   open,
   onCancel,

@@ -1,3 +1,8 @@
+/**
+ * InputPanel Component
+ * 
+ * This module exports the InputPanel component for the application.
+ */
 import React, { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Button, Select, Tooltip, message as antMessage } from 'antd';
 import {
@@ -51,12 +56,22 @@ const ActionLink: React.FC<{
   </Tooltip>
 );
 
+/**
+ * SubagentCommand type definition
+ * 
+ * Describes the structure and properties of SubagentCommand
+ */
 interface SubagentCommand {
   category: string;
   title: string;
   subcommand: string;
 }
 
+/**
+ * InputPanelProps type definition
+ * 
+ * Describes the structure and properties of InputPanelProps
+ */
 interface InputPanelProps {
   onSendMessage: (message: string, command?: string) => void;
   onClear: () => void;
@@ -65,6 +80,9 @@ interface InputPanelProps {
   subagentCommands?: SubagentCommand[];
 }
 
+/**
+ * InputPanel component
+ */
 export const InputPanel: React.FC<InputPanelProps> = ({
   onSendMessage,
   onClear,

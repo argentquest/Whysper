@@ -1,3 +1,8 @@
+/**
+ * NewFileModal Component
+ * 
+ * This module exports the NewFileModal component for the application.
+ */
 import React, { useState } from 'react';
 import { Input, Button, Select, message, Form } from 'antd';
 import {
@@ -8,6 +13,11 @@ import { Modal } from '../common/Modal';
 
 const { Option } = Select;
 
+/**
+ * NewFileModalProps type definition
+ * 
+ * Describes the structure and properties of NewFileModalProps
+ */
 interface NewFileModalProps {
   open: boolean;
   onCancel: () => void;
@@ -29,6 +39,11 @@ function exampleFunction() {
   'typescript': {
     extension: '.ts',
     content: `// New TypeScript file
+/**
+ * ExampleInterface type definition
+ * 
+ * Describes the structure and properties of ExampleInterface
+ */
 interface ExampleInterface {
     message: string;
 }
@@ -60,10 +75,18 @@ if __name__ == "__main__":
     extension: '.tsx',
     content: `import React from 'react';
 
+/**
+ * Props type definition
+ * 
+ * Describes the structure and properties of Props
+ */
 interface Props {
     // Add your props here
 }
 
+/**
+ * NewComponent component
+ */
 export const NewComponent: React.FC<Props> = () => {
     return (
         <div>
@@ -163,6 +186,9 @@ You can add any content here.
   },
 };
 
+/**
+ * NewFileModal component
+ */
 export const NewFileModal: React.FC<NewFileModalProps> = ({
   open,
   onCancel,

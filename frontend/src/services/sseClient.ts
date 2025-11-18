@@ -6,20 +6,40 @@
  * validation, rendering, and AI processing.
  */
 
+/**
+ * ProgressEvent type definition
+ * 
+ * Describes the structure and properties of ProgressEvent
+ */
 export interface ProgressEvent {
   stage: string;
   message: string;
 }
 
+/**
+ * ErrorEvent type definition
+ * 
+ * Describes the structure and properties of ErrorEvent
+ */
 export interface ErrorEvent {
   error: string;
 }
 
+/**
+ * CompleteEvent type definition
+ * 
+ * Describes the structure and properties of CompleteEvent
+ */
 export interface CompleteEvent {
   message: any;
   conversationId: string;
 }
 
+/**
+ * SSECallbacks type definition
+ * 
+ * Describes the structure and properties of SSECallbacks
+ */
 export interface SSECallbacks {
   onProgress?: (event: ProgressEvent) => void;
   onError?: (event: ErrorEvent) => void;

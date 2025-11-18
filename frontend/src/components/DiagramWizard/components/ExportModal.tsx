@@ -11,6 +11,11 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { exportDiagram, getSVGElement } from '@/services/diagram/exportService';
 import type { ExportFormat } from '@/services/diagram/exportService';
 
+/**
+ * ExportModalProps type definition
+ * 
+ * Describes the structure and properties of ExportModalProps
+ */
 interface ExportModalProps {
   visible: boolean;
   onClose: () => void;
@@ -18,6 +23,9 @@ interface ExportModalProps {
   defaultFilename?: string;
 }
 
+/**
+ * ExportModal component
+ */
 const ExportModal: React.FC<ExportModalProps> = ({
   visible,
   onClose,

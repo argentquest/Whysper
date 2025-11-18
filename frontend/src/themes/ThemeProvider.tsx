@@ -1,8 +1,18 @@
+/**
+ * ThemeProvider Theme Configuration
+ * 
+ * Theme-related configuration and utilities for the application.
+ */
 import React, { useEffect, useState } from 'react';
 import { ConfigProvider } from 'antd';
 import { getThemeConfig, type ThemeKey, themes } from './antd-themes';
 import { ThemeContext, type ThemeContextType } from './ThemeContext';
 
+/**
+ * ThemeProviderProps type definition
+ * 
+ * Describes the structure and properties of ThemeProviderProps
+ */
 interface ThemeProviderProps {
   children: React.ReactNode;
 }
@@ -50,6 +60,9 @@ const applyCssVariables = (token: Record<string, unknown>) => {
   });
 };
 
+/**
+ * ThemeProvider function
+ */
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Initialize theme from localStorage or default
   const [theme, setThemeState] = useState<ThemeKey>(() => {

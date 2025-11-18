@@ -7,6 +7,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+/**
+ * SSEMessage type definition
+ * 
+ * Describes the structure and properties of SSEMessage
+ */
 export interface SSEMessage<T = any> {
   id: string;
   type: string;
@@ -15,6 +20,11 @@ export interface SSEMessage<T = any> {
   isRead: boolean;
 }
 
+/**
+ * UseSSEOptions type definition
+ * 
+ * Describes the structure and properties of UseSSEOptions
+ */
 export interface UseSSEOptions<T = any> {
   url: string;
   enabled?: boolean;
@@ -28,6 +38,11 @@ export interface UseSSEOptions<T = any> {
   autoClose?: boolean; // Auto-close on completed/error status
 }
 
+/**
+ * UseSSEReturn type definition
+ * 
+ * Describes the structure and properties of UseSSEReturn
+ */
 export interface UseSSEReturn<T = any> {
   messages: SSEMessage<T>[];
   isConnected: boolean;

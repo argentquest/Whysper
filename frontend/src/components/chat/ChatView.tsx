@@ -1,3 +1,8 @@
+/**
+ * ChatView Component
+ * 
+ * This module exports the ChatView component for the application.
+ */
 // @ts-nocheck
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, Button, Typography, Tooltip, Avatar, Dropdown, Modal, App } from 'antd';
@@ -160,6 +165,11 @@ const printMessageElement = (messageId: string) => {
   }, 500);
 };
 
+/**
+ * MessageItemProps type definition
+ * 
+ * Describes the structure and properties of MessageItemProps
+ */
 interface MessageItemProps {
   message: Message;
   onShowCode?: (code: string, language: string, title?: string) => void;
@@ -462,6 +472,9 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
   return parts;
 };
 
+/**
+ * MessageItem component
+ */
 const MessageItem: React.FC<MessageItemProps> = ({
   message,
   onShowCode
@@ -1362,6 +1375,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
   );
 };
 
+/**
+ * ChatViewProps type definition
+ * 
+ * Describes the structure and properties of ChatViewProps
+ */
 interface ChatViewProps {
   messages: Message[];
   loading?: boolean;
@@ -1369,6 +1387,9 @@ interface ChatViewProps {
   onExtractCode: (messageId: string) => void;
 }
 
+/**
+ * ChatView component
+ */
 export const ChatView: React.FC<ChatViewProps> = ({
   messages,
   loading = false,

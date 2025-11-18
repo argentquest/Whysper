@@ -1,3 +1,8 @@
+/**
+ * ContextModal Component
+ * 
+ * This module exports the ContextModal component for the application.
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented } from 'antd';
 import {
@@ -27,6 +32,11 @@ const { Text } = Typography;
  * @property {(selectedFiles: FileItem[]) => void} onApply - Callback triggered when files are selected and applied
  * @property {FileItem[]} [initialFiles] - Pre-selected files to initialize the modal with
  */
+/**
+ * ContextModalProps type definition
+ * 
+ * Describes the structure and properties of ContextModalProps
+ */
 interface ContextModalProps {
   open: boolean;
   onCancel: () => void;
@@ -53,6 +63,9 @@ interface ContextModalProps {
  * 
  * @param {ContextModalProps} props - Component props
  * @returns {JSX.Element} Rendered context selection modal
+ */
+/**
+ * ContextModal component
  */
 export const ContextModal: React.FC<ContextModalProps> = ({
   open,

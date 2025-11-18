@@ -13,11 +13,21 @@ import ApiService from '../../services/api';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+/**
+ * DocumentationGeneratorProps type definition
+ * 
+ * Describes the structure and properties of DocumentationGeneratorProps
+ */
 interface DocumentationGeneratorProps {
   selectedFiles: string[];
   onDocumentationGenerated?: (content: string) => void;
 }
 
+/**
+ * DocumentationRequest type definition
+ * 
+ * Describes the structure and properties of DocumentationRequest
+ */
 interface DocumentationRequest {
   file_paths: string[];
   documentation_type: string;
@@ -29,6 +39,9 @@ interface DocumentationRequest {
   language?: string;
 }
 
+/**
+ * DocumentationGenerator component
+ */
 const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
   selectedFiles,
   onDocumentationGenerated

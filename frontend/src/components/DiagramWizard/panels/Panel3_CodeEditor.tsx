@@ -26,6 +26,11 @@ import type { ValidationResult } from '../../../services/diagram/validationServi
 import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
 
+/**
+ * Panel3CodeEditorProps type definition
+ * 
+ * Describes the structure and properties of Panel3CodeEditorProps
+ */
 interface Panel3CodeEditorProps {
   code: string;
   diagramType: string;
@@ -33,6 +38,9 @@ interface Panel3CodeEditorProps {
   isLoading: boolean;
 }
 
+/**
+ * Panel3_CodeEditor component
+ */
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
   diagramType,

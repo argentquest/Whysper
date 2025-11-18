@@ -1,3 +1,8 @@
+/**
+ * StatusBar Component
+ * 
+ * This module exports the StatusBar component for the application.
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { Space, Tag, Typography, Tooltip, Button, Badge, Popover } from 'antd';
 import {
@@ -14,6 +19,11 @@ import { BrandColors } from 'branding';
 
 const { Text } = Typography;
 
+/**
+ * LogEvent type definition
+ * 
+ * Describes the structure and properties of LogEvent
+ */
 interface LogEvent {
   timestamp: string;
   level: string;
@@ -21,6 +31,11 @@ interface LogEvent {
   logger: string;
 }
 
+/**
+ * StatusBarProps type definition
+ * 
+ * Describes the structure and properties of StatusBarProps
+ */
 interface StatusBarProps {
   status: 'ready' | 'loading' | 'error';
   provider?: string;
@@ -34,6 +49,9 @@ interface StatusBarProps {
   conversationId?: string;  // For session-specific log filtering
 }
 
+/**
+ * StatusBar component
+ */
 export const StatusBar: React.FC<StatusBarProps> = ({
   status,
   provider = 'openrouter',

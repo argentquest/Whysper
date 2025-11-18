@@ -1,3 +1,8 @@
+/**
+ * MermaidDiagram Components
+ * 
+ * This module contains component definitions and exports for MermaidDiagram.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Button, Space, message as antMessage, Tooltip, Tag } from 'antd';
 import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, CheckCircleOutlined } from '@ant-design/icons';
@@ -5,11 +10,19 @@ import { ApiService } from '../../services/api';
 import diagramProviderService from '../../services/diagramProviderService';
 import type { ProviderInfo, DiagramRenderResponse } from '../../services/diagramProviderService';
 
+/**
+ * MermaidDiagramProps type definition
+ * 
+ * Describes the structure and properties of MermaidDiagramProps
+ */
 interface MermaidDiagramProps {
   code: string;
   title?: string;
 }
 
+/**
+ * MermaidDiagram component
+ */
 export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);

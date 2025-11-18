@@ -71,6 +71,11 @@ import { getInitialPersistedState } from './types/persistence';
  * @property {string} [sessionId] - Pre-assigned backend session ID from the parent tab.
  *                                  Allows session lifecycle to be bound to tab lifecycle.
  */
+/**
+ * DiagramWizardProps type definition
+ * 
+ * Describes the structure and properties of DiagramWizardProps
+ */
 interface DiagramWizardProps {
   onDiagramGenerated?: (code: string, svg: string) => void;
   initialPrompt?: string;
@@ -88,6 +93,9 @@ const phases = [
   { title: 'Rendering', description: 'Visualizing the diagram', icon: '🎨' },
 ];
 
+/**
+ * DiagramWizard component
+ */
 export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
   initialPrompt,

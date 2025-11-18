@@ -1,3 +1,8 @@
+/**
+ * TabManager Component
+ * 
+ * This module exports the TabManager component for the application.
+ */
 // @ts-nocheck
 import React from 'react';
 import { Tabs, Button, Space, Tooltip, Dropdown, Typography, theme as antdTheme } from 'antd';
@@ -15,6 +20,11 @@ import type { Tab } from '../../types';
 import { BrandColors } from 'branding';
 const { Link } = Typography;
 
+/**
+ * TabManagerProps type definition
+ * 
+ * Describes the structure and properties of TabManagerProps
+ */
 interface TabManagerProps {
   tabs: Tab[];
   activeTabId: string;
@@ -27,6 +37,9 @@ interface TabManagerProps {
   onTabsAction?: (action: string, tabId?: string) => void;
 }
 
+/**
+ * TabManager component
+ */
 export const TabManager: React.FC<TabManagerProps> = ({
   tabs,
   activeTabId,

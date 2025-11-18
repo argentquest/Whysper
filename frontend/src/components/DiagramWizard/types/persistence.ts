@@ -3,6 +3,11 @@
  * Defines the structure for persisted state in localStorage
  */
 
+/**
+ * DiagramWizardPreferences type definition
+ * 
+ * Describes the structure and properties of DiagramWizardPreferences
+ */
 export interface DiagramWizardPreferences {
   defaultDiagramType: 'Mermaid' | 'D2' | 'PlantUML' | 'auto';
   autoSave: boolean;
@@ -12,6 +17,11 @@ export interface DiagramWizardPreferences {
   showScoreInfo: boolean;
 }
 
+/**
+ * SavedSession type definition
+ * 
+ * Describes the structure and properties of SavedSession
+ */
 export interface SavedSession {
   sessionId: string;
   timestamp: number;
@@ -32,6 +42,11 @@ export interface SavedSession {
   };
 }
 
+/**
+ * DiagramWizardPersistedState type definition
+ * 
+ * Describes the structure and properties of DiagramWizardPersistedState
+ */
 export interface DiagramWizardPersistedState {
   preferences: DiagramWizardPreferences;
   sessionHistory: SavedSession[];

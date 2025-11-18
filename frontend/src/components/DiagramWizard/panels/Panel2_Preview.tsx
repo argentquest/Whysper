@@ -20,12 +20,20 @@ import {
 } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
+/**
+ * Panel2PreviewProps type definition
+ * 
+ * Describes the structure and properties of Panel2PreviewProps
+ */
 interface Panel2PreviewProps {
   svgOutput: string;
   diagramType: string;
   isLoading: boolean;
 }
 
+/**
+ * Panel2_Preview component
+ */
 const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   svgOutput,
   diagramType,

@@ -1,3 +1,8 @@
+/**
+ * FileEditorView Component
+ * 
+ * This module exports the FileEditorView component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Spin, Alert, Button, message } from 'antd';
 import { FileOutlined, SaveOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -5,6 +10,11 @@ import MonacoEditor from './MonacoEditor';
 import ApiService from '../../services/api';
 import type { Tab } from '../../types';
 
+/**
+ * FileEditorViewProps type definition
+ * 
+ * Describes the structure and properties of FileEditorViewProps
+ */
 interface FileEditorViewProps {
   tab: Tab;
   onContentChange: (tabId: string, content: string, isDirty: boolean) => void;
@@ -12,6 +22,9 @@ interface FileEditorViewProps {
   theme: 'light' | 'dark';
 }
 
+/**
+ * FileEditorView component
+ */
 export const FileEditorView: React.FC<FileEditorViewProps> = ({
   tab,
   onContentChange,

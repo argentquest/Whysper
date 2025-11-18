@@ -1,9 +1,19 @@
+/**
+ * MonacoEditor Component
+ * 
+ * This module exports the MonacoEditor component for the application.
+ */
 import React, { useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, Tooltip, Space, message } from 'antd';
 import { SaveOutlined, UndoOutlined, RedoOutlined, ExpandOutlined, CompressOutlined } from '@ant-design/icons';
 import type { editor } from 'monaco-editor';
 
+/**
+ * MonacoEditorProps type definition
+ * 
+ * Describes the structure and properties of MonacoEditorProps
+ */
 interface MonacoEditorProps {
   value: string;
   language: string;
@@ -20,6 +30,9 @@ interface MonacoEditorProps {
 type OnMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => void;
 type OnChange = (value: string | undefined, event: any) => void;
 
+/**
+ * MonacoEditor component
+ */
 export const MonacoEditor: React.FC<MonacoEditorProps> = ({
   value,
   language,

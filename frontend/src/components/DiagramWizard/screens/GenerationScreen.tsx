@@ -22,6 +22,11 @@ import Footer from '../components/Footer';
 import type { ModelId } from './ModelSelectionScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
 
+/**
+ * GenerationScreenProps type definition
+ * 
+ * Describes the structure and properties of GenerationScreenProps
+ */
 interface GenerationScreenProps {
   selectedModel: ModelId;
   currentPhase: number;
@@ -45,6 +50,9 @@ interface GenerationScreenProps {
   error?: { message: string };
 }
 
+/**
+ * GenerationScreen component
+ */
 export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   selectedModel,
   currentPhase,

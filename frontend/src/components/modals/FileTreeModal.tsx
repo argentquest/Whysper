@@ -1,3 +1,8 @@
+/**
+ * FileTreeModal Component
+ * 
+ * This module exports the FileTreeModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Tree, Button, Input, Space, Typography, Spin, message, Checkbox } from 'antd';
 import {
@@ -16,6 +21,11 @@ import ApiService from '../../services/api';
 const { Search } = Input;
 const { Text } = Typography;
 
+/**
+ * FileTreeModalProps type definition
+ * 
+ * Describes the structure and properties of FileTreeModalProps
+ */
 interface FileTreeModalProps {
   open: boolean;
   onCancel: () => void;
@@ -23,6 +33,11 @@ interface FileTreeModalProps {
   initialFiles?: FileItem[];
 }
 
+/**
+ * TreeNode type definition
+ * 
+ * Describes the structure and properties of TreeNode
+ */
 interface TreeNode extends DataNode {
   key: string;
   title: React.ReactNode;
@@ -33,6 +48,9 @@ interface TreeNode extends DataNode {
   type: 'file' | 'directory';
 }
 
+/**
+ * FileTreeModal component
+ */
 export const FileTreeModal: React.FC<FileTreeModalProps> = ({
   open,
   onCancel,

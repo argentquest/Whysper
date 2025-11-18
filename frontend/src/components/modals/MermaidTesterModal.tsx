@@ -1,3 +1,8 @@
+/**
+ * MermaidTesterModal Component
+ * 
+ * This module exports the MermaidTesterModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Button, message, Typography } from 'antd';
 import { PlayCircleOutlined, CheckCircleOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -7,11 +12,21 @@ import { useTheme } from '../../themes';
 
 const { Title, Text } = Typography;
 
+/**
+ * MermaidTesterModalProps type definition
+ * 
+ * Describes the structure and properties of MermaidTesterModalProps
+ */
 interface MermaidTesterModalProps {
   open: boolean;
   onCancel: () => void;
 }
 
+/**
+ * ValidationResult type definition
+ * 
+ * Describes the structure and properties of ValidationResult
+ */
 interface ValidationResult {
   is_valid: boolean;
   error: string | null;
@@ -21,6 +36,11 @@ interface ValidationResult {
   fix_message: string | null;
 }
 
+/**
+ * RenderResult type definition
+ * 
+ * Describes the structure and properties of RenderResult
+ */
 interface RenderResult {
   success: boolean;
   content: string | null;
@@ -105,6 +125,9 @@ const TEST_CASES = {
   },
 };
 
+/**
+ * MermaidTesterModal component
+ */
 export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
   open,
   onCancel,

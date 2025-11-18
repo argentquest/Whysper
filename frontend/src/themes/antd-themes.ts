@@ -1,3 +1,8 @@
+/**
+ * antd-themes Theme Configuration
+ * 
+ * Theme-related configuration and utilities for the application.
+ */
 import { theme } from 'antd';
 import { DefaultLightTheme, DefaultDarkTheme, BrandColors } from 'branding';
 
@@ -487,6 +492,10 @@ export const getThemeConfig = (themeKey: ThemeKey): any => {
   return config;
 };
 
+/**
+ * getThemeList function
+ * @returns Return value description
+ */
 export const getThemeList = () => {
   return Object.entries(themes).map(([key, theme]) => ({
     key: key as ThemeKey,

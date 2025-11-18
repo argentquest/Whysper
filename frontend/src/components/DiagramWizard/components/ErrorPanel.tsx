@@ -15,6 +15,11 @@ import {
 } from '@ant-design/icons';
 import type { ValidationError } from '../../../services/diagram/validationService';
 
+/**
+ * ErrorPanelProps type definition
+ * 
+ * Describes the structure and properties of ErrorPanelProps
+ */
 interface ErrorPanelProps {
   errors: ValidationError[];
   warnings: ValidationError[];
@@ -24,6 +29,9 @@ interface ErrorPanelProps {
   autoFixAvailable?: boolean;
 }
 
+/**
+ * ErrorPanel component
+ */
 const ErrorPanel: React.FC<ErrorPanelProps> = ({
   errors,
   warnings,

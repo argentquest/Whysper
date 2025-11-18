@@ -1,3 +1,8 @@
+/**
+ * C4Diagram Components
+ * 
+ * This module contains component definitions and exports for C4Diagram.
+ */
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Button, Space, message as antMessage, Tag } from 'antd';
@@ -13,11 +18,19 @@ import diagramProviderService from '../../services/diagramProviderService';
  * All rendering happens server-side to avoid client-side D2 library dependencies.
  */
 
+/**
+ * C4DiagramProps type definition
+ * 
+ * Describes the structure and properties of C4DiagramProps
+ */
 interface C4DiagramProps {
   code: string;
   title?: string;
 }
 
+/**
+ * C4Diagram component
+ */
 export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);

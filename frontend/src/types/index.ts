@@ -1,6 +1,16 @@
+/**
+ * index Type Definitions
+ * 
+ * TypeScript type definitions and interfaces for index.
+ */
 // Core application types
 import type { ThemeKey } from '../themes/antd-themes';
 
+/**
+ * Conversation type definition
+ * 
+ * Describes the structure and properties of Conversation
+ */
 export interface Conversation {
   id: string;
   title: string;
@@ -9,6 +19,11 @@ export interface Conversation {
   updatedAt: string;
 }
 
+/**
+ * Message type definition
+ * 
+ * Describes the structure and properties of Message
+ */
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -28,6 +43,11 @@ export interface Message {
   };
 }
 
+/**
+ * CodeBlock type definition
+ * 
+ * Describes the structure and properties of CodeBlock
+ */
 export interface CodeBlock {
   id: string;
   language: string;
@@ -35,12 +55,22 @@ export interface CodeBlock {
   filename?: string;
 }
 
+/**
+ * MermaidDiagram type definition
+ * 
+ * Describes the structure and properties of MermaidDiagram
+ */
 export interface MermaidDiagram {
   id: string;
   code: string;
   title?: string;
 }
 
+/**
+ * D2Diagram type definition
+ * 
+ * Describes the structure and properties of D2Diagram
+ */
 export interface D2Diagram {
   id: string;
   code: string;
@@ -48,6 +78,11 @@ export interface D2Diagram {
   svgContent?: string;
 }
 
+/**
+ * Tab type definition
+ * 
+ * Describes the structure and properties of Tab
+ */
 export interface Tab {
   id: string;
   conversationId: string;
@@ -63,6 +98,11 @@ export interface Tab {
   projectId?: string; // For architecture studio projects
 }
 
+/**
+ * AppSettings type definition
+ * 
+ * Describes the structure and properties of AppSettings
+ */
 export interface AppSettings {
   theme: ThemeKey;
   provider: string;
@@ -78,6 +118,11 @@ export interface AppSettings {
   subagentCommands?: SubagentCommand[];
 }
 
+/**
+ * FileItem type definition
+ * 
+ * Describes the structure and properties of FileItem
+ */
 export interface FileItem {
   path: string;
   name: string;
@@ -88,6 +133,11 @@ export interface FileItem {
   content?: string; // File content for uploaded files
 }
 
+/**
+ * ApiResponse type definition
+ * 
+ * Describes the structure and properties of ApiResponse
+ */
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -95,6 +145,11 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
+/**
+ * ChatRequest type definition
+ * 
+ * Describes the structure and properties of ChatRequest
+ */
 export interface ChatRequest {
   message: string;
   conversationId?: string;
@@ -102,6 +157,11 @@ export interface ChatRequest {
   settings?: Partial<AppSettings>;
 }
 
+/**
+ * ChatResponse type definition
+ * 
+ * Describes the structure and properties of ChatResponse
+ */
 export interface ChatResponse {
   message: Message;
   conversationId: string;
@@ -112,6 +172,11 @@ export interface ChatResponse {
   };
 }
 
+/**
+ * AgentPrompt type definition
+ * 
+ * Describes the structure and properties of AgentPrompt
+ */
 export interface AgentPrompt {
   name: string;
   title: string;
@@ -120,23 +185,43 @@ export interface AgentPrompt {
   category?: string[];
 }
 
+/**
+ * SubagentCommand type definition
+ * 
+ * Describes the structure and properties of SubagentCommand
+ */
 export interface SubagentCommand {
   category: string;
   title: string;
   subcommand: string;
 }
 
+/**
+ * FileContent type definition
+ * 
+ * Describes the structure and properties of FileContent
+ */
 export interface FileContent {
   path: string;
   content: string;
   size: number;
 }
 
+/**
+ * FileSaveRequest type definition
+ * 
+ * Describes the structure and properties of FileSaveRequest
+ */
 export interface FileSaveRequest {
   path: string;
   content: string;
 }
 
+/**
+ * FileSaveResponse type definition
+ * 
+ * Describes the structure and properties of FileSaveResponse
+ */
 export interface FileSaveResponse {
   success: boolean;
   message: string;
@@ -146,6 +231,11 @@ export interface FileSaveResponse {
   };
 }
 
+/**
+ * UploadedFile type definition
+ * 
+ * Describes the structure and properties of UploadedFile
+ */
 export interface UploadedFile {
   name: string;
   content: string;
@@ -153,11 +243,21 @@ export interface UploadedFile {
   type: string;
 }
 
+/**
+ * FileUploadRequest type definition
+ * 
+ * Describes the structure and properties of FileUploadRequest
+ */
 export interface FileUploadRequest {
   files: UploadedFile[];
   target_directory?: string;
 }
 
+/**
+ * FileUploadResponse type definition
+ * 
+ * Describes the structure and properties of FileUploadResponse
+ */
 export interface FileUploadResponse {
   success: boolean;
   message: string;

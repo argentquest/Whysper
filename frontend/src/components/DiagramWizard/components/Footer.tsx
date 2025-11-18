@@ -21,6 +21,11 @@ import {
 
 const { Text } = Typography;
 
+/**
+ * FooterProps type definition
+ * 
+ * Describes the structure and properties of FooterProps
+ */
 interface FooterProps {
   sessionId?: string | null;
   sseConnected: boolean;
@@ -30,6 +35,9 @@ interface FooterProps {
   lastMessage?: string;
 }
 
+/**
+ * Footer component
+ */
 const Footer: React.FC<FooterProps> = ({
   sessionId,
   sseConnected,

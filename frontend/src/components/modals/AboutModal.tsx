@@ -1,3 +1,8 @@
+/**
+ * AboutModal Component
+ * 
+ * This module exports the AboutModal component for the application.
+ */
 import React from 'react';
 import { Typography, Space, Tag, Button, Divider } from 'antd';
 import {
@@ -20,6 +25,11 @@ const { Title, Text, Paragraph } = Typography;
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
  * @property {() => void} onCreateChatTab - Callback to create a new chat tab
  * @property {() => void} onCreateArchStudioTab - Callback to create a new Architecture Studio tab
+ */
+/**
+ * AboutModalProps type definition
+ * 
+ * Describes the structure and properties of AboutModalProps
  */
 interface AboutModalProps {
   open: boolean;
@@ -47,6 +57,9 @@ interface AboutModalProps {
  * 
  * @param {AboutModalProps} props - Component props
  * @returns {JSX.Element} Rendered about modal
+ */
+/**
+ * AboutModal component
  */
 export const AboutModal: React.FC<AboutModalProps> = ({
   open,

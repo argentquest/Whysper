@@ -87,6 +87,11 @@ import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
  * @property {Function} onConfirmReady - Callback when user confirms they're done with clarifications
  * @property {Object} [error] - Optional error object with message property for displaying errors
  */
+/**
+ * SystemDescriptionScreenProps type definition
+ * 
+ * Describes the structure and properties of SystemDescriptionScreenProps
+ */
 interface SystemDescriptionScreenProps {
   selectedModel: ModelId;
   currentPhase: number;
@@ -109,6 +114,9 @@ interface SystemDescriptionScreenProps {
   error?: { message: string };
 }
 
+/**
+ * SystemDescriptionScreen component
+ */
 export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = ({
   selectedModel,
   currentPhase,

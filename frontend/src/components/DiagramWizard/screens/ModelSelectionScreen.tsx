@@ -17,6 +17,11 @@ import styles from '../diagram-wizard.module.css';
 
 export type ModelId = 'gpt5' | 'grok' | 'claude' | 'gemini';
 
+/**
+ * ModelOption type definition
+ * 
+ * Describes the structure and properties of ModelOption
+ */
 export interface ModelOption {
   id: ModelId;
   name: string;
@@ -86,11 +91,19 @@ const MODELS: ModelOption[] = [
   },
 ];
 
+/**
+ * ModelSelectionScreenProps type definition
+ * 
+ * Describes the structure and properties of ModelSelectionScreenProps
+ */
 interface ModelSelectionScreenProps {
   onSelect: (modelId: ModelId) => void;
   loading?: boolean;
 }
 
+/**
+ * ModelSelectionScreen component
+ */
 export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
   onSelect,
   loading = false,

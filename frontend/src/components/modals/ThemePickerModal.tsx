@@ -1,3 +1,8 @@
+/**
+ * ThemePickerModal Component
+ * 
+ * This module exports the ThemePickerModal component for the application.
+ */
 import React from 'react';
 import { Modal, Row, Col, Card, Typography, Button, Space } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
@@ -6,11 +11,19 @@ import { useTheme } from '../../themes/useTheme';
 
 const { Title, Text } = Typography;
 
+/**
+ * ThemePickerModalProps type definition
+ * 
+ * Describes the structure and properties of ThemePickerModalProps
+ */
 interface ThemePickerModalProps {
   open: boolean;
   onCancel: () => void;
 }
 
+/**
+ * ThemePickerModal component
+ */
 export const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
   open,
   onCancel,

@@ -17,6 +17,11 @@ import styles from './diagram-wizard.module.css';
 
 export type ModelId = 'gpt5' | 'grok' | 'claude' | 'gemini';
 
+/**
+ * ModelOption type definition
+ * 
+ * Describes the structure and properties of ModelOption
+ */
 export interface ModelOption {
   id: ModelId;
   name: string;
@@ -86,11 +91,19 @@ const MODELS: ModelOption[] = [
   },
 ];
 
+/**
+ * ModelSelectorProps type definition
+ * 
+ * Describes the structure and properties of ModelSelectorProps
+ */
 interface ModelSelectorProps {
   onSelect: (modelId: ModelId) => void;
   loading?: boolean;
 }
 
+/**
+ * ModelSelector component
+ */
 export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading = false }) => {
   return (
     <div

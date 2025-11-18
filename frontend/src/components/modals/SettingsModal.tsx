@@ -1,3 +1,8 @@
+/**
+ * SettingsModal Component
+ * 
+ * This module exports the SettingsModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, Slider, Switch, Tabs, Typography, message, InputNumber, Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
@@ -17,6 +22,11 @@ const { Title, Text } = Typography;
  * @property {boolean} open - Controls modal visibility state
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
  * @property {(settings: AppSettings) => void} onSave - Callback triggered when settings are successfully saved
+ */
+/**
+ * SettingsModalProps type definition
+ * 
+ * Describes the structure and properties of SettingsModalProps
  */
 interface SettingsModalProps {
   open: boolean;
@@ -46,6 +56,9 @@ interface SettingsModalProps {
  * 
  * @param {SettingsModalProps} props - Component props
  * @returns {JSX.Element} Rendered settings modal
+ */
+/**
+ * SettingsModal component
  */
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   open,

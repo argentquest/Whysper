@@ -12,6 +12,11 @@ import type { DiagramRenderResponse, ProviderInfo } from '../../services/diagram
 const { Text } = Typography;
 const { Panel } = Collapse;
 
+/**
+ * D2DiagramBackendProps type definition
+ * 
+ * Describes the structure and properties of D2DiagramBackendProps
+ */
 interface D2DiagramBackendProps {
   code: string;
   title?: string;
@@ -19,6 +24,9 @@ interface D2DiagramBackendProps {
   onRenderComplete?: (success: boolean, svg?: string) => void;
 }
 
+/**
+ * D2DiagramBackend component
+ */
 export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
   code,
   title = 'D2 Diagram',

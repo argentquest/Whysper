@@ -1,3 +1,8 @@
+/**
+ * SystemMessageModal Component
+ * 
+ * This module exports the SystemMessageModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Input, Select, Button, Space, Typography, message, Tabs, Modal as AntModal } from 'antd';
 import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
@@ -8,6 +13,11 @@ const { TextArea } = Input;
 const { Option } = Select;
 const { Title, Text } = Typography;
 
+/**
+ * Agent type definition
+ * 
+ * Describes the structure and properties of Agent
+ */
 interface Agent {
   name: string;
   title: string;
@@ -16,6 +26,11 @@ interface Agent {
   filename: string;
 }
 
+/**
+ * SystemMessageModalProps type definition
+ * 
+ * Describes the structure and properties of SystemMessageModalProps
+ */
 interface SystemMessageModalProps {
   open: boolean;
   onCancel: () => void;
@@ -26,6 +41,9 @@ interface SystemMessageModalProps {
   hasConversationHistory?: boolean;
 }
 
+/**
+ * SystemMessageModal component
+ */
 export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
   open,
   onCancel,

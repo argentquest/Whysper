@@ -1,7 +1,17 @@
+/**
+ * Modal Component
+ * 
+ * This module exports the Modal component for the application.
+ */
 import React from 'react';
 import { Modal as AntModal, Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 
+/**
+ * ModalProps type definition
+ * 
+ * Describes the structure and properties of ModalProps
+ */
 interface ModalProps {
   title: string | React.ReactNode;
   open: boolean;
@@ -19,6 +29,9 @@ interface ModalProps {
   className?: string;
 }
 
+/**
+ * Modal component
+ */
 export const Modal: React.FC<ModalProps> = ({
   title,
   open,

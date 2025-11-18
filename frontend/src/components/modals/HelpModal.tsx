@@ -1,12 +1,25 @@
+/**
+ * HelpModal Components
+ * 
+ * This module contains component definitions and exports for HelpModal.
+ */
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'antd';
 import ReactMarkdown from 'react-markdown';
 
+/**
+ * HelpModalProps type definition
+ * 
+ * Describes the structure and properties of HelpModalProps
+ */
 interface HelpModalProps {
   open: boolean;
   onCancel: () => void;
 }
 
+/**
+ * HelpModal component
+ */
 export const HelpModal: React.FC<HelpModalProps> = ({ open, onCancel }) => {
   const [guideContent, setGuideContent] = useState('');
 

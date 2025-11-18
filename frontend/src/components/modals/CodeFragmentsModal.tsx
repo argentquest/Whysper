@@ -1,3 +1,8 @@
+/**
+ * CodeFragmentsModal Component
+ * 
+ * This module exports the CodeFragmentsModal component for the application.
+ */
 import React, { useState } from 'react';
 import { Button, Space, Typography, Input, Tag, Tooltip, message } from 'antd';
 import {
@@ -12,6 +17,11 @@ import type { CodeBlock } from '../../types';
 const { Text } = Typography;
 const { Search } = Input;
 
+/**
+ * CodeFragmentsModalProps type definition
+ * 
+ * Describes the structure and properties of CodeFragmentsModalProps
+ */
 interface CodeFragmentsModalProps {
   open: boolean;
   onCancel: () => void;
@@ -20,6 +30,9 @@ interface CodeFragmentsModalProps {
   onDownloadBlock?: (block: CodeBlock) => void;
 }
 
+/**
+ * CodeFragmentsModal component
+ */
 export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
   open,
   onCancel,

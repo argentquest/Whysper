@@ -1,3 +1,8 @@
+/**
+ * WelcomeScreen Components
+ * 
+ * This module contains component definitions and exports for WelcomeScreen.
+ */
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, message, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
@@ -5,10 +10,18 @@ import ApiService from '../../services/api';
 
 const { Title, Paragraph } = Typography;
 
+/**
+ * WelcomeScreenProps type definition
+ * 
+ * Describes the structure and properties of WelcomeScreenProps
+ */
 interface WelcomeScreenProps {
   onSuccess: () => void;
 }
 
+/**
+ * WelcomeScreen component
+ */
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [guideContent, setGuideContent] = useState('');

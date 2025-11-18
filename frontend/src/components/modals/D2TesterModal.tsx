@@ -1,3 +1,8 @@
+/**
+ * D2TesterModal Component
+ * 
+ * This module exports the D2TesterModal component for the application.
+ */
 import React, { useState, useEffect } from 'react';
 import { Button, message, Typography } from 'antd';
 import { PlayCircleOutlined, CheckCircleOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -7,17 +12,32 @@ import { useTheme } from '../../themes';
 
 const { Title, Text } = Typography;
 
+/**
+ * D2TesterModalProps type definition
+ * 
+ * Describes the structure and properties of D2TesterModalProps
+ */
 interface D2TesterModalProps {
   open: boolean;
   onCancel: () => void;
 }
 
+/**
+ * ValidationResult type definition
+ * 
+ * Describes the structure and properties of ValidationResult
+ */
 interface ValidationResult {
   is_valid: boolean;
   error: string | null;
   code_length: number;
 }
 
+/**
+ * RenderResult type definition
+ * 
+ * Describes the structure and properties of RenderResult
+ */
 interface RenderResult {
   success: boolean;
   content: string | null;
@@ -213,6 +233,9 @@ payment_service -> queue: Payment Events`,
   },
 };
 
+/**
+ * D2TesterModal component
+ */
 export const D2TesterModal: React.FC<D2TesterModalProps> = ({
   open,
   onCancel,
