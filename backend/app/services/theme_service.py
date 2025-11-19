@@ -1,4 +1,3 @@
-```python
 """Theme management service for web backend."""
 from __future__ import annotations
 

@@ -1,4 +1,3 @@
-```python
 """
 Test script for new diagram provider configuration system
 

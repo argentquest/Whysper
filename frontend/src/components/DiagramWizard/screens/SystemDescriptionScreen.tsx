@@ -138,8 +138,26 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   onConfirmReady,
   error,
 }) => {
-  const isClarifying = status?.status === 'clarifying';
+  // Show input field during clarification phase (includes initial analysis and follow-up questions)
+  // Keep input visible as long as we're in analysis phase (hasn't moved to generation yet)
+  const isClarifying = isInAnalysisPhase && sessionId && (
+    status?.status === 'clarifying' ||
+    status?.status === 'analysis_complete' ||
+    status?.status === 'waiting' ||
+    status?.status === 'analyzing'
+  );
   const canConfirmReady = status?.status === 'can_proceed' || status?.status === 'clarification_ready';
+
+  // Debug logging
+  console.log('[SystemDescriptionScreen] Debug:', {
+    statusValue: status?.status,
+    isClarifying,
+    canConfirmReady,
+    sessionActive: !!sessionId,
+    isInAnalysisPhase,
+    isLoading: loading,
+    sessionId
+  });
 
   const handleStart = () => {
     if (!userInput.trim()) {
@@ -166,60 +184,62 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
       {/* Header */}
       <Layout.Header className={styles.header}>
         <div className={styles.headerContent}>
-          <h2 className={styles.title}>Diagram Wizard</h2>
+          <div className={styles.headerTop}>
+            <div>
+              <h2 className={styles.title}>Diagram Wizard</h2>
+            </div>
+            <Space className={styles.headerMeta}>
+              {selectedModel && (
+                <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
+                  ?? {selectedModel === 'gpt5'
+                    ? 'DEEP'
+                    : selectedModel === 'grok'
+                    ? 'FASY'
+                    : selectedModel === 'claude'
+                    ? 'Thinking'
+                    : 'EFficient'}
+                </Tag>
+              )}
+              {sessionId && (
+                <>
+                  <span className={styles.sessionId}>Session: {sessionId.substring(0, 8)}...</span>
+                  <span style={{ color: sseConnected ? '#52c41a' : '#ff4d4f' }}>
+                    {sseConnected ? '? Connected' : '? Disconnected'}
+                  </span>
+                  {loading && <Spin size="small" />}
+                </>
+              )}
+            </Space>
+          </div>
 
-          <Space>
-            {selectedModel && (
-              <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
-                🤖 {selectedModel === 'gpt5'
-                  ? 'DEEP'
-                  : selectedModel === 'grok'
-                  ? 'FASY'
-                  : selectedModel === 'claude'
-                  ? 'Thinking'
-                  : 'EFficient'}
-              </Tag>
-            )}
-            {sessionId && (
-              <>
-                <span className={styles.sessionId}>Session: {sessionId.substring(0, 8)}...</span>
-                <span style={{ color: sseConnected ? '#52c41a' : '#ff4d4f' }}>
-                  {sseConnected ? '● Connected' : '● Disconnected'}
-                </span>
-                {loading && <Spin size="small" />}
-              </>
-            )}
-          </Space>
+          <div className={styles.headerProgress}>
+            <Steps
+              current={currentPhase}
+              size="small"
+              items={phases.map((phase, index) => ({
+                title: phase.title,
+                description: phase.description,
+                icon: phase.icon,
+                status: currentPhase > index ? 'finish' : currentPhase === index ? 'process' : 'wait',
+              }))}
+            />
+            <div className={styles.phaseIndicator}>
+              <div>
+                <span className={styles.phaseLabel}>Current Phase:</span>{' '}
+                <strong>{phases[Math.min(currentPhase, phases.length - 1)].title}</strong>
+              </div>
+              {score > 0 && (
+                <div>
+                  <span className={styles.phaseLabel}>Clarity Score:</span>{' '}
+                  <strong>{score}/10</strong>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </Layout.Header>
 
       <Layout.Content className={styles.content}>
-        {/* Progress Steps */}
-        <div style={{ marginBottom: 24, padding: '0 24px' }}>
-          <Steps
-            current={currentPhase}
-            size="small"
-            items={phases.map((phase, index) => ({
-              title: phase.title,
-              description: phase.description,
-              icon: phase.icon,
-              status: currentPhase > index ? 'finish' : currentPhase === index ? 'process' : 'wait',
-            }))}
-          />
-          <div className={styles.phaseIndicator} style={{ marginTop: '16px' }}>
-            <div>
-              <span className={styles.phaseLabel}>Current Phase:</span>{' '}
-              <strong>{phases[Math.min(currentPhase, phases.length - 1)].title}</strong>
-            </div>
-            {score > 0 && (
-              <div>
-                <span className={styles.phaseLabel}>Clarity Score:</span>{' '}
-                <strong>{score}/10</strong>
-              </div>
-            )}
-          </div>
-        </div>
-
         {error && (
           <Alert
             message="Error"
@@ -303,6 +323,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               isClarifying={isClarifying}
               canConfirmReady={canConfirmReady}
               onConfirmReady={onConfirmReady}
+              sessionActive={!!sessionId}
+              isLoading={loading}
             />
           </div>
         ) : (

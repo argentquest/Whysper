@@ -1,4 +1,3 @@
-```python
 """
 Main entry point for diagram factory system.
 

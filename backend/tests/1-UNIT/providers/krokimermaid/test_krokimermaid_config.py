@@ -1,4 +1,3 @@
-```python
 """
 Test Kroki Mermaid provider configuration
 """

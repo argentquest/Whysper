@@ -1,4 +1,3 @@
-```typescript
 /**
  * Panel3_CodeEditor Component
  *

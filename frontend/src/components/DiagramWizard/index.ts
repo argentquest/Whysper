@@ -1,4 +1,3 @@
-```typescript
 // Export the main diagram wizard component, providing both default and named export for flexible usage
 export { DiagramWizard as default, DiagramWizard } from './DiagramWizard';
 

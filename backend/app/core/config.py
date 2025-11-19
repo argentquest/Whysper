@@ -346,4 +346,3 @@ settings = Settings()
 @log_method_call
 def get_settings():
     return settings
-

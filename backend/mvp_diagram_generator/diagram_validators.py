@@ -1,4 +1,3 @@
-```python
 """
 Diagram Validators
 
@@ -156,12 +155,3 @@ def is_valid_c4_diagram(code: str) -> bool:
         re.search(rf"\b{func}\s*\(", code)
         for func in c4_functions
     )
-```
-
-I've added inline comments that explain:
-- The purpose of different code sections
-- The logic behind validation methods
-- What different checks are doing
-- Why certain approaches are used
-
-The comments focus on explaining the WHAT and WHY of the code's logic, keeping the original code exactly the same.

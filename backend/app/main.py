@@ -1,4 +1,3 @@
-```python
 """
 FastAPI application for Whysper Web2 Backend API.
 
@@ -111,12 +110,3 @@ if __name__ == "__main__":
         reload=settings.reload,   # Auto-reload on code changes (development)
         log_level="info"          # Logging level for uvicorn
     )
-```
-
-I've added inline comments that:
-- Explain the purpose of code blocks
-- Highlight key configuration choices
-- Provide context for initialization steps
-- Describe the reasoning behind certain implementations
-
-The comments focus on the logic, configuration, and overall system design while keeping the original code exactly the same.

@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Layout, Button, Spin, Alert, Space, Badge, Tag, message } from 'antd';
+import { Layout, Button, Spin, Alert, Space, Badge, Tag, Steps, message } from 'antd';
 import {
   CopyOutlined,
 } from '@ant-design/icons';
@@ -85,62 +85,67 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
       {/* Header */}
       <Layout.Header className={styles.header}>
         <div className={styles.headerContent}>
-          <h2 className={styles.title}>
-            Diagram Wizard
-            {isComplete && <Tag color="green" style={{ marginLeft: '12px' }}>Complete ✅</Tag>}
-            {isError && <Tag color="red" style={{ marginLeft: '12px' }}>Error ❌</Tag>}
-          </h2>
+          <div className={styles.headerTop}>
+            <div>
+              <h2 className={styles.title}>
+                Diagram Wizard
+                {isComplete && <Tag color="green" style={{ marginLeft: '12px' }}>Complete ?</Tag>}
+                {isError && <Tag color="red" style={{ marginLeft: '12px' }}>Error ?</Tag>}
+              </h2>
+            </div>
+            <Space className={styles.headerMeta}>
+              {selectedModel && (
+                <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
+                  ?? {selectedModel === 'gpt5'
+                    ? 'Deep'
+                    : selectedModel === 'grok'
+                    ? 'Fast'
+                    : selectedModel === 'claude'
+                    ? 'Thinking'
+                    : 'Efficient'}
+                </Tag>
+              )}
+              {sessionId && (
+                <>
+                  <span style={{ fontSize: '12px' }}>Session: {sessionId.substring(0, 8)}...</span>
+                  <Badge
+                    status={sseConnected ? 'success' : 'error'}
+                    text={sseConnected ? 'Connected' : 'Disconnected'}
+                  />
+                  {loading && <Spin size="small" />}
+                </>
+              )}
+            </Space>
+          </div>
 
-          <Space>
-            {selectedModel && (
-              <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
-                🤖 {selectedModel === 'gpt5'
-                  ? 'Deep'
-                  : selectedModel === 'grok'
-                  ? 'Fast'
-                  : selectedModel === 'claude'
-                  ? 'Thinking'
-                  : 'Efficient'}
-              </Tag>
-            )}
-            {sessionId && (
-              <>
-                <span style={{ fontSize: '12px' }}>Session: {sessionId.substring(0, 8)}...</span>
-                <Badge
-                  status={sseConnected ? 'success' : 'error'}
-                  text={sseConnected ? 'Connected' : 'Disconnected'}
-                />
-                {loading && <Spin size="small" />}
-              </>
-            )}
-          </Space>
+          <div className={styles.headerProgress}>
+            <Steps
+              current={currentPhase}
+              size="small"
+              items={phases.map((phase, index) => ({
+                title: phase.title,
+                description: phase.description,
+                icon: phase.icon,
+                status: currentPhase > index ? 'finish' : currentPhase === index ? 'process' : 'wait',
+              }))}
+            />
+            <div className={styles.phaseIndicator}>
+              <div>
+                <span className={styles.phaseLabel}>Current Phase:</span>{' '}
+                <strong>{phases[Math.min(currentPhase, phases.length - 1)].title}</strong>
+              </div>
+              {score > 0 && (
+                <div>
+                  <span className={styles.phaseLabel}>Clarity Score:</span>{' '}
+                  <strong>{score}/10</strong>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </Layout.Header>
 
       <Layout.Content className={styles.content}>
-        {/* Progress Steps */}
-        <div style={{ marginBottom: 24, padding: '0 24px' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '16px',
-            }}
-          >
-            <div>
-              <span className={styles.phaseLabel}>Current Phase:</span>{' '}
-              <strong>{phases[Math.min(currentPhase, phases.length - 1)].title}</strong>
-            </div>
-            {score > 0 && (
-              <div>
-                <span className={styles.phaseLabel}>Clarity Score:</span>{' '}
-                <strong>{score}/10</strong>
-              </div>
-            )}
-          </div>
-        </div>
-
         {error && (
           <Alert
             message="Error"

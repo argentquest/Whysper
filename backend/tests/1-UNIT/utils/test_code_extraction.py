@@ -39,8 +39,7 @@ class TestMarkdownCodeExtraction:
         """Code content is preserved exactly"""
         markdown = """```python
 def hello():
-    return "world"
-```"""
+    return "world""""
         code = markdown.split("```")[1].strip()
         assert "def hello" in code
         assert "return" in code
@@ -48,14 +47,9 @@ def hello():
     def test_extract_handles_empty_blocks(self):
         """Empty code blocks are handled"""
         markdown = """
-```
-```
 
-```python
 def func():
-    pass
-```
-"""
+    pass"""
         blocks = [b.strip() for b in markdown.split("```") if b.strip()]
         assert len(blocks) >= 1
 

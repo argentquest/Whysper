@@ -1,4 +1,3 @@
-```python
 from fastapi import APIRouter, HTTPException, Body
 from fastapi.responses import StreamingResponse
 import asyncio
@@ -22,17 +21,22 @@ async def start_diagram_generation(
     initial_prompt: str = Body(..., embed=True),
     diagram_type: str = Body("Mermaid", embed=True),
     model_id: str = Body(None, embed=True),
+    session_id: str = Body(None, embed=True),
 ):
     # Initialize a new diagram generation session with optional model selection
     try:
+        logger.info(f"🚀 Starting diagram generation with prompt: {initial_prompt[:100]}... (session_id provided: {session_id is not None})")
         # Create a unique session for tracking diagram generation progress
-        session = DiagramSessionStore.create_session()
+        # If session_id is provided (from frontend tab), use it; otherwise generate a new one
+        session = DiagramSessionStore.create_session(session_id=session_id)
+        logger.info(f"✅ Session created: {session.session_id}")
         # Instantiate service to manage diagram generation workflow
         service = DiagramFactoryService(session)
         # Pass model_id to the service if provided
         await service.start_generation(initial_prompt, diagram_type, model_id)
-        
+
         # Return session details for client tracking
+        logger.info(f"✅ Diagram generation started for session {session.session_id}")
         return {
             "session_id": session.session_id,
             "status": service.get_status(),
@@ -48,9 +52,12 @@ async def start_diagram_generation(
 @log_method_call
 async def stream_diagram_updates(session_id: str):
     # Stream real-time updates for a diagram generation session
+    logger.info(f"📡 Received stream request for session: {session_id}")
     session = DiagramSessionStore.get_session(session_id)
     if not session:
+        logger.error(f"❌ Session not found: {session_id}")
         raise HTTPException(status_code=404, detail="Session not found")
+    logger.info(f"✅ Found session: {session_id}, starting stream...")
 
     async def event_generator():
         try:

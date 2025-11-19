@@ -1,6 +1,3 @@
-Here's the Python code with added inline comments explaining the logic:
-
-```python
 """
 Kroki Base Provider - Common functionality for all Kroki-based diagram providers
 
@@ -355,6 +352,3 @@ class KrokiBaseProvider(BaseDiagramProvider):
                 metadata={"server_url": self.server_url},
                 error=error_msg
             )
-```
-
-The comments explain the logic, purpose, and key mechanisms behind each method and block of code. They highlight the core functionalities like server availability checking, validation, auto-fixing, and rendering, while maintaining the original code's structure.

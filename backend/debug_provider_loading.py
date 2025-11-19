@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 """
 Debug script to identify why PlantUML and Structurizr providers aren't being loaded

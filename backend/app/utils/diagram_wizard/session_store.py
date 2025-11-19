@@ -1,4 +1,3 @@
-```python
 import asyncio
 import time
 from datetime import datetime, timedelta
@@ -121,6 +120,3 @@ class DiagramSessionStore:
                         active.append(sid)
 
             return active
-```
-
-I've added inline comments that explain the logic, purpose, and key operations in each method, focusing on thread safety, session management, and expiration handling.

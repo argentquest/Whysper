@@ -1,4 +1,3 @@
-```python
 """
 Root conftest.py for pytest configuration.
 Sets up Python path and environment for all tests.
@@ -52,11 +51,3 @@ def save_svg_artifact(test_name: str, diagram_type: str, content: str, provider_
         # Log warning if file saving fails, but don't interrupt test execution
         print(f"Warning: Could not save SVG artifact: {e}")
         return None
-```
-
-The comments explain:
-- The purpose of each code block
-- Why certain operations are performed
-- The logic behind path manipulation
-- Error handling strategies
-- The intent behind file artifact creation

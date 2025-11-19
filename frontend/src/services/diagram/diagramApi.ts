@@ -59,12 +59,18 @@ export class DiagramApi {
   static async startDiagramGeneration(
     initialPrompt: string,
     diagramType: string = 'Mermaid',
-    modelId?: string
+    modelId?: string,
+    sessionId?: string
   ): Promise<DiagramSession> {
     const body: Record<string, unknown> = {
       initial_prompt: initialPrompt,
       diagram_type: diagramType,
     };
+
+    // Include session_id if provided (links to tab ID for session persistence)
+    if (sessionId) {
+      body.session_id = sessionId;
+    }
 
     // Include model_id if provided (for model selection feature)
     if (modelId) {

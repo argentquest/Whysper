@@ -1,4 +1,3 @@
-```typescript
 /**
  * HelpModal Components
  * 

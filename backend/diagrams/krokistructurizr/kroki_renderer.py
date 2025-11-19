@@ -1,4 +1,3 @@
-```python
 """
 Kroki Structurizr Provider Implementation
 
@@ -115,6 +114,3 @@ STRUCTURIZR-SPECIFIC RULES:
 - Use systemContext, container, component for view types
 - Keep syntax simple and standard Structurizr format
 """.strip()
-```
-
-The comments explain the purpose and logic of each method and key code block, focusing on the auto-fix mechanism and provider configuration.

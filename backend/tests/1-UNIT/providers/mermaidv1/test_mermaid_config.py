@@ -1,4 +1,3 @@
-```python
 """
 Test mermaidv1 provider configuration
 """

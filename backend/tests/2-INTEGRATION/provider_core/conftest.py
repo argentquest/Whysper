@@ -1,4 +1,3 @@
-```python
 """
 Pytest fixtures for provider rendering tests.
 """
@@ -135,6 +134,3 @@ def invalid_d2():
     D -> -> E
     F: shape invalid_shape
     """
-```
-
-The comments focus on explaining the purpose of each fixture, the logic behind key functions, and provide context for the test setup. They describe WHAT the code does and WHY it's structured this way.

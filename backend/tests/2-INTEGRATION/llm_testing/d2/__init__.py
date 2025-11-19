@@ -1,4 +1,3 @@
-```python
 """
 LLM-based D2 Diagram Generation and Validation Tests
 
@@ -76,8 +75,6 @@ def test_d2_diagram_generation(prompt):
     
     # Save diagram for tracking and manual review
     save_diagram(diagram_content, f"{prompt.replace(' ', '_')}.d2")
-```
-
 The comments provide insights into:
 - Purpose of each function
 - Key logic flows

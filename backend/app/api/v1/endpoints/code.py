@@ -1,4 +1,3 @@
-```python
 """
 Code extraction endpoints.
 
@@ -68,12 +67,3 @@ def extract_code_blocks(request: dict) -> Dict[str, Any]:
             status_code=500,
             detail=f"Failed to extract code blocks: {str(e)}"
         )
-```
-
-The comments explain:
-- The purpose of each section of code
-- The logic behind key operations
-- Why specific error handling or logging is implemented
-- The flow of extracting message content and code blocks
-
-The comments provide context about WHAT the code does and WHY it's structured this way, helping developers understand the implementation quickly.

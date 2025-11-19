@@ -1,4 +1,3 @@
-```python
 """
 Validate all 25 Structurizr tests using the Kroki Structurizr Provider Endpoint
 """

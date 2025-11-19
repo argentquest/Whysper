@@ -1,6 +1,3 @@
-Here's the TypeScript code with inline comments:
-
-```typescript
 import React from 'react';
 import { Modal as AntModal, Button } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';

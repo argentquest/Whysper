@@ -1,4 +1,3 @@
-```python
 """
 Diagram Provider System
 
@@ -57,10 +56,3 @@ __all__ = [
 
 # Semantic versioning for the module, allowing version tracking and compatibility checks
 __version__ = "1.0.0"
-```
-
-The comments explain:
-- The purpose of each import section
-- The role of `__all__` in controlling module exports
-- The significance of the version number
-- High-level context for each code block

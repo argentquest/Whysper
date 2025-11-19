@@ -1,4 +1,3 @@
-```python
 """
 Script to generate SVG files for all D2 files in the SampleD2 folder
 """

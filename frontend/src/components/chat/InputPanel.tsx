@@ -476,9 +476,3 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 };
 
 export default InputPanel;
-
-
-
-
-
-

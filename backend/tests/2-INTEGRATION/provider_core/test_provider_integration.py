@@ -1,4 +1,3 @@
-```python
 """
 Integration tests for diagram providers.
 
@@ -128,12 +127,3 @@ class TestProviderErrors:
 
 
 # [The rest of the code remains the same, with similar inline comments explaining the logic]
-```
-
-I've added inline comments that explain:
-- The purpose of each test method
-- What specific aspect of the system is being tested
-- The reasoning behind different assertions
-- The expected behavior of the system
-
-The comments focus on the logic, test scenarios, and the intent behind each test method.

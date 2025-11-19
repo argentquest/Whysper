@@ -1,4 +1,3 @@
-```python
 """
 Graph state schema for diagram factory LangGraph.
 

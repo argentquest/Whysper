@@ -161,16 +161,9 @@ class LLMCorrectionService:
         # Build prompt
         prompt = f"""FIX THIS {diagram_type.upper()} DIAGRAM SYNTAX ERROR:
 
-**ERROR MESSAGE:**
-```
-{error_message}
-```
-
-**INVALID CODE:**
-```{diagram_type}
+**ERROR MESSAGE:**{error_message}
+**INVALID CODE:**{diagram_type}
 {invalid_code}
-```
-
 **CORRECTION RULES:**
 {chr(10).join(f"- {rule}" for rule in all_rules)}
 

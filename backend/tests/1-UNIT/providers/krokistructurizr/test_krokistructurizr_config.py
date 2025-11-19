@@ -1,4 +1,3 @@
-```python
 """
 Test Kroki Structurizr provider configuration
 """

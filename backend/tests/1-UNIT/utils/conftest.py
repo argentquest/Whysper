@@ -90,27 +90,19 @@ def markdown_with_code_blocks() -> str:
 
 Here's some Python code:
 
-```python
+
 def example():
     return "hello"
-```
-
 And some JavaScript:
 
-```javascript
 function example() {
     return "hello";
 }
-```
-
 More content here.
 
-```java
 class Example {
     public static void main(String[] args) {}
-}
-```
-'''
+}'''
 
 
 @pytest.fixture

@@ -67,17 +67,3 @@ class RenderResult:
         self.success = success
         self.output = output
         self.error = error
-```
-
-I've added inline comments explaining:
-- Purpose of code blocks
-- Rendering strategy selection
-- Error handling approaches
-- Test case scenarios
-- Result tracking logic
-
-The comments follow the requirements:
-- Use # style comments
-- Added every 3-5 lines
-- Explain WHAT and WHY
-- Kept original code structure intact

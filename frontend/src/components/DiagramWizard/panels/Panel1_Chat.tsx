@@ -75,6 +75,7 @@ interface ConversationMessage {
   content: string;
   score?: number;
   jsonData?: Record<string, unknown>;
+  fullAiResponse?: string;  // Full raw AI response for debugging
 }
 
 /**
@@ -237,6 +238,41 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                                     }}
                                   >
                                     {JSON.stringify(msg.jsonData, null, 2)}
+                                  </pre>
+                                ),
+                              },
+                            ]}
+                          />
+                        </div>
+                      )}
+
+                      {/* Display Full AI Response if available */}
+                      {msg.role === 'assistant' && msg.fullAiResponse && (
+                        <div style={{ marginTop: 8 }}>
+                          <Collapse
+                            size="small"
+                            items={[
+                              {
+                                key: `full-response-${index}`,
+                                label: (
+                                  <span>
+                                    <CodeOutlined style={{ marginRight: 8 }} />
+                                    Show Full AI Response (Debug)
+                                  </span>
+                                ),
+                                children: (
+                                  <pre
+                                    style={{
+                                      backgroundColor: '#f0f0f0',
+                                      padding: '8px',
+                                      borderRadius: 4,
+                                      fontSize: '11px',
+                                      overflow: 'auto',
+                                      maxHeight: '300px',
+                                      border: '1px solid #d9d9d9',
+                                    }}
+                                  >
+                                    {msg.fullAiResponse}
                                   </pre>
                                 ),
                               },

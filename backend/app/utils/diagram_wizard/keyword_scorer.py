@@ -1,4 +1,3 @@
-```python
 """
 Keyword-based diagram type scoring and determination.
 
@@ -186,7 +185,20 @@ class KeywordScorer:
 
         return diagram_type, scores
 
-# Rest of the code remains the same...
-```
+# Module-level function for convenience (used by nodes.py)
+_scorer = KeywordScorer()
 
-I've added inline comments explaining the logic at key points in the code, focusing on what each section does and why. The comments provide insights into the scoring mechanism, keyword matching strategy, and diagram type determination process.
+def determine_diagram_type(text: str) -> Tuple[DiagramType, Dict[str, float]]:
+    """
+    Convenience function to determine diagram type from text.
+
+    This is a module-level wrapper around KeywordScorer.determine_diagram_type()
+    for use in diagram wizard nodes.
+
+    Args:
+        text: Analysis text (design summary, component descriptions, etc.)
+
+    Returns:
+        Tuple of (DiagramType, keyword_scores dictionary)
+    """
+    return _scorer.determine_diagram_type(text)

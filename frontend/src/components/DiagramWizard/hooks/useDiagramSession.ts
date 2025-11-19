@@ -89,9 +89,14 @@ export interface UseDiagramSessionOptions {
 }
 
 export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
+  // Store the pre-assigned session ID from the tab (for linking when we call /start)
+  // This should NOT be used to immediately connect to SSE - only passed to /start API call
+  const initialSessionId = options.initialSessionId;
+
   // Backend session UUID - null until startSession() creates a session
-  // Can be initialized from options.initialSessionId for session-tab binding
-  const [sessionId, setSessionId] = useState<string | null>(options.initialSessionId ?? null);
+  // Will be set to the result.session_id returned from /start endpoint
+  // This triggers SSE connection only AFTER session is created on backend
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Latest session status update received via SSE
   // Contains: status, history, clarifications, diagramCode, svgOutput, scores, etc.
@@ -142,8 +147,15 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         return;
       }
 
+      // Transform snake_case fields to camelCase for consistency
+      // Backend sends json_representation, frontend expects jsonRepresentation
+      const transformedUpdate = {
+        ...update,
+        jsonRepresentation: (update as any).json_representation || update.jsonRepresentation,
+      };
+
       // Merge new update with existing status (preserves fields not in current update)
-      setStatus((prev) => ({ ...(prev ?? {}), ...update }));
+      setStatus((prev) => ({ ...(prev ?? {}), ...transformedUpdate }));
 
       // Notify parent component of the update
       options.onUpdate?.(update);
@@ -221,7 +233,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const startSession = useCallback(
     async (initialPrompt: string, diagramType: string = 'Mermaid', modelId?: string) => {
       try {
-        logEvent('Starting session', { initialPrompt, diagramType, modelId });
+        logEvent('Starting session', { initialPrompt, diagramType, modelId, sessionId });
 
         // Set loading state to show UI spinner
         setLoading(true);
@@ -236,10 +248,17 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         clearSSEMessages();
 
         // Call backend API to create new session and begin AI analysis
-        // Backend returns session_id and initial status
-        const result = await DiagramApi.startDiagramGeneration(initialPrompt, diagramType, modelId);
+        // Pass the pre-assigned initialSessionId (from tab) to link them together
+        // Backend returns session_id (should match what was passed) and initial status
+        const result = await DiagramApi.startDiagramGeneration(
+          initialPrompt,
+          diagramType,
+          modelId,
+          initialSessionId || undefined  // Pass pre-assigned session ID from tab if available
+        );
 
         // Store session ID - this triggers SSE connection via useSSE hook
+        // Use the returned session_id (which should match what we passed)
         setSessionId(result.session_id);
 
         // Store initial status from session creation response
@@ -261,7 +280,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         setLoading(false);
       }
     },
-    [logEvent, options, clearSSEMessages]
+    [logEvent, options, clearSSEMessages, initialSessionId]
   );
 
   /**

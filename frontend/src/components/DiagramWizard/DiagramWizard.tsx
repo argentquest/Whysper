@@ -100,7 +100,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   onDiagramGenerated,
   initialPrompt,
   onClose,
-  tabId,
+  tabId: _tabId, // eslint-disable-next-line @typescript-eslint/no-unused-vars
   sessionId: initialSessionId,
 }) => {
   // ============ State Management ============
@@ -307,7 +307,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Transform tuples into properly typed message objects for UI display
   const chatHistory = rawHistory.map((item, index) => {
     // Handle both tuple format [role, content] and object format {role, content}
-    const [role, content] = Array.isArray(item) ? item : [item.role, item.content];
+    const [role, content] = Array.isArray(item) ? item : [(item as any).role, (item as any).content];
 
     // Create base message object with role and content
     const messageObj: any = {
@@ -329,6 +329,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // Include structured JSON representation if AI extracted system architecture
       if (status?.jsonRepresentation && Object.keys(status.jsonRepresentation).length > 0) {
         messageObj.jsonData = status.jsonRepresentation;
+      }
+
+      // Include full AI response for debugging (if available)
+      if (status?.full_ai_response) {
+        messageObj.fullAiResponse = status.full_ai_response;
       }
     }
 

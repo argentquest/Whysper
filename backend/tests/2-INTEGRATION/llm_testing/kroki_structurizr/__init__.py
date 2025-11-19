@@ -67,12 +67,3 @@ def test_structurizr_diagrams(test_prompts):
 
     # Return comprehensive results of diagram validation
     return validation_results
-```
-
-I've added inline comments that explain:
-- The purpose of each function
-- Key logic steps
-- Reasoning behind specific code blocks
-- Error handling approaches
-
-The comments focus on explaining WHAT is happening and WHY, without changing the underlying code structure or logic.

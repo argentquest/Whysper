@@ -1,4 +1,3 @@
-```python
 """
 Mermaid CLI-Only Renderer - Version 3
 
@@ -144,6 +143,3 @@ def is_mmdc_available() -> bool:
     except Exception as e:
         logger.warning(f"Could not check mmdc availability: {str(e)}")
         return False
-```
-
-The comments explain the key logic, purpose, and flow of each function and significant code block, focusing on what the code is doing and why, without changing the underlying implementation.

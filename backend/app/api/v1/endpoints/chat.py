@@ -409,17 +409,15 @@ def send_chat_message(request: dict):
             )
 
         # Get or create conversation session
-        access_key = settings.get("access_key")
-        if not access_key or access_key != env_config.get("access_key"):
-            raise HTTPException(status_code=401, detail="Invalid access key")
-
+        # Note: access_key is only used during app startup, not for chat operations
+        # Chat operations only require valid API_KEY for the AI provider
         session, was_created = conversation_manager.get_or_create_session(
             session_id=conversation_id,
             api_key=api_key,
             provider=provider,
             models=models_list,
             default_model=model,
-            access_key=access_key,
+            access_key=None,  # Not required for chat operations
         )
         
         if was_created:

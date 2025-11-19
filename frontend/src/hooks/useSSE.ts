@@ -255,7 +255,8 @@ export function useSSE<T = any>({
     return () => {
       disconnect();
     };
-  }, [url, enabled, connect, disconnect]); // Include connect and disconnect in dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, enabled]); // Only depend on url and enabled to avoid reconnection loops
 
   // ============================================================================
   // Message Management

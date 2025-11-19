@@ -1,4 +1,3 @@
-```python
 """
 Test d2v1 provider configuration
 """
@@ -55,10 +54,3 @@ def test_d2v1_config():
 
 if __name__ == "__main__":
     test_d2v1_config()
-```
-
-The comments explain:
-- Purpose of each code block
-- What specific assertions are checking
-- Why certain configuration values are being verified
-- The overall flow of configuration loading and testing

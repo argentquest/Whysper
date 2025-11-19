@@ -1,4 +1,3 @@
-```python
 """
 Validate all D2 diagrams from history files and capture any errors
 This script will:
@@ -266,6 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-The comments explain the logic and purpose of different sections of the code, focusing on key operations, error handling, and the overall flow of the script.

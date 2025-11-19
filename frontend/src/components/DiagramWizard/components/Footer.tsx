@@ -1,4 +1,3 @@
-```typescript
 import React from 'react';
 import { Space, Badge, Tooltip, Typography } from 'antd';
 import {

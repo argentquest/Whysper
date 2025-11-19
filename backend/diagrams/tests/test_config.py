@@ -1,4 +1,3 @@
-```python
 """
 Test script for new diagram provider configuration system
 
@@ -173,6 +172,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-The comments explain the purpose and logic of each function and key code blocks, focusing on what the code does and why, as requested in the requirements.

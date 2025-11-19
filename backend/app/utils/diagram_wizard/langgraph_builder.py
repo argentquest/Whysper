@@ -19,12 +19,16 @@ from .nodes import (
 )
 
 
-def route_to_diagram_type_determination(state: GraphState) -> str:
-    # Determine routing based on LLM readiness
-    # If LLM is ready, proceed to code generation, otherwise wait for user
+def route_after_clarify(state: GraphState) -> str:
+    # Determine routing after clarification phase
+    # If LLM is ready (user confirmed or timeout), proceed to JSON generation
+    # Otherwise, end graph and wait for user response (either answer to question or confirmation)
+    # The graph will resume when user provides input via handle_clarification or confirm_ready
     if state.get("llm_ready", False):
-        return "generate_code"
+        return "generate_json"
     else:
+        # Not ready - end graph and wait for user input
+        # Graph will resume from analyze_request (which skips re-analysis) when user responds
         return END
 
 
@@ -69,8 +73,11 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
     workflow.add_conditional_edges(
         "clarify_prompt",
-        route_to_diagram_type_determination,
-        {"generate_code": "generate_json_representation", END: END},
+        route_after_clarify,
+        {
+            "generate_json": "generate_json_representation",
+            END: END  # End when waiting for user input (question or confirmation)
+        },
     )
 
     workflow.add_edge("generate_json_representation", "determine_diagram_type")
@@ -86,13 +93,11 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
 
 # Use lazy loading to cache compiled graph and avoid repeated compilation
-_compiled_graph = None
-
+# Note: The graph is rebuilt for each service instance to ensure proper state isolation
+# This prevents issues with shared state between concurrent sessions
 
 def get_diagram_factory_graph(service):
-    # Retrieve or create compiled graph, implementing singleton-like behavior
-    # Ensures graph is only compiled once and reused across calls
-    global _compiled_graph
-    if _compiled_graph is None:
-        _compiled_graph = build_diagram_factory_graph(service)
-    return _compiled_graph
+    # Build a fresh graph for each service instance
+    # This ensures proper state isolation between concurrent diagram generation sessions
+    # and allows the graph to use the correct service instance for callbacks
+    return build_diagram_factory_graph(service)

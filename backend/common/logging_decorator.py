@@ -1,4 +1,3 @@
-```python
 import functools
 import inspect
 from .logger import get_logger

@@ -1,6 +1,3 @@
-Here's the TypeScript code with added inline comments:
-
-```typescript
 /**
  * Panel2_Preview Component
  *

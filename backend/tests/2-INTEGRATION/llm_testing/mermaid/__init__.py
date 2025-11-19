@@ -78,8 +78,6 @@ def test_generate_class_diagram():
     
     # Validate Mermaid code syntax before further processing
     assert validate_mermaid_syntax(mermaid_code), "Class diagram generation failed syntax validation"
-```
-
 Key comment principles applied:
 - Explained purpose of functions
 - Highlighted key logic steps

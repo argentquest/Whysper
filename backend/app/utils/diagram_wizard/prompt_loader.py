@@ -1,4 +1,3 @@
-```python
 """
 Prompt loader for diagram wizard system.
 
@@ -151,6 +150,3 @@ def _extract_section(file_path: Path, section_header: str) -> str:
         # Log error and return empty string if section extraction fails
         print(f"Error loading prompt from {file_path}: {e}")
         return ""
-```
-
-The comments explain the logic, purpose, and key steps in each function and section of the code.

@@ -1,4 +1,3 @@
-```python
 from fastapi import APIRouter, HTTPException
 from common.logging_decorator import log_method_call
 from pydantic import BaseModel
@@ -38,11 +37,3 @@ async def check_auth_required():
         "auth_required": bool(correct_key),  # True if a key is set
         "auth_disabled": not bool(correct_key)  # True if no key is set
     }
-```
-
-The comments explain:
-- The purpose of the Pydantic model
-- How the access key is retrieved from environment variables
-- The authentication logic for verifying the access key
-- The logic for checking if authentication is required
-- What each return value represents

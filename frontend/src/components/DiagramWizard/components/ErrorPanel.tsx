@@ -1,4 +1,3 @@
-```typescript
 // Import necessary React and Ant Design components for UI rendering
 import React from 'react';
 import { Alert, List, Tag, Space, Empty, Button } from 'antd';

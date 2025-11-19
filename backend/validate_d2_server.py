@@ -1,4 +1,3 @@
-```python
 """
 Simple D2 Server Validation
 Validates that the D2 server is working correctly with temperature 0.1

@@ -1,4 +1,3 @@
-```python
 """
 Diagram tool configuration and safe execution.
 
@@ -150,11 +149,3 @@ class ToolValidationError(Exception):
     """Raised when tool validation fails."""
 
     pass
-```
-
-The comments explain:
-- The purpose of configuration dictionaries
-- Validation strategies
-- Timeout mechanisms
-- Shell injection prevention
-- Subprocess execution details

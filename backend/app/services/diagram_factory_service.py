@@ -82,32 +82,47 @@ class DiagramSessionStore:
 
     @classmethod
     @log_method_call
-    def create_session(cls) -> DiagramSession:
+    def create_session(cls, session_id: str = None) -> DiagramSession:
         """Create a new diagram generation session.
-        
-        Generates a unique session ID and creates a new DiagramSession
-        instance, then stores it in the session registry.
-        
+
+        If session_id is provided (from frontend tab), uses that ID;
+        otherwise generates a unique UUID-based session ID.
+        Creates a new DiagramSession instance and stores it in the
+        session registry.
+
+        Args:
+            session_id: Optional pre-assigned session ID from frontend tab.
+                       If not provided, a UUID will be generated.
+
         Returns:
             DiagramSession: The newly created session instance
         """
-        session_id = str(uuid.uuid4())
+        # Use provided session_id or generate a new UUID
+        if not session_id:
+            session_id = str(uuid.uuid4())
+
         session = DiagramSession(session_id)
         cls._sessions[session_id] = session
+        logger.debug(f"✅ Created session {session_id}")
+        logger.debug(f"📊 Total sessions in store: {len(cls._sessions)}")
         return session
 
     @classmethod
     @log_method_call
     def get_session(cls, session_id: str) -> Optional[DiagramSession]:
         """Retrieve an existing session by ID.
-        
+
         Args:
             session_id: The unique identifier
-            
+
         Returns:
             DiagramSession or None: The session if found, None otherwise
         """
-        return cls._sessions.get(session_id)
+        logger.debug(f"🔍 get_session called for: {session_id}")
+        logger.debug(f"📦 Available sessions: {list(cls._sessions.keys())}")
+        session = cls._sessions.get(session_id)
+        logger.debug(f"🎯 Found session: {session is not None}")
+        return session
 
     @classmethod
     @log_method_call

@@ -1,4 +1,3 @@
-```python
 """Utility helpers for applying include/exclude file pattern filters."""
 from __future__ import annotations
 
@@ -86,10 +85,3 @@ def filter_files(
         ]
 
     return filtered
-```
-
-The comments explain the key logic in each function, focusing on:
-- What each function does
-- How patterns are processed
-- The filtering mechanism
-- Handling of include/exclude patterns

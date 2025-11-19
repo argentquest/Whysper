@@ -1,4 +1,3 @@
-```python
 """
 Kroki D2 Provider LLM Tests
 
@@ -71,11 +70,3 @@ def test_d2_diagram_generation():
 if __name__ == "__main__":
     # Run tests if script is executed directly
     pytest.main([__file__])
-```
-
-The comments explain:
-- Purpose of different code sections
-- Logic flow
-- Error handling
-- Test scenario intentions
-- API interaction details

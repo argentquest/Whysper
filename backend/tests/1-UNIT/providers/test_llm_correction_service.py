@@ -1,4 +1,3 @@
-```python
 """
 Integration tests for LLM Correction Service
 """
@@ -75,12 +74,9 @@ def test_code_extraction_from_llm_response():
     # Test extraction from code block response
     response_with_block = """Here's the corrected code:
 
-```mermaid
 graph TD
   A --> B
   B --> C
-```
-
 This should work now!"""
 
     extracted = service._extract_code_from_response(response_with_block, "mermaid")
@@ -100,11 +96,9 @@ def test_mocked_correction_workflow():
     # Set up mock to return a corrected code response
     mock_processor.process_question.return_value = """Here's the corrected code:
 
-```mermaid
 graph TD
   A --> B
-  B --> C
-```"""
+  B --> C"""
 
     service = LLMCorrectionService(ai_processor=mock_processor)
 
