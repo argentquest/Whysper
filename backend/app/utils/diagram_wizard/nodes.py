@@ -149,6 +149,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                 "clarity_score": clarity_score,
                 "json_representation": state.get("json_representation", {}),
                 "question": follow_up_question,
+                "full_ai_response": ai_response_str  # Include full raw response for "Show More"
             })
 
         # Mark analysis as complete to prevent re-analysis
@@ -183,22 +184,26 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
 @log_method_call
 def _get_model_for_id(model_id: str = None) -> str:
-    """Map model_id to actual model name.
+    """Get the actual AI model to use for API calls.
+
+    NOTE: The model_id parameter is used to select which system PROMPT to use
+    (different prompt styles for gpt5, grok, claude, gemini), but the ACTUAL
+    model used for API calls always comes from DEFAULT_MODEL in .env file.
 
     Args:
-        model_id: User-selected model ID (gpt5, grok, claude, gemini)
+        model_id: Used for prompt selection only (gpt5, grok, claude, gemini)
+                  Does NOT affect which actual AI model is called
 
     Returns:
-        Actual model identifier for API calls
+        Actual model identifier from .env DEFAULT_MODEL for API calls
     """
-    model_map = {
-        "gpt5": "openai/gpt-4-turbo",  # Deep Context
-        "grok": "xai/grok-2-latest",  # Fast
-        "claude": "anthropic/claude-3.5-sonnet",  # Thinking
-        "gemini": "google/gemini-2.5-pro",  # Efficient
-    }
-    # Return the mapped model or default to Gemini
-    return model_map.get(model_id, "google/gemini-2.5-flash-preview-09-2025")
+    # Always use the actual model from .env file for API calls
+    # The model_id is only used to select prompt style via get_prompt()
+    env_vars = env_manager.load_env_file()
+    default_model = env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
+
+    logger.info(f"Using actual AI model from .env: {default_model} (prompt style: {model_id or 'default'})")
+    return default_model
 
 
 async def _call_llm(prompt: str, user_content: str, session_id: str = None, model_id: str = None) -> str:
@@ -271,11 +276,8 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
         logger.info(f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s",
                    extra={'session_id': session_id} if session_id else {})
 
-        # Log a preview of the response for debugging
-        preview = response[:200].replace('\n', ' ').strip()
-        if len(response) > 200:
-            preview += "..."
-        logger.info(f"📄 LLM RESPONSE CONTENT: {preview}",
+        # Log the FULL raw AI response for debugging
+        logger.info(f"📄 FULL LLM RAW RESPONSE:\n{response}",
                    extra={'session_id': session_id} if session_id else {})
 
         return response
@@ -540,18 +542,31 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     clarity_scores = state.get("clarity_scores", [])
     question_count = state.get("question_count", 0)
 
-    # Check for clarification timeout (max 10 questions or 5 minutes)
+    # Check for clarification timeout (max 20 questions or 30 minutes)
     import time
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
-    if question_count >= 10 or (current_time - start_time) > 300:  # 5 minutes
+    if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
         logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
                       extra={'session_id': state.get("_session_id")})
+        # Send update to frontend asking for user confirmation even though timeout reached
+        update_callback = state.get("_update_callback")
+        if update_callback:
+            await update_callback({
+                "status": "clarification_ready",
+                "message": "Maximum clarification attempts reached. Please confirm to proceed with diagram generation.",
+                "clarity_score": state.get("clarity_score", 5),
+                "awaiting_user_confirmation": True,
+                "clarification_timeout": True,
+                "message_type": "clarification_summary",
+            })
+        # Wait for user confirmation instead of auto-proceeding
         return {
-            "llm_ready": True,
-            "final_design_summary": "TIMEOUT: Maximum clarification attempts reached. Proceeding with available information.",
+            "llm_ready": False,
+            "final_design_summary": "TIMEOUT: Maximum clarification attempts reached. Awaiting user confirmation to proceed.",
+            "awaiting_user_confirmation": True,
             "clarification_timeout": True,
-            "current_state": SessionState.GENERATING
+            "current_state": SessionState.CLARIFYING
         }
 
     # Get both ANALYZE and CLARIFY prompts for persistent schema context
@@ -632,6 +647,11 @@ Determine if you have enough information or need to ask more questions."""
     try:
         # Parse JSON response from LLM
         ai_response = json.loads(ai_response_str)
+
+        # Log the parsed JSON structure for debugging
+        logger.info(f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",
+                   extra={'session_id': session_id} if session_id else {})
+
         question = ai_response.get("question")
         clarity_score = ai_response.get("clarity_score", 5)
         ready = ai_response.get("ready", False)
@@ -651,11 +671,12 @@ Determine if you have enough information or need to ask more questions."""
                 "question": question,
                 "clarity_score": clarity_score,
                 "json_representation": json_representation,
-                "message_type": "clarification"
+                "message_type": "clarification",
+                "full_ai_response": ai_response_str  # Include full raw response for "Show More"
             })
 
         # Check if AI thinks we're ready
-        if ready or design_summary.startswith("READY:"):
+        if ready or (design_summary and design_summary.startswith("READY:")):
             summary = design_summary.replace("READY:", "").strip() if design_summary else user_content
             updated_clarity_scores = clarity_scores + [clarity_score]
             logger.info(
@@ -671,7 +692,8 @@ Determine if you have enough information or need to ask more questions."""
                     "clarity_scores": updated_clarity_scores,
                     "json_representation": json_representation,
                     "awaiting_user_confirmation": True,
-                    "message_type": "clarification_summary"
+                    "message_type": "clarification_summary",
+                    "full_ai_response": ai_response_str  # Include full raw response for "Show More"
                 })
             return {
                 "llm_ready": False,
@@ -711,7 +733,7 @@ Determine if you have enough information or need to ask more questions."""
         logger.error(f"❌ Failed to parse clarification response as JSON: {e}",
                     extra={'session_id': session_id} if session_id else {})
         # Fallback to simple string parsing
-        if ai_response_str.startswith("READY:"):
+        if ai_response_str and ai_response_str.startswith("READY:"):
             summary = ai_response_str.replace("READY:", "").strip()
             return {
                 "llm_ready": False,
@@ -907,7 +929,7 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
 
     # Direct provider system call - no fallback
     provider_registry = get_registry()
-    provider = provider_registry.get_provider_for_type(diagram_type.value)
+    provider = provider_registry.get_default_provider(diagram_type.value)
 
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")
@@ -1057,7 +1079,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
 
     # Direct provider system call - no fallback
     provider_registry = get_registry()
-    provider = provider_registry.get_provider_for_type(diagram_type.value)
+    provider = provider_registry.get_default_provider(diagram_type.value)
 
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")

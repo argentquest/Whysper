@@ -1,9 +1,13 @@
-Here's the TypeScript code with inline comments explaining the logic:
+/**
+ * Validation Service
+ *
+ * Provides client-side validation for diagram code using the backend provider system.
+ * Supports real-time validation as the user types in the code editor.
+ */
 
-```typescript
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'; // Define base API endpoint, with fallback to localhost
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
 
 export interface ValidationError {
   line?: number;
@@ -19,18 +23,19 @@ export interface ValidationResult {
   suggestions?: string[];
 }
 
+/**
+ * Validate diagram code using the backend provider system
+ */
 export async function validateDiagramCode(
   code: string,
   diagramType: string
 ): Promise<ValidationResult> {
   try {
-    // Send validation request to backend API with code and diagram type
     const response = await axios.post(`${API_BASE}/diagram/validate`, {
       code,
       diagram_type: diagramType,
     });
 
-    // Transform API response into standardized validation result
     return {
       isValid: response.data.is_valid,
       errors: response.data.errors || [],
@@ -38,17 +43,20 @@ export async function validateDiagramCode(
       suggestions: response.data.suggestions || [],
     };
   } catch (error) {
-    // Log error and fall back to client-side validation if API call fails
     console.error('Validation failed:', error);
+
+    // Return basic client-side validation on error
     return performBasicValidation(code, diagramType);
   }
 }
 
+/**
+ * Basic client-side validation as fallback
+ */
 function performBasicValidation(code: string, diagramType: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
-  // Immediately return error if code is empty
   if (!code || code.trim().length === 0) {
     errors.push({
       message: 'Code cannot be empty',
@@ -59,7 +67,6 @@ function performBasicValidation(code: string, diagramType: string): ValidationRe
 
   const trimmedCode = code.trim();
 
-  // Route to specific diagram type validation based on input
   switch (diagramType) {
     case 'Mermaid':
       return validateMermaid(trimmedCode);
@@ -68,7 +75,6 @@ function performBasicValidation(code: string, diagramType: string): ValidationRe
     case 'PlantUML':
       return validatePlantUML(trimmedCode);
     default:
-      // Return valid result for unknown diagram types
       return {
         isValid: true,
         errors: [],
@@ -77,11 +83,13 @@ function performBasicValidation(code: string, diagramType: string): ValidationRe
   }
 }
 
+/**
+ * Basic Mermaid validation
+ */
 function validateMermaid(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
-  // List of valid Mermaid diagram type keywords
   const mermaidKeywords = [
     'flowchart',
     'sequenceDiagram',
@@ -94,10 +102,8 @@ function validateMermaid(code: string): ValidationResult {
     'graph',
   ];
 
-  // Check if any Mermaid keyword is present in the code
   const hasKeyword = mermaidKeywords.some((keyword) => code.includes(keyword));
 
-  // Add error if no diagram type keyword is found
   if (!hasKeyword) {
     errors.push({
       line: 1,
@@ -113,15 +119,16 @@ function validateMermaid(code: string): ValidationResult {
   };
 }
 
+/**
+ * Basic D2 validation
+ */
 function validateD2(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
-  // Check for connections and shape definitions
   const hasConnection = /->|<->/.test(code);
   const hasShape = /shape:/.test(code);
 
-  // Add error if no connections or shapes are found
   if (!hasConnection && !hasShape) {
     errors.push({
       line: 1,
@@ -137,11 +144,13 @@ function validateD2(code: string): ValidationResult {
   };
 }
 
+/**
+ * Basic PlantUML validation
+ */
 function validatePlantUML(code: string): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
-  // Check for @startuml marker at the beginning
   if (!code.includes('@startuml')) {
     errors.push({
       line: 1,
@@ -150,7 +159,6 @@ function validatePlantUML(code: string): ValidationResult {
     });
   }
 
-  // Check for @enduml marker at the end
   if (!code.includes('@enduml')) {
     errors.push({
       message: 'PlantUML diagram must end with "@enduml"',
@@ -165,6 +173,9 @@ function validatePlantUML(code: string): ValidationResult {
   };
 }
 
+/**
+ * Debounce helper for validation
+ */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -172,11 +183,9 @@ export function debounce<T extends (...args: any[]) => any>(
   let timeout: NodeJS.Timeout | null = null;
 
   return (...args: Parameters<T>) => {
-    // Clear previous timeout to prevent multiple calls
     if (timeout) {
       clearTimeout(timeout);
     }
-    // Set new timeout to delay function execution
     timeout = setTimeout(() => {
       func(...args);
     }, wait);
