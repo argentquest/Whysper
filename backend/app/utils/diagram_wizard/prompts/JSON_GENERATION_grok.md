@@ -1,6 +1,6 @@
 # JSON Generation Prompt - Grok Edition
 
-**Model:** Grok (Fast & Deterministic)
+**Model:** (Fast & Deterministic)
 
 **Strength:** Speed, deterministic output, lean efficiency
 
@@ -43,7 +43,7 @@ Return single JSON (minimal but complete):
 ```json
 {
   "analysis_summary": "Architecture summary",
-  "clarity_score": 8,
+  "clarity_score": 80,
   "information_score": {"entities": true, "actions": true, "structure": true, "word_count": 200},
   "structurizr_workspace": "workspace \"System\" \"Desc\" { model { ... } views { systemContext { include * } } }",
   "clean_d2": "model { ... }",
@@ -112,4 +112,4 @@ Return valid JSON now.
 
 ---
 
-**Grok style: Fast, deterministic, clean output.**
+**Dtyle: Fast, deterministic, clean output.**

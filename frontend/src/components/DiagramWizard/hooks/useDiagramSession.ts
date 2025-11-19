@@ -149,10 +149,11 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
 
       // Transform snake_case fields to camelCase for consistency
       // Backend sends json_representation, frontend expects jsonRepresentation
-      const transformedUpdate = {
-        ...update,
-        jsonRepresentation: (update as any).json_representation || update.jsonRepresentation,
-      };
+      const transformedUpdate = { ...update };
+
+      if ((update as any).json_representation) {
+        (transformedUpdate as any).jsonRepresentation = (update as any).json_representation;
+      }
 
       // Merge new update with existing status (preserves fields not in current update)
       setStatus((prev) => ({ ...(prev ?? {}), ...transformedUpdate }));

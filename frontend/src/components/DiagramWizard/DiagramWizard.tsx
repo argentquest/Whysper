@@ -304,6 +304,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Backend sends history as array of [role, content] tuples
   const rawHistory = status?.history ?? [];
 
+  // Find the index of the last assistant message to attach metadata to
+  const lastAssistantMessageIndex = rawHistory.reduce((lastIndex, item, index) => {
+    const role = Array.isArray(item) ? item[0] : (item as any).role;
+    return role === 'assistant' ? index : lastIndex;
+  }, -1);
+
   // Transform tuples into properly typed message objects for UI display
   const chatHistory = rawHistory.map((item, index) => {
     // Handle both tuple format [role, content] and object format {role, content}
@@ -317,7 +323,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
     // Determine if this is the most recent AI response
     const isLatestAssistantMessage = role === 'assistant' &&
-      index === rawHistory.length - 1;
+      index === lastAssistantMessageIndex;
 
     // Attach additional metadata only to the latest AI message
     if (isLatestAssistantMessage) {

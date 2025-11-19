@@ -1,6 +1,6 @@
-# JSON Generation Prompt - Gemini 2.5 Pro Edition
+# JSON Generation Prompt - 
 
-**Model:** Gemini 2.5 Pro (Efficient, Pragmatic)
+**Model:** Efficient, Pragmatic
 
 **Strength:** Efficient output, pragmatic approach, practical solutions
 
@@ -47,7 +47,7 @@ Return practical JSON:
 ```json
 {
   "analysis_summary": "Practical summary of architecture",
-  "clarity_score": 8,
+  "clarity_score": 80,
   "information_score": {
     "entities": true,
     "actions": true,
@@ -180,4 +180,4 @@ Return valid JSON efficiently.
 
 ---
 
-**Gemini style: Efficient, pragmatic, practical output.**
+**Style: Efficient, pragmatic, practical output.**

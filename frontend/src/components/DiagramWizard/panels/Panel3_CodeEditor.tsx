@@ -211,10 +211,10 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
           )}
         </Space>
       }
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {/* Render code editor with loading and validation tabs */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
         {isLoading ? (
           <div
             style={{

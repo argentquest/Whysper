@@ -1,6 +1,6 @@
-# JSON Generation Prompt - Claude Sonnet 4.5 Edition
+# JSON Generation Prompt
 
-**Model:** Claude Sonnet 4.5 (Transparent, Structured Thinking)
+**Model:** (Transparent, Structured Thinking)
 
 **Strength:** Clear reasoning, structured approach, transparent decision-making
 
@@ -47,7 +47,7 @@ Return single comprehensive JSON:
 ```json
 {
   "analysis_summary": "Structured summary of architecture analysis with reasoning",
-  "clarity_score": 8,
+  "clarity_score": 80,
   "information_score": {
     "entities": true,
     "actions": true,

@@ -56,10 +56,11 @@
  */
 
 import React from 'react';
-import { Layout, Button, Input, Spin, Alert, message, Space, Steps, Tag, Modal, Card, Collapse } from 'antd';
-import { SendOutlined, ClearOutlined, LeftOutlined, CodeOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, Alert, message, Space, Tag, Modal } from 'antd';
+import { SendOutlined, ClearOutlined, LeftOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 import ChatPanel from '../panels/Panel1_Chat';
+import DiagramWizardHeader from '../components/DiagramWizardHeader';
 import type { ModelId } from './ModelSelectionScreen';
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
 
@@ -181,63 +182,16 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
 
   return (
     <Layout className={styles.diagramWizard}>
-      {/* Header */}
-      <Layout.Header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.headerTop}>
-            <div>
-              <h2 className={styles.title}>Diagram Wizard</h2>
-            </div>
-            <Space className={styles.headerMeta}>
-              {selectedModel && (
-                <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
-                  ?? {selectedModel === 'gpt5'
-                    ? 'DEEP'
-                    : selectedModel === 'grok'
-                    ? 'FASY'
-                    : selectedModel === 'claude'
-                    ? 'Thinking'
-                    : 'EFficient'}
-                </Tag>
-              )}
-              {sessionId && (
-                <>
-                  <span className={styles.sessionId}>Session: {sessionId.substring(0, 8)}...</span>
-                  <span style={{ color: sseConnected ? '#52c41a' : '#ff4d4f' }}>
-                    {sseConnected ? '? Connected' : '? Disconnected'}
-                  </span>
-                  {loading && <Spin size="small" />}
-                </>
-              )}
-            </Space>
-          </div>
-
-          <div className={styles.headerProgress}>
-            <Steps
-              current={currentPhase}
-              size="small"
-              items={phases.map((phase, index) => ({
-                title: phase.title,
-                description: phase.description,
-                icon: phase.icon,
-                status: currentPhase > index ? 'finish' : currentPhase === index ? 'process' : 'wait',
-              }))}
-            />
-            <div className={styles.phaseIndicator}>
-              <div>
-                <span className={styles.phaseLabel}>Current Phase:</span>{' '}
-                <strong>{phases[Math.min(currentPhase, phases.length - 1)].title}</strong>
-              </div>
-              {score > 0 && (
-                <div>
-                  <span className={styles.phaseLabel}>Clarity Score:</span>{' '}
-                  <strong>{score}/10</strong>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </Layout.Header>
+      {/* Unified Header Component */}
+      <DiagramWizardHeader
+        selectedModel={selectedModel}
+        sessionId={sessionId}
+        sseConnected={sseConnected}
+        loading={loading}
+        score={score}
+        currentPhase={currentPhase}
+        phases={phases}
+      />
 
       <Layout.Content className={styles.content}>
         {error && (
@@ -252,70 +206,16 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
 
         {/* If in analysis/clarification phase, show chat panel */}
         {isInAnalysisPhase && sessionId ? (
-          <div style={{ padding: '0 24px' }}>
-            {/* Score and JSON Summary - Show at Top */}
-            {(score > 0 || status?.jsonRepresentation) && (
-              <Card
-                style={{
-                  marginBottom: 24,
-                  backgroundColor: '#fafafa',
-                  borderColor: '#f0f0f0',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', marginBottom: score > 0 && status?.jsonRepresentation ? '16px' : '0' }}>
-                  {/* Score Display */}
-                  {score > 0 && (
-                    <div style={{ flex: '0 0 auto' }}>
-                      <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 500 }}>
-                        LLM Assessment Score
-                      </div>
-                      <Tag color={score >= 8 ? 'green' : score >= 6 ? 'blue' : 'orange'} style={{ fontSize: '16px', padding: '4px 12px' }}>
-                        📊 {score}/10
-                      </Tag>
-                    </div>
-                  )}
-                </div>
-
-                {/* JSON Representation */}
-                {status?.jsonRepresentation && (
-                  <Collapse
-                    items={[
-                      {
-                        key: 'json-representation',
-                        label: (
-                          <span>
-                            <CodeOutlined style={{ marginRight: 8 }} />
-                            <strong>JSON Representation</strong>
-                          </span>
-                        ),
-                        children: (
-                          <div style={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e8e8e8',
-                            borderRadius: '4px',
-                            padding: '12px',
-                            maxHeight: '250px',
-                            overflow: 'auto',
-                          }}>
-                            <pre style={{
-                              margin: 0,
-                              fontFamily: 'monospace',
-                              fontSize: '12px',
-                              whiteSpace: 'pre-wrap',
-                              wordWrap: 'break-word',
-                            }}>
-                              {JSON.stringify(status.jsonRepresentation, null, 2)}
-                            </pre>
-                          </div>
-                        ),
-                      },
-                    ]}
-                  />
-                )}
-              </Card>
-            )}
-
-            {/* Chat Panel Below Score/JSON */}
+          <div
+            style={{
+              padding: '0 24px 16px',
+              height: 'calc(100vh - 230px)',
+              minHeight: 360,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Chat Panel */}
             <ChatPanel
               messages={chatHistory}
               clarifications={clarifications}

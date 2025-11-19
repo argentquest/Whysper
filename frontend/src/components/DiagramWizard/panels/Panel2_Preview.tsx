@@ -225,9 +225,9 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
           </Space>
         )
       }
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
-      <div style={{ flex: 1, overflow: 'auto', display: 'flex' }}>
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         {/* Show loading spinner while diagram is generating */}
         {isLoading ? (
           <div

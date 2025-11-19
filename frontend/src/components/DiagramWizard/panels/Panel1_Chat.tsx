@@ -57,8 +57,10 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Card, List, Input, Button, Empty, Spin, Avatar, Space, Tag, Collapse, Tooltip } from 'antd';
-import { UserOutlined, RobotOutlined, SendOutlined, EyeOutlined, CodeOutlined } from '@ant-design/icons';
+import { Card, List, Input, Button, Empty, Spin, Space, Tag, Tooltip, Tabs } from 'antd';
+import { SendOutlined, CodeOutlined, EyeOutlined } from '@ant-design/icons';
+import Editor from '@monaco-editor/react';
+import JsonPreview from '../components/JsonPreview';
 import styles from '../diagram-wizard.module.css';
 
 /**
@@ -125,7 +127,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
 }) => {
   const [userResponse, setUserResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json'>('preview');
+  const [editorReady, setEditorReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && typeof messagesEndRef.current.scrollIntoView === 'function') {
@@ -136,6 +142,23 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (activeResponseTab === 'json' && editorRef.current) {
+      requestAnimationFrame(() => editorRef.current?.layout());
+    }
+  }, [activeResponseTab]);
+
+  useEffect(() => {
+    if (!editorReady || !editorContainerRef.current || !editorRef.current) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      editorRef.current?.layout();
+    });
+    observer.observe(editorContainerRef.current);
+    return () => observer.disconnect();
+  }, [editorReady]);
 
   const handleSubmit = async () => {
     if (!userResponse.trim()) return;
@@ -155,192 +178,212 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
     }
   };
 
+  // Get the latest assistant message with AI response data
+  const latestAssistantMessage = [...messages].reverse().find(msg =>
+    msg.role === 'assistant' && (msg.jsonData || msg.fullAiResponse)
+  );
+
   return (
     <Card
       title="Conversation"
       className={styles.chatPanel}
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: 0,
+      }}
     >
-      <div className={styles.messagesList} style={{ flex: 1, overflow: 'auto' }}>
-        {messages.length === 0 ? (
-          <Empty description="No messages yet" />
-        ) : (
-          <List
-            dataSource={messages}
-            renderItem={(msg, index) => (
-              <List.Item
-                key={index}
-                style={{
-                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: '80%',
-                    display: 'flex',
-                    gap: 8,
-                    flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                  }}
-                >
-                  <Avatar
-                    icon={msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+      <div style={{ flex: 1, display: 'flex', gap: '16px', overflow: 'hidden', minHeight: 0 }}>
+        {/* Left: Chat Messages */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', minHeight: 0 }}>
+          <div className={styles.messagesList} style={{ flex: 1, overflow: 'auto' }}>
+            {messages.length === 0 ? (
+              <Empty description="No messages yet" />
+            ) : (
+              <List
+                split={false}
+                dataSource={messages}
+                renderItem={(msg, index) => (
+                  <List.Item
+                    key={index}
                     style={{
-                      backgroundColor: msg.role === 'user' ? '#1890ff' : '#52c41a',
+                      justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                      border: 'none',
+                      padding: '6px 0',
                     }}
-                  />
-
+                  >
                     <div
                       style={{
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        backgroundColor:
-                          msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
-                        wordBreak: 'break-word',
-                        minWidth: '200px',
+                        maxWidth: '80%',
+                        display: 'flex',
+                        justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
                       }}
                     >
-                      <p style={{ margin: 0, fontSize: 14 }}>{msg.content}</p>
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          backgroundColor:
+                            msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
+                          wordBreak: 'break-word',
+                          minWidth: '200px',
+                        }}
+                      >
+                        <p style={{ margin: 0, fontSize: 14, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+                          {msg.content}
+                        </p>
 
-                      {/* Display LLM Score for assistant messages */}
-                      {msg.role === 'assistant' && typeof msg.score === 'number' && (
-                        <div style={{ marginTop: 8, marginBottom: 8 }}>
-                          <Tooltip title="LLM assessment score for this response">
-                            <Tag color={msg.score >= 8 ? 'green' : msg.score >= 6 ? 'blue' : 'orange'}>
-                              📊 Score: {msg.score}/10
-                            </Tag>
-                          </Tooltip>
-                        </div>
-                      )}
-
-                      {/* Display JSON data if available */}
-                      {msg.role === 'assistant' && msg.jsonData && (
-                        <div style={{ marginTop: 8 }}>
-                          <Collapse
-                            size="small"
-                            items={[
-                              {
-                                key: `json-${index}`,
-                                label: (
-                                  <span>
-                                    <CodeOutlined style={{ marginRight: 8 }} />
-                                    JSON Representation
-                                  </span>
-                                ),
-                                children: (
-                                  <pre
-                                    style={{
-                                      backgroundColor: '#f5f5f5',
-                                      padding: '8px',
-                                      borderRadius: 4,
-                                      fontSize: '12px',
-                                      overflow: 'auto',
-                                      maxHeight: '200px',
-                                    }}
-                                  >
-                                    {JSON.stringify(msg.jsonData, null, 2)}
-                                  </pre>
-                                ),
-                              },
-                            ]}
-                          />
-                        </div>
-                      )}
-
-                      {/* Display Full AI Response if available */}
-                      {msg.role === 'assistant' && msg.fullAiResponse && (
-                        <div style={{ marginTop: 8 }}>
-                          <Collapse
-                            size="small"
-                            items={[
-                              {
-                                key: `full-response-${index}`,
-                                label: (
-                                  <span>
-                                    <CodeOutlined style={{ marginRight: 8 }} />
-                                    Show Full AI Response (Debug)
-                                  </span>
-                                ),
-                                children: (
-                                  <pre
-                                    style={{
-                                      backgroundColor: '#f0f0f0',
-                                      padding: '8px',
-                                      borderRadius: 4,
-                                      fontSize: '11px',
-                                      overflow: 'auto',
-                                      maxHeight: '300px',
-                                      border: '1px solid #d9d9d9',
-                                    }}
-                                  >
-                                    {msg.fullAiResponse}
-                                  </pre>
-                                ),
-                              },
-                            ]}
-                          />
-                        </div>
-                      )}
-
-                      {msg.role === 'assistant' && onViewResponseDetails && (
-                        <Button
-                          type="link"
-                          size="small"
-                          style={{ padding: 0, marginTop: 8 }}
-                          onClick={() => onViewResponseDetails(index)}
-                        >
-                          <EyeOutlined /> View full details
-                        </Button>
-                      )}
+                        {/* Display LLM Score for assistant messages */}
+                        {msg.role === 'assistant' && typeof msg.score === 'number' && (
+                          <div style={{ marginTop: 8, marginBottom: 8 }}>
+                            <Tooltip title="LLM assessment score for this response">
+                              <Tag color={msg.score >= 80 ? 'green' : msg.score >= 60 ? 'blue' : 'orange'}>
+                                📊 Score: {msg.score}/100
+                              </Tag>
+                            </Tooltip>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </List.Item>
-              )}
-            />
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Response Input Section OR Confirm Ready Button */}
-      {sessionActive && (
-        <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
-          {canConfirmReady && onConfirmReady ? (
-            // Show Confirm Ready Button when clarifications are complete
-            <Button
-              type="primary"
-              size="large"
-              onClick={onConfirmReady}
-              loading={isLoading}
-              style={{ width: '100%' }}
-            >
-              ✓ Confirm Ready to Generate Diagram
-            </Button>
-          ) : isClarifying ? (
-            // Show input for clarifications
-            <Space.Compact style={{ width: '100%' }}>
-              <Input
-                placeholder="Enter your response to the clarification..."
-                value={userResponse}
-                onChange={(e) => setUserResponse(e.target.value)}
-                onPressEnter={handleSubmit}
-                disabled={isLoading || submitting}
-                autoFocus
+                  </List.Item>
+                )}
               />
+            )}
 
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleSubmit}
-                loading={isLoading || submitting}
-              >
-                Send
-              </Button>
-            </Space.Compact>
-          ) : null}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Response Input Section OR Confirm Ready Button */}
+          {sessionActive && (
+            <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+              {canConfirmReady && onConfirmReady ? (
+                // Show Confirm Ready Button when clarifications are complete
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={onConfirmReady}
+                  loading={isLoading}
+                  style={{ width: '100%' }}
+                >
+                  ✓ Confirm Ready to Generate Diagram
+                </Button>
+              ) : isClarifying ? (
+                // Show input for clarifications
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    placeholder="Enter your response to the clarification..."
+                    value={userResponse}
+                    onChange={(e) => setUserResponse(e.target.value)}
+                    onPressEnter={handleSubmit}
+                    disabled={isLoading || submitting}
+                    autoFocus
+                  />
+
+                  <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    onClick={handleSubmit}
+                    loading={isLoading || submitting}
+                  >
+                    Send
+                  </Button>
+                </Space.Compact>
+              ) : null}
+            </div>
+          )}
+
+          {isLoading && <Spin style={{ marginTop: 16 }} />}
         </div>
-      )}
 
-      {isLoading && <Spin style={{ marginTop: 16 }} />}
+        {/* Right: AI Response */}
+        <div style={{
+          flex: '0 0 400px',
+          borderLeft: '1px solid #f0f0f0',
+          paddingLeft: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          height: '100%',
+          minHeight: 0,
+        }}>
+          <h4 style={{ marginTop: 0, marginBottom: 12, flexShrink: 0 }}>AI Response</h4>
+
+          {latestAssistantMessage ? (
+            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+              <Tabs
+                activeKey={activeResponseTab}
+                onChange={(key) => setActiveResponseTab(key as 'preview' | 'json')}
+                size="small"
+                destroyInactiveTabPane
+                animated={false}
+                className={styles.aiResponseTabs}
+                items={[
+                  {
+                    key: 'preview',
+                    label: (
+                      <span>
+                        <EyeOutlined style={{ marginRight: 4 }} />
+                        Preview
+                      </span>
+                    ),
+                    children: (
+                      <div className={`${styles.aiResponseContent} ${styles.aiResponseScrollable}`}>
+                        <JsonPreview data={latestAssistantMessage.jsonData || {}} />
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'json',
+                    label: (
+                      <span>
+                        <CodeOutlined style={{ marginRight: 4 }} />
+                        JSON
+                      </span>
+                    ),
+                    children: (
+                      <div
+                        className={styles.aiResponseContent}
+                        style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}
+                        ref={editorContainerRef}
+                      >
+                        <Editor
+                          height="700px"
+                          width="100%"
+                          defaultLanguage="json"
+                          value={JSON.stringify(latestAssistantMessage.jsonData || {}, null, 2)}
+                          theme="vs-light"
+                          onMount={(editorInstance) => {
+                            editorRef.current = editorInstance;
+                            editorInstance.layout();
+                            setEditorReady(true);
+                          }}
+                          options={{
+                            readOnly: true,
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            fontSize: 12,
+                            lineNumbers: 'on',
+                            wordWrap: 'on',
+                            automaticLayout: true,
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          ) : (
+            <Empty
+              description="No AI response data yet"
+              style={{ marginTop: '40px' }}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          )}
+        </div>
+      </div>
     </Card>
   );
 };
