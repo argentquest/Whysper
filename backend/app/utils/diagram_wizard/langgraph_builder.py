@@ -32,6 +32,17 @@ def route_after_clarify(state: GraphState) -> str:
         return END
 
 
+def route_after_diagram_type(state: GraphState) -> str:
+    # Determine routing after diagram type determination
+    # If user has selected their preferred diagram type, proceed to code generation
+    # Otherwise, end graph and wait for user selection via select_diagram_type endpoint
+    if state.get("user_selected_diagram_type", False):
+        return "generate_code"
+    else:
+        # Wait for user to select diagram type
+        return END
+
+
 def route_validation(state: GraphState) -> str:
     # Validate generated code and route to next step
     # If code is valid, render diagram; if invalid, refine code
@@ -62,7 +73,6 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
     # Define deterministic edges between nodes
     # These represent guaranteed transitions in the workflow
-    workflow.add_edge("determine_diagram_type", "generate_code")
     workflow.add_edge("generate_code", "validate_code")
     workflow.add_edge("refine_code", "validate_code")
     workflow.add_edge("render_diagram", END)
@@ -81,6 +91,15 @@ def build_diagram_factory_graph(service) -> StateGraph:
     )
 
     workflow.add_edge("generate_json_representation", "determine_diagram_type")
+
+    workflow.add_conditional_edges(
+        "determine_diagram_type",
+        route_after_diagram_type,
+        {
+            "generate_code": "generate_code",
+            END: END  # End when waiting for user diagram type selection
+        },
+    )
 
     workflow.add_conditional_edges(
         "validate_code",

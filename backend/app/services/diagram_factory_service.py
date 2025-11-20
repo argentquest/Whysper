@@ -529,6 +529,54 @@ class DiagramFactoryService:
             })
 
     @log_method_call
+    async def select_diagram_type(self, diagram_type: str):
+        """
+        User selects their preferred diagram type from the available options.
+        Sets the diagram_type in state and resumes the graph workflow.
+
+        Args:
+            diagram_type: Selected diagram type (Mermaid, D2, PlantUML, Structurizr)
+        """
+        try:
+            if self.session.graph_state:
+                # Import DiagramType enum to validate and set the selection
+                from app.utils.diagram_wizard.graph_state import DiagramType
+
+                # Map string to enum
+                diagram_type_map = {
+                    "Mermaid": DiagramType.MERMAID,
+                    "D2": DiagramType.D2,
+                    "PlantUML": DiagramType.PLANTUML,
+                    "Structurizr": DiagramType.STRUCTURIZR
+                }
+
+                if diagram_type not in diagram_type_map:
+                    raise ValueError(f"Invalid diagram type: {diagram_type}. Must be one of: Mermaid, D2, PlantUML, Structurizr")
+
+                # Set the user's selected diagram type
+                self.session.graph_state["diagram_type"] = diagram_type_map[diagram_type]
+                self.session.graph_state["user_selected_diagram_type"] = True
+
+            await self._push_update({
+                "status": "diagram_type_selected",
+                "message": f"Generating {diagram_type} diagram...",
+                "diagram_type": diagram_type,
+                "message_role": "assistant"
+            })
+
+            # Resume the workflow now that the user selected diagram type
+            self._resume_graph_if_idle("user selected diagram type")
+
+        except Exception as e:
+            logger.error(f"Error selecting diagram type: {e}")
+            self.session.errors.append(str(e))
+            await self._push_update({
+                "status": "error",
+                "message": str(e),
+                "message_role": "assistant"
+            })
+
+    @log_method_call
     async def approve_render(self):
         """Approve the diagram for rendering."""
         try:

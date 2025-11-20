@@ -39,6 +39,8 @@ export interface DiagramStatus {
   score_info?: ScoreInfo;
   clarity_score?: number;
   assessment_score?: number;
+  score_target?: number;
+  full_ai_response?: string;
 }
 
 export interface DiagramUpdate extends DiagramStatus {
@@ -48,6 +50,8 @@ export interface DiagramUpdate extends DiagramStatus {
   question?: string;
   message_role?: 'assistant' | 'user';
   error?: string;
+  recommended_diagram_type?: string;
+  keyword_scores?: { [key: string]: number };
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
@@ -171,6 +175,31 @@ export class DiagramApi {
 
     if (!resp.ok) {
       throw new Error(`Failed to confirm ready: ${resp.statusText}`);
+    }
+
+    return resp.json();
+  }
+
+  /**
+   * Select diagram type from available options (Mermaid, D2, PlantUML, Structurizr)
+   */
+  static async selectDiagramType(
+    sessionId: string,
+    diagramType: string
+  ): Promise<DiagramStatus> {
+    const resp = await fetch(`${API_BASE}/diagram/select_diagram_type`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        diagram_type: diagramType,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Failed to select diagram type: ${resp.statusText}`);
     }
 
     return resp.json();

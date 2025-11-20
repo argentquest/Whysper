@@ -58,6 +58,21 @@ class KeywordScorer:
         "uml", "diagram", "modeling", "class diagram", "component diagram"
     ]
 
+    STRUCTURIZR_KEYWORDS = [
+        # C4 model indicators
+        "c4", "c4 model", "context", "container", "component",
+        "person", "software system", "enterprise", "boundary",
+        # Architectural views
+        "system context", "container diagram", "component diagram", "deployment",
+        "landscape", "dynamic", "deployment diagram",
+        # Structurizr DSL specific
+        "workspace", "model", "views", "styles", "theme",
+        "relationship", "uses", "includes", "extends",
+        # Software architecture focus
+        "bounded context", "subdomain", "aggregate", "entity", "value object",
+        "strategic", "tactical", "domain", "architecture diagram"
+    ]
+
     def __init__(self):
         # Initialize empty lists for base keywords from external source
         self.entity_words = []
@@ -70,6 +85,7 @@ class KeywordScorer:
         self.mermaid_keywords = self.MERMAID_KEYWORDS
         self.d2_keywords = self.D2_KEYWORDS
         self.plantuml_keywords = self.PLANTUML_KEYWORDS
+        self.structurizr_keywords = self.STRUCTURIZR_KEYWORDS
 
     def _load_base_keywords(self):
         # Attempt to load additional keywords from a JSON file
@@ -96,9 +112,10 @@ class KeywordScorer:
         # Handle empty text case with default even distribution
         if not text:
             return {
-                "Mermaid": 33,
-                "D2": 33,
-                "PlantUML": 34,
+                "Mermaid": 25,
+                "D2": 25,
+                "PlantUML": 25,
+                "Structurizr": 25,
             }
 
         # Prepare text for analysis
@@ -109,6 +126,7 @@ class KeywordScorer:
         mermaid_diagram_score = self._count_matches(text_lower, self.mermaid_keywords)
         d2_diagram_score = self._count_matches(text_lower, self.d2_keywords)
         plantuml_diagram_score = self._count_matches(text_lower, self.plantuml_keywords)
+        structurizr_diagram_score = self._count_matches(text_lower, self.structurizr_keywords)
 
         # Score base keywords for additional context
         entity_matches = self._count_matches(text_lower, self.entity_words)
@@ -135,15 +153,22 @@ class KeywordScorer:
             entity_matches * 0.8
         )
 
+        structurizr_base_score = (
+            structurizr_diagram_score * 3 +  # Heavy weight for C4/architecture keywords
+            structure_matches * 1.5 +
+            entity_matches * 0.8
+        )
+
         # Calculate total score for normalization
-        total_score = mermaid_base_score + d2_base_score + plantuml_base_score
+        total_score = mermaid_base_score + d2_base_score + plantuml_base_score + structurizr_base_score
 
         # Handle case with no matches
         if total_score == 0:
             return {
-                "Mermaid": 33,
-                "D2": 33,
-                "PlantUML": 34,
+                "Mermaid": 25,
+                "D2": 25,
+                "PlantUML": 25,
+                "Structurizr": 25,
             }
 
         # Normalize scores to 100% and return
@@ -151,6 +176,7 @@ class KeywordScorer:
             "Mermaid": round((mermaid_base_score / total_score) * 100, 2),
             "D2": round((d2_base_score / total_score) * 100, 2),
             "PlantUML": round((plantuml_base_score / total_score) * 100, 2),
+            "Structurizr": round((structurizr_base_score / total_score) * 100, 2),
         }
 
     @staticmethod
@@ -175,6 +201,8 @@ class KeywordScorer:
             diagram_type = DiagramType.MERMAID
         elif diagram_type_name == "D2":
             diagram_type = DiagramType.D2
+        elif diagram_type_name == "Structurizr":
+            diagram_type = DiagramType.STRUCTURIZR
         else:  # PlantUML
             diagram_type = DiagramType.PLANTUML
 

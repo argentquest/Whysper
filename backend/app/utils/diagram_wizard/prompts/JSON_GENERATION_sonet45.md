@@ -47,7 +47,7 @@ Return single comprehensive JSON:
 ```json
 {
   "analysis_summary": "Structured summary of architecture analysis with reasoning",
-  "clarity_score": 80,
+  "clarity_score": {SCORE_TARGET},
   "information_score": {
     "entities": true,
     "actions": true,

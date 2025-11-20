@@ -231,6 +231,8 @@ PROMPTS_DIR=""
 # Production: Use absolute path like "/var/www/whysper/bin/d2" or "C:/www/whysper/bin/d2.exe"
 D2_EXECUTABLE_PATH=""
 
+
+
 # =============================================================================
 # 🔧 ADDITIONAL CONFIGURATION
 # =============================================================================
@@ -245,6 +247,15 @@ TOKEN_PASSWORD=""
 # Advanced AI parameters
 TOP_P="1"
 FREQUENCY_PENALTY="0"
+
+# =============================================================================
+# 🎯 DIAGRAM WIZARD CONFIGURATION
+# =============================================================================
+
+# Target clarity score for diagram generation (0-100)
+# The AI will continue asking clarification questions until this score is reached
+# Recommended range: 70-90 (default: 80)
+SCORE_TARGET="80"
 
 # =============================================================================
 # 💾 SESSION PERSISTENCE (auto-saved by application)

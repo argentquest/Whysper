@@ -47,6 +47,9 @@
 
   "provider_preferences": {
     "description": "Specify the default provider for each diagram type when multiple providers are available",
-    "d2": "d2v1"
+    "mermaid": "mermaidv1",
+    "d2": "d2v1",
+    "plantuml": "krokiplantuml",
+    "structurizr": "krokistructurizr"
   }
 }

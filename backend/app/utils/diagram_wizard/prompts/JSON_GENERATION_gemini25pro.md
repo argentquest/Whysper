@@ -47,7 +47,7 @@ Return practical JSON:
 ```json
 {
   "analysis_summary": "Practical summary of architecture",
-  "clarity_score": 80,
+  "clarity_score": {SCORE_TARGET},
   "information_score": {
     "entities": true,
     "actions": true,

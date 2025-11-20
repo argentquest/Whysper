@@ -29,6 +29,7 @@ interface DiagramWizardHeaderProps {
 
   // LLM Score
   score: number;
+  scoreTarget?: number; // Dynamic score target from backend .env (default: 80)
 
   // Progress phases
   currentPhase: number;
@@ -47,6 +48,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   sseConnected,
   loading = false,
   score,
+  scoreTarget = 80, // Default to 80 if not provided by backend
   currentPhase,
   phases,
 }) => {
@@ -67,9 +69,10 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   };
 
   // Get score tag color (1-100 scale)
+  // Uses dynamic scoreTarget from backend .env (default: 80)
   const getScoreTagColor = (score: number): string => {
-    if (score >= 80) return 'green';
-    if (score >= 60) return 'blue';
+    if (score >= scoreTarget) return 'green';
+    if (score >= scoreTarget * 0.75) return 'blue'; // 75% of target
     return 'orange';
   };
 
@@ -104,7 +107,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
                   fontWeight: 'bold',
                 }}
               >
-                📊 {score}/100
+                📊 {score}/{scoreTarget}
               </Tag>
             )}
           </div>

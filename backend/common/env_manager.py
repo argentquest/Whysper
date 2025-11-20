@@ -291,6 +291,26 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             logger.error(f"Error updating environment variable {key}: {e}")
             return False
 
+    @log_method_call
+    def get_score_target(self) -> int:
+        """
+        Get the diagram wizard clarity score target from environment variables.
+
+        Returns the SCORE_TARGET value from .env file, with a default of 80 if not set.
+        The score target determines when the AI has gathered enough information to
+        proceed with diagram generation (typically 70-90 on a 1-100 scale).
+
+        Returns:
+            int: The score target threshold (default: 80)
+        """
+        try:
+            env_vars = self.load_env_file()
+            score_target_str = env_vars.get("SCORE_TARGET", "80")
+            return int(score_target_str)
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid SCORE_TARGET value, using default 80: {e}")
+            return 80
+
 
 # Global instance
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -180,21 +180,21 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 @log_method_call
 async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     """
-    Determines the appropriate diagram type based on keyword analysis.
+    Determines the appropriate diagram type options based on keyword analysis.
 
     Runs after the clarification loop completes, analyzing the final
-    design summary and JSON representation to select the best diagram type
-    (Mermaid, D2, or PlantUML).
+    design summary and JSON representation to score all diagram types
+    (Mermaid, D2, PlantUML, Structurizr) and present them to the user for selection.
 
     Returns:
-        - diagram_type: The determined DiagramType
-        - keyword_scores: Dictionary with scoring breakdown
+        - keyword_scores: Dictionary with scoring breakdown for all diagram types
+        - awaiting_diagram_type_selection: True (pauses workflow for user input)
     """
     session_id = state.get("_session_id")
     final_design_summary = state.get("final_design_summary", "")
     json_representation = state.get("json_representation", {})
 
-    logger.info("🎯 Determining diagram type based on clarification results...",
+    logger.info("🎯 Analyzing diagram type options based on clarification results...",
                extra={'session_id': session_id} if session_id else {})
 
     # Combine design summary and JSON metadata for better keyword analysis
@@ -206,28 +206,29 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
             if description:
                 analysis_text = f"{analysis_text}\n{description}"
 
-    # Determine diagram type using keyword scoring
-    diagram_type, keyword_scores = determine_diagram_type(analysis_text)
+    # Determine diagram type using keyword scoring (get recommended type and all scores)
+    recommended_type, keyword_scores = determine_diagram_type(analysis_text)
 
     logger.info(
-        f"📊 Diagram type determined: {diagram_type.value} | Scores: Mermaid={keyword_scores.get('Mermaid', 0):.1f}%, D2={keyword_scores.get('D2', 0):.1f}%, PlantUML={keyword_scores.get('PlantUML', 0):.1f}%",
+        f"📊 Diagram type scores calculated: Mermaid={keyword_scores.get('Mermaid', 0):.1f}%, D2={keyword_scores.get('D2', 0):.1f}%, PlantUML={keyword_scores.get('PlantUML', 0):.1f}%, Structurizr={keyword_scores.get('Structurizr', 0):.1f}% | Recommended: {recommended_type.value}",
         extra={'session_id': session_id} if session_id else {}
     )
 
-    # Send update to frontend with diagram type and scores
+    # Send update to frontend with all diagram type options and scores for user selection
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
         await update_callback({
-            "status": "diagram_type_determined",
-            "message": f"✅ Selected {diagram_type.value} diagram based on your design.",
-            "diagram_type": diagram_type.value,
+            "status": "awaiting_diagram_type_selection",
+            "message": "Please select your preferred diagram type",
+            "recommended_diagram_type": recommended_type.value,
             "keyword_scores": keyword_scores,
-            "message_type": "info"
+            "awaiting_user_selection": True,
+            "message_type": "diagram_type_selection"
         })
 
     return {
-        "diagram_type": diagram_type,
         "keyword_scores": keyword_scores,
+        "user_selected_diagram_type": False,  # Waiting for user selection
         "current_state": SessionState.GENERATING
     }
 

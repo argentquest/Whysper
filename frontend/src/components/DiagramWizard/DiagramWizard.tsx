@@ -54,9 +54,11 @@ import { useDiagramSession } from './hooks/useDiagramSession';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ModelSelectionScreen, type ModelId } from './screens/ModelSelectionScreen';
 import { SystemDescriptionScreen } from './screens/SystemDescriptionScreen';
+import { DiagramTypeSelectionScreen } from './screens/DiagramTypeSelectionScreen';
 import { GenerationScreen } from './screens/GenerationScreen';
 import type { DiagramWizardPersistedState, SavedSession } from './types/persistence';
 import { getInitialPersistedState } from './types/persistence';
+import { DiagramApi } from '../../services/diagram/diagramApi';
 
 /**
  * Props for the DiagramWizard component
@@ -113,8 +115,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   );
 
   // Screen navigation - controls which UI screen is visible to user
-  // Possible values: 'model' (AI selection), 'description' (input/clarification), 'generation' (result display)
-  const [currentScreen, setCurrentScreen] = useState<'model' | 'description' | 'generation'>('model');
+  // Possible values: 'model' (AI selection), 'description' (input/clarification), 'diagramTypeSelection' (choose diagram type), 'generation' (result display)
+  const [currentScreen, setCurrentScreen] = useState<'model' | 'description' | 'diagramTypeSelection' | 'generation'>('model');
 
   // Selected AI model - initialized from localStorage to remember user's last choice
   const [selectedModel, setSelectedModel] = useState<ModelId | null>(() => {
@@ -139,6 +141,16 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [currentPhase, setCurrentPhase] = useState(0); // 0-4 index into phases array (Analysis -> Clarification -> Generation -> Rendering)
   const [isInAnalysisPhase, setIsInAnalysisPhase] = useState(false); // True when AI is analyzing initial description
   const [score, setScore] = useState(0); // Clarity score (0-100) from AI assessment
+  const [scoreTarget, setScoreTarget] = useState(80); // Target score from backend .env (default: 80)
+
+  // Diagram type selection state
+  const [recommendedDiagramType, setRecommendedDiagramType] = useState<string>('Mermaid'); // AI-recommended diagram type
+  const [keywordScores, setKeywordScores] = useState<{ [key: string]: number }>({
+    Mermaid: 25,
+    D2: 25,
+    PlantUML: 25,
+    Structurizr: 25,
+  }); // Suitability scores for each diagram type
 
   // UI state - controls modal visibility and error display
   const [exportModalVisible, setExportModalVisible] = useState(false); // Export options modal
@@ -177,6 +189,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         setScore(latestScore);
       }
 
+      // Extract and update score target from backend if provided
+      if (typeof update.score_target === 'number') {
+        setScoreTarget(update.score_target);
+      }
+
       // Handle different session status values and update UI accordingly
       // Status transitions: started -> analyzing -> clarifying -> generating -> rendering -> completed
       switch (statusValue) {
@@ -212,9 +229,24 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // AI determined it has sufficient information to generate diagram
           message.success('Ready to proceed with diagram generation!');
           break;
-        case 'diagram_type_determined':
-          // AI selected the optimal diagram type (Mermaid/D2/PlantUML) for the system
+        case 'awaiting_diagram_type_selection':
+          // AI has analyzed diagram options and is waiting for user to select preferred type
+          message.info('Please select your preferred diagram type');
+          // Extract diagram type options and scores from update
+          if (update.recommended_diagram_type) {
+            setRecommendedDiagramType(update.recommended_diagram_type);
+          }
+          if (update.keyword_scores) {
+            setKeywordScores(update.keyword_scores);
+          }
+          // Navigate to diagram type selection screen
+          setCurrentScreen('diagramTypeSelection');
+          break;
+        case 'diagram_type_selected':
+          // User selected diagram type, AI proceeding to code generation
           message.success('Diagram type selected');
+          // Navigate to generation screen
+          setCurrentScreen('generation');
           break;
         case 'generating_json':
           // AI creating structured JSON representation of system architecture
@@ -506,11 +538,33 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // Signal backend that user is satisfied with clarification
       await confirmReady();
 
-      // Navigate to generation screen to show diagram code/preview
-      setCurrentScreen('generation');
+      // Note: Don't navigate to generation screen here anymore
+      // Backend will send 'awaiting_diagram_type_selection' status
+      // which will trigger navigation to diagram type selection screen
     } catch (err) {
       console.error('Confirm ready failed:', err);
       message.error('Failed to confirm ready');
+    }
+  };
+
+  // Handle user selecting diagram type
+  const handleSelectDiagramType = async (diagramType: string) => {
+    // Ensure session is active
+    if (!sessionId) {
+      message.error('No active session');
+      return;
+    }
+
+    try {
+      // Send diagram type selection to backend
+      await DiagramApi.selectDiagramType(sessionId, diagramType);
+      message.success(`${diagramType} diagram selected`);
+
+      // Note: Navigation to generation screen happens via SSE update
+      // Backend sends 'diagram_type_selected' status which triggers navigation
+    } catch (err) {
+      console.error('Select diagram type failed:', err);
+      message.error('Failed to select diagram type');
     }
   };
 
@@ -553,11 +607,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     }
   }, [initialPrompt, sessionId, isInitializing]);
 
-  // Effect: Reset score when session ends
+  // Effect: Reset score and scoreTarget when session ends
   useEffect(() => {
     if (!sessionId) {
-      // No active session means no valid score - reset to 0
+      // No active session means no valid score - reset to defaults
       setScore(0);
+      setScoreTarget(80);
     }
   }, [sessionId]);
 
@@ -622,6 +677,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         sessionId={sessionId}
         status={status}
         score={score}
+        scoreTarget={scoreTarget}
         clarifications={clarifications}
         chatHistory={chatHistory}
         sseConnected={sseConnected}
@@ -635,7 +691,26 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       />
     );
   }
-  // Screen 3: Generation + Rendering
+  // Screen 3: Diagram Type Selection
+  // Show after clarification phase when user confirms ready
+  else if (currentScreen === 'diagramTypeSelection') {
+    screenContent = (
+      <DiagramTypeSelectionScreen
+        selectedModel={selectedModel}
+        currentPhase={currentPhase}
+        phases={phases}
+        sessionId={sessionId}
+        score={score}
+        scoreTarget={scoreTarget}
+        sseConnected={sseConnected}
+        loading={loading}
+        recommendedDiagramType={recommendedDiagramType}
+        keywordScores={keywordScores}
+        onSelectDiagramType={handleSelectDiagramType}
+      />
+    );
+  }
+  // Screen 4: Generation + Rendering
   // Show once session is active and user has moved to generation phase
   else {
     screenContent = (
@@ -647,6 +722,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         sessionId={sessionId}
         status={status}
         score={score}
+        scoreTarget={scoreTarget}
         diagramCode={diagramCode}
         svgOutput={svgOutput}
         chatHistory={chatHistory}

@@ -12,6 +12,7 @@ from ..graph_state import GraphState, SessionState
 from ..prompt_loader import get_prompt
 from .llm_helpers import call_llm
 from common.logging_decorator import log_method_call
+from common.env_manager import env_manager
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         }
 
     logger.info(f"🔬 Analyzing initial user request (model: {model_id})...", extra={'session_id': session_id})
+
+    # Get dynamic score target from environment
+    score_target = env_manager.get_score_target()
 
     update_callback = state.get("_update_callback")
     if update_callback:
@@ -112,6 +116,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                 "message": analysis_summary,
                 "assessment_score": assessment_score,
                 "score": assessment_score,
+                "score_target": score_target,
                 "clarity_score": clarity_score,
                 "json_representation": state.get("json_representation", {}),
                 "question": follow_up_question,

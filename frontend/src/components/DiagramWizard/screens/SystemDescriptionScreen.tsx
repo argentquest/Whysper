@@ -103,6 +103,7 @@ interface SystemDescriptionScreenProps {
   sessionId: string | null;
   status: DiagramUpdate | null;
   score: number;
+  scoreTarget: number;
   clarifications: Array<{ question: string; answer?: string }>;
   chatHistory: any[];
   sseConnected: boolean;
@@ -128,6 +129,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   sessionId,
   status,
   score,
+  scoreTarget,
   clarifications,
   chatHistory,
   sseConnected,
@@ -189,6 +191,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
         sseConnected={sseConnected}
         loading={loading}
         score={score}
+        scoreTarget={scoreTarget}
         currentPhase={currentPhase}
         phases={phases}
       />

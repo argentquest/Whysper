@@ -13,6 +13,7 @@ from ..graph_state import GraphState, SessionState
 from ..prompt_loader import get_prompt
 from .llm_helpers import call_llm
 from common.logging_decorator import log_method_call
+from common.env_manager import env_manager
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,11 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     It uses a conversational approach with scoring to track progress.
 
     ## Workflow
-    1. Check if clarification is needed (clarity_score < 80)
+    1. Check if clarification is needed (clarity_score < SCORE_TARGET from .env)
     2. Call LLM with combined ANALYZE + CLARIFY prompts for full context
     3. Extract clarity_score and next question from LLM response
-    4. If clarity_score >= 80, mark ready and return design summary
-    5. If clarity_score < 80, add question to history and ask user
+    4. If clarity_score >= SCORE_TARGET, mark ready and return design summary
+    5. If clarity_score < SCORE_TARGET, add question to history and ask user
     6. Track all scores and questions for audit trail
 
     ## Features
@@ -65,13 +66,16 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     3. User: "PostgreSQL and Redis"
     4. AI clarity_score: 60/100 → "Any external services?"
     5. User: "AWS S3 for file storage"
-    6. AI clarity_score: 80/100 → "Ready!" → Proceed to generation
+    6. AI clarity_score: SCORE_TARGET/100 → "Ready!" → Proceed to generation
 
     ## Timeout Behavior
     If max questions (10) or max time (5 minutes) reached, proceeds with
     available information rather than indefinitely clarifying.
     """
     session_id = state.get("_session_id")
+
+    # Get dynamic score target from environment
+    score_target = env_manager.get_score_target()
 
     # IMPORTANT: Skip clarify_prompt on first run (analyze_request already asked a question)
     # This prevents asking TWO questions immediately after analysis
@@ -149,14 +153,14 @@ Continue refining the JSON representation based on the user's responses."""
         prompt_template = clarify_prompt_template
     else:
         # Fallback prompt if specific prompt not found
-        prompt_template = """You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
+        prompt_template = f"""You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
 
 INSTRUCTIONS:
 1. Ask ONE clarifying question per turn to understand system components and connections
 2. After each user response, provide a clarity_score (1-100)
 3. Update the json_representation with new information
 4. Respond ONLY in JSON format with: question, clarity_score, ready, json_representation
-5. Mark ready=true when clarity_score >= 80 and you have sufficient detail
+5. Mark ready=true when clarity_score >= {score_target} and you have sufficient detail
 6. When ready, include design_summary with "READY:" prefix
 
 Determine if you have enough information or need to ask more questions."""
@@ -218,6 +222,16 @@ Determine if you have enough information or need to ask more questions."""
                 json_representation = {}
         design_summary = ai_response.get("design_summary", "")
 
+        # Enforce score target: If score meets or exceeds target, mark as ready regardless of AI's decision
+        if clarity_score >= score_target and not ready:
+            logger.info(
+                f"✅ Score {clarity_score} meets target {score_target}, overriding AI ready flag",
+                extra={'session_id': session_id} if session_id else {}
+            )
+            ready = True
+            if not design_summary:
+                design_summary = f"READY: System architecture understood with clarity score of {clarity_score}/{score_target}."
+
         # Send AI response to frontend with score and JSON
         update_callback = state.get("_update_callback")
         if update_callback and callable(update_callback):
@@ -225,6 +239,7 @@ Determine if you have enough information or need to ask more questions."""
                 "status": "clarifying",
                 "question": question,
                 "clarity_score": clarity_score,
+                "score_target": score_target,
                 "json_representation": json_representation,
                 "message_type": "clarification",
                 "full_ai_response": ai_response_str  # Include full raw response for "Show More"
@@ -244,6 +259,7 @@ Determine if you have enough information or need to ask more questions."""
                     "status": "clarification_ready",
                     "message": summary,
                     "clarity_score": clarity_score,
+                    "score_target": score_target,
                     "clarity_scores": updated_clarity_scores,
                     "json_representation": json_representation,
                     "awaiting_user_confirmation": True,

@@ -53,7 +53,7 @@ Return a single JSON object with full Structurizr DSL:
 ```json
 {
   "analysis_summary": "Comprehensive summary of deep architecture analysis",
-  "clarity_score": 80,
+  "clarity_score": {SCORE_TARGET},
   "information_score": {
     "entities": true,
     "actions": true,

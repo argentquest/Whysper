@@ -7,6 +7,7 @@ generation, and refinement phases.
 
 from pathlib import Path
 from typing import Dict, Optional
+from common.env_manager import env_manager
 
 
 # Global cache to store loaded prompts and avoid repeated file reads
@@ -86,18 +87,43 @@ def load_prompts() -> Dict[str, str]:
 
 
 def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str]:
+    """
+    Get a prompt by name and optionally by model ID, with variable substitution.
+
+    This function loads prompts from markdown files and performs dynamic variable
+    substitution for configurable values like {SCORE_TARGET}.
+
+    Args:
+        prompt_name: The base name of the prompt (e.g., "clarify_universal")
+        model_id: Optional model ID for model-specific prompts (e.g., "gpt5", "grok")
+
+    Returns:
+        The prompt string with all variables substituted, or None if not found
+    """
     # Load all prompts if not already loaded
     prompts = load_prompts()
 
     # Prioritize model-specific prompts if a model_id is provided
+    prompt_content = None
     if model_id:
         model_specific_key = f"{prompt_name}_{model_id}"
         # Check if a model-specific prompt exists
         if model_specific_key in prompts:
-            return prompts.get(model_specific_key)
+            prompt_content = prompts.get(model_specific_key)
 
     # Fall back to generic prompt if no model-specific version found
-    return prompts.get(prompt_name)
+    if prompt_content is None:
+        prompt_content = prompts.get(prompt_name)
+
+    # Perform variable substitution if prompt was found
+    if prompt_content:
+        # Get dynamic values from environment
+        score_target = env_manager.get_score_target()
+
+        # Replace placeholders with actual values
+        prompt_content = prompt_content.replace("{SCORE_TARGET}", str(score_target))
+
+    return prompt_content
 
 
 def _load_full_file(file_path: Path) -> str:

@@ -140,6 +140,29 @@ async def confirm_ready(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/select_diagram_type")
+@log_method_call
+async def select_diagram_type(
+    session_id: str = Body(..., embed=True),
+    diagram_type: str = Body(..., embed=True),
+):
+    # Process user's selection of diagram type (Mermaid, D2, PlantUML, Structurizr)
+    session = DiagramSessionStore.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        # Create service to handle diagram type selection workflow
+        service = DiagramFactoryService(session)
+        # Process user's diagram type selection and resume workflow
+        await service.select_diagram_type(diagram_type)
+        return service.get_status()
+    except Exception as e:
+        # Log and handle any diagram type selection errors
+        logger.error(f"Error selecting diagram type: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/approve_render")
 @log_method_call
 async def approve_render(

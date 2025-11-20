@@ -34,6 +34,7 @@ interface GenerationScreenProps {
   sessionId: string | null;
   status: DiagramUpdate | null;
   score: number;
+  scoreTarget: number;
   diagramCode: string;
   svgOutput: string;
   chatHistory: any[];
@@ -60,6 +61,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   sessionId,
   status,
   score,
+  scoreTarget,
   diagramCode,
   svgOutput,
   chatHistory,
@@ -90,6 +92,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         sseConnected={sseConnected}
         loading={loading}
         score={score}
+        scoreTarget={scoreTarget}
         currentPhase={currentPhase}
         phases={phases}
       />
