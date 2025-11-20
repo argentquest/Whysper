@@ -144,7 +144,9 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 <PreviewPanel
                   svgOutput={svgOutput}
                   isLoading={loading && !svgOutput}
-                  diagramType="Mermaid"
+                  diagramType={status?.diagramType || "Mermaid"}
+                  error={status?.error_message || status?.error || error?.message || null}
+                  validationError={status?.validation_error || null}
                 />
               </div>
             </div>

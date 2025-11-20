@@ -8,15 +8,17 @@
  * - Mouse wheel zoom (Ctrl + wheel)
  * - Keyboard shortcuts (Ctrl+/-/0)
  * - Pan/drag with mouse
+ * - Error display for validation and rendering failures
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, Empty, Button, Space, Spin } from 'antd';
+import { Card, Empty, Button, Space, Spin, Alert } from 'antd';
 import {
   ZoomInOutlined,
   ZoomOutOutlined,
   ReloadOutlined,
   DragOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 
@@ -25,19 +27,22 @@ interface Panel2PreviewProps {
   svgOutput: string;
   diagramType: string;
   isLoading: boolean;
+  error?: string | null;
+  validationError?: string | null;
 }
 
 const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   svgOutput,
   diagramType,
   isLoading,
+  error,
+  validationError,
 }) => {
   // State management for zoom, position, and dragging interactions
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [renderError, _setRenderError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Zoom in function with controlled maximum scale limit
@@ -129,22 +134,83 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
 
   // Render the preview content with various states
   const renderPreview = () => {
-    // Show empty state if no SVG is generated
-    if (!svgOutput) {
-      return <Empty description="No diagram generated yet" />;
-    }
+    // Determine if there are any errors to display
+    const hasError = error || validationError;
 
-    // Show error state if rendering failed
-    if (renderError) {
+    // Show validation error if present (code is invalid)
+    if (validationError) {
       return (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <Empty
-            description={`Error rendering ${diagramType} diagram`}
-            style={{ marginBottom: 16 }}
+        <div style={{ padding: '20px', width: '100%' }}>
+          <Alert
+            message="Validation Error"
+            description={
+              <div>
+                <p style={{ marginBottom: 8 }}>
+                  The generated {diagramType} code contains syntax errors:
+                </p>
+                <pre style={{
+                  background: '#fff1f0',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  maxHeight: '200px',
+                  overflow: 'auto',
+                  border: '1px solid #ffccc7',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}>
+                  {validationError}
+                </pre>
+                <p style={{ marginTop: 12, fontSize: '12px', color: '#8c8c8c' }}>
+                  The AI will attempt to fix these errors automatically, or you can edit the code manually in the right panel.
+                </p>
+              </div>
+            }
+            type="error"
+            showIcon
+            icon={<ExclamationCircleOutlined />}
           />
-          <p style={{ color: '#ff4d4f', fontSize: 12 }}>{renderError}</p>
         </div>
       );
+    }
+
+    // Show rendering error if present (code is valid but rendering failed)
+    if (error) {
+      return (
+        <div style={{ padding: '20px', width: '100%' }}>
+          <Alert
+            message="Rendering Error"
+            description={
+              <div>
+                <p style={{ marginBottom: 8 }}>
+                  Failed to render the {diagramType} diagram:
+                </p>
+                <pre style={{
+                  background: '#fff1f0',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  maxHeight: '200px',
+                  overflow: 'auto',
+                  border: '1px solid #ffccc7',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}>
+                  {error}
+                </pre>
+              </div>
+            }
+            type="error"
+            showIcon
+            icon={<ExclamationCircleOutlined />}
+          />
+        </div>
+      );
+    }
+
+    // Show empty state if no SVG is generated and no errors
+    if (!svgOutput) {
+      return <Empty description="No diagram generated yet" />;
     }
 
     // Render SVG with interactive zoom and pan capabilities

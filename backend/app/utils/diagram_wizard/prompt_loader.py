@@ -55,19 +55,40 @@ def load_prompts() -> Dict[str, str]:
         if model_json_path.exists():
             _prompt_cache[f"json_generation_{model}"] = _load_full_file(model_json_path)
 
-    # Load generation prompts for different diagram formats
+    # Load optimized generation prompts for different diagram formats
+    # These are standalone prompt files optimized for each diagram type
+    d2_gen_path = prompt_dir / "D2_GENERATION.md"
+    if d2_gen_path.exists():
+        _prompt_cache["generate_d2"] = _load_full_file(d2_gen_path)
+
+    mermaid_gen_path = prompt_dir / "MERMAID_GENERATION.md"
+    if mermaid_gen_path.exists():
+        _prompt_cache["generate_mermaid"] = _load_full_file(mermaid_gen_path)
+
+    structurizr_gen_path = prompt_dir / "STRUCTURIZR_GENERATION.md"
+    if structurizr_gen_path.exists():
+        _prompt_cache["generate_structurizr"] = _load_full_file(structurizr_gen_path)
+
+    # Fallback to legacy GENERATE_PROMPTS.md for backward compatibility
     generate_path = prompt_dir / "GENERATE_PROMPTS.md"
     if generate_path.exists():
-        # Extract specific sections for different diagram generation methods
-        _prompt_cache["generate_mermaid"] = _extract_section(
-            generate_path, "Mermaid Generation Prompt"
-        )
-        _prompt_cache["generate_d2"] = _extract_section(
-            generate_path, "D2 Generation Prompt"
-        )
-        _prompt_cache["generate_plantuml"] = _extract_section(
-            generate_path, "PlantUML Generation Prompt"
-        )
+        # Only load if optimized prompts weren't found
+        if "generate_mermaid" not in _prompt_cache:
+            _prompt_cache["generate_mermaid"] = _extract_section(
+                generate_path, "Mermaid Generation Prompt"
+            )
+        if "generate_d2" not in _prompt_cache:
+            _prompt_cache["generate_d2"] = _extract_section(
+                generate_path, "D2 Generation Prompt"
+            )
+        if "generate_plantuml" not in _prompt_cache:
+            _prompt_cache["generate_plantuml"] = _extract_section(
+                generate_path, "PlantUML Generation Prompt"
+            )
+        if "generate_structurizr" not in _prompt_cache:
+            _prompt_cache["generate_structurizr"] = _extract_section(
+                generate_path, "Structurizr Generation Prompt"
+            )
 
     # Load refinement prompts for different diagram formats
     refine_path = prompt_dir / "REFINE_PROMPTS.md"
@@ -81,6 +102,9 @@ def load_prompts() -> Dict[str, str]:
         )
         _prompt_cache["refine_plantuml"] = _extract_section(
             refine_path, "PlantUML Refinement Prompt"
+        )
+        _prompt_cache["refine_structurizr"] = _extract_section(
+            refine_path, "Structurizr Refinement Prompt"
         )
 
     return _prompt_cache

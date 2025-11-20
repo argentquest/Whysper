@@ -50,6 +50,8 @@ export interface DiagramUpdate extends DiagramStatus {
   question?: string;
   message_role?: 'assistant' | 'user';
   error?: string;
+  error_message?: string;
+  validation_error?: string;
   recommended_diagram_type?: string;
   keyword_scores?: { [key: string]: number };
 }
