@@ -11,7 +11,7 @@ import time
 from typing import Dict, Any
 from ..graph_state import GraphState, SessionState
 from ..prompt_loader import get_prompt
-from .llm_helpers import call_llm
+from .llm_helpers import call_llm, extract_json_from_response
 from common.logging_decorator import log_method_call
 from common.env_manager import env_manager
 
@@ -204,8 +204,8 @@ Determine if you have enough information or need to ask more questions."""
         }
 
     try:
-        # Parse JSON response from LLM
-        ai_response = json.loads(ai_response_str)
+        # Parse JSON response from LLM (handles markdown-wrapped JSON)
+        ai_response = extract_json_from_response(ai_response_str)
 
         # Log the parsed JSON structure for debugging
         logger.info(f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",

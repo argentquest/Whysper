@@ -7,10 +7,13 @@ and shared helper functions used across multiple nodes.
 
 import logging
 import httpx
-from typing import Dict
+import json
+import re
+from typing import Dict, Any
 from ..graph_state import DiagramType
 from common.ai import create_ai_processor
 from common.env_manager import env_manager
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +23,44 @@ PROVIDER_MAP = {
     "D2": "d2v1",
     "PlantUML": "krokiplantuml"
 }
+
+
+def extract_json_from_response(response_text: str) -> Dict[str, Any]:
+    """
+    Extract and parse JSON from an LLM response that may be wrapped in markdown code blocks.
+    
+    Args:
+        response_text: The raw response text from the LLM
+        
+    Returns:
+        Parsed JSON dictionary
+        
+    Raises:
+        json.JSONDecodeError: If the response cannot be parsed as JSON
+    """
+    try:
+        # First try direct JSON parsing
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        # Try to extract JSON from markdown code blocks
+        # Pattern matches ```json ... ``` or ``` ... ```
+        json_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+        match = re.search(json_pattern, response_text, re.DOTALL)
+        
+        if match:
+            json_str = match.group(1)
+            return json.loads(json_str)
+        
+        # If no code blocks found, try to find JSON object in the text
+        # Look for content between curly braces
+        brace_pattern = r'\{.*?\}'
+        match = re.search(brace_pattern, response_text, re.DOTALL)
+        
+        if match:
+            return json.loads(match.group(0))
+        
+        # If all else fails, raise the original error
+        raise
 
 
 def get_diagram_type_str(diagram_type: DiagramType) -> str:
