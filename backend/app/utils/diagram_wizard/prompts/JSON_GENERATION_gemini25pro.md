@@ -30,7 +30,7 @@ Gemini style: Practical, efficient, focus on what works.
 
 3. **Practical Validation**
    - Verify Structurizr validity
-   - Check workspace/clean_d2 sync
+   - Check workspace/clean_structurizr sync
    - Validate JSON schema
    - Done efficiently
 
@@ -55,7 +55,7 @@ Return practical JSON:
     "word_count": 250
   },
   "structurizr_workspace": "workspace \"System\" \"Practical Description\" { model { ... } views { systemContext { include * } } }",
-  "clean_d2": "model { ... same architecture, no views ... }",
+  "clean_structurizr": "model { ... same architecture, no views ... }",
   "json_representation": {
     "metadata": {
       "name": "System",
@@ -108,7 +108,7 @@ workspace "System" "What it does" {
 }
 ```
 
-clean_d2: Model only, identical architecture
+clean_structurizr: Model only, identical architecture
 
 ```
 model {
@@ -161,7 +161,7 @@ Essential fields, clear values:
 
 Quick checks:
 - Workspace valid Structurizr? ✓
-- clean_d2 matches workspace? ✓
+- clean_structurizr matches workspace? ✓
 - JSON schema valid? ✓
 - All systems included? ✓
 

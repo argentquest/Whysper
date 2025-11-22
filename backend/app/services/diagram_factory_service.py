@@ -509,6 +509,8 @@ class DiagramFactoryService:
             if self.session.graph_state:
                 self.session.graph_state["user_confirmed_ready"] = True
                 self.session.graph_state["llm_ready"] = True
+                # Clear awaiting_user_confirmation flag to allow graph to proceed
+                self.session.graph_state["awaiting_user_confirmation"] = False
 
             await self._push_update({
                 "status": "confirmed_ready",

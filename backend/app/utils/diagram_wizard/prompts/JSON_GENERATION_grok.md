@@ -27,7 +27,7 @@ Grok style: Lean, efficient, no wasted tokens.
    - No unnecessary detail
 
 3. **Quick Validation**
-   - Workspace = clean_d2 architecture
+   - Workspace = clean_structurizr architecture
    - All components consistent
    - All connections match
 
@@ -46,7 +46,7 @@ Return single JSON (minimal but complete):
   "clarity_score": {SCORE_TARGET},
   "information_score": {"entities": true, "actions": true, "structure": true, "word_count": 200},
   "structurizr_workspace": "workspace \"System\" \"Desc\" { model { ... } views { systemContext { include * } } }",
-  "clean_d2": "model { ... }",
+  "clean_structurizr": "model { ... }",
   "json_representation": {"metadata": {"name": "S", "description": "D"}, "components": [], "connections": [], "users": []},
   "assumptions": ["fact1", "fact2"],
   "next_step": "ready_for_generation"
@@ -69,7 +69,7 @@ workspace "System" "Description" {
 }
 ```
 
-clean_d2: Same model block, no views.
+clean_structurizr: Same model block, no views.
 
 ## JSON: Minimal Valid Schema
 
@@ -94,7 +94,7 @@ clean_d2: Same model block, no views.
 ## Fast Validation
 
 - Workspace valid Structurizr? Yes/No
-- clean_d2 matches workspace? Yes/No
+- clean_structurizr matches workspace? Yes/No
 - All components in both? Yes/No
 - JSON schema valid? Yes/No
 

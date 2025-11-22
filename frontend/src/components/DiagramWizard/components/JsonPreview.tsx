@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Card, Tag, Descriptions, List, Typography, Divider } from 'antd';
-import { DatabaseOutlined, LinkOutlined, InfoCircleOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, LinkOutlined, InfoCircleOutlined, AppstoreOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -98,6 +98,68 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
     );
   };
 
+  // Render users section (people/end-users)
+  const renderUsers = (users: any[]) => {
+    if (!users || users.length === 0) return null;
+
+    return (
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={5} style={{ color: '#722ed1', marginBottom: '12px' }}>
+          <UserOutlined /> Users ({users.length})
+        </Title>
+        <List
+          grid={{ gutter: 12, xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 }}
+          dataSource={users}
+          renderItem={(user: any, index: number) => (
+            <List.Item>
+              <Card
+                size="small"
+                style={{
+                  backgroundColor: '#f9f0ff',
+                  borderLeft: '4px solid #722ed1',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text strong style={{ fontSize: '14px' }}>
+                    {user.name || user.id || `User ${index + 1}`}
+                  </Text>
+                  {user.type && (
+                    <Tag color="purple" style={{ fontSize: '11px' }}>
+                      {user.type}
+                    </Tag>
+                  )}
+                </div>
+                {(user.id || user.identifier) && (
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '6px' }}>
+                    ID: {user.id || user.identifier}
+                  </Text>
+                )}
+                {user.description && (
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
+                    {user.description}
+                  </Text>
+                )}
+                {user.properties && Object.keys(user.properties).length > 0 && (
+                  <Descriptions
+                    size="small"
+                    column={1}
+                    style={{ marginTop: '8px', fontSize: '11px' }}
+                  >
+                    {Object.entries(user.properties).map(([key, value]) => (
+                      <Descriptions.Item key={key} label={key}>
+                        {String(value)}
+                      </Descriptions.Item>
+                    ))}
+                  </Descriptions>
+                )}
+              </Card>
+            </List.Item>
+          )}
+        />
+      </div>
+    );
+  };
+
   // Render connections section
   const renderConnections = (connections: any[]) => {
     if (!connections || connections.length === 0) return null;
@@ -121,7 +183,7 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
                   <Text code>{connection.from || connection.source || 'Source'}</Text>
-                  <Text type="secondary">→</Text>
+                  <Text type="secondary">-&gt;</Text>
                   <Text code>{connection.to || connection.target || 'Target'}</Text>
                   {connection.label && (
                     <Tag color="green" style={{ fontSize: '10px', marginLeft: 'auto' }}>
@@ -199,6 +261,9 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
         </div>
       )}
 
+      {/* Render users */}
+      {renderUsers(parsedData.users || parsedData.people || parsedData.actors)}
+
       {/* Render components */}
       {renderComponents(parsedData.components || parsedData.nodes || parsedData.elements)}
 
@@ -212,7 +277,8 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
       {Object.entries(parsedData).map(([key, value]) => {
         // Skip already rendered properties
         if (['name', 'title', 'system_name', 'description', 'components', 'nodes', 'elements',
-             'connections', 'edges', 'relationships', 'links', 'metadata', 'properties', 'config'].includes(key)) {
+             'connections', 'edges', 'relationships', 'links', 'metadata', 'properties', 'config',
+             'users', 'people', 'actors'].includes(key)) {
           return null;
         }
 

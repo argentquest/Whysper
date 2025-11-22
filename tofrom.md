@@ -1,0 +1,10 @@
+You are an expert enterprise archtect with deep expertise in DSL.  You have been asked to generate an Architecture diagram.  Carefully Review
+the architecture described in the natural language input.  You output must:
+- Reflect both the current and target state of the architecture.
+- Clearly represent all componnents, systems and transitions.
+- Maitain the original intent and structure without introducing any new compnnents and assumptions
+- All Text connecting the boxes should only have Invest, Migrate and Eliminate
+- 
+The architecture describes a migration scenario with a 'From Container' (current state) containing SQL Server (database) and .Net Web Application (web app), and a 'To Container' (target state) containing MongoDB (database) and React Based Web Application (web app). Only one explicit transition is provided: SQL Server migrates to MongoDB. No current-state interactions (e.g., .Net app to SQL Server) or transitions for the web apps are specified. Modeled containers as grouping components and added 'state' (current/target) to distinguish phases. No new components or assumptions introduced beyond schema necessities (e.g., slugified IDs, inferred types like 'database'/'web_app'). Missing: web app transitions (Invest/Migrate/Eliminate?), current/target interactions, protocols, and full intent for diagram labels limited to Invest/Migrate/Eliminate.
+
+Understood as a migration architecture diagram showing current ('From Container' with SQL Server database and .Net Web Application) and target ('To Container' with MongoDB database and React Based Web Application) states. Containers modeled as grouping components with 'state' property to distinguish phases. Only explicit transition is SQL Server to MongoDB as 'Migrate'. No current-state interactions specified (e.g., .Net app to SQL Server), no web app transitions, no protocols. Adhered strictly to instructions: no new components/assumptions; connections limited to Invest/Migrate/Eliminate labels where known. Components include inferred types ('database', 'web_app', 'container'). Missing: web app transition label, confirmation on absence of other connections/interactions.

@@ -30,7 +30,7 @@ Claude style: Think through clearly, structure work methodically, provide comple
 
 3. **Transparent Validation**
    - Clearly describe validation steps
-   - Check workspace ↔ clean_d2 synchronization
+   - Check workspace ↔ clean_structurizr synchronization
    - Verify JSON schema compliance
    - Note any ambiguities or assumptions
 
@@ -55,7 +55,7 @@ Return single comprehensive JSON:
     "word_count": 300
   },
   "structurizr_workspace": "workspace \"System Name\" \"Comprehensive Description\" { model { ... complete with descriptions ... } views { systemContext { include * autoLayout } container { include * autoLayout } } }",
-  "clean_d2": "model { ... identical systems, containers, relationships ... }",
+  "clean_structurizr": "model { ... identical systems, containers, relationships ... }",
   "json_representation": {
     "metadata": {
       "name": "System Name",
@@ -146,7 +146,7 @@ workspace "System Name" "System Description and Purpose" {
 }
 ```
 
-### clean_d2: Model Only
+### clean_structurizr: Model Only
 
 Same model block as workspace, no views:
 
@@ -223,8 +223,8 @@ All required and optional fields populated:
 Before returning, verify:
 
 - [ ] Workspace is valid Structurizr DSL
-- [ ] clean_d2 is valid Structurizr DSL (model only)
-- [ ] Workspace and clean_d2 describe identical architecture
+- [ ] clean_structurizr is valid Structurizr DSL (model only)
+- [ ] Workspace and clean_structurizr describe identical architecture
 - [ ] All component IDs are consistent across representations
 - [ ] JSON schema validates against specification
 - [ ] All relationships are bidirectional where needed

@@ -4,9 +4,13 @@ LangGraph state machine builder for diagram factory.
 Constructs and compiles the diagram generation workflow graph.
 """
 
+import logging
 from functools import partial
 from langgraph.graph import StateGraph, END
 from .graph_state import GraphState
+from common.logger import get_logger
+
+logger = get_logger(__name__)
 from .nodes import (
     analyze_request,
     clarify_prompt,
@@ -20,35 +24,70 @@ from .nodes import (
 
 
 def route_after_clarify(state: GraphState) -> str:
-    # Determine routing after clarification phase
-    # If LLM is ready (user confirmed or timeout), proceed to JSON generation
-    # Otherwise, end graph and wait for user response (either answer to question or confirmation)
-    # The graph will resume when user provides input via handle_clarification or confirm_ready
+    """
+    Route after clarification phase to next stage.
+    
+    Returns:
+        "generate_json_representation" if ready to proceed
+        END if waiting for user input
+    """
     if state.get("llm_ready", False):
-        return "generate_json"
+        logger.debug(
+            f"Routing from clarify_prompt to generate_json_representation "
+            f"(llm_ready=True, user_confirmed={state.get('user_confirmed_ready', False)})",
+            extra={'session_id': state.get("_session_id")}
+        )
+        return "generate_json_representation"
     else:
-        # Not ready - end graph and wait for user input
-        # Graph will resume from analyze_request (which skips re-analysis) when user responds
+        logger.debug(
+            "Routing from clarify_prompt to END (waiting for user input)",
+            extra={'session_id': state.get("_session_id")}
+        )
         return END
 
 
 def route_after_diagram_type(state: GraphState) -> str:
-    # Determine routing after diagram type determination
-    # If user has selected their preferred diagram type, proceed to code generation
-    # Otherwise, end graph and wait for user selection via select_diagram_type endpoint
+    """
+    Route after diagram type determination to next stage.
+    
+    Returns:
+        "generate_code" if user has selected diagram type
+        END if waiting for user selection
+    """
     if state.get("user_selected_diagram_type", False):
+        logger.debug(
+            f"Routing from determine_diagram_type to generate_code "
+            f"(user_selected={state.get('diagram_type', 'unknown')})",
+            extra={'session_id': state.get("_session_id")}
+        )
         return "generate_code"
     else:
-        # Wait for user to select diagram type
+        logger.debug(
+            "Routing from determine_diagram_type to END (waiting for user selection)",
+            extra={'session_id': state.get("_session_id")}
+        )
         return END
 
 
 def route_validation(state: GraphState) -> str:
-    # Validate generated code and route to next step
-    # If code is valid, render diagram; if invalid, refine code
+    """
+    Route after validation to next stage.
+    
+    Returns:
+        "render_diagram" if code is valid
+        "refine_code" if code needs refinement
+    """
     if state.get("is_valid", False):
+        logger.debug(
+            "Routing from validate_code to render_diagram (code is valid)",
+            extra={'session_id': state.get("_session_id")}
+        )
         return "render_diagram"
     else:
+        logger.debug(
+            f"Routing from validate_code to refine_code (validation_error: {state.get('validation_error', 'unknown')})",
+            extra={'session_id': state.get("_session_id")}
+        )
         return "refine_code"
 
 
@@ -85,7 +124,8 @@ def build_diagram_factory_graph(service) -> StateGraph:
         "clarify_prompt",
         route_after_clarify,
         {
-            "generate_json": "generate_json_representation",
+            "generate_json_representation": "generate_json_representation",
+            "determine_diagram_type": "determine_diagram_type",
             END: END  # End when waiting for user input (question or confirmation)
         },
     )

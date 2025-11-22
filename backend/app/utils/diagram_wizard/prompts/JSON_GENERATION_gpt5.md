@@ -36,7 +36,7 @@ Leverage your long-context strength:
 
 3. **Dual Representation Synchronization**
    - Build workspace first with full detail
-   - Extract model block for clean_d2
+   - Extract model block for clean_structurizr
    - Verify identical architecture in both forms
    - Triple-check all component IDs match
 
@@ -61,7 +61,7 @@ Return a single JSON object with full Structurizr DSL:
     "word_count": 350
   },
   "structurizr_workspace": "workspace \"System\" \"Description\" { model { ... comprehensive detail ... } views { systemContext { include * } container { include * } } }",
-  "clean_d2": "model { ... identical architecture, no views ... }",
+  "clean_structurizr": "model { ... identical architecture, no views ... }",
   "json_representation": {
     "metadata": { "name": "System", "description": "Full description", "version": "1.0", "tags": ["comprehensive"], "status": "active" },
     "components": [ { "id": "comp1", "name": "Component", "type": "service", "description": "Detailed description", "technology": "Tech", "responsibility": ["resp1", "resp2"], "owner": "Team", "hosted_on": "Location" } ],
@@ -135,9 +135,9 @@ workspace "E-Commerce Platform" "Complete e-commerce system with microservices" 
 }
 ```
 
-### clean_d2 Excellence
+### clean_structurizr Excellence
 
-Your clean_d2 MUST:
+Your clean_structurizr MUST:
 - Contain ONLY the model block
 - Have NO views block
 - Be minimal but complete
@@ -149,10 +149,10 @@ Your clean_d2 MUST:
 Before returning output, verify:
 
 - [ ] workspace is valid Structurizr DSL
-- [ ] clean_d2 is valid Structurizr DSL (model only)
-- [ ] All systems in workspace appear in clean_d2
-- [ ] All containers in workspace appear in clean_d2
-- [ ] All relationships in workspace appear in clean_d2
+- [ ] clean_structurizr is valid Structurizr DSL (model only)
+- [ ] All systems in workspace appear in clean_structurizr
+- [ ] All containers in workspace appear in clean_structurizr
+- [ ] All relationships in workspace appear in clean_structurizr
 - [ ] All component IDs in JSON match both Structurizr forms
 - [ ] Metadata in JSON matches workspace description
 - [ ] All connections in JSON match workspace relationships
@@ -173,7 +173,7 @@ After constructing output:
 
 1. Syntax Check: Valid JSON
 2. Schema Check: All fields present
-3. Consistency Check: Workspace = clean_d2 architecture
+3. Consistency Check: Workspace = clean_structurizr architecture
 4. Completeness Check: All mentioned systems included
 5. Metadata Check: Full details in JSON
 
@@ -186,7 +186,7 @@ If any validation fails:
 
 Return ONLY valid JSON with:
 - Complete Structurizr workspace (with views)
-- Complete clean_d2 (model only, no views)
+- Complete clean_structurizr (model only, no views)
 - Complete json_representation (legacy schema)
 - All three representing identical architecture
 

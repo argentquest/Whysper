@@ -7,14 +7,49 @@ is needed or if the system can proceed directly to diagram generation.
 
 import logging
 import json
+import re
 from typing import Dict, Any
 from ..graph_state import GraphState, SessionState
 from ..prompt_loader import get_prompt
-from .llm_helpers import call_llm
+from .llm_helpers import call_llm, extract_json_from_response
 from common.logging_decorator import log_method_call
 from common.env_manager import env_manager
+from common.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+
+def _parse_ai_response(ai_response_str: str, session_id: str = None) -> Dict[str, Any]:
+    """Parse AI response, attempting to clean common LLM artifacts before failing."""
+    parse_errors = []
+
+    try:
+        return json.loads(ai_response_str)
+    except json.JSONDecodeError as err:
+        parse_errors.append(f"direct parse: {err}")
+
+    try:
+        return extract_json_from_response(ai_response_str)
+    except Exception as err:  # noqa: BLE001 - wants the concrete error in logs
+        parse_errors.append(f"extraction helper: {err}")
+
+    stripped = ai_response_str.strip()
+    stripped = re.sub(r"^```(?:json)?\\s*", "", stripped)
+    stripped = re.sub(r"```\\s*$", "", stripped)
+    brace_match = re.search(r"\{.*\}", stripped, re.DOTALL)
+    cleaned = brace_match.group(0) if brace_match else stripped
+
+    if cleaned != ai_response_str:
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as err:
+            parse_errors.append(f"cleaned parse: {err}")
+
+    logger.info(
+        f"Failed to parse AI response after retries: {' | '.join(parse_errors)}",
+        extra={'session_id': session_id} if session_id else {},
+    )
+    raise ValueError(f"Unable to parse AI response; attempts: {' | '.join(parse_errors)}")
 
 
 @log_method_call
@@ -86,7 +121,8 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         }
 
     try:
-        ai_response = json.loads(ai_response_str)
+        logger.info(ai_response_str)
+        ai_response = _parse_ai_response(ai_response_str, session_id)
         analysis_summary = ai_response.get("analysis_summary") or ai_response.get("payload")
         assessment_score = ai_response.get("assessment_score", 20)
         clarity_score = ai_response.get("clarity_score", 50)

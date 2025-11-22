@@ -5,6 +5,7 @@ Provides centralized AI/LLM call handling, model ID mapping,
 and shared helper functions used across multiple nodes.
 """
 
+import asyncio
 import logging
 import httpx
 import json
@@ -12,7 +13,6 @@ import re
 from typing import Dict, Any
 from ..graph_state import DiagramType
 from common.ai import create_ai_processor
-from common.env_manager import env_manager
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -86,10 +86,7 @@ def _get_model_for_id(model_id: str = None) -> str:
     Returns:
         Actual model identifier from .env DEFAULT_MODEL for API calls
     """
-    # Always use the actual model from .env file for API calls
-    # The model_id is only used to select prompt style via get_prompt()
-    env_vars = env_manager.load_env_file()
-    default_model = env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
+    default_model = settings.default_model or "google/gemini-2.5-flash-preview-09-2025"
 
     logger.info(f"Using actual AI model from .env: {default_model} (prompt style: {model_id or 'default'})")
     return default_model
@@ -111,12 +108,10 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         Exception: When AI call fails with descriptive error message
     """
     try:
-        # Load environment configuration
-        env_vars = env_manager.load_env_file()
-        api_key = env_vars.get("API_KEY", "")
-        provider = env_vars.get("PROVIDER", "openrouter")
-        # Use selected model or fall back to environment/default
-        model = _get_model_for_id(model_id) if model_id else env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
+        # Load configuration via settings (.env + environment)
+        api_key = settings.api_key
+        provider = settings.provider or "openrouter"
+        model = _get_model_for_id(model_id)
 
         if not api_key:
             logger.error("No API key configured for diagram wizard AI calls",
@@ -141,15 +136,48 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         logger.info(f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {len(prompt)} chars, content: {len(user_content)} chars)",
                    extra={'session_id': session_id} if session_id else {})
 
-        # Make the AI call
-        result = processor.process_question(
-            question=user_content,
-            conversation_history=conversation_history,
-            model=model,
-            codebase_content="",  # No codebase context needed for diagrams
-            max_tokens=2000,      # Reasonable token limit for diagram generation
-            temperature=0.7       # Balance creativity and consistency
-        )
+        # Pull token and temperature configuration from settings
+        try:
+            max_tokens = int(settings.max_tokens)
+        except (TypeError, ValueError):
+            max_tokens = 2000
+
+        try:
+            temperature = float(settings.temperature)
+        except (TypeError, ValueError):
+            temperature = 0.7
+
+        # Compute a hard timeout so a stuck provider call doesn't hang the workflow
+        try:
+            connect_timeout = int(settings.ai_connect_timeout)
+            read_timeout = int(settings.ai_read_timeout)
+        except (TypeError, ValueError):
+            connect_timeout = 30
+            read_timeout = 120
+        total_timeout = connect_timeout + read_timeout + 15
+
+        # Make the AI call in a worker thread with an overall timeout
+        try:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    processor.process_question,
+                    user_content,
+                    conversation_history,
+                    "",  # codebase_content not used for diagram wizard
+                    model,
+                    max_tokens,
+                    temperature,
+                ),
+                timeout=total_timeout,
+            )
+        except asyncio.TimeoutError as timeout_err:
+            logger.error(
+                f"AI call exceeded timeout ({total_timeout}s)",
+                extra={'session_id': session_id} if session_id else {},
+            )
+            raise Exception(
+                f"AI call timed out after {total_timeout}s. Please try again or simplify the request."
+            ) from timeout_err
 
         # Handle both string and dict return types
         if isinstance(result, str):

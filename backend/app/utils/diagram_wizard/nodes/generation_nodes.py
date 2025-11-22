@@ -31,7 +31,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     All three representations must be synchronized and valid.
 
     Returns:
-        - Dictionary with 'structurizr_workspace', 'clean_d2', 'json_representation'
+        - Dictionary with 'structurizr_workspace', 'clean_structurizr', 'json_representation'
     """
     session_id = state.get("_session_id")
     model_id = state.get("model_id", "claude")  # Get selected model
@@ -57,9 +57,10 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         # Fallback: use existing representations from clarify_prompt
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
-            "clean_d2": state.get("clean_d2", ""),
+            "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
         }
+    
 
     # Build prompt content from conversation history
     clarification_history = state.get("clarification_history", [])
@@ -68,6 +69,12 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         for msg in clarification_history
         if msg.get('role') == 'user'
     ])
+
+    logger.info(
+        f"Preparing LLM (model: {model_id})...",
+        extra={'session_id': session_id}
+    )
+    
 
     # Call LLM with model-specific prompt
     try:
@@ -89,10 +96,14 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
-            "clean_d2": state.get("clean_d2", ""),
+            "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
             "error_message": error_message,
         }
+    logger.info(
+        f"AI Response {ai_response_str}",
+        extra={'session_id': session_id}
+    )
 
     try:
         # Parse AI response as JSON
@@ -100,7 +111,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Extract three representations
         structurizr_workspace = response.get("structurizr_workspace", "")
-        clean_d2 = response.get("clean_d2", "")
+        clean_structurizr = response.get("clean_structurizr", "")
         json_representation = response.get("json_representation", {})
 
         # Validate Structurizr syntax (basic check)
@@ -110,9 +121,9 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
                 extra={'session_id': session_id}
             )
 
-        if not clean_d2 or not clean_d2.startswith("model"):
+        if not clean_structurizr or not clean_structurizr.startswith("model"):
             logger.warning(
-                "clean_d2 missing or invalid format",
+                "clean_structurizr missing or invalid format",
                 extra={'session_id': session_id}
             )
 
@@ -138,7 +149,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         return {
             "structurizr_workspace": structurizr_workspace,
-            "clean_d2": clean_d2,
+            "clean_structurizr": clean_structurizr,
             "json_representation": json_representation,
         }
 
@@ -155,7 +166,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
-            "clean_d2": state.get("clean_d2", ""),
+            "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
         }
 
@@ -172,7 +183,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
-            "clean_d2": state.get("clean_d2", ""),
+            "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
         }
 

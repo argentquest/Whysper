@@ -14,8 +14,9 @@ from ..prompt_loader import get_prompt
 from .llm_helpers import call_llm, extract_json_from_response
 from common.logging_decorator import log_method_call
 from common.env_manager import env_manager
+from common.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @log_method_call
@@ -249,8 +250,13 @@ Determine if you have enough information or need to ask more questions."""
         if ready or (design_summary and design_summary.startswith("READY:")):
             summary = design_summary.replace("READY:", "").strip() if design_summary else user_content
             updated_clarity_scores = clarity_scores + [clarity_score]
+            # Default to requiring an explicit user confirmation before moving on
+            auto_proceed_on_ready = state.get("auto_proceed_on_ready", False)
+            await_user_confirmation = not auto_proceed_on_ready
+
             logger.info(
-                f"🎯 AI gathered enough information (score: {clarity_score}) - waiting for user confirmation",
+                f"?? AI gathered enough information (score: {clarity_score}) - "
+                f"{'auto-proceeding' if auto_proceed_on_ready else 'waiting for user confirmation'}",
                 extra={'session_id': session_id} if session_id else {}
             )
             state["json_representation"] = json_representation
@@ -262,10 +268,23 @@ Determine if you have enough information or need to ask more questions."""
                     "score_target": score_target,
                     "clarity_scores": updated_clarity_scores,
                     "json_representation": json_representation,
-                    "awaiting_user_confirmation": True,
+                    "awaiting_user_confirmation": await_user_confirmation,
                     "message_type": "clarification_summary",
                     "full_ai_response": ai_response_str  # Include full raw response for "Show More"
                 })
+
+            if auto_proceed_on_ready:
+                return {
+                    "llm_ready": True,
+                    "final_design_summary": summary,
+                    "json_representation": json_representation,
+                    "clarity_scores": updated_clarity_scores,
+                    "clarity_score": clarity_score,
+                    "awaiting_user_confirmation": False,
+                    "user_confirmed_ready": True,
+                    "current_state": SessionState.GENERATING
+                }
+
             return {
                 "llm_ready": False,
                 "final_design_summary": summary,
@@ -273,6 +292,7 @@ Determine if you have enough information or need to ask more questions."""
                 "clarity_scores": updated_clarity_scores,
                 "clarity_score": clarity_score,
                 "awaiting_user_confirmation": True,
+                "user_confirmed_ready": False,
                 "current_state": SessionState.CLARIFYING
             }
 
