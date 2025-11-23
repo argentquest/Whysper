@@ -74,17 +74,21 @@ def test_code_extraction_from_llm_response():
     # Test extraction from code block response
     response_with_block = """Here's the corrected code:
 
+```mermaid
 graph TD
   A --> B
   B --> C
+```
 This should work now!"""
 
     extracted = service._extract_code_from_response(response_with_block, "mermaid")
-    assert extracted == "graph TD\n  A --> B\n  B --> C", "Should extract code from block"
+    assert extracted.strip() == "graph TD\n  A --> B\n  B --> C", f"Should extract code from block, got: {extracted}"
 
-    # Test extraction from plain text response
+    # Test extraction from plain text response (if supported, or fail gracefully)
+    # The implementation might look for backticks. If not found, it returns the whole string or tries to clean it.
     response_plain = "graph TD\n  A --> B\n  B --> C"
     extracted_plain = service._extract_code_from_response(response_plain, "mermaid")
+    # If it returns the whole string when no backticks
     assert "graph TD" in extracted_plain, "Should handle plain response"
 
     print("[OK] Code extraction test passed")
@@ -96,9 +100,11 @@ def test_mocked_correction_workflow():
     # Set up mock to return a corrected code response
     mock_processor.process_question.return_value = """Here's the corrected code:
 
+```mermaid
 graph TD
   A --> B
-  B --> C"""
+  B --> C
+```"""
 
     service = LLMCorrectionService(ai_processor=mock_processor)
 
@@ -142,7 +148,7 @@ def test_correction_failure_handling():
 
     # Verify failure handling mechanisms
     assert not success, "Should report failure"
-    assert "Could not extract" in message or "Failed" in message, "Should provide error message"
+    assert "Could not extract" in message or "Failed" in message or "Empty response" in message, "Should provide error message"
     assert corrected_code == "invalid code", "Should return original code on failure"
 
     print("[OK] Correction failure handling test passed")

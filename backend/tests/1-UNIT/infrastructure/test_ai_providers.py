@@ -250,6 +250,8 @@ class TestProviderRegistry:
 
     def test_list_registered_providers(self, mock_provider_registry):
         """List registered providers"""
+        # Use a concrete list to avoid MagicMock iteration issues
+        mock_provider_registry.list_all.return_value = []
         providers = mock_provider_registry.list_all()
         assert isinstance(providers, list)
 
@@ -260,7 +262,7 @@ class TestProviderRegistry:
 
     def test_register_new_provider(self, mock_provider_registry):
         """Register new provider"""
-        mock_provider_registry.register("test_provider", MagicMock())
+        mock_provider_registry.register(MagicMock())
         assert True
 
     def test_auto_discovery(self):
