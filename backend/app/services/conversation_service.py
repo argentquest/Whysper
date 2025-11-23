@@ -1045,8 +1045,11 @@ class ConversationSession:
         This should be called BEFORE sending messages to the AI.
 
         Args:
-            codebase_content: The current codebase content
-            agent_prompt: Optional agent prompt to use instead of default
+            codebase_content: The current codebase content.
+            agent_prompt: Optional agent prompt to use instead of default.
+
+        Returns:
+            None
         """
         # Build the system message with current context
         if agent_prompt:
@@ -1095,6 +1098,15 @@ class ConversationSession:
         """
         Update conversation history with the assistant's response.
         Note: System message injection now happens BEFORE AI call, not here.
+
+        Args:
+            response_text: The assistant's response.
+            is_first_message: Whether this is the first message.
+            codebase_content: The codebase content (not used but part of signature).
+            agent_prompt: The agent prompt (not used but part of signature).
+
+        Returns:
+            None
         """
         self.app_state.conversation_history.append(
             ConversationMessage(role="assistant", content=response_text)
@@ -1233,6 +1245,7 @@ class ConversationManager:
     """Registry for active conversation sessions."""
 
     def __init__(self) -> None:
+        """Initialize the ConversationManager."""
         self._sessions: Dict[str, ConversationSession] = {}
         self._logger = get_logger("conversation_manager")
 
@@ -1246,6 +1259,20 @@ class ConversationManager:
         session_id: Optional[str] = None,
         access_key: Optional[str] = None,
     ) -> ConversationSession:
+        """
+        Create a new conversation session.
+
+        Args:
+            api_key: The API key for the AI provider.
+            provider: The AI provider name.
+            models: List of available models.
+            default_model: The default model to use.
+            session_id: Optional session ID. If not provided, one will be generated.
+            access_key: Optional access key for the session.
+
+        Returns:
+            ConversationSession: The created session.
+        """
         logger.info(
             "Creating conversation session",
             extra={"provider": provider, "requested_id": session_id},
@@ -1274,6 +1301,18 @@ class ConversationManager:
 
     @log_method_call
     def get_session(self, session_id: str) -> ConversationSession:
+        """
+        Retrieve an active conversation session by ID.
+
+        Args:
+            session_id: The ID of the session to retrieve.
+
+        Returns:
+            ConversationSession: The active session.
+
+        Raises:
+            KeyError: If the session is not found.
+        """
         if session_id not in self._sessions:
             raise KeyError(f"Conversation {session_id} not found")
         return self._sessions[session_id]
@@ -1291,6 +1330,14 @@ class ConversationManager:
         """
         Get existing session or create a new one if it doesn't exist.
         
+        Args:
+            session_id: The session ID.
+            api_key: The API key.
+            provider: The provider name.
+            models: List of models.
+            default_model: Default model name.
+            access_key: Optional access key.
+
         Returns:
             Tuple[ConversationSession, bool]: (session, was_created)
                 - session: The conversation session (existing or new)
@@ -1320,11 +1367,22 @@ class ConversationManager:
 
     @log_method_call
     def list_sessions(self) -> List[ConversationSession]:
-        """Return all active conversation sessions."""
+        """
+        Return all active conversation sessions.
+
+        Returns:
+            List[ConversationSession]: A list of all active sessions.
+        """
         return list(self._sessions.values())
 
     @log_method_call
     def drop_session(self, session_id: str) -> None:
+        """
+        Remove a conversation session from the registry.
+
+        Args:
+            session_id: The ID of the session to remove.
+        """
         if session_id in self._sessions:
             self._logger.info("Conversation session removed", extra={"session_id": session_id})
             del self._sessions[session_id]

@@ -16,7 +16,6 @@ from typing import Dict, List, Any, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-import logging
 
 from common.logger import get_logger
 from common.ai import create_ai_processor
@@ -102,7 +101,12 @@ class DocumentationService:
     
     @log_method_call
     def _initialize_ai_processor(self):
-        """Initialize AI processor with current settings"""
+        """
+        Initialize AI processor with current settings.
+
+        Attempts to load API key and provider from environment or settings
+        and initializes the AI processor. Sets self.ai_processor to None on failure.
+        """
         try:
             from app.core.config import load_env_defaults
             env_config = load_env_defaults()
@@ -192,7 +196,15 @@ class DocumentationService:
     
     @log_method_call
     def _detect_language(self, file_path: str) -> str:
-        """Detect programming language from file extension"""
+        """
+        Detect programming language from file extension.
+
+        Args:
+            file_path: The path to the file.
+
+        Returns:
+            str: The detected language name (e.g., 'python', 'javascript') or 'unknown'.
+        """
         extension = Path(file_path).suffix.lower()
         
         language_map = {
@@ -2117,10 +2129,10 @@ Contributing guidelines will be included here.
         Generate documentation with GUID-based file naming.
         
         Args:
-            request: DocumentationRequest with generation parameters
+            request: DocumentationRequest with generation parameters.
             
         Returns:
-            DocumentationResult with GUID-prefixed content and metadata
+            DocumentationResult: The result with GUID-prefixed content and metadata.
         """
         # Generate GUID for this documentation session
         session_guid = str(uuid.uuid4())[:8]  # Use first 8 characters for brevity
@@ -2141,11 +2153,11 @@ Contributing guidelines will be included here.
         Create a comprehensive file listing with date and size metadata.
         
         Args:
-            file_paths: List of file paths to analyze
-            session_guid: GUID for the current session
+            file_paths: List of file paths to analyze.
+            session_guid: GUID for the current session.
             
         Returns:
-            Dictionary containing file listing metadata
+            Dict[str, Any]: Dictionary containing file listing metadata.
         """
         file_listing = {
             'session_guid': session_guid,
@@ -2190,13 +2202,13 @@ Contributing guidelines will be included here.
         Create a zip file containing all documentation output and optionally source files.
         
         Args:
-            documentation_results: List of documentation results to include
-            file_paths: List of source file paths
-            session_guid: GUID for the current session
-            include_source_files: Whether to include original source files
+            documentation_results: List of documentation results to include.
+            file_paths: List of source file paths.
+            session_guid: GUID for the current session.
+            include_source_files: Whether to include original source files. Defaults to True.
             
         Returns:
-            Zip file as bytes
+            bytes: Zip file content as bytes.
         """
         self.logger.info(f"Creating documentation zip for session {session_guid}")
         

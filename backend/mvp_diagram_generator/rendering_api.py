@@ -9,7 +9,6 @@ from common.logger import get_logger
 
 # Import diagram validation functions for different diagram types
 from .diagram_validators import (
-    is_valid_d2_diagram,
     is_valid_mermaid_diagram,
     is_valid_c4_diagram,
 )
@@ -18,7 +17,6 @@ from .d2_cli_validator import validate_and_fix_d2_with_cli, is_d2_cli_available
 
 # Import rendering and conversion modules for diagram generation
 from .renderer_v2 import render_diagram  # Use new renderer with frontend HTML
-from .c4_to_d2 import convert_c4_to_d2
 
 # Import provider system for C4 rendering
 from diagrams.provider_registry import get_registry
@@ -35,6 +33,15 @@ router = APIRouter()
 
 # Helper function to detect C4 diagram level based on user's prompt
 def detect_c4_level(prompt: str) -> Optional[str]:
+    """
+    Detect the C4 diagram level from the user's prompt.
+
+    Args:
+        prompt: The user's prompt text.
+
+    Returns:
+        Optional[str]: The detected C4 level ("C1", "C2", "C3", "C4") or None if not detected.
+    """
     # Normalize prompt to uppercase for consistent pattern matching
     prompt_upper = prompt.upper()
 
@@ -85,7 +92,20 @@ async def generate_diagram(
     settings: Settings = Depends(get_settings)
 ):
     """
-    Generate a diagram from a prompt.
+    Generate a diagram from a user prompt.
+
+    This endpoint handles the entire diagram generation workflow:
+    1. Selects the appropriate AI agent based on the requested diagram type.
+    2. Generates diagram code using the AI processor.
+    3. Validates and optionally fixes the generated code.
+    4. Renders the diagram.
+
+    Args:
+        request: The diagram generation request containing the prompt and diagram type.
+        settings: Application settings (injected).
+
+    Returns:
+        DiagramResponse: The generated diagram image data, code, and metadata.
     """
     logger.info(f"Received diagram generation request: {request}")
 

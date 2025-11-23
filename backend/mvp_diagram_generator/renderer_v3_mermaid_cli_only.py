@@ -14,10 +14,8 @@ This is the most reliable and stable approach for Windows environments.
 
 import subprocess
 import tempfile
-import os
 import base64
 from pathlib import Path
-from typing import Literal
 from common.logger import get_logger
 
 # Initialize logger for tracking and debugging rendering process

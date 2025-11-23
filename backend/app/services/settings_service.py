@@ -22,6 +22,19 @@ class SettingsService:
 
     @log_method_call
     def get_settings(self) -> Dict[str, Any]:
+        """
+        Retrieve current application settings and configuration.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - values: Current environment variables.
+                - masked: Environment variables with sensitive keys masked.
+                - descriptions: Descriptions for environment variables.
+                - theme: Current active theme.
+                - availableThemes: List of available themes.
+                - timeout: Frontend timeout value.
+                - activeBrand: Active brand code.
+        """
         env_vars = env_manager.load_env_file()
         masked = {
             key: SecurityUtils.mask_api_key(value) if "KEY" in key else value
@@ -46,7 +59,15 @@ class SettingsService:
 
     @log_method_call
     def _parse_yaml_frontmatter(self, content: str) -> Optional[Dict[str, Any]]:
-        """Parse YAML frontmatter from markdown content."""
+        """
+        Parse YAML frontmatter from markdown content.
+
+        Args:
+            content: The markdown content string.
+
+        Returns:
+            Optional[Dict[str, Any]]: Parsed metadata dictionary or None if no frontmatter found.
+        """
         if not content.startswith('---'):
             return None
 
@@ -80,7 +101,17 @@ class SettingsService:
 
     @log_method_call
     def get_agent_prompts(self) -> List[Dict[str, str]]:
-        """Load available agent prompts from the prompts/coding/agent directory."""
+        """
+        Load available agent prompts from the prompts/coding/agent directory.
+
+        Returns:
+            List[Dict[str, str]]: List of agent prompt metadata dictionaries containing:
+                - name: The agent name (filename without extension).
+                - title: The display title.
+                - description: The description.
+                - category: List of categories.
+                - filename: The filename.
+        """
         try:
             prompts_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "agent")
             agent_prompts = []
@@ -128,7 +159,12 @@ class SettingsService:
 
     @log_method_call
     def get_subagent_commands(self) -> List[Dict[str, str]]:
-        """Load subagent commands from the prompts/coding/subagent/master.json file."""
+        """
+        Load subagent commands from the prompts/coding/subagent/master.json file.
+
+        Returns:
+            List[Dict[str, str]]: List of subagent commands.
+        """
         try:
             commands_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "subagent", "master.json")
 
@@ -146,7 +182,15 @@ class SettingsService:
 
     @log_method_call
     def get_agent_prompt_content(self, filename: str) -> str:
-        """Load the content of a specific agent prompt file."""
+        """
+        Load the content of a specific agent prompt file.
+
+        Args:
+            filename: The name of the prompt file (e.g., 'agent.md').
+
+        Returns:
+            str: The content of the file, or empty string if not found/error.
+        """
         try:
             prompts_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "agent")
             file_path = os.path.join(prompts_dir, filename)
@@ -197,6 +241,15 @@ class SettingsService:
 
     @log_method_call
     def set_theme(self, theme_name: str) -> Tuple[bool, str]:
+        """
+        Set the application theme.
+
+        Args:
+            theme_name: The theme to set ('light' or 'dark').
+
+        Returns:
+            Tuple[bool, str]: Success status and the active theme name.
+        """
         success = theme_manager.switch_theme(theme_name)
         if success:
             env_manager.update_single_var("UI_THEME", theme_name)
@@ -220,7 +273,12 @@ class SettingsService:
 
     @log_method_call
     def get_architecture_agents(self) -> List[Dict[str, str]]:
-        """Load only agents with 'architecture' in name or metadata."""
+        """
+        Load only agents with 'architecture' in name or metadata.
+
+        Returns:
+            List[Dict[str, str]]: List of architecture-related agent prompts.
+        """
         try:
             all_agents = self.get_agent_prompts()
             architecture_agents = []
@@ -250,7 +308,15 @@ class SettingsService:
 
     @log_method_call
     def get_agent_options(self, agent_id: str) -> List[Dict[str, Any]]:
-        """Load agent options from agentoption.json file for a specific agent."""
+        """
+        Load agent options from agentoption.json file for a specific agent.
+
+        Args:
+            agent_id: The agent identifier (folder name).
+
+        Returns:
+            List[Dict[str, Any]]: List of options or empty list if not found.
+        """
         try:
             # Build path to agentoption.json
             agentoption_dir = os.path.join(

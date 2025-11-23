@@ -4,7 +4,6 @@ Conversation history logging service.
 This service handles saving conversation messages to files for persistent storage
 and debugging purposes. Each conversation gets a unique GUID-based filename.
 """
-import os
 import json
 import uuid
 from datetime import datetime
@@ -30,7 +29,13 @@ class HistoryService:
     
     @log_method_call
     def __init__(self, history_dir: str = None):
-        """Initialize history service with a target directory."""
+        """
+        Initialize history service with a target directory.
+
+        Args:
+            history_dir: Optional path to the history directory.
+                        Defaults to 'history' in the project root.
+        """
         if history_dir is None:
             # Default to history folder in project root
             project_root = Path(__file__).parent.parent.parent.parent
@@ -50,8 +55,11 @@ class HistoryService:
         """
         Ensure we have tracking data for this conversation.
 
+        Args:
+            conversation_id: The conversation ID.
+
         Returns:
-            Tuple[str, str]: (guid, start_time_iso)
+            Tuple[str, str]: A tuple containing (guid, start_time_iso).
         """
         if conversation_id not in self._conversation_guids:
             conversation_guid = str(uuid.uuid4())
@@ -124,7 +132,15 @@ class HistoryService:
     
     @log_method_call
     def get_history_filepath(self, conversation_id: str) -> Path:
-        """Get file path for a conversation's history."""
+        """
+        Get file path for a conversation's history.
+
+        Args:
+            conversation_id: The conversation ID.
+
+        Returns:
+            Path: The path object pointing to the history file.
+        """
         guid, start_time_iso = self._ensure_conversation_record(conversation_id)
         timestamp_prefix = self._timestamp_prefix(start_time_iso)
         return self.history_dir / f"{timestamp_prefix}_{guid}.json"
@@ -195,7 +211,7 @@ class HistoryService:
             conversation_id: The conversation ID
             
         Returns:
-            Dict containing conversation history or None if not found
+            Optional[Dict[str, Any]]: Dict containing conversation history or None if not found
         """
         try:
             filepath = self.get_history_filepath(conversation_id)
@@ -228,7 +244,7 @@ class HistoryService:
         List all conversation history files with basic info.
         
         Returns:
-            List of dictionaries containing conversation metadata
+            List[Dict[str, Any]]: List of dictionaries containing conversation metadata.
         """
         histories = []
         

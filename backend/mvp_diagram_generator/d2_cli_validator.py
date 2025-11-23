@@ -9,11 +9,20 @@ import subprocess
 import os
 import tempfile
 import logging
-from typing import Tuple, Optional
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
 def _get_d2_executable_path() -> str:
+    """
+    Retrieve the path to the D2 executable.
+
+    Tries to get the path from the D2_EXECUTABLE_PATH environment variable.
+    Falls back to "d2" (assuming it's in the system PATH).
+
+    Returns:
+        str: The path to the D2 executable.
+    """
     # Attempt to retrieve D2 executable path from environment variables
     # Provides flexibility in executable location configuration
     try:
@@ -32,6 +41,16 @@ def _get_d2_executable_path() -> str:
     return "d2"
 
 def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool, str]:
+    """
+    Validate D2 code syntax using the D2 CLI.
+
+    Args:
+        d2_code: The D2 diagram code to validate.
+        d2_executable: Optional path to the D2 executable.
+
+    Returns:
+        Tuple[bool, str]: A tuple containing a boolean indicating validity and a message (validation success message or error details).
+    """
     # Validate D2 code syntax by executing the D2 CLI as a subprocess
     # This method uses the official parser to check syntax reliability
 
@@ -48,7 +67,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool,
     try:
         # Run D2 executable with text layout engine for fastest syntax check
         # Capture output and set a timeout to prevent hanging
-        result = subprocess.run(
+        subprocess.run(
             [d2_executable, temp_file_name, '-t', '1'],  # -t 1 is for text layout engine (fastest check)
             capture_output=True,
             text=True,
@@ -93,6 +112,15 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool,
             logger.warning(f"Failed to clean up temp file {temp_file_name}: {e}")
 
 def is_d2_cli_available(d2_executable: str = None) -> bool:
+    """
+    Check if the D2 CLI is available on the system.
+
+    Args:
+        d2_executable: Optional path to the D2 executable.
+
+    Returns:
+        bool: True if the D2 CLI is available, False otherwise.
+    """
     # Check if the D2 CLI is installed and accessible
     # Useful for pre-flight checks before validation
 
@@ -115,6 +143,19 @@ def is_d2_cli_available(d2_executable: str = None) -> bool:
         return False
 
 def validate_and_fix_d2_with_cli(d2_code: str, max_attempts: int = 3) -> Tuple[bool, str, str]:
+    """
+    Validate D2 code and attempt to automatically fix syntax errors.
+
+    Args:
+        d2_code: The D2 diagram code.
+        max_attempts: Maximum number of fix attempts (default: 3).
+
+    Returns:
+        Tuple[bool, str, str]: A tuple containing:
+            - is_valid (bool): Whether the final code is valid.
+            - code (str): The (potentially fixed) D2 code.
+            - message (str): Validation/fix status message.
+    """
     # Validate D2 code and attempt automatic fixes for common syntax issues
     # Provides multiple attempts to correct and validate the code
     

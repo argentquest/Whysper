@@ -26,6 +26,11 @@ class ExportService:
     """
     
     def __init__(self):
+        """
+        Initialize the ExportService.
+
+        Sets up the logger and defines the path to the export templates directory.
+        """
         self.logger = get_logger(f"{__name__}.ExportService")
         self.templates_dir = os.path.join(
             os.path.dirname(__file__), 
@@ -38,11 +43,11 @@ class ExportService:
         Export documentation to PDF format.
         
         Args:
-            content: Markdown content to export
-            options: Export options
+            content: Markdown content to export.
+            options: Export options such as 'template'. Defaults to None.
             
         Returns:
-            PDF document as bytes
+            bytes: PDF document content as bytes.
         """
         self.logger.info("Exporting documentation to PDF")
         
@@ -82,11 +87,11 @@ class ExportService:
         Export documentation to HTML format.
         
         Args:
-            content: Markdown content to export
-            options: Export options
+            content: Markdown content to export.
+            options: Export options such as 'template'. Defaults to None.
             
         Returns:
-            HTML document as string
+            str: HTML document as a string.
         """
         self.logger.info("Exporting documentation to HTML")
         
@@ -129,11 +134,11 @@ class ExportService:
         Export documentation to Markdown format.
         
         Args:
-            content: Markdown content to export
-            options: Export options
+            content: Markdown content to export.
+            options: Export options. Defaults to None.
             
         Returns:
-            Markdown document as string
+            str: Markdown document as a string.
         """
         self.logger.info("Exporting documentation to Markdown")
         
@@ -154,11 +159,11 @@ class ExportService:
         Export documentation to Word document format.
         
         Args:
-            content: Markdown content to export
-            options: Export options
+            content: Markdown content to export.
+            options: Export options. Defaults to None.
             
         Returns:
-            Word document as bytes
+            bytes: Word document as bytes.
         """
         self.logger.info("Exporting documentation to Word document")
         
@@ -215,7 +220,15 @@ class ExportService:
     
     @log_method_call
     def _markdown_to_html(self, content: str) -> str:
-        """Convert markdown content to HTML."""
+        """
+        Convert markdown content to HTML.
+
+        Args:
+            content: The markdown content to convert.
+
+        Returns:
+            str: The converted HTML string.
+        """
         try:
             # Try to use markdown2 if available
             import markdown2
@@ -232,7 +245,17 @@ class ExportService:
     
     @log_method_call
     def _apply_html_template(self, content: str, template_name: str, options: Dict[str, Any]) -> str:
-        """Apply HTML template to content."""
+        """
+        Apply HTML template to content.
+
+        Args:
+            content: The HTML content to wrap.
+            template_name: The filename of the template.
+            options: A dictionary of options for template substitution (e.g., 'title', 'author').
+
+        Returns:
+            str: The complete HTML document with the template applied.
+        """
         try:
             template_path = os.path.join(self.templates_dir, template_name)
             
@@ -257,7 +280,16 @@ class ExportService:
     
     @log_method_call
     def _export_to_pdf_with_reportlab(self, content: str, options: Dict[str, Any]) -> bytes:
-        """Export to PDF using ReportLab as fallback."""
+        """
+        Export to PDF using ReportLab as fallback.
+
+        Args:
+            content: The markdown content to export.
+            options: Export options.
+
+        Returns:
+            bytes: The generated PDF content as bytes.
+        """
         try:
             from reportlab.lib.pagesizes import letter
             from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
@@ -316,12 +348,25 @@ class ExportService:
     
     @log_method_call
     def get_supported_formats(self) -> List[str]:
-        """Get list of supported export formats."""
+        """
+        Get list of supported export formats.
+
+        Returns:
+            List[str]: A list of supported format strings (e.g., 'markdown', 'html').
+        """
         return ['markdown', 'html', 'pdf', 'docx']
     
     @log_method_call
     def get_format_options(self, format: str) -> Dict[str, Any]:
-        """Get available options for a specific format."""
+        """
+        Get available options for a specific format.
+
+        Args:
+            format: The format to retrieve options for (e.g., 'pdf', 'html').
+
+        Returns:
+            Dict[str, Any]: A dictionary of available options for the specified format.
+        """
         options = {
             'pdf': {
                 'page_size': ['letter', 'a4'],

@@ -63,15 +63,56 @@ MyApp/
 │   ├── app/                 # Application code
 │   │   ├── api/v1/         # API version 1 endpoints
 │   │   ├── core/           # Core configuration
-│   │   └── main.py         # FastAPI app with frontend serving
+│   │   ├── services/       # Business logic services
+│   │   └── utils/          # Utility functions
+│   ├── diagrams/           # Diagram provider system (Modular)
+│   ├── mvp_diagram_generator/ # Legacy diagram generation logic
+│   ├── providers/          # AI providers (OpenRouter, etc.)
 │   ├── static/             # Built frontend files
 │   ├── main.py             # Simple entry point
 │   └── requirements.txt    # Python dependencies
+├── frontend/               # React frontend
+│   ├── src/
+│   │   ├── components/     # UI components (DiagramWizard, etc.)
+│   │   ├── services/       # API clients and services
+│   │   └── hooks/          # Custom React hooks
 ├── setup/                  # Installation scripts
 │   ├── install.bat         # Windows installer
 │   └── install.sh          # Linux/macOS installer
 └── README.md               # This file
 ```
+
+### Diagram Generation System (DiagramWizard)
+
+The diagram generation system is a core feature of Whysper, enabling users to generate architectural diagrams from natural language descriptions. It uses a sophisticated multi-stage pipeline:
+
+1.  **Frontend (React + TypeScript)**:
+    -   **DiagramWizard Component**: Orchestrates the user flow (Analysis -> Clarification -> Generation -> Rendering).
+    -   **useDiagramSession Hook**: Manages the session lifecycle, SSE connection, and state transitions.
+    -   **DiagramProviderService**: Handles communication with the backend provider system for validation and rendering.
+
+2.  **Backend (FastAPI + Python)**:
+    -   **DiagramFactoryService**: Manages the diagram generation workflow using LangGraph state machines.
+    -   **LangGraph Workflow**:
+        -   `analyze_request`: Deconstructs user prompt into key components.
+        -   `clarify_prompt`: Generates clarification questions if information is ambiguous.
+        -   `generate_json`: Creates a structured JSON representation of the system.
+        -   `determine_diagram_type`: Selects the best diagram type (Mermaid, D2, PlantUML, C4).
+        -   `generate_code`: Uses LLM to generate diagram code.
+        -   `validate_code`: Validates syntax using specific validators.
+        -   `render_diagram`: Renders the final SVG/PNG.
+    -   **Provider System** (`backend/diagrams/`): Modular system for supporting different diagram tools (Mermaid, D2, etc.) with uniform interfaces for rendering and validation.
+
+### AI Integration
+
+Whysper uses a flexible AI provider system:
+-   **BaseAIProvider**: Abstract base class for all AI providers.
+-   **OpenRouter Provider**: Default implementation connecting to OpenRouter for access to GPT-4, Claude 3, Gemini, etc.
+-   **Custom Provider**: Allows connection to any OpenAI-compatible endpoint.
+
+### Real-time Updates
+
+Communication between backend and frontend for long-running tasks (like diagram generation) is handled via **Server-Sent Events (SSE)**. This ensures the UI remains responsive and provides real-time feedback on the AI's progress.
 
 ## ✨ Features
 

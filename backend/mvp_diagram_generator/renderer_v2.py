@@ -7,11 +7,19 @@ No fallbacks, no Playwright, pure Mermaid CLI approach.
 This is the most reliable and stable approach for Windows environments.
 """
 
+import os
 import subprocess
 import tempfile
 import base64
+import asyncio
+import platform
 from pathlib import Path
 from common.logger import get_logger
+
+try:
+    from playwright.async_api import async_playwright
+except ImportError:
+    async_playwright = None
 
 logger = get_logger(__name__)
 

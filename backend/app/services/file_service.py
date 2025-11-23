@@ -9,7 +9,6 @@ from common.lazy_file_scanner import LazyCodebaseScanner, FileInfo
 from common.logger import get_logger
 from common.env_manager import env_manager
 from common.logging_decorator import log_method_call
-from security_utils import SecurityUtils
 
 logger = get_logger(__name__)
 
@@ -19,6 +18,14 @@ class FileService:
 
     @log_method_call
     def __init__(self, base_directory: Optional[str] = None) -> None:
+        """
+        Initialize the FileService.
+
+        Args:
+            base_directory: Optional custom base directory for scanning.
+                           If not provided, it tries to use the CODE_PATH environment variable,
+                           and defaults to None (which the scanner usually handles as current dir).
+        """
         logger.info("Initializing FileService")
         self._scanner = LazyCodebaseScanner()
         # Support for custom base directory - uses CODE_PATH from env or provided parameter
@@ -46,7 +53,11 @@ class FileService:
             directory: The new base directory path
 
         Returns:
-            Dict with validation result
+            Dict[str, Any]: A dictionary containing the result of the operation.
+                - success (bool): Whether the operation was successful.
+                - message (str): A message describing the result.
+                - directory (str, optional): The set directory if successful.
+                - error (str, optional): Error message if failed.
         """
         # Validate the directory exists and is accessible
         validation = self.validate_directory(directory)
@@ -69,7 +80,12 @@ class FileService:
 
     @log_method_call
     def get_base_directory(self) -> str:
-        """Get the current base directory."""
+        """
+        Get the current base directory.
+
+        Returns:
+            str: The current base directory path. Defaults to os.getcwd() if not set.
+        """
         return self._base_directory or os.getcwd()
 
     @log_method_call
@@ -101,7 +117,7 @@ class FileService:
             directory: Directory to scan. If None, uses base directory.
 
         Returns:
-            List of file metadata dictionaries
+            List[Dict[str, Any]]: List of file metadata dictionaries.
         """
         scan_dir = directory or self.get_base_directory()
         logger.info(f"Scanning directory: {scan_dir}")
@@ -114,7 +130,15 @@ class FileService:
 
     @log_method_call
     def build_directory_tree(self, directory: str) -> Dict[str, Any]:
-        """Return a nested tree of directories and supported files."""
+        """
+        Return a nested tree of directories and supported files.
+
+        Args:
+            directory: The root directory path to build the tree from.
+
+        Returns:
+            Dict[str, Any]: A dictionary representing the directory tree structure.
+        """
         root_path = Path(directory)
         tree = {
             "name": root_path.name,
@@ -148,10 +172,28 @@ class FileService:
     # ------------------------------------------------------------------
     @log_method_call
     def read_file(self, file_path: str) -> str:
+        """
+        Read the content of a single file.
+
+        Args:
+            file_path: The path to the file to read.
+
+        Returns:
+            str: The content of the file.
+        """
         return self._scanner.read_file_content(file_path)
 
     @log_method_call
     def read_files(self, file_paths: Iterable[str]) -> str:
+        """
+        Read the content of multiple files.
+
+        Args:
+            file_paths: An iterable of file paths to read.
+
+        Returns:
+            str: The concatenated content of the files, formatted for codebase context.
+        """
         return self._scanner.get_codebase_content(list(file_paths))
 
     # ------------------------------------------------------------------
@@ -164,6 +206,17 @@ class FileService:
         directory: Path,
         root_path: Path,
     ) -> Dict[str, Any]:
+        """
+        Ensure a directory node exists in the tree, creating it if necessary.
+
+        Args:
+            children_map: A map of Path objects to their tree node dictionaries.
+            directory: The directory path to ensure.
+            root_path: The root path of the tree.
+
+        Returns:
+            Dict[str, Any]: The tree node for the directory.
+        """
         if directory in children_map:
             return children_map[directory]
         if directory == root_path:
@@ -186,6 +239,16 @@ class FileService:
     def _serialize_file_info(
         self, info: FileInfo, base_directory: str
     ) -> Dict[str, Any]:
+        """
+        Serialize FileInfo object to a dictionary.
+
+        Args:
+            info: The FileInfo object.
+            base_directory: The base directory to calculate relative path from.
+
+        Returns:
+            Dict[str, Any]: Serialized file information.
+        """
         return {
             "path": info.path,
             "relativePath": os.path.relpath(info.path, base_directory),
@@ -197,7 +260,15 @@ class FileService:
 
     @log_method_call
     def get_folder_file_counts(self, directory: str) -> List[Dict[str, Any]]:
-        """Return recursive subfolders with file counts."""
+        """
+        Return recursive subfolders with file counts.
+
+        Args:
+            directory: The root directory to start counting from.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries with 'path' and 'fileCount'.
+        """
 
         root = Path(directory).resolve()
         results = []
