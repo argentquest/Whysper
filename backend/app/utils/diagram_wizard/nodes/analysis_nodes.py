@@ -5,7 +5,6 @@ Handles the initial analysis of user requests to determine if clarification
 is needed or if the system can proceed directly to diagram generation.
 """
 
-import logging
 import json
 import re
 from typing import Dict, Any
@@ -73,7 +72,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
     # IMPORTANT: Skip re-analysis if we've already analyzed the request
     # This prevents infinite loops when resuming the graph after clarification
     if state.get("analysis_complete", False):
-        logger.info(f"⏭️ Skipping re-analysis - already completed", extra={'session_id': session_id})
+        logger.info("⏭️ Skipping re-analysis - already completed", extra={'session_id': session_id})
         return {
             "next_action": "clarify",
             "skip_analysis": True

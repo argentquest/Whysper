@@ -1,8 +1,7 @@
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-from .graph_state import GraphState
+from typing import Dict, Any, List
 
 
 class DiagramSessionStore:

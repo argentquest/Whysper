@@ -119,7 +119,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
             raise Exception("No API key configured. Please configure your AI provider API key in settings.")
 
         # Log AI call initiation (visible via SSE)
-        logger.info(f"🤖 Starting AI call for diagram generation",
+        logger.info("🤖 Starting AI call for diagram generation",
                    extra={'session_id': session_id} if session_id else {})
         logger.info(f"📋 Model: {model} | Provider: {provider}",
                    extra={'session_id': session_id} if session_id else {})

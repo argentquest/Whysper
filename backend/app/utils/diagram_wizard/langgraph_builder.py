@@ -4,13 +4,10 @@ LangGraph state machine builder for diagram factory.
 Constructs and compiles the diagram generation workflow graph.
 """
 
-import logging
 from functools import partial
 from langgraph.graph import StateGraph, END
 from .graph_state import GraphState
 from common.logger import get_logger
-
-logger = get_logger(__name__)
 from .nodes import (
     analyze_request,
     clarify_prompt,
@@ -21,6 +18,8 @@ from .nodes import (
     refine_code,
     render_diagram,
 )
+
+logger = get_logger(__name__)
 
 
 def route_after_clarify(state: GraphState) -> str:

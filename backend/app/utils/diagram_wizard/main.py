@@ -20,9 +20,6 @@ async def run_diagram_factory(
     user_id: str = "test_user",
     conversation_id: str = "test_conversation"
 ) -> Dict[str, Any]:
-    # Initialize session store for tracking diagram generation process
-    session_store = DiagramSessionStore()
-    
     # Construct initial state with configuration parameters
     # Ensures correct diagram type and sets up initial tracking variables
     initial_state: GraphState = {
