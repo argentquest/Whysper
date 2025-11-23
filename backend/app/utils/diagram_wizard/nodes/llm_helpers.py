@@ -30,13 +30,13 @@ def extract_json_from_response(response_text: str) -> Dict[str, Any]:
     Extract and parse JSON from an LLM response that may be wrapped in markdown code blocks.
     
     Args:
-        response_text: The raw response text from the LLM
+        response_text (str): The raw response text from the LLM.
         
     Returns:
-        Parsed JSON dictionary
+        Dict[str, Any]: Parsed JSON dictionary.
         
     Raises:
-        json.JSONDecodeError: If the response cannot be parsed as JSON
+        json.JSONDecodeError: If the response cannot be parsed as JSON.
     """
     try:
         # First try direct JSON parsing
@@ -68,23 +68,30 @@ def get_diagram_type_str(diagram_type: DiagramType) -> str:
     Helper function to convert DiagramType enum to string.
 
     Handles both enum values and string fallbacks.
+
+    Args:
+        diagram_type (DiagramType): The diagram type enum or value.
+
+    Returns:
+        str: The string representation of the diagram type.
     """
     return diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
 
 
 def _get_model_for_id(model_id: str = None) -> str:
-    """Get the actual AI model to use for API calls.
+    """
+    Get the actual AI model to use for API calls.
 
     NOTE: The model_id parameter is used to select which system PROMPT to use
     (different prompt styles for gpt5, grok, claude, gemini), but the ACTUAL
     model used for API calls always comes from DEFAULT_MODEL in .env file.
 
     Args:
-        model_id: Used for prompt selection only (gpt5, grok, claude, gemini)
-                  Does NOT affect which actual AI model is called
+        model_id (str, optional): Used for prompt selection only (gpt5, grok, claude, gemini).
+                                  Does NOT affect which actual AI model is called.
 
     Returns:
-        Actual model identifier from .env DEFAULT_MODEL for API calls
+        str: Actual model identifier from .env DEFAULT_MODEL for API calls.
     """
     default_model = settings.default_model or "google/gemini-2.5-flash-preview-09-2025"
 
@@ -93,19 +100,20 @@ def _get_model_for_id(model_id: str = None) -> str:
 
 
 async def call_llm(prompt: str, user_content: str, session_id: str = None, model_id: str = None) -> str:
-    """Helper function to call AI/LLM with proper error handling and SSE logging.
+    """
+    Helper function to call AI/LLM with proper error handling and SSE logging.
 
     Args:
-        prompt: System prompt template
-        user_content: User message content
-        session_id: Session ID for SSE filtering (optional)
-        model_id: Selected AI model ID (gpt5, grok, claude, gemini)
+        prompt (str): System prompt template.
+        user_content (str): User message content.
+        session_id (str, optional): Session ID for SSE filtering.
+        model_id (str, optional): Selected AI model ID (gpt5, grok, claude, gemini).
 
     Returns:
-        AI response string
+        str: AI response string.
 
     Raises:
-        Exception: When AI call fails with descriptive error message
+        Exception: When AI call fails with descriptive error message.
     """
     try:
         # Load configuration via settings (.env + environment)

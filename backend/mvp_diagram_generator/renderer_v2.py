@@ -29,17 +29,22 @@ def render_diagram(
     """
     Render a diagram using Mermaid CLI (mmdc) only.
 
+    This function acts as the main entry point for rendering diagrams.
+    It validates the input, normalizes the diagram code, and delegates
+    the actual rendering to the Mermaid CLI wrapper.
+
     Args:
-        diagram_code: The diagram source code
-        diagram_type: Type of diagram ('mermaid', 'd2', or 'c4')
-        output_format: Output format ('svg' or 'png')
-        **kwargs: Additional arguments (ignored, for compatibility)
+        diagram_code (str): The diagram source code to render.
+        diagram_type (str): Type of diagram ('mermaid', 'd2', or 'c4').
+        output_format (str): Output format ('svg' or 'png'). Defaults to "svg".
+        **kwargs: Additional arguments (ignored, for compatibility).
 
     Returns:
-        str: Rendered diagram (SVG string or base64-encoded PNG)
+        str: Rendered diagram (SVG string or base64-encoded PNG).
 
     Raises:
-        Exception: If rendering fails
+        ValueError: If the output format or diagram type is unsupported.
+        Exception: If rendering fails.
     """
     logger.info(f"Rendering {diagram_type} diagram to {output_format} using Mermaid CLI")
 
@@ -67,11 +72,11 @@ def convert_to_mermaid(diagram_code: str, diagram_type: str) -> str:
     - Parse C4 syntax and convert to Mermaid diagram
 
     Args:
-        diagram_code: The diagram code
-        diagram_type: 'd2' or 'c4'
+        diagram_code (str): The diagram code to convert.
+        diagram_type (str): The type of the original diagram ('d2' or 'c4').
 
     Returns:
-        str: Mermaid-compatible diagram code
+        str: Mermaid-compatible diagram code.
     """
     logger.debug(f"Converting {diagram_type} to Mermaid (currently returns as-is)")
     # TODO: Implement actual D2->Mermaid and C4->Mermaid conversion
@@ -84,14 +89,14 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
     Render using Mermaid CLI (mmdc) executable.
 
     Args:
-        diagram_code: The Mermaid diagram code
-        output_format: 'svg' or 'png'
+        diagram_code (str): The Mermaid diagram code to render.
+        output_format (str): The desired output format ('svg' or 'png').
 
     Returns:
-        str: SVG string or base64-encoded PNG
+        str: SVG string or base64-encoded PNG.
 
     Raises:
-        Exception: If mmdc is not available or rendering fails
+        Exception: If mmdc is not available or rendering fails.
     """
 
     # Check if mmdc is available
@@ -161,7 +166,7 @@ def is_mmdc_available() -> bool:
     Check if Mermaid CLI (mmdc) is available on the system.
 
     Returns:
-        bool: True if mmdc is available, False otherwise
+        bool: True if mmdc is available, False otherwise.
     """
     try:
         result = subprocess.run(

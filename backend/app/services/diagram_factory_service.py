@@ -604,7 +604,15 @@ class DiagramFactoryService:
             })
 
     def _resume_graph_if_idle(self, reason: str):
-        """Resume the LangGraph workflow if no task is currently running."""
+        """Resume the LangGraph workflow if no task is currently running.
+
+        This method ensures that the workflow continues after a user interaction
+        or state change, provided that it's not already processing. It avoids
+        creating duplicate tasks.
+
+        Args:
+            reason (str): The reason for resuming (for logging purposes).
+        """
         if not self.session.graph_state:
             logger.warning(
                 "Cannot resume LangGraph workflow without state",

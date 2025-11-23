@@ -20,7 +20,19 @@ logger = get_logger(__name__)
 
 
 def _parse_ai_response(ai_response_str: str, session_id: str = None) -> Dict[str, Any]:
-    """Parse AI response, attempting to clean common LLM artifacts before failing."""
+    """
+    Parse AI response, attempting to clean common LLM artifacts before failing.
+
+    Args:
+        ai_response_str (str): The raw response string from the AI.
+        session_id (str, optional): The session ID for logging context.
+
+    Returns:
+        Dict[str, Any]: The parsed JSON response.
+
+    Raises:
+        ValueError: If parsing fails after all attempts.
+    """
     parse_errors = []
 
     try:
@@ -59,13 +71,19 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
     Calls an LLM with a specialized prompt to determine if the request
     is clear enough to proceed with diagram generation or if clarification
-
     is needed.
 
+    Args:
+        state (GraphState): The current graph state.
+        service: The DiagramFactoryService instance.
+
     Returns:
-        - A dictionary with 'next_action' set to either 'clarify' or 'generate'.
-        - If 'clarify', a 'clarification_question' is also returned.
-        - If 'generate', a 'suggested_diagram_type' and 'reason' are returned.
+        Dict[str, Any]: Dictionary containing updates to the graph state, including:
+            - next_action (str): 'clarify' or 'generate'
+            - assessment_score (int): Quality score of the request
+            - json_representation (dict): Preliminary architecture data
+            - clarification_history (list): Updated history
+            - current_state (SessionState): New state enum
     """
     session_id = state.get("_session_id")
     model_id = state.get("model_id")  # Get selected model from state
