@@ -1,5 +1,18 @@
 import { useEffect, useCallback } from 'react';
 
+/**
+ * KeyboardNavigationOptions interface
+ *
+ * Configuration options for the useKeyboardNavigation hook.
+ * @interface KeyboardNavigationOptions
+ * @property {Function} [onEscape] - Callback for Escape key press
+ * @property {Function} [onEnter] - Callback for Enter key press
+ * @property {Function} [onArrowUp] - Callback for ArrowUp key press
+ * @property {Function} [onArrowDown] - Callback for ArrowDown key press
+ * @property {Function} [onArrowLeft] - Callback for ArrowLeft key press
+ * @property {Function} [onArrowRight] - Callback for ArrowRight key press
+ * @property {boolean} [enabled] - Whether keyboard navigation is enabled (default: true)
+ */
 export interface KeyboardNavigationOptions {
   onEscape?: () => void;
   onEnter?: () => void;
@@ -10,6 +23,13 @@ export interface KeyboardNavigationOptions {
   enabled?: boolean;
 }
 
+/**
+ * useKeyboardNavigation hook
+ *
+ * A custom hook to handle keyboard navigation events globally.
+ *
+ * @param {KeyboardNavigationOptions} options - Configuration options
+ */
 export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
   // Destructure options with default settings to simplify configuration
   const {
@@ -98,8 +118,15 @@ export function useKeyboardNavigation(options: KeyboardNavigationOptions) {
 }
 
 // Utility functions for managing focus in complex UI interactions
+/**
+ * Focus utilities for managing keyboard focus
+ */
 export const focusUtils = {
   // Find and focus the first interactive element in a given container
+  /**
+   * Focuses the first interactive element within a container.
+   * @param {HTMLElement | null} container - The container element to search within
+   */
   focusFirst: (container: HTMLElement | null) => {
     // Validate container exists before proceeding
     if (!container) return;
@@ -116,6 +143,11 @@ export const focusUtils = {
   },
 
   // Create circular focus navigation within a specific container
+  /**
+   * Traps focus within a container, cycling between first and last focusable elements.
+   * @param {HTMLElement} container - The container element to trap focus within
+   * @param {KeyboardEvent} event - The keyboard event triggering the focus trap
+   */
   trapFocus: (container: HTMLElement, event: KeyboardEvent) => {
     // Only process Tab key events for focus trapping
     if (event.key !== 'Tab') return;
@@ -151,6 +183,10 @@ export const focusUtils = {
   },
 
   // Safely restore focus to a previously stored element
+  /**
+   * Restores focus to a specific element if it still exists in the DOM.
+   * @param {HTMLElement | null} element - The element to restore focus to
+   */
   restoreFocus: (element: HTMLElement | null) => {
     // Ensure element exists and is still in the document before focusing
     if (element && document.body.contains(element)) {

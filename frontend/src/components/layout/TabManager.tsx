@@ -15,7 +15,21 @@ import type { Tab } from '../../types';
 import { BrandColors } from 'branding';
 const { Link } = Typography;
 
-// Define the props interface for the TabManager component with all necessary callback functions
+/**
+ * TabManagerProps type definition
+ *
+ * Describes the structure and properties of TabManagerProps
+ * @interface TabManagerProps
+ * @property {Tab[]} tabs - Array of active tabs
+ * @property {string} activeTabId - ID of the currently active tab
+ * @property {Function} onTabChange - Callback when tab selection changes
+ * @property {Function} onTabClose - Callback when a tab is closed
+ * @property {Function} onTabSave - Callback when a tab is saved
+ * @property {Function} onNewTab - Callback to create a new default tab
+ * @property {Function} [onNewDiagramWizardTab] - Callback to create a new diagram wizard tab
+ * @property {Function} [onNewArchStudioTab] - Callback to create a new architecture studio tab
+ * @property {Function} [onTabsAction] - Callback for bulk tab actions (close all, etc.)
+ */
 interface TabManagerProps {
   tabs: Tab[];
   activeTabId: string;
@@ -28,6 +42,16 @@ interface TabManagerProps {
   onTabsAction?: (action: string, tabId?: string) => void;
 }
 
+/**
+ * TabManager component
+ *
+ * Manages application tabs, allowing users to switch between different views
+ * (Chat, Diagram Wizard, Architecture Studio).
+ * Provides controls for creating, closing, and managing tabs.
+ *
+ * @param {TabManagerProps} props - Component props
+ * @returns {JSX.Element} Rendered tab manager
+ */
 export const TabManager: React.FC<TabManagerProps> = ({
   tabs,
   activeTabId,

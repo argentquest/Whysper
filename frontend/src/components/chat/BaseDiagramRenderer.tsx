@@ -27,6 +27,15 @@ import diagramProviderService, {
 
 /**
  * State for diagram rendering
+ * @interface DiagramState
+ * @property {boolean} isRendering - Whether the diagram is currently being rendered
+ * @property {boolean} isValidating - Whether the diagram code is currently being validated
+ * @property {string | null} error - Error message if rendering or validation fails
+ * @property {string | null} svg - Rendered SVG content
+ * @property {string | null} png - Rendered PNG content (base64)
+ * @property {DiagramValidationResponse | null} validation - Validation result details
+ * @property {ProviderInfo | null} providerInfo - Information about the diagram provider
+ * @property {DiagramRenderResponse | null} renderResult - Full render response details
  */
 export interface DiagramState {
   isRendering: boolean;
@@ -41,6 +50,14 @@ export interface DiagramState {
 
 /**
  * Props for all diagram renderers
+ * @interface BaseDiagramRendererProps
+ * @property {string} code - The diagram source code to render
+ * @property {string} [title] - Optional title for the diagram
+ * @property {boolean} [showCode] - Whether to show source code by default
+ * @property {Function} [onRenderComplete] - Callback when rendering completes
+ * @property {Function} [onValidationComplete] - Callback when validation completes
+ * @property {string} [className] - CSS class name
+ * @property {React.CSSProperties} [style] - CSS styles
  */
 export interface BaseDiagramRendererProps {
   code: string;
@@ -64,18 +81,24 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
   /**
    * Get the diagram type this renderer handles
    * Must be implemented by subclasses
+   * @returns {DiagramType} The type of diagram (mermaid, d2, etc.)
    */
   abstract getDiagramType(): DiagramType;
 
   /**
    * Render the diagram content to the DOM
    * Must be implemented by subclasses
+   * @param {HTMLDivElement} container - The DOM element to render into
+   * @param {string} svg - The SVG content to render
    */
   abstract renderToDOM(container: HTMLDivElement, svg: string): void;
 
   /**
    * Validate diagram code
    * Can be overridden by subclasses for custom validation
+   * @param {string} code - The diagram source code
+   * @param {boolean} [autoFix=true] - Whether to attempt automatic fixes
+   * @returns {Promise<DiagramValidationResponse>} The validation result
    */
   protected async validateDiagram(code: string, autoFix: boolean = true): Promise<DiagramValidationResponse> {
     return diagramProviderService.validate({
@@ -88,6 +111,9 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
   /**
    * Render diagram using provider service
    * Can be overridden by subclasses for custom rendering
+   * @param {string} code - The diagram source code
+   * @param {OutputFormat} [format='svg'] - The desired output format
+   * @returns {Promise<DiagramRenderResponse>} The render result
    */
   protected async renderDiagram(code: string, format: OutputFormat = 'svg'): Promise<DiagramRenderResponse> {
     return diagramProviderService.render({
@@ -99,6 +125,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Get provider information
+   * @returns {Promise<ProviderInfo>} Information about the diagram provider
    */
   protected async getProviderInfo(): Promise<ProviderInfo> {
     return diagramProviderService.getProviderInfo(this.getDiagramType());
@@ -106,6 +133,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Export diagram as SVG
+   * @param {string} svgContent - The SVG content to export
+   * @param {string} [filename] - The filename to save as
    */
   protected exportAsSvg(svgContent: string, filename?: string): void {
     const blob = new Blob([svgContent], { type: 'image/svg+xml' });
@@ -123,6 +152,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Export diagram as PNG
+   * @param {string} svgContent - The SVG content to export
+   * @param {string} [filename] - The filename to save as
    */
   protected async exportAsPng(svgContent: string, filename?: string): Promise<void> {
     try {
@@ -151,6 +182,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Copy code to clipboard
+   * @param {string} code - The code to copy
    */
   protected copyCodeToClipboard(code: string): void {
     navigator.clipboard
@@ -166,6 +198,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Log diagram event
+   * @param {Object} event - The event details
    */
   protected logDiagramEvent(event: {
     event_type: 'detection' | 'render_start' | 'render_success' | 'render_error' | 'validation';
@@ -183,6 +216,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Parse and extract provider metadata from render result
+   * @param {DiagramRenderResponse} result - The render response
+   * @returns {Object} Extracted metadata
    */
   protected extractProviderMetadata(result: DiagramRenderResponse): {
     providerId: string;
@@ -200,6 +235,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Format error message for display
+   * @param {any} error - The error object
+   * @returns {string} Formatted error message
    */
   protected formatErrorMessage(error: any): string {
     if (typeof error === 'string') {
@@ -223,6 +260,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Check if provider supports output format
+   * @param {OutputFormat} format - The format to check
+   * @returns {Promise<boolean>} True if supported
    */
   protected async supportsFormat(format: OutputFormat): Promise<boolean> {
     try {
@@ -235,6 +274,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Check if provider supports auto-fix
+   * @returns {Promise<boolean>} True if supported
    */
   protected async supportsAutoFix(): Promise<boolean> {
     try {
@@ -247,6 +287,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 
   /**
    * Check if provider supports LLM correction
+   * @returns {Promise<boolean>} True if supported
    */
   protected async supportsLLMCorrection(): Promise<boolean> {
     try {
@@ -265,6 +306,8 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
 /**
  * Custom React hook for diagram rendering
  * Provides common state and methods for diagram components
+ * @param {DiagramType} diagramType - The type of diagram to manage
+ * @returns {Object} Hook state and methods
  */
 export function useDiagramRenderer(diagramType: DiagramType) {
   const [state, setState] = React.useState<DiagramState>({
@@ -280,6 +323,7 @@ export function useDiagramRenderer(diagramType: DiagramType) {
 
   /**
    * Update state
+   * @param {Partial<DiagramState>} updates - State updates to merge
    */
   const updateState = (updates: Partial<DiagramState>): void => {
     setState(prev => ({ ...prev, ...updates }));
@@ -287,6 +331,9 @@ export function useDiagramRenderer(diagramType: DiagramType) {
 
   /**
    * Render diagram
+   * @param {string} code - The code to render
+   * @param {OutputFormat} [format='svg'] - The output format
+   * @returns {Promise<boolean>} Success status
    */
   const render = async (code: string, format: OutputFormat = 'svg'): Promise<boolean> => {
     updateState({ isRendering: true, error: null });
@@ -328,6 +375,9 @@ export function useDiagramRenderer(diagramType: DiagramType) {
 
   /**
    * Validate diagram
+   * @param {string} code - The code to validate
+   * @param {boolean} [autoFix=true] - Whether to auto-fix errors
+   * @returns {Promise<boolean>} Validity status
    */
   const validate = async (code: string, autoFix: boolean = true): Promise<boolean> => {
     updateState({ isValidating: true });
@@ -359,6 +409,7 @@ export function useDiagramRenderer(diagramType: DiagramType) {
 
   /**
    * Get provider info
+   * @returns {Promise<ProviderInfo | null>} Provider information
    */
   const getProviderInfo = async (): Promise<ProviderInfo | null> => {
     try {
@@ -386,6 +437,8 @@ export function useDiagramRenderer(diagramType: DiagramType) {
 
 /**
  * Normalize diagram type name
+ * @param {string} type - The raw diagram type string
+ * @returns {DiagramType} The normalized diagram type
  */
 export function normalizeDiagramType(type: string): DiagramType {
   const normalized = type.toLowerCase();

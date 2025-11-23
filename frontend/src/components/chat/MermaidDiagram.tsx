@@ -14,6 +14,9 @@ import type { ProviderInfo, DiagramRenderResponse } from '../../services/diagram
  * MermaidDiagramProps type definition
  * 
  * Describes the structure and properties of MermaidDiagramProps
+ * @interface MermaidDiagramProps
+ * @property {string} code - The Mermaid diagram source code
+ * @property {string} [title] - Optional title for the diagram card
  */
 interface MermaidDiagramProps {
   code: string;
@@ -22,6 +25,16 @@ interface MermaidDiagramProps {
 
 /**
  * MermaidDiagram component
+ *
+ * Renders Mermaid diagrams using the backend provider service.
+ * Includes features for:
+ * - Server-side rendering
+ * - Client-side pan and zoom
+ * - SVG export and copy
+ * - Auto-fix validation
+ *
+ * @param {MermaidDiagramProps} props - Component props
+ * @returns {JSX.Element} Rendered Mermaid diagram card
  */
 export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);

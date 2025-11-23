@@ -55,6 +55,10 @@ const PLANTUML_C4_MARKERS = [
 /**
  * Check if a code block should be rendered as a Mermaid diagram
  * based on the language attribute and inline status
+ *
+ * @param {string} language - The language attribute from the code block
+ * @param {boolean} inline - Whether the code block is inline
+ * @returns {boolean} True if it should be rendered as Mermaid
  */
 export const isMermaidCode = (language: string, inline: boolean): boolean => {
   const isMermaid = !inline && language === 'mermaid';
@@ -73,6 +77,9 @@ export const isMermaidCode = (language: string, inline: boolean): boolean => {
 /**
  * Detect if code content contains Mermaid syntax
  * Uses heuristic pattern matching to identify Mermaid diagram types
+ *
+ * @param {string} code - The code content to check
+ * @returns {boolean} True if Mermaid syntax is detected
  */
 export const isMermaidSyntax = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -106,6 +113,9 @@ export const isMermaidSyntax = (code: string): boolean => {
 /**
  * Decode HTML entities in Mermaid code
  * Uses browser's native HTML entity decoding for comprehensive support
+ *
+ * @param {string} code - The code string with HTML entities
+ * @returns {string} The decoded code string
  */
 export const decodeMermaidCode = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -123,6 +133,9 @@ export const decodeMermaidCode = (code: string): string => {
  * - Removes trailing newlines
  * - Decodes HTML entities
  * - Trims whitespace
+ *
+ * @param {string} code - The raw Mermaid code
+ * @returns {string} The prepared code string
  */
 export const prepareMermaidCode = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -141,6 +154,9 @@ export const prepareMermaidCode = (code: string): string => {
 /**
  * Get the diagram type from Mermaid code
  * Returns the detected diagram type or 'unknown'
+ *
+ * @param {string} code - The Mermaid code
+ * @returns {string} The diagram type keyword or 'unknown'
  */
 export const getMermaidDiagramType = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -170,6 +186,10 @@ export const getMermaidDiagramType = (code: string): string => {
 /**
  * Check if a code block should be rendered as a D2 diagram
  * based on the language attribute and inline status
+ *
+ * @param {string} language - The language attribute
+ * @param {boolean} inline - Whether the code block is inline
+ * @returns {boolean} True if it should be rendered as D2
  */
 export const isD2Code = (language: string, inline: boolean): boolean => {
   const isD2 = !inline && (language === 'd2' || language === 'd2lang');
@@ -188,6 +208,9 @@ export const isD2Code = (language: string, inline: boolean): boolean => {
 /**
  * Detect if code content contains D2 syntax
  * Uses simplified pattern matching - backend handles actual validation
+ *
+ * @param {string} code - The code content to check
+ * @returns {boolean} True if D2 syntax is detected
  */
 export const isD2Syntax = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -231,6 +254,9 @@ export const isD2Syntax = (code: string): boolean => {
  * - Removes trailing newlines
  * - Decodes HTML entities
  * - Trims whitespace
+ *
+ * @param {string} code - The raw D2 code
+ * @returns {string} The prepared code string
  */
 export const prepareD2Code = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -256,6 +282,10 @@ export const prepareD2Code = (code: string): string => {
  * Check if a code block should be rendered as a C4 diagram
  * based on the language attribute and inline status
  * Supports: c4, c4diagram, plantuml (if contains C4 elements)
+ *
+ * @param {string} language - The language attribute
+ * @param {boolean} inline - Whether the code block is inline
+ * @returns {boolean} True if it should be rendered as C4
  */
 export const isC4Code = (language: string, inline: boolean): boolean => {
   // Direct C4 language markers
@@ -288,6 +318,9 @@ export const isC4Code = (language: string, inline: boolean): boolean => {
  * Detect if code content contains C4 syntax
  * C4 diagrams use specific keywords for different levels
  * Supports both Mermaid-style and PlantUML-style C4 diagrams
+ *
+ * @param {string} code - The code content to check
+ * @returns {boolean} True if C4 syntax is detected
  */
 export const isC4Syntax = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -348,6 +381,9 @@ export const isC4Syntax = (code: string): boolean => {
 
 /**
  * Get the C4 level from code (Context, Container, Component, etc.)
+ *
+ * @param {string} code - The C4 code
+ * @returns {string} The detected C4 level or 'unknown'
  */
 export const getC4Level = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -368,6 +404,9 @@ export const getC4Level = (code: string): string => {
 /**
  * Prepare C4 code for rendering
  * C4 will be rendered using D2, so we may need to preprocess
+ *
+ * @param {string} code - The raw C4 code
+ * @returns {string} The prepared code string
  */
 export const prepareC4Code = (code: string): string => {
   if (!code || typeof code !== 'string') {
@@ -392,6 +431,9 @@ export const prepareC4Code = (code: string): string => {
 /**
  * Extract potential diagram code from HTML elements
  * Handles <pre><code>, inline <code>, and <p> tags
+ *
+ * @param {string} htmlContent - The HTML string to parse
+ * @returns {Array} Array of detected diagram candidates
  */
 export const extractDiagramCandidates = (htmlContent: string): Array<{
   code: string;
@@ -492,6 +534,9 @@ export const extractDiagramCandidates = (htmlContent: string): Array<{
 /**
  * Process HTML content to detect and extract diagram candidates
  * Returns both the original HTML and any detected diagrams
+ *
+ * @param {string} htmlContent - The HTML string to process
+ * @returns {Object} Original HTML and array of detected diagrams
  */
 export const processMixedHtmlContent = (htmlContent: string): {
   originalHtml: string;
