@@ -74,6 +74,7 @@ class KeywordScorer:
     ]
 
     def __init__(self):
+        """Initialize the KeywordScorer with keywords."""
         # Initialize empty lists for base keywords from external source
         self.entity_words = []
         self.action_words = []
@@ -88,6 +89,7 @@ class KeywordScorer:
         self.structurizr_keywords = self.STRUCTURIZR_KEYWORDS
 
     def _load_base_keywords(self):
+        """Load additional keywords from a JSON file."""
         # Attempt to load additional keywords from a JSON file
         try:
             # Construct path to keywords file
@@ -109,6 +111,15 @@ class KeywordScorer:
             logger.warning(f"Error loading base keywords from keywords.json: {e}")
 
     def score_text(self, text: str) -> Dict[str, float]:
+        """
+        Score the text to determine probabilities for each diagram type.
+
+        Args:
+            text (str): The text to analyze.
+
+        Returns:
+            Dict[str, float]: A dictionary mapping diagram types to percentage scores.
+        """
         # Handle empty text case with default even distribution
         if not text:
             return {
@@ -181,6 +192,16 @@ class KeywordScorer:
 
     @staticmethod
     def _count_matches(text: str, keywords: list) -> int:
+        """
+        Count occurrences of keywords in text.
+
+        Args:
+            text (str): The text to search.
+            keywords (list): The list of keywords to look for.
+
+        Returns:
+            int: The total count of keyword matches.
+        """
         # Simple keyword matching method
         count = 0
         for keyword in keywords:
@@ -189,6 +210,15 @@ class KeywordScorer:
         return count
 
     def determine_diagram_type(self, text: str) -> Tuple[DiagramType, Dict[str, float]]:
+        """
+        Determine the best diagram type based on text analysis.
+
+        Args:
+            text (str): The text to analyze.
+
+        Returns:
+            Tuple[DiagramType, Dict[str, float]]: The determined diagram type and the score breakdown.
+        """
         # Score the text to determine best diagram type
         scores = self.score_text(text)
 

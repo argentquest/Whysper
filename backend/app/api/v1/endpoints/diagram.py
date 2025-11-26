@@ -23,6 +23,21 @@ async def start_diagram_generation(
     model_id: str = Body(None, embed=True),
     session_id: str = Body(None, embed=True),
 ):
+    """
+    Initialize a new diagram generation session.
+
+    Args:
+        initial_prompt (str): The initial description of the system.
+        diagram_type (str): The desired diagram type (default: "Mermaid").
+        model_id (str, optional): The AI model ID to use.
+        session_id (str, optional): A specific session ID to use (e.g. from frontend).
+
+    Returns:
+        dict: Session details including session_id, status, and message.
+
+    Raises:
+        HTTPException: If an error occurs during initialization.
+    """
     # Initialize a new diagram generation session with optional model selection
     try:
         logger.info(f"🚀 Starting diagram generation with prompt: {initial_prompt[:100]}... (session_id provided: {session_id is not None})")
@@ -51,6 +66,18 @@ async def start_diagram_generation(
 @router.get("/stream/{session_id}")
 @log_method_call
 async def stream_diagram_updates(session_id: str):
+    """
+    Stream real-time updates for a diagram generation session.
+
+    Args:
+        session_id (str): The ID of the session to stream updates for.
+
+    Returns:
+        StreamingResponse: A Server-Sent Events (SSE) stream of updates.
+
+    Raises:
+        HTTPException: If the session is not found.
+    """
     # Stream real-time updates for a diagram generation session
     logger.info(f"📡 Received stream request for session: {session_id}")
     session = DiagramSessionStore.get_session(session_id)
@@ -101,6 +128,19 @@ async def submit_clarification(
     session_id: str = Body(..., embed=True),
     response: str = Body(..., embed=True),
 ):
+    """
+    Submit a user response to a clarification question.
+
+    Args:
+        session_id (str): The session ID.
+        response (str): The user's response to the clarification question.
+
+    Returns:
+        dict: The updated session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Process user's response to a clarification request
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -123,6 +163,18 @@ async def submit_clarification(
 async def confirm_ready(
     session_id: str = Body(..., embed=True),
 ):
+    """
+    Confirm that the user is ready to proceed with diagram generation.
+
+    Args:
+        session_id (str): The session ID.
+
+    Returns:
+        dict: The updated session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Confirm user is ready to proceed with diagram generation
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -146,6 +198,19 @@ async def select_diagram_type(
     session_id: str = Body(..., embed=True),
     diagram_type: str = Body(..., embed=True),
 ):
+    """
+    Select the preferred diagram type for generation.
+
+    Args:
+        session_id (str): The session ID.
+        diagram_type (str): The selected diagram type (e.g., "Mermaid", "D2").
+
+    Returns:
+        dict: The updated session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Process user's selection of diagram type (Mermaid, D2, PlantUML, Structurizr)
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -168,6 +233,18 @@ async def select_diagram_type(
 async def approve_render(
     session_id: str = Body(..., embed=True),
 ):
+    """
+    Approve the current diagram for rendering.
+
+    Args:
+        session_id (str): The session ID.
+
+    Returns:
+        dict: The updated session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Approve diagram for rendering
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -191,6 +268,19 @@ async def render_diagram(
     session_id: str = Body(..., embed=True),
     code: str = Body(None, embed=True),
 ):
+    """
+    Render a diagram from the session's code or provided code.
+
+    Args:
+        session_id (str): The session ID.
+        code (str, optional): Custom diagram code to render. If not provided, uses session code.
+
+    Returns:
+        dict: The updated session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Render a diagram from session or provided code
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -211,6 +301,18 @@ async def render_diagram(
 @router.get("/{session_id}")
 @log_method_call
 async def get_diagram_status(session_id: str):
+    """
+    Get the current status of a diagram generation session.
+
+    Args:
+        session_id (str): The session ID.
+
+    Returns:
+        dict: The current session status.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Retrieve the current status of a diagram generation session
     session = DiagramSessionStore.get_session(session_id)
     if not session:
@@ -229,6 +331,18 @@ async def get_diagram_status(session_id: str):
 @router.delete("/{session_id}")
 @log_method_call
 async def delete_session(session_id: str):
+    """
+    Delete a diagram generation session.
+
+    Args:
+        session_id (str): The session ID to delete.
+
+    Returns:
+        dict: A confirmation message.
+
+    Raises:
+        HTTPException: If the session is not found or an error occurs.
+    """
     # Delete a specific diagram generation session
     session = DiagramSessionStore.get_session(session_id)
     if not session:
