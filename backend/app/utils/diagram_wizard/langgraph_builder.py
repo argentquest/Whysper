@@ -27,9 +27,11 @@ def route_after_clarify(state: GraphState) -> str:
     """
     Route after clarification phase to next stage.
     
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        "generate_json_representation" if ready to proceed
-        END if waiting for user input
+        str: The next node to transition to ("generate_json_representation" or END).
     """
     if state.get("llm_ready", False):
         logger.debug(
@@ -50,9 +52,11 @@ def route_after_diagram_type(state: GraphState) -> str:
     """
     Route after diagram type determination to next stage.
     
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        "generate_code" if user has selected diagram type
-        END if waiting for user selection
+        str: The next node to transition to ("generate_code" or END).
     """
     if state.get("user_selected_diagram_type", False):
         logger.debug(
@@ -73,9 +77,11 @@ def route_validation(state: GraphState) -> str:
     """
     Route after validation to next stage.
     
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        "render_diagram" if code is valid
-        "refine_code" if code needs refinement
+        str: The next node to transition to ("render_diagram" or "refine_code").
     """
     if state.get("is_valid", False):
         logger.debug(
@@ -92,6 +98,17 @@ def route_validation(state: GraphState) -> str:
 
 
 def build_diagram_factory_graph(service) -> StateGraph:
+    """
+    Build the LangGraph state machine for the diagram factory.
+
+    Constructs the graph with all nodes, edges, and conditional routing logic.
+
+    Args:
+        service: The DiagramFactoryService instance.
+
+    Returns:
+        StateGraph: The compiled LangGraph workflow.
+    """
     # Initialize state graph for diagram generation workflow
     # Creates a structured workflow with multiple nodes and conditional routing
     workflow = StateGraph(GraphState)
@@ -156,6 +173,18 @@ def build_diagram_factory_graph(service) -> StateGraph:
 # This prevents issues with shared state between concurrent sessions
 
 def get_diagram_factory_graph(service):
+    """
+    Get a new instance of the diagram factory graph.
+
+    This function acts as a factory for creating the graph, ensuring
+    a fresh instance is built for each service request.
+
+    Args:
+        service: The DiagramFactoryService instance.
+
+    Returns:
+        StateGraph: The compiled LangGraph workflow.
+    """
     # Build a fresh graph for each service instance
     # This ensures proper state isolation between concurrent diagram generation sessions
     # and allows the graph to use the correct service instance for callbacks

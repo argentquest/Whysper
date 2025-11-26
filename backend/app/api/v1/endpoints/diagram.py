@@ -24,19 +24,19 @@ async def start_diagram_generation(
     session_id: str = Body(None, embed=True),
 ):
     """
-    Start a new diagram generation session.
+    Initialize a new diagram generation session.
 
     Args:
-        initial_prompt: The user's initial description of the diagram.
-        diagram_type: The type of diagram to generate (e.g., "Mermaid", "D2"). Defaults to "Mermaid".
-        model_id: Optional specific AI model to use.
-        session_id: Optional existing session ID.
+        initial_prompt (str): The initial description of the system.
+        diagram_type (str): The desired diagram type (default: "Mermaid").
+        model_id (str, optional): The AI model ID to use.
+        session_id (str, optional): A specific session ID to use (e.g. from frontend).
 
     Returns:
-        dict: A dictionary containing the session ID, current status, and a success message.
+        dict: Session details including session_id, status, and message.
 
     Raises:
-        HTTPException: If there is an error during session initialization.
+        HTTPException: If an error occurs during initialization.
     """
     # Initialize a new diagram generation session with optional model selection
     try:
@@ -67,16 +67,16 @@ async def start_diagram_generation(
 @log_method_call
 async def stream_diagram_updates(session_id: str):
     """
-    Stream real-time updates for a diagram generation session using Server-Sent Events (SSE).
+    Stream real-time updates for a diagram generation session.
 
     Args:
-        session_id: The ID of the session to stream updates for.
+        session_id (str): The ID of the session to stream updates for.
 
     Returns:
-        StreamingResponse: An SSE stream of status updates.
+        StreamingResponse: A Server-Sent Events (SSE) stream of updates.
 
     Raises:
-        HTTPException: If the session is not found or an error occurs.
+        HTTPException: If the session is not found.
     """
     # Stream real-time updates for a diagram generation session
     logger.info(f"📡 Received stream request for session: {session_id}")
@@ -129,11 +129,11 @@ async def submit_clarification(
     response: str = Body(..., embed=True),
 ):
     """
-    Submit a user's response to a clarification question.
+    Submit a user response to a clarification question.
 
     Args:
-        session_id: The active session ID.
-        response: The user's response text.
+        session_id (str): The session ID.
+        response (str): The user's response to the clarification question.
 
     Returns:
         dict: The updated session status.
@@ -167,7 +167,7 @@ async def confirm_ready(
     Confirm that the user is ready to proceed with diagram generation.
 
     Args:
-        session_id: The active session ID.
+        session_id (str): The session ID.
 
     Returns:
         dict: The updated session status.
@@ -202,8 +202,8 @@ async def select_diagram_type(
     Select the preferred diagram type for generation.
 
     Args:
-        session_id: The active session ID.
-        diagram_type: The selected diagram type (e.g., "Mermaid", "D2").
+        session_id (str): The session ID.
+        diagram_type (str): The selected diagram type (e.g., "Mermaid", "D2").
 
     Returns:
         dict: The updated session status.
@@ -234,10 +234,10 @@ async def approve_render(
     session_id: str = Body(..., embed=True),
 ):
     """
-    Approve the generated diagram code for rendering.
+    Approve the current diagram for rendering.
 
     Args:
-        session_id: The active session ID.
+        session_id (str): The session ID.
 
     Returns:
         dict: The updated session status.
@@ -269,11 +269,11 @@ async def render_diagram(
     code: str = Body(None, embed=True),
 ):
     """
-    Render a diagram from the session's current code or provided custom code.
+    Render a diagram from the session's code or provided code.
 
     Args:
-        session_id: The active session ID.
-        code: Optional custom diagram code to render.
+        session_id (str): The session ID.
+        code (str, optional): Custom diagram code to render. If not provided, uses session code.
 
     Returns:
         dict: The updated session status.
@@ -302,10 +302,10 @@ async def render_diagram(
 @log_method_call
 async def get_diagram_status(session_id: str):
     """
-    Retrieve the current status of a diagram generation session.
+    Get the current status of a diagram generation session.
 
     Args:
-        session_id: The session ID.
+        session_id (str): The session ID.
 
     Returns:
         dict: The current session status.
@@ -332,10 +332,10 @@ async def get_diagram_status(session_id: str):
 @log_method_call
 async def delete_session(session_id: str):
     """
-    Delete a specific diagram generation session.
+    Delete a diagram generation session.
 
     Args:
-        session_id: The session ID to delete.
+        session_id (str): The session ID to delete.
 
     Returns:
         dict: A confirmation message.

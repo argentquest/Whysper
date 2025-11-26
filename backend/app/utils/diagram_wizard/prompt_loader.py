@@ -15,6 +15,16 @@ _prompt_cache: Dict[str, str] = {}
 
 
 def load_prompts() -> Dict[str, str]:
+    """
+    Load all prompts from the prompts directory into the cache.
+
+    Reads markdown files from the 'prompts' directory and populates
+    the global prompt cache. Supports unified prompts, legacy files,
+    model-specific prompts, and optimized diagram generation prompts.
+
+    Returns:
+        Dict[str, str]: A dictionary mapping prompt keys to prompt content.
+    """
     global _prompt_cache
 
     # Return cached prompts if already loaded to prevent redundant file reads
@@ -118,11 +128,11 @@ def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str
     substitution for configurable values like {SCORE_TARGET}.
 
     Args:
-        prompt_name: The base name of the prompt (e.g., "clarify_universal")
-        model_id: Optional model ID for model-specific prompts (e.g., "gpt5", "grok")
+        prompt_name (str): The base name of the prompt (e.g., "clarify_universal").
+        model_id (Optional[str]): Optional model ID for model-specific prompts (e.g., "gpt5", "grok").
 
     Returns:
-        The prompt string with all variables substituted, or None if not found
+        Optional[str]: The prompt string with all variables substituted, or None if not found.
     """
     # Load all prompts if not already loaded
     prompts = load_prompts()
@@ -151,6 +161,15 @@ def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str
 
 
 def _load_full_file(file_path: Path) -> str:
+    """
+    Safely read entire file content with error handling.
+
+    Args:
+        file_path (Path): Path to the file to read.
+
+    Returns:
+        str: The content of the file, or an empty string if reading fails.
+    """
     # Safely read entire file content with error handling
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -162,6 +181,19 @@ def _load_full_file(file_path: Path) -> str:
 
 
 def _extract_section(file_path: Path, section_header: str) -> str:
+    """
+    Extract a specific markdown section from a file.
+
+    Searches for a section starting with '## {section_header}' and returns
+    the content until the next section or end of file.
+
+    Args:
+        file_path (Path): Path to the file.
+        section_header (str): The header of the section to extract (without '## ').
+
+    Returns:
+        str: The content of the section, or an empty string if not found.
+    """
     # Extract a specific markdown section from a file
     try:
         with open(file_path, "r", encoding="utf-8") as f:

@@ -135,6 +135,14 @@ Communication between backend and frontend for long-running tasks (like diagram 
 - 🔐 API key management
 - 🎯 Architecture diagram generation with agent system prompts
 
+### Diagram Wizard (New!)
+- 🧙‍♂️ Interactive, conversational AI for diagram creation
+- 🎯 Intelligent clarification loop to ensure requirements are met
+- 🔄 Multi-step workflow: Analysis -> Clarification -> Generation -> Rendering
+- 📊 Real-time clarity scoring and architectural validation
+- 🖼️ Supports Mermaid, D2, PlantUML, and C4 models
+- 💾 Session persistence and export capabilities
+
 ### Integration
 - 🚀 Single-command deployment
 - 📦 Built-in frontend serving via FastAPI

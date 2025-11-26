@@ -9,6 +9,7 @@ from common.logger import get_logger
 
 # Import diagram validation functions for different diagram types
 from .diagram_validators import (
+    is_valid_d2_diagram,
     is_valid_mermaid_diagram,
     is_valid_c4_diagram,
 )
@@ -17,6 +18,7 @@ from .d2_cli_validator import validate_and_fix_d2_with_cli, is_d2_cli_available
 
 # Import rendering and conversion modules for diagram generation
 from .renderer_v2 import render_diagram  # Use new renderer with frontend HTML
+from .c4_to_d2 import convert_c4_to_d2
 
 # Import provider system for C4 rendering
 from diagrams.provider_registry import get_registry
@@ -34,13 +36,13 @@ router = APIRouter()
 # Helper function to detect C4 diagram level based on user's prompt
 def detect_c4_level(prompt: str) -> Optional[str]:
     """
-    Detect the C4 diagram level from the user's prompt.
+    Helper function to detect C4 diagram level based on user's prompt.
 
     Args:
-        prompt: The user's prompt text.
+        prompt (str): The user's prompt describing the system.
 
     Returns:
-        Optional[str]: The detected C4 level ("C1", "C2", "C3", "C4") or None if not detected.
+        Optional[str]: The detected C4 level ('C1', 'C2', 'C3', 'C4') or None if not detected.
     """
     # Normalize prompt to uppercase for consistent pattern matching
     prompt_upper = prompt.upper()
@@ -63,7 +65,15 @@ def detect_c4_level(prompt: str) -> Optional[str]:
 
 # Pydantic models for request and response validation
 class DiagramRequest(BaseModel):
-    """Request model for diagram generation."""
+    """
+    Request model for diagram generation.
+
+    Attributes:
+        prompt (str): Natural language description of diagram
+        diagram_type (str): Type of diagram to generate. Defaults to "d2".
+        c4_level (Optional[str]): C4 level: "C1", "C2", "C3", "C4" (auto-detected if not provided)
+        output_format (str): Output format (svg, png). Defaults to "svg".
+    """
     prompt: str                           # Natural language description of diagram
     diagram_type: str = "d2"              # Type of diagram to generate
     c4_level: Optional[str] = None        # C4 level: "C1", "C2", "C3", "C4" (auto-detected if not provided)
@@ -71,13 +81,29 @@ class DiagramRequest(BaseModel):
 
 
 class ErrorInfo(BaseModel):
-    """Error information model for response."""
+    """
+    Error information model for response.
+
+    Attributes:
+        has_error (bool): Whether an error occurred
+        error_message (str): Error message description
+    """
     has_error: bool                # Whether an error occurred
     error_message: str             # Error message description
 
 
 class DiagramResponse(BaseModel):
-    """Complete response model for diagram generation."""
+    """
+    Complete response model for diagram generation.
+
+    Attributes:
+        image_data (str): Base64-encoded image data
+        image_format (str): Format of the generated image
+        initial_prompt (str): Original user prompt
+        full_response (str): Complete AI response (includes thinking)
+        diagram_code (str): Generated diagram source code
+        error_info (ErrorInfo): Error information if any
+    """
     image_data: str               # Base64-encoded image data
     image_format: str             # Format of the generated image
     initial_prompt: str           # Original user prompt
@@ -92,20 +118,23 @@ async def generate_diagram(
     settings: Settings = Depends(get_settings)
 ):
     """
-    Generate a diagram from a user prompt.
+    Generate a diagram from a prompt using AI and available renderers.
 
-    This endpoint handles the entire diagram generation workflow:
-    1. Selects the appropriate AI agent based on the requested diagram type.
-    2. Generates diagram code using the AI processor.
-    3. Validates and optionally fixes the generated code.
-    4. Renders the diagram.
+    This endpoint handles the complete workflow:
+    1. Selecting the appropriate AI prompt based on diagram type.
+    2. Calling the AI model to generate diagram code.
+    3. Validating and fixing the generated code.
+    4. Rendering the diagram to the requested format.
 
     Args:
-        request: The diagram generation request containing the prompt and diagram type.
-        settings: Application settings (injected).
+        request (DiagramRequest): The diagram generation request details.
+        settings (Settings): Application settings injected by dependency.
 
     Returns:
-        DiagramResponse: The generated diagram image data, code, and metadata.
+        DiagramResponse: The generated diagram, code, and metadata.
+
+    Raises:
+        HTTPException: If the diagram type or C4 level is invalid.
     """
     logger.info(f"Received diagram generation request: {request}")
 

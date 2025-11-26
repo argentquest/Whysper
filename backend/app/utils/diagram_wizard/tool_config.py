@@ -51,7 +51,18 @@ class DiagramToolConfig:
 
     @staticmethod
     def get_config(diagram_type: str) -> Dict[str, Any]:
-        """Get configuration for a specific diagram type."""
+        """
+        Get configuration for a specific diagram type.
+
+        Args:
+            diagram_type (str): The diagram type (e.g., 'D2', 'Mermaid').
+
+        Returns:
+            Dict[str, Any]: The tool configuration.
+
+        Raises:
+            ValueError: If the diagram type is unknown.
+        """
         # Validate and retrieve tool configuration
         if diagram_type not in DiagramToolConfig.CONFIGS:
             raise ValueError(f"Unknown diagram type: {diagram_type}")
@@ -72,6 +83,12 @@ class DiagramToolRunner:
     def is_tool_available(tool_name: str) -> bool:
         """
         Check if a tool is available in the system PATH.
+
+        Args:
+            tool_name (str): The name of the tool executable.
+
+        Returns:
+            bool: True if available, False otherwise.
         """
         try:
             # Attempt to run tool with version check
@@ -88,6 +105,12 @@ class DiagramToolRunner:
     def validate_arguments(args: List[str]) -> bool:
         """
         Validate that arguments don't contain shell metacharacters.
+
+        Args:
+            args (List[str]): List of command arguments.
+
+        Returns:
+            bool: True if valid, False if forbidden characters found.
         """
         # List of forbidden characters to prevent shell injection
         forbidden_chars = ["$", "`", "|", ";", "&", ">", "<", "\n", "\r"]
@@ -107,6 +130,16 @@ class DiagramToolRunner:
     ) -> Tuple[bool, str]:
         """
         Safely execute a diagram tool.
+
+        Args:
+            tool (str): The tool executable name.
+            args (List[str]): Command line arguments.
+            input_file (str, optional): Path to input file.
+            output_file (str, optional): Path to output file.
+            timeout (int, optional): Execution timeout in seconds.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing (success, output/error message).
         """
         # Validate arguments to prevent shell injection
         if not DiagramToolRunner.validate_arguments(args):
