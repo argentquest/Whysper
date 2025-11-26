@@ -25,6 +25,7 @@ describe('GenerationScreen', () => {
     sessionId: 'test-session-123',
     status: null as DiagramUpdate | null,
     score: 9,
+    scoreTarget: 10,
     diagramCode: 'graph TD\n  A[Start] --> B[Process]\n  B --> C[End]',
     svgOutput: '<svg>test</svg>',
     chatHistory: [
@@ -183,7 +184,7 @@ describe('GenerationScreen', () => {
     });
 
     it('should display clarity score', () => {
-      render(<GenerationScreen {...mockProps} score={9} />);
+      render(<GenerationScreen {...mockProps} score={9} scoreTarget={10} />);
       expect(screen.getByText('9/10')).toBeInTheDocument();
     });
 

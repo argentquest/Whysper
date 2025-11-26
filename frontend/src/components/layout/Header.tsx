@@ -30,6 +30,27 @@ const { Option } = Select;
  * HeaderProps type definition
  * 
  * Describes the structure and properties of HeaderProps
+ * @interface HeaderProps
+ * @property {Function} onSetContext - Callback to open context modal
+ * @property {Function} onNewConversation - Callback to start new conversation
+ * @property {Function} onNewSession - Callback to start new session
+ * @property {Function} onEditFile - Callback to edit file
+ * @property {Function} onOpenSettings - Callback to open settings
+ * @property {Function} onToggleTheme - Callback to toggle theme
+ * @property {Function} onOpenThemePicker - Callback to open theme picker
+ * @property {Function} onSystemMessage - Callback to open system message modal
+ * @property {Function} onAbout - Callback to open about modal
+ * @property {Function} onCodeFragments - Callback to open code fragments
+ * @property {Function} onGenerateDocumentation - Callback to generate docs
+ * @property {Function} onHelp - Callback to open help modal
+ * @property {Function} onMermaidTester - Callback to open Mermaid tester
+ * @property {Function} onD2Tester - Callback to open D2 tester
+ * @property {Function} onDiagramWizard - Callback to open Diagram Wizard
+ * @property {Function} onArchStudio - Callback to open Architecture Studio
+ * @property {string} [currentSystem] - Currently selected system prompt
+ * @property {Function} onSystemChange - Callback when system prompt changes
+ * @property {Function} onRunSystemPrompt - Callback to execute system prompt
+ * @property {AgentPrompt[]} [agentPrompts] - List of available agent prompts
  */
 interface HeaderProps {
   onSetContext: () => void;
@@ -56,6 +77,15 @@ interface HeaderProps {
 
 /**
  * Header component
+ *
+ * Main application header containing:
+ * - Branding/Logo
+ * - Agent/System Prompt selector
+ * - Quick actions toolbar
+ * - Settings and tools menu
+ *
+ * @param {HeaderProps} props - Component props
+ * @returns {JSX.Element} Rendered header
  */
 export const Header: React.FC<HeaderProps> = ({
   onSetContext,

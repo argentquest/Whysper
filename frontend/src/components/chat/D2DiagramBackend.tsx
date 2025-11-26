@@ -16,6 +16,11 @@ const { Panel } = Collapse;
  * D2DiagramBackendProps type definition
  * 
  * Describes the structure and properties of D2DiagramBackendProps
+ * @interface D2DiagramBackendProps
+ * @property {string} code - The D2 diagram code to render
+ * @property {string} [title] - Optional title for the diagram card
+ * @property {boolean} [showCode] - Whether to show the source code by default
+ * @property {Function} [onRenderComplete] - Callback when rendering completes
  */
 interface D2DiagramBackendProps {
   code: string;
@@ -26,6 +31,16 @@ interface D2DiagramBackendProps {
 
 /**
  * D2DiagramBackend component
+ *
+ * Renders a D2 diagram using the backend rendering service.
+ * Includes features for:
+ * - Server-side rendering
+ * - Auto-fix validation
+ * - SVG export and copy
+ * - Debug information
+ *
+ * @param {D2DiagramBackendProps} props - Component props
+ * @returns {JSX.Element} Rendered D2 diagram card
  */
 export const D2DiagramBackend: React.FC<D2DiagramBackendProps> = ({
   code,

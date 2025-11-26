@@ -77,6 +77,7 @@ import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
  * @property {string | null} sessionId - Unique session ID from backend (null if not started)
  * @property {DiagramUpdate | null} status - Latest status update from backend (includes scores, json_representation)
  * @property {number} score - Current clarity_score (0-10) from AI assessment
+ * @property {number} scoreTarget - Target clarity_score (usually 80)
  * @property {Array} clarifications - List of clarification questions asked by AI
  * @property {Array} chatHistory - Array of message objects with role, content, and optional score/jsonData
  * @property {boolean} sseConnected - Whether SSE connection to backend is active
@@ -143,12 +144,12 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
 }) => {
   // Show input field during clarification phase (includes initial analysis and follow-up questions)
   // Keep input visible as long as we're in analysis phase (hasn't moved to generation yet)
-  const isClarifying = isInAnalysisPhase && sessionId && (
+  const isClarifying = !!(isInAnalysisPhase && sessionId && (
     status?.status === 'clarifying' ||
     status?.status === 'analysis_complete' ||
     status?.status === 'waiting' ||
     status?.status === 'analyzing'
-  );
+  ));
   const canConfirmReady = status?.status === 'can_proceed' || status?.status === 'clarification_ready';
 
   // Debug logging

@@ -27,6 +27,7 @@ describe('SystemDescriptionScreen', () => {
     sessionId: null,
     status: null as DiagramUpdate | null,
     score: 0,
+    scoreTarget: 80,
     clarifications: [],
     chatHistory: [],
     sseConnected: true,
@@ -284,13 +285,13 @@ describe('SystemDescriptionScreen', () => {
     });
 
     it('should display clarity score when available', () => {
-      render(<SystemDescriptionScreen {...mockProps} score={7} />);
-      expect(screen.getByText('7/10')).toBeInTheDocument();
+      render(<SystemDescriptionScreen {...mockProps} score={70} scoreTarget={80} />);
+      expect(screen.getByText('70/80')).toBeInTheDocument();
     });
 
     it('should not display score when score is 0', () => {
-      render(<SystemDescriptionScreen {...mockProps} score={0} />);
-      expect(screen.queryByText('0/10')).not.toBeInTheDocument();
+      render(<SystemDescriptionScreen {...mockProps} score={0} scoreTarget={80} />);
+      expect(screen.queryByText('0/80')).not.toBeInTheDocument();
     });
   });
 
