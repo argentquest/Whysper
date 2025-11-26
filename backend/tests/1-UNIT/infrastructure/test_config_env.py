@@ -23,11 +23,15 @@ class TestEnvManager:
         """Load environment variables from file"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        manager.load_env_file(temp_env_file)
+        # Write content to file first
+        with open(temp_env_file, "w") as f:
+            f.write("TEST_KEY=test_value\n")
+
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
 
         # Check that variables were loaded
-        assert os.getenv("TEST_VAR") == "test_value" or True
+        assert manager.env_vars.get("TEST_KEY") == "test_value"
 
     def test_env_var_with_quotes(self):
         """Handle environment variables with quotes"""
@@ -38,9 +42,10 @@ class TestEnvManager:
 
         try:
             from common.env_manager import EnvManager
-            manager = EnvManager()
-            manager.load_env_file(env_path)
-            assert True
+            manager = EnvManager(env_path)
+            manager.load_env_file()
+            assert manager.env_vars.get("TEST_QUOTED") == "quoted value"
+            assert manager.env_vars.get("TEST_SINGLE") == "single quoted"
         finally:
             os.unlink(env_path)
 
@@ -54,9 +59,10 @@ class TestEnvManager:
 
         try:
             from common.env_manager import EnvManager
-            manager = EnvManager()
-            manager.load_env_file(env_path)
-            assert True
+            manager = EnvManager(env_path)
+            manager.load_env_file()
+            assert manager.env_vars.get("VALID_VAR") == "value"
+            assert manager.env_vars.get("ANOTHER_VAR") == "another"
         finally:
             os.unlink(env_path)
 
@@ -64,44 +70,60 @@ class TestEnvManager:
         """Save environment variables to file"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        manager.load_env_file(temp_env_file)
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
 
         # Create new file with saved variables
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
-            output_path = f.name
+        # save_env_file uses self.env_path, so we need to set it or modify manager
+        # EnvManager doesn't take path in save_env_file, it uses self.env_path
 
-        try:
-            manager.save_env_file(output_path)
-            assert Path(output_path).exists()
-        finally:
-            if os.path.exists(output_path):
-                os.unlink(output_path)
+        # We can temporarily change env_path or just verify it saves to original
+
+        manager.env_vars["NEW_VAR"] = "new_value"
+        manager.save_env_file(manager.env_vars)
+
+        # Check if file content updated
+        with open(temp_env_file, "r") as f:
+            content = f.read()
+        assert "NEW_VAR" in content
 
     def test_get_env_var(self):
         """Get environment variable"""
         from common.env_manager import EnvManager
 
-        with patch.dict(os.environ, {"TEST_KEY": "test_value"}):
-            manager = EnvManager()
-            value = manager.get_env_var("TEST_KEY")
-            assert value == "test_value" or value is not None
+        # EnvManager uses its own env_vars dict, not os.environ directly usually, unless it falls back
+        # But here we test getting from loaded vars
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+            f.write("TEST_KEY=test_value\n")
+            env_path = f.name
+
+        try:
+            manager = EnvManager(env_path)
+            manager.load_env_file()
+            value = manager.env_vars.get("TEST_KEY")
+            assert value == "test_value"
+        finally:
+            os.unlink(env_path)
 
     def test_get_env_var_with_default(self):
         """Get environment variable with default"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        value = manager.get_env_var("NONEXISTENT_VAR", default="default_value")
-        assert value == "default_value" or value is None or isinstance(value, str)
+        manager = EnvManager() # No file
+        value = manager.env_vars.get("NONEXISTENT_VAR", "default_value")
+        assert value == "default_value"
 
-    def test_set_env_var(self):
+    def test_set_env_var(self, temp_env_file):
         """Set environment variable"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        manager.set_env_var("TEST_NEW_VAR", "new_value")
-        assert os.getenv("TEST_NEW_VAR") == "new_value" or True
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
+        manager.update_single_var("TEST_NEW_VAR", "new_value")
+
+        # Verify reloaded
+        manager.load_env_file()
+        assert manager.env_vars.get("TEST_NEW_VAR") == "new_value"
 
     def test_env_var_validation(self):
         """Validate environment variables"""
@@ -110,7 +132,7 @@ class TestEnvManager:
         manager = EnvManager()
         # Should handle validation without error
         result = manager.validate_env_var("TEST_VAR", "value")
-        assert isinstance(result, (bool, type(None))) or True
+        assert isinstance(result, tuple) and len(result) == 2
 
     def test_validate_all_env_vars(self, valid_env_vars):
         """Validate all required environment variables"""
@@ -119,20 +141,21 @@ class TestEnvManager:
         manager = EnvManager()
         # Should handle validation of multiple vars
         result = manager.validate_all_env_vars(valid_env_vars)
-        assert isinstance(result, (bool, list, dict, type(None))) or True
+        assert isinstance(result, dict)
 
     def test_env_file_not_found(self):
         """Handle missing environment file"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        try:
-            manager.load_env_file("/nonexistent/path/.env")
-            # May succeed silently or raise exception
-            assert True
-        except FileNotFoundError:
-            # Expected behavior
-            assert True
+        manager = EnvManager("/nonexistent/path/.env")
+        with patch.object(manager, '_create_default_env'):
+            try:
+                manager.load_env_file()
+                # Should not fail if handled gracefully
+                assert True
+            except Exception:
+                # Or fail gracefully
+                assert True
 
     def test_create_default_env_file(self):
         """Create default environment file"""
@@ -140,9 +163,9 @@ class TestEnvManager:
             env_path = Path(tmpdir) / ".env"
 
             from common.env_manager import EnvManager
-            manager = EnvManager()
-            # Should handle default creation
-            assert True
+            manager = EnvManager(str(env_path))
+            manager._create_default_env()
+            assert env_path.exists()
 
 
 class TestEnvValidator:
@@ -153,49 +176,49 @@ class TestEnvValidator:
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_string("TEST_VALUE")
-        assert isinstance(result, (bool, dict)) or True
+        # Use _validate_model_name as a proxy for string validation
+        result = validator._validate_model_name("provider/model")
+        assert result[0] is True
 
     def test_validate_integer_var(self):
         """Validate integer environment variable"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_integer(8003)
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_int_range("8003", 1, 65535)
+        assert result[0] is True
 
     def test_validate_boolean_var(self):
         """Validate boolean environment variable"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_boolean(True)
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_enum("true", {"true", "false"})
+        assert result[0] is True
 
     def test_validate_url(self):
         """Validate URL environment variable"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_url("https://example.com")
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_fastapi_url("http://localhost:8000")
+        assert result[0] is True
 
     def test_validate_api_key(self):
         """Validate API key format"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_api_key("sk-proj-abc123def456")
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_api_key("sk-proj-abc123def456")
+        assert result[0] is True
 
     def test_validate_invalid_url(self):
         """Reject invalid URL"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_url("not a valid url")
-        # Should return False or error dict
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_fastapi_url("not a valid url")
+        assert result[0] is False
 
     def test_validation_with_constraints(self):
         """Validate with min/max constraints"""
@@ -203,17 +226,17 @@ class TestEnvValidator:
 
         validator = EnvValidator()
         # Should handle range validation
-        result = validator.validate_integer(50, min_value=1, max_value=100)
-        assert isinstance(result, (bool, dict)) or True
+        result = validator._validate_int_range("50", 1, 100)
+        assert result[0] is True
 
     def test_validation_error_messages(self):
         """Validation errors include helpful messages"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_integer("not_an_integer")
+        result = validator._validate_int_range("not_an_integer", 1, 100)
         # Should return error or False
-        assert isinstance(result, (bool, dict, str)) or True
+        assert result[0] is False
 
 
 class TestSettings:
@@ -340,8 +363,8 @@ class TestEnvironmentIntegration:
         """Load environment file and validate"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        manager.load_env_file(temp_env_file)
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
         # Should complete without error
         assert True
 
@@ -350,8 +373,8 @@ class TestEnvironmentIntegration:
         from common.env_manager import EnvManager
         from app.core.config import Settings
 
-        manager = EnvManager()
-        manager.load_env_file(temp_env_file)
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
 
         try:
             settings = Settings()
@@ -380,22 +403,23 @@ class TestEnvironmentIntegration:
 class TestConfigurationErrors:
     """Test error handling in configuration"""
 
-    def test_missing_required_var(self):
+    def test_missing_required_var(self, temp_env_file):
         """Handle missing required variables"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
-        value = manager.get_env_var("DEFINITELY_NOT_SET_VAR")
-        assert value is None or isinstance(value, str)
+        manager = EnvManager(str(temp_env_file))
+        manager.load_env_file()
+        value = manager.env_vars.get("DEFINITELY_NOT_SET_VAR")
+        assert value is None
 
     def test_invalid_env_type(self):
         """Handle type conversion errors"""
         from env_validator import EnvValidator
 
         validator = EnvValidator()
-        result = validator.validate_integer("not_an_integer")
+        result = validator._validate_int_range("not_an_integer", 1, 100)
         # Should return False or error dict
-        assert True
+        assert result[0] is False
 
     def test_malformed_config_file(self):
         """Handle malformed configuration file"""
@@ -423,9 +447,9 @@ class TestConfigurationErrors:
         validator = EnvValidator()
         # Should handle each invalid variable
         for key, value in invalid_env_vars.items():
-            result = validator.validate_integer(value)
+            result = validator._validate_int_range(value, 1, 100)
             # Should indicate error
-            assert True
+            assert isinstance(result, tuple)
 
 
 class TestConfigurationSecurity:
@@ -487,9 +511,9 @@ class TestConfigurationPerformance:
         import time
         from common.env_manager import EnvManager
 
-        manager = EnvManager()
+        manager = EnvManager(str(temp_env_file))
         start = time.time()
-        manager.load_env_file(temp_env_file)
+        manager.load_env_file()
         elapsed = time.time() - start
 
         assert elapsed < performance_thresholds["config_load"]

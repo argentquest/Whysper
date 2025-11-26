@@ -1,0 +1,498 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.1, pluggy-1.6.0 -- /home/jules/.pyenv/versions/3.12.12/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.12', 'Platform': 'Linux-6.8.0-x86_64-with-glibc2.39', 'Packages': {'pytest': '9.0.1', 'pluggy': '1.6.0'}, 'Plugins': {'xdist': '3.8.0', 'html': '4.1.1', 'mock': '3.15.1', 'langsmith': '0.4.46', 'anyio': '4.11.0', 'cov': '7.0.0', 'asyncio': '1.3.0', 'metadata': '3.1.1'}, 'JAVA_HOME': '/usr/lib/jvm/java-21-openjdk-amd64'}
+rootdir: /app/backend/tests
+configfile: pytest.ini
+plugins: xdist-3.8.0, html-4.1.1, mock-3.15.1, langsmith-0.4.46, anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, metadata-3.1.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 343 items
+
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_validate_mermaid_code PASSED [  0%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_validate_d2_code PASSED [  0%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_validate_plantuml_code PASSED [  0%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_validate_invalid_code PASSED [  1%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_validate_empty_code PASSED [  1%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_render_mermaid_diagram PASSED [  1%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_render_d2_diagram PASSED [  2%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_render_empty_diagram PASSED [  2%]
+backend/tests/1-UNIT/diagram_wizard/test_provider_integration.py::test_provider_id_propagation PASSED [  2%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_create_ai_provider_config PASSED [  2%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_ai_provider_requires_implementation PASSED [  3%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_ai_provider_has_required_methods PASSED [  3%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_api_key_handling PASSED [  3%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_token_tracking PASSED [  4%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseAIProvider::test_system_message_injection PASSED [  4%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_create_factory PASSED [  4%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_get_openai_provider PASSED [  4%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_get_anthropic_provider PASSED [  5%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_list_available_providers PASSED [  5%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_provider_not_found PASSED [  5%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_provider_validation PASSED [  6%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProviderFactory::test_dynamic_provider_loading PASSED [  6%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProcessor::test_create_processor PASSED [  6%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProcessor::test_process_request PASSED [  6%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProcessor::test_handle_api_errors PASSED [  7%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestAIProcessor::test_token_counting PASSED [  7%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_diagram_provider_instantiation PASSED [  7%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_render_diagram PASSED [  8%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_validate_diagram_code PASSED [  8%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_correction_strategy PASSED [  8%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_metadata_generation PASSED [  9%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestBaseDiagramProvider::test_error_handling_in_rendering PASSED [  9%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_create_registry PASSED [  9%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_list_registered_providers PASSED [  9%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_get_provider_by_id PASSED [ 10%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_register_new_provider PASSED [ 10%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_auto_discovery PASSED [ 10%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_provider_loading PASSED [ 11%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderRegistry::test_singleton_pattern PASSED [ 11%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderCapabilities::test_provider_metadata PASSED [ 11%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderCapabilities::test_supported_formats PASSED [ 11%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderCapabilities::test_format_conversion PASSED [ 12%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderCapabilities::test_performance_characteristics PASSED [ 12%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderCapabilities::test_resource_requirements PASSED [ 12%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramValidation::test_validate_mermaid_syntax PASSED [ 13%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramValidation::test_validate_d2_syntax PASSED [ 13%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramValidation::test_reject_invalid_syntax PASSED [ 13%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramValidation::test_provide_syntax_hints PASSED [ 13%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramValidation::test_auto_correct_common_errors PASSED [ 14%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramCorrection::test_pattern_matching_correction PASSED [ 14%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramCorrection::test_llm_based_correction PASSED [ 14%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramCorrection::test_user_feedback_correction PASSED [ 15%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramCorrection::test_correction_attempts_tracking PASSED [ 15%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestDiagramCorrection::test_correction_success_rate PASSED [ 15%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_handle_invalid_config PASSED [ 16%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_handle_missing_dependencies PASSED [ 16%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_handle_network_errors PASSED [ 16%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_handle_timeout_errors PASSED [ 16%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_retry_logic PASSED [ 17%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderErrors::test_fallback_providers PASSED [ 17%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderIntegration::test_end_to_end_rendering PASSED [ 17%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderIntegration::test_multi_provider_rendering PASSED [ 18%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderIntegration::test_provider_chaining PASSED [ 18%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderIntegration::test_performance_comparison PASSED [ 18%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderConfiguration::test_load_provider_config PASSED [ 18%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderConfiguration::test_validate_provider_config PASSED [ 19%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderConfiguration::test_config_inheritance PASSED [ 19%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderConfiguration::test_config_override PASSED [ 19%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderConfiguration::test_config_defaults PASSED [ 20%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderPerformance::test_rendering_speed PASSED [ 20%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderPerformance::test_memory_usage PASSED [ 20%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderPerformance::test_concurrent_rendering PASSED [ 20%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderPerformance::test_caching_strategy PASSED [ 21%]
+backend/tests/1-UNIT/infrastructure/test_ai_providers.py::TestProviderPerformance::test_resource_optimization PASSED [ 21%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_load_env_file PASSED [ 21%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_env_var_with_quotes PASSED [ 22%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_env_var_with_comments PASSED [ 22%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_save_env_file PASSED [ 22%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_get_env_var PASSED [ 23%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_get_env_var_with_default PASSED [ 23%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_set_env_var PASSED [ 23%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_env_var_validation PASSED [ 23%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_validate_all_env_vars PASSED [ 24%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_env_file_not_found PASSED [ 24%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvManager::test_create_default_env_file PASSED [ 24%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_string_var PASSED [ 25%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_integer_var PASSED [ 25%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_boolean_var PASSED [ 25%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_url PASSED [ 25%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_api_key PASSED [ 26%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validate_invalid_url PASSED [ 26%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validation_with_constraints PASSED [ 26%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvValidator::test_validation_error_messages PASSED [ 27%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_create_settings PASSED [ 27%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_with_env_vars PASSED [ 27%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_has_api_host PASSED [ 27%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_has_api_port PASSED [ 28%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_has_log_level PASSED [ 28%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_database_url PASSED [ 28%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_cors_configuration PASSED [ 29%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_api_keys PASSED [ 29%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_validation PASSED [ 29%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestSettings::test_settings_defaults PASSED [ 30%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigParsing::test_parse_json_config PASSED [ 30%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigParsing::test_parse_invalid_json PASSED [ 30%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvironmentIntegration::test_load_and_validate_env PASSED [ 30%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvironmentIntegration::test_settings_from_env_file PASSED [ 31%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvironmentIntegration::test_env_override_defaults PASSED [ 31%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestEnvironmentIntegration::test_cascade_configuration_loading PASSED [ 31%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationErrors::test_missing_required_var PASSED [ 32%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationErrors::test_invalid_env_type PASSED [ 32%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationErrors::test_malformed_config_file PASSED [ 32%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationErrors::test_config_validation_errors PASSED [ 32%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationSecurity::test_api_keys_not_logged PASSED [ 33%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationSecurity::test_sensitive_data_masked PASSED [ 33%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationSecurity::test_config_file_permissions PASSED [ 33%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationSecurity::test_no_hardcoded_secrets PASSED [ 34%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationPerformance::test_settings_creation_speed PASSED [ 34%]
+backend/tests/1-UNIT/infrastructure/test_config_env.py::TestConfigurationPerformance::test_env_file_parsing_speed PASSED [ 34%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_include_python_files PASSED [ 34%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_exclude_cache_directories PASSED [ 35%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_glob_pattern_matching PASSED [ 35%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_complex_pattern_matching PASSED [ 35%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_exclude_patterns PASSED [ 36%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_case_insensitive_matching PASSED [ 36%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileFilters::test_ignore_directory_based_filtering PASSED [ 36%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_create_scanner PASSED [ 37%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_scan_directory PASSED [ 37%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_get_file_info PASSED [ 37%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_cache_file_content PASSED [ 37%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_cache_size_limit PASSED [ 38%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_detect_file_changes PASSED [ 38%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_lazy_loading PASSED [ 38%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_filter_by_extension PASSED [ 39%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestLazyFileScanner::test_get_file_statistics PASSED [ 39%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileContentHandling::test_read_text_file PASSED [ 39%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileContentHandling::test_handle_binary_files PASSED [ 39%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileContentHandling::test_handle_large_files PASSED [ 40%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileContentHandling::test_handle_encoding_issues PASSED [ 40%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileContentHandling::test_line_counting PASSED [ 40%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestDirectoryTraversal::test_traverse_directory_tree PASSED [ 41%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestDirectoryTraversal::test_respect_ignore_patterns PASSED [ 41%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestDirectoryTraversal::test_follow_symlinks_option PASSED [ 41%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestDirectoryTraversal::test_max_depth_limit PASSED [ 41%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestDirectoryTraversal::test_permission_denied_handling PASSED [ 42%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerPerformance::test_scanning_speed PASSED [ 42%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerPerformance::test_content_caching_efficiency PASSED [ 42%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerPerformance::test_cache_hit_rate PASSED [ 43%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerIntegration::test_scan_codebase_structure PASSED [ 43%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerIntegration::test_get_all_python_files PASSED [ 43%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerIntegration::test_generate_file_manifest PASSED [ 44%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerIntegration::test_calculate_codebase_stats PASSED [ 44%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerErrorHandling::test_handle_nonexistent_directory PASSED [ 44%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerErrorHandling::test_handle_permission_errors PASSED [ 44%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerErrorHandling::test_handle_invalid_path PASSED [ 45%]
+backend/tests/1-UNIT/infrastructure/test_file_utils.py::TestFileScannerErrorHandling::test_handle_circular_symlinks PASSED [ 45%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLogContext::test_create_empty_context PASSED [ 45%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLogContext::test_create_context_with_data PASSED [ 46%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLogContext::test_context_to_dict PASSED [ 46%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLogContext::test_context_with_additional_data PASSED [ 46%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLogContext::test_context_with_file_location PASSED [ 46%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestStructuredFormatter::test_format_basic_log_record PASSED [ 47%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestStructuredFormatter::test_format_with_exception PASSED [ 47%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestStructuredFormatter::test_format_with_context PASSED [ 47%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestStructuredFormatter::test_format_json_is_valid PASSED [ 48%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestStructuredFormatter::test_format_with_extra_fields PASSED [ 48%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestConsoleFormatter::test_create_console_formatter PASSED [ 48%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestConsoleFormatter::test_format_basic_message PASSED [ 48%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestConsoleFormatter::test_format_different_levels PASSED [ 49%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestConsoleFormatter::test_format_is_human_readable PASSED [ 49%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_create_logger PASSED [ 49%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_has_handlers PASSED [ 50%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_log_file_created PASSED [ 50%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_log_file_contains_logs PASSED [ 50%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_log_rotating_file_handler PASSED [ 51%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_info_level PASSED [ 51%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_debug_level PASSED [ 51%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_warning_level PASSED [ 51%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_error_level PASSED [ 52%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestCodeChatLogger::test_logger_critical_level PASSED [ 52%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerContextManager::test_context_manager_creation PASSED [ 52%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerContextManager::test_context_manager_with_context PASSED [ 53%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerPerformance::test_logger_creation_performance PASSED [ 53%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerPerformance::test_logging_performance PASSED [ 53%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerErrorHandling::test_logger_with_invalid_path PASSED [ 53%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerErrorHandling::test_logger_with_exception_logging PASSED [ 54%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerIntegration::test_logger_with_multiple_handlers PASSED [ 54%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerIntegration::test_logger_with_context_flow PASSED [ 54%]
+backend/tests/1-UNIT/infrastructure/test_logger.py::TestLoggerIntegration::test_concurrent_logging PASSED [ 55%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_openai_key PASSED [ 55%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_anthropic_key PASSED [ 55%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_generic_key PASSED [ 55%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_short_key PASSED [ 56%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_empty_key PASSED [ 56%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyMasking::test_mask_none_key PASSED [ 56%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_dict_with_api_key PASSED [ 57%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_nested_dict PASSED [ 57%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_with_multiple_secrets PASSED [ 57%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_passwords PASSED [ 58%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_tokens PASSED [ 58%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSensitiveDataMasking::test_mask_email_addresses PASSED [ 58%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestPathTraversalPrevention::test_reject_parent_directory_traversal PASSED [ 58%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestPathTraversalPrevention::test_reject_absolute_path_traversal PASSED [ 59%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestPathTraversalPrevention::test_allow_safe_relative_paths PASSED [ 59%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestPathTraversalPrevention::test_prevent_symlink_attacks PASSED [ 59%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestPathTraversalPrevention::test_normalize_path_separators PASSED [ 60%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyValidation::test_validate_openai_format PASSED [ 60%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyValidation::test_validate_anthropic_format PASSED [ 60%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyValidation::test_reject_invalid_format PASSED [ 60%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyValidation::test_validate_key_length PASSED [ 61%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestAPIKeyValidation::test_validate_key_characters PASSED [ 61%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityIntegration::test_mask_full_config PASSED [ 61%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityIntegration::test_mask_api_response PASSED [ 62%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityIntegration::test_secure_logging_flow PASSED [ 62%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityErrorHandling::test_handle_invalid_input_to_masking PASSED [ 62%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityErrorHandling::test_handle_invalid_path PASSED [ 62%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityErrorHandling::test_handle_none_in_validation PASSED [ 63%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityPerformance::test_masking_performance PASSED [ 63%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityPerformance::test_path_validation_performance PASSED [ 63%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityCompliance::test_follows_owasp_standards PASSED [ 64%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityCompliance::test_prevents_cwe22_path_traversal PASSED [ 64%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityCompliance::test_prevents_information_disclosure PASSED [ 64%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityCompliance::test_input_validation PASSED [ 65%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityEdgeCases::test_unicode_in_masked_data PASSED [ 65%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityEdgeCases::test_very_long_api_key PASSED [ 65%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityEdgeCases::test_special_characters_in_path PASSED [ 65%]
+backend/tests/1-UNIT/infrastructure/test_security.py::TestSecurityEdgeCases::test_repeated_masking PASSED [ 66%]
+backend/tests/1-UNIT/providers/d2v1/test_d2_config.py::test_d2v1_config PASSED [ 66%]
+backend/tests/1-UNIT/providers/krokic4/test_krokic4_config.py::test_krokic4_config PASSED [ 66%]
+backend/tests/1-UNIT/providers/krokid2/test_krokid2_config.py::test_krokid2_config PASSED [ 67%]
+backend/tests/1-UNIT/providers/krokimermaid/test_krokimermaid_config.py::test_krokimermaid_config PASSED [ 67%]
+backend/tests/1-UNIT/providers/krokiplantuml/test_krokiplantuml_config.py::test_krokiplantuml_config PASSED [ 67%]
+backend/tests/1-UNIT/providers/krokistructurizr/test_krokistructurizr_config.py::test_krokistructurizr_config PASSED [ 67%]
+backend/tests/1-UNIT/providers/mermaidv1/test_mermaid_config.py::test_mermaidv1_config PASSED [ 68%]
+backend/tests/1-UNIT/providers/test_config.py::test_root_config PASSED   [ 68%]
+backend/tests/1-UNIT/providers/test_config.py::test_provider_config[mermaidv1] PASSED [ 68%]
+backend/tests/1-UNIT/providers/test_config.py::test_provider_config[d2v1] PASSED [ 69%]
+backend/tests/1-UNIT/providers/test_config.py::test_config_comparison PASSED [ 69%]
+backend/tests/1-UNIT/providers/test_config.py::test_extract_overrides PASSED [ 69%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_creation PASSED [ 69%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_add_attempt PASSED [ 70%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_llm_retry_limit PASSED [ 70%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_expiration PASSED [ 70%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_summary PASSED [ 71%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_creation PASSED [ 71%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_get_session PASSED [ 71%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_update PASSED [ 72%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_delete PASSED [ 72%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_cleanup_expired PASSED [ 72%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_singleton PASSED [ 72%]
+backend/tests/1-UNIT/providers/test_correction_session.py::test_session_manager_active_count PASSED [ 73%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_llm_service_singleton PASSED [ 73%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_llm_service_availability_without_processor PASSED [ 73%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_llm_service_availability_with_processor PASSED [ 74%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_correction_prompt_building PASSED [ 74%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_code_extraction_from_llm_response PASSED [ 74%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_mocked_correction_workflow PASSED [ 74%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_correction_failure_handling PASSED [ 75%]
+backend/tests/1-UNIT/providers/test_llm_correction_service.py::test_provider_specific_rules PASSED [ 75%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_creation PASSED [ 75%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_register_provider PASSED [ 76%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_get_provider PASSED [ 76%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_find_by_diagram_type PASSED [ 76%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_find_by_output_format PASSED [ 76%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_get_best_provider PASSED [ 77%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_list_providers PASSED [ 77%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_get_metadata PASSED [ 77%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_get_all_metadata PASSED [ 78%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_singleton PASSED [ 78%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_unregister PASSED [ 78%]
+backend/tests/1-UNIT/providers/test_provider_registry.py::test_registry_supports_capability PASSED [ 79%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_single_markdown_block PASSED [ 79%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_multiple_markdown_blocks PASSED [ 79%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_with_language_specifier PASSED [ 79%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_preserves_code_content PASSED [ 80%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_handles_empty_blocks PASSED [ 80%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestMarkdownCodeExtraction::test_extract_with_different_fencing PASSED [ 80%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_python_code PASSED [ 81%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_javascript_code PASSED [ 81%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_java_code PASSED [ 81%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_cpp_code PASSED [ 81%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_from_comment_style PASSED [ 82%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_unknown_language PASSED [ 82%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_from_shebang PASSED [ 82%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestLanguageDetection::test_detect_mixed_content PASSED [ 83%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestHTMLCodeExtraction::test_extract_from_pre_code_tags PASSED [ 83%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestHTMLCodeExtraction::test_extract_inline_code PASSED [ 83%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestHTMLCodeExtraction::test_handle_html_entities PASSED [ 83%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestFilenameGeneration::test_generate_python_filename PASSED [ 84%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestFilenameGeneration::test_generate_javascript_filename PASSED [ 84%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestFilenameGeneration::test_generate_java_filename PASSED [ 84%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestFilenameGeneration::test_handle_duplicate_filenames PASSED [ 85%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestFilenameGeneration::test_sanitize_special_chars PASSED [ 85%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_very_long_code_block PASSED [ 85%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_code_with_special_characters PASSED [ 86%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_code_with_nested_blocks PASSED [ 86%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_code_with_comments_only PASSED [ 86%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_empty_code_block PASSED [ 86%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_code_extraction_preserves_indentation PASSED [ 87%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_code_with_line_continuations PASSED [ 87%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestEdgeCases::test_mixed_endings PASSED [ 87%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestCodeExtractionIntegration::test_extract_and_detect_language PASSED [ 88%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestCodeExtractionIntegration::test_extract_generate_filename PASSED [ 88%]
+backend/tests/1-UNIT/utils/test_code_extraction.py::TestCodeExtractionIntegration::test_process_multiple_blocks PASSED [ 88%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_python_from_extension PASSED [ 88%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_javascript_from_extension PASSED [ 89%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_java_from_extension PASSED [ 89%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_cpp_from_extension PASSED [ 89%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_csharp_from_extension PASSED [ 90%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_ruby_from_extension PASSED [ 90%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_go_from_extension PASSED [ 90%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_detect_rust_from_extension PASSED [ 90%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromExtension::test_unknown_extension PASSED [ 91%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_python_from_content PASSED [ 91%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_javascript_from_content PASSED [ 91%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_java_from_content PASSED [ 92%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_cpp_from_content PASSED [ 92%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_from_comment_style PASSED [ 92%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_ruby_from_content PASSED [ 93%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_go_from_content PASSED [ 93%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromContent::test_detect_rust_from_content PASSED [ 93%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromShebang::test_detect_python_from_shebang PASSED [ 93%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromShebang::test_detect_bash_from_shebang PASSED [ 94%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromShebang::test_detect_node_from_shebang PASSED [ 94%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromShebang::test_detect_ruby_from_shebang PASSED [ 94%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectFromShebang::test_no_shebang PASSED [ 95%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestLanguageVariants::test_detect_python2_vs_python3 PASSED [ 95%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestLanguageVariants::test_detect_nodejs_vs_browser_javascript PASSED [ 95%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestLanguageVariants::test_detect_ecmascript_versions PASSED [ 95%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestLanguageVariants::test_detect_cpp_standards PASSED [ 96%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestAmbiguousDetection::test_ambiguous_java_csharp PASSED [ 96%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestAmbiguousDetection::test_ambiguous_cpp_c PASSED [ 96%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestAmbiguousDetection::test_sql_detection PASSED [ 97%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestAmbiguousDetection::test_html_detection PASSED [ 97%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionAccuracy::test_single_keyword_detection PASSED [ 97%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionAccuracy::test_confidence_levels PASSED [ 97%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionAccuracy::test_false_positives PASSED [ 98%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionAccuracy::test_case_sensitivity PASSED [ 98%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionEdgeCases::test_mixed_language_snippets PASSED [ 98%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionEdgeCases::test_detect_from_imports PASSED [ 99%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionEdgeCases::test_unicode_in_code PASSED [ 99%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionEdgeCases::test_minified_code PASSED [ 99%]
+backend/tests/1-UNIT/utils/test_language_detection.py::TestDetectionEdgeCases::test_commented_out_code PASSED [100%]
+
+=============================== warnings summary ===============================
+backend/app/core/config.py:145
+  /app/backend/app/core/config.py:145: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    host: str = Field(default="0.0.0.0", env="API_HOST")  # Server host (0.0.0.0 allows external connections)
+
+backend/app/core/config.py:146
+  /app/backend/app/core/config.py:146: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    port: int = Field(default=8003, env="API_PORT")       # Server port (8003 to avoid conflicts with other services)
+
+backend/app/core/config.py:169
+  /app/backend/app/core/config.py:169: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    frontend_url: Optional[str] = Field(default=None, env="FRONTEND_URL")
+
+backend/app/core/config.py:254
+  /app/backend/app/core/config.py:254: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    active_brand: str = Field(
+
+backend/diagrams/provider_config.py:97
+  /app/backend/diagrams/provider_config.py:97: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ProviderConfig(BaseModel):
+
+backend/diagrams/correction_session.py:22
+  /app/backend/diagrams/correction_session.py:22: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class CorrectionSession(BaseModel):
+
+../home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319
+../home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319
+../home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319
+  /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319: PydanticDeprecatedSince20: `json_encoders` is deprecated. See https://docs.pydantic.dev/2.12/concepts/serialization/#custom-serializers for alternatives. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.12-final-0 _______________
+
+Name                                                                      Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------------------------------
+backend/app/__init__.py                                                       0      0   100%
+backend/app/api/__init__.py                                                   0      0   100%
+backend/app/api/v1/__init__.py                                                0      0   100%
+backend/app/api/v1/api.py                                                    15     15     0%   24-114
+backend/app/api/v1/endpoints/__init__.py                                      0      0   100%
+backend/app/api/v1/endpoints/auth.py                                         21     21     0%   1-36
+backend/app/api/v1/endpoints/chat.py                                        385    385     0%   27-854
+backend/app/api/v1/endpoints/code.py                                         27     27     0%   7-66
+backend/app/api/v1/endpoints/diagram.py                                     141    141     0%   1-244
+backend/app/api/v1/endpoints/diagram_events.py                               38     38     0%   11-89
+backend/app/api/v1/endpoints/diagram_provider.py                            371    371     0%   7-980
+backend/app/api/v1/endpoints/documentation.py                                35     35     0%   1-76
+backend/app/api/v1/endpoints/documentation_updated.py                       157    157     0%   8-391
+backend/app/api/v1/endpoints/files.py                                       327    327     0%   10-752
+backend/app/api/v1/endpoints/settings.py                                    126    126     0%   9-328
+backend/app/api/v1/endpoints/studio.py                                        0      0   100%
+backend/app/api/v1/endpoints/system.py                                       24     24     0%   9-63
+backend/app/core/__init__.py                                                  0      0   100%
+backend/app/core/config.py                                                   78     15    81%   22-24, 45-78, 175, 297-298, 348
+backend/app/main.py                                                          42     42     0%   16-106
+backend/app/routers/MCP.py                                                  172    172     0%   14-431
+backend/app/services/__init__.py                                              0      0   100%
+backend/app/services/conversation_service.py                                481    481     0%   8-1332
+backend/app/services/diagram_factory_service.py                             229    229     0%   16-680
+backend/app/services/diagram_factory_service_backup.py                      246    246     0%   16-805
+backend/app/services/documentation_service.py                              1015   1015     0%   8-2290
+backend/app/services/export_service.py                                      168    168     0%   8-346
+backend/app/services/file_service.py                                         90     90     0%   2-216
+backend/app/services/history_service.py                                     130    130     0%   7-296
+backend/app/services/settings_service.py                                    160    160     0%   2-278
+backend/app/services/theme_service.py                                        34     34     0%   2-69
+backend/app/utils/__init__.py                                                 2      0   100%
+backend/app/utils/architecture_schema.py                                    267    155    42%   177-205, 221, 241-242, 262-265, 278, 291, 304, 317, 330-331, 351-362, 379-411, 425-432, 445-450, 520-540, 567-588, 601-610, 626, 643, 660, 674, 691-695, 716-732, 745-776, 789-799, 812-822, 835-844
+backend/app/utils/code_extraction.py                                         46     46     0%   25-168
+backend/app/utils/diagram_wizard/__init__.py                                  3      0   100%
+backend/app/utils/diagram_wizard/graph_state.py                              47      0   100%
+backend/app/utils/diagram_wizard/keyword_scorer.py                           76     39    49%   107-109, 113-175, 185-189, 193-214, 232
+backend/app/utils/diagram_wizard/langgraph_builder.py                        38     29    24%   27-32, 39-43, 49-52, 58-111, 122
+backend/app/utils/diagram_wizard/main.py                                     83     83     0%   8-196
+backend/app/utils/diagram_wizard/nodes/__init__.py                            6      0   100%
+backend/app/utils/diagram_wizard/nodes/analysis_nodes.py                     60     49    18%   35-149
+backend/app/utils/diagram_wizard/nodes/clarification_nodes.py                97     85    12%   75-320
+backend/app/utils/diagram_wizard/nodes/generation_nodes.py                  110     94    15%   36-173, 193-229, 247-318
+backend/app/utils/diagram_wizard/nodes/llm_helpers.py                        51     40    22%   31, 50-54, 72-147
+backend/app/utils/diagram_wizard/nodes/rendering_nodes.py                    26      4    85%   17-18, 53, 69
+backend/app/utils/diagram_wizard/nodes/validation_nodes.py                   65     40    38%   19-20, 58, 83-172
+backend/app/utils/diagram_wizard/prompt_loader.py                            96     88     8%   21-110, 128-150, 155-161, 166-202
+backend/app/utils/diagram_wizard/prompts/__init__.py                         11     11     0%   11-44
+backend/app/utils/diagram_wizard/session_store.py                            59     59     0%   1-122
+backend/app/utils/diagram_wizard/tool_config.py                              53     53     0%   11-151
+backend/app/utils/language_detection.py                                      35     35     0%   33-185
+backend/app/utils/session_utils.py                                            9      4    56%   11-22
+backend/diagrams/__init__.py                                                  5      0   100%
+backend/diagrams/base_diagram.py                                            176     93    47%   111, 146, 159, 168, 177, 186, 195, 213, 233, 238, 243, 269, 285, 299, 310-319, 344, 450-535, 547-597, 607, 631-642
+backend/diagrams/correction_session.py                                      106      5    95%   95, 192-193, 231, 250
+backend/diagrams/d2v1/__init__.py                                             0      0   100%
+backend/diagrams/d2v1/d2_renderer.py                                        205    163    20%   34-37, 74-135, 148-166, 217-263, 276-286, 305-347, 403, 419, 431, 468-476, 480-492, 496-517, 525-550, 559-643, 658
+backend/diagrams/kroki_base.py                                              119     78    34%   40, 47, 52, 93-99, 113-128, 133-186, 197-230, 237-343
+backend/diagrams/krokic4/__init__.py                                          2      0   100%
+backend/diagrams/krokic4/kroki_renderer.py                                   17      1    94%   75
+backend/diagrams/krokid2/__init__.py                                          2      0   100%
+backend/diagrams/krokid2/kroki_renderer.py                                   19      1    95%   75
+backend/diagrams/krokimermaid/__init__.py                                     2      0   100%
+backend/diagrams/krokimermaid/kroki_renderer.py                              49     31    37%   84-135, 139
+backend/diagrams/krokiplantuml/__init__.py                                    2      0   100%
+backend/diagrams/krokiplantuml/kroki_renderer.py                             17      1    94%   77
+backend/diagrams/krokistructurizr/__init__.py                                 2      0   100%
+backend/diagrams/krokistructurizr/kroki_renderer.py                          48     30    38%   45-97, 101
+backend/diagrams/llm_correction_service.py                                  106     25    76%   46-57, 91-92, 130-132, 226-228, 245, 273-276, 285
+backend/diagrams/mermaidv1/__init__.py                                        1      0   100%
+backend/diagrams/mermaidv1/mermaid_renderer.py                              251    198    21%   52-80, 85-92, 97-108, 113-128, 133-151, 156-169, 187-227, 240-256, 275-318, 324-343, 364, 372, 376, 398-406, 410-423, 427-448, 456-481, 490-574, 589
+backend/diagrams/models.py                                                   54      0   100%
+backend/diagrams/provider_config.py                                         208     37    82%   215-218, 228-231, 236-249, 278-279, 295-297, 306-311, 342-359, 389
+backend/diagrams/provider_registry.py                                       163     37    77%   66-67, 91-97, 128-135, 272-280, 305-308, 318-329, 363
+backend/diagrams/tests/__init__.py                                            0      0   100%
+backend/diagrams/tests/d2v1/__init__.py                                       0      0   100%
+backend/diagrams/tests/d2v1/test_d2_config.py                                26     26     0%   5-56
+backend/diagrams/tests/krokic4/__init__.py                                    0      0   100%
+backend/diagrams/tests/krokic4/test_krokic4_config.py                        17     17     0%   5-38
+backend/diagrams/tests/krokid2/__init__.py                                    0      0   100%
+backend/diagrams/tests/krokid2/test_krokid2_config.py                        17     17     0%   5-43
+backend/diagrams/tests/krokimermaid/__init__.py                               0      0   100%
+backend/diagrams/tests/krokimermaid/test_krokimermaid_config.py              17     17     0%   5-39
+backend/diagrams/tests/krokiplantuml/__init__.py                              0      0   100%
+backend/diagrams/tests/krokiplantuml/test_krokiplantuml_config.py            17     17     0%   5-39
+backend/diagrams/tests/krokistructurizr/__init__.py                           0      0   100%
+backend/diagrams/tests/krokistructurizr/test_krokistructurizr_config.py      17     17     0%   5-39
+backend/diagrams/tests/mermaidv1/__init__.py                                  0      0   100%
+backend/diagrams/tests/mermaidv1/test_mermaid_config.py                      23     23     0%   5-51
+backend/diagrams/tests/test_config.py                                        99     99     0%   11-174
+backend/diagrams/tests/test_correction_session.py                           142    142     0%   5-363
+backend/diagrams/tests/test_d2v1_provider.py                                231    231     0%   5-427
+backend/diagrams/tests/test_diagram_samples_d2.py                            80     80     0%   47-475
+backend/diagrams/tests/test_diagram_samples_mermaid.py                       83     83     0%   6-296
+backend/diagrams/tests/test_krokic4_provider.py                             203    203     0%   5-352
+backend/diagrams/tests/test_krokid2_provider.py                             203    203     0%   5-355
+backend/diagrams/tests/test_krokimermaid_provider.py                        203    203     0%   5-330
+backend/diagrams/tests/test_krokiplantuml_provider.py                       202    202     0%   5-355
+backend/diagrams/tests/test_krokistructurizr_provider.py                    203    203     0%   5-372
+backend/diagrams/tests/test_llm_correction_service.py                        92     92     0%   5-198
+backend/diagrams/tests/test_mermaidv1_provider.py                           149    149     0%   5-232
+backend/diagrams/tests/test_provider_registry.py                            253    253     0%   5-465
+backend/diagrams/tests/test_registry_integration.py                         160    160     0%   7-243
+backend/diagrams/tests/test_save_diagram_outputs.py                         146    146     0%   6-269
+-------------------------------------------------------------------------------------------------------
+TOTAL                                                                      9889   8646    13%
+======================= 343 passed, 9 warnings in 5.16s ========================

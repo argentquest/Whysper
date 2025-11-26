@@ -12,7 +12,8 @@ class SecurityUtils:
     
     # Patterns for identifying sensitive data
     SENSITIVE_PATTERNS = {
-        'api_key': re.compile(r'sk-[a-zA-Z0-9]{20,}', re.IGNORECASE),
+        # Allow hyphens in API keys (e.g., sk-proj-...)
+        'api_key': re.compile(r'sk-[a-zA-Z0-9\-]{20,}', re.IGNORECASE),
         'bearer_token': re.compile(r'Bearer\s+[a-zA-Z0-9_\-\.]{20,}', re.IGNORECASE),
         'auth_header': re.compile(r'Authorization:\s*[a-zA-Z0-9_\-\.]+', re.IGNORECASE),
         'password': re.compile(r'password["\']?\s*[:=]\s*["\']?[^"\'\s]+', re.IGNORECASE),

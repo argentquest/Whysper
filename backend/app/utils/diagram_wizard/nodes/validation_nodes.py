@@ -68,11 +68,13 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")
 
-    result = await provider.validate_code(diagram_code)
+    # Provider methods are synchronous, do not await
+    result = provider.validate_code(diagram_code)
 
+    # Note: result is a ValidationResult object which has 'error' attribute (str), not 'errors' list.
     return {
         "is_valid": result.is_valid,
-        "validation_error": "; ".join([e.message for e in result.errors]) if not result.is_valid else None,
+        "validation_error": result.error if not result.is_valid else None,
         "validation_details": result,
         "current_state": SessionState.RENDERING if result.is_valid else SessionState.VALIDATION_ERROR
     }

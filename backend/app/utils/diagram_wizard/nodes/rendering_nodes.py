@@ -62,7 +62,8 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")
 
-    result = await provider.render_with_validation(
+    # Provider methods are synchronous, do not await
+    result = provider.render_with_validation(
         code=diagram_code,
         output_format="svg",
         auto_fix=False,  # Validation already done
