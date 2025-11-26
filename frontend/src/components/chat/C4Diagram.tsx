@@ -22,6 +22,9 @@ import diagramProviderService from '../../services/diagramProviderService';
  * C4DiagramProps type definition
  * 
  * Describes the structure and properties of C4DiagramProps
+ * @interface C4DiagramProps
+ * @property {string} code - The C4 PlantUML code to render
+ * @property {string} [title] - Optional title for the diagram card
  */
 interface C4DiagramProps {
   code: string;
@@ -30,6 +33,12 @@ interface C4DiagramProps {
 
 /**
  * C4Diagram component
+ *
+ * Renders a C4 model diagram by converting it to D2 syntax and using the backend D2 renderer.
+ * Provides options to copy code, download as SVG/PNG, and view generated D2 code.
+ *
+ * @param {C4DiagramProps} props - Component props
+ * @returns {JSX.Element} Rendered C4 diagram card
  */
 export const C4Diagram: React.FC<C4DiagramProps> = ({ code, title }) => {
   const containerRef = useRef<HTMLDivElement>(null);

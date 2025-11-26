@@ -169,6 +169,9 @@ const printMessageElement = (messageId: string) => {
  * MessageItemProps type definition
  * 
  * Describes the structure and properties of MessageItemProps
+ * @interface MessageItemProps
+ * @property {Message} message - The message object to display
+ * @property {Function} [onShowCode] - Callback when code block is clicked
  */
 interface MessageItemProps {
   message: Message;
@@ -1379,6 +1382,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
  * ChatViewProps type definition
  * 
  * Describes the structure and properties of ChatViewProps
+ * @interface ChatViewProps
+ * @property {Message[]} messages - Array of messages to display
+ * @property {boolean} [loading] - Whether the assistant is typing
+ * @property {Function} [onShowCode] - Callback when a code block is opened
+ * @property {Function} onExtractCode - Callback to extract code from a message
  */
 interface ChatViewProps {
   messages: Message[];
@@ -1389,6 +1397,16 @@ interface ChatViewProps {
 
 /**
  * ChatView component
+ *
+ * Main chat interface displaying the conversation history.
+ * Renders user and assistant messages with support for:
+ * - Markdown and HTML content
+ * - Syntax highlighting for code blocks
+ * - Diagrams (Mermaid, D2, C4)
+ * - Metadata statistics
+ *
+ * @param {ChatViewProps} props - Component props
+ * @returns {JSX.Element} Rendered chat view
  */
 export const ChatView: React.FC<ChatViewProps> = ({
   messages,

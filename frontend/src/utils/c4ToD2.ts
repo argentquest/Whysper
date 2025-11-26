@@ -44,6 +44,8 @@ const C4_TO_D2_SHAPES: Record<string, { shape: string; style?: string }> = {
 
 /**
  * Strip PlantUML fence markers (@startuml/@enduml) and includes
+ * @param {string} code - The raw code string
+ * @returns {string} Cleaned code string
  */
 const stripPlantUMLMarkers = (code: string): string => {
   return code
@@ -58,6 +60,9 @@ const stripPlantUMLMarkers = (code: string): string => {
  * Parse C4 Mermaid syntax and convert to D2
  * Enhanced to support boundaries and nested structures
  * Also supports PlantUML-style C4 diagrams (with @startuml/@enduml)
+ *
+ * @param {string} c4Code - The input C4 diagram code
+ * @returns {string} The converted D2 diagram code
  */
 export const convertC4ToD2 = (c4Code: string): string => {
   // Input validation - handle null/undefined/empty gracefully
@@ -237,6 +242,8 @@ export const convertC4ToD2 = (c4Code: string): string => {
 /**
  * Simplified C4-to-D2 conversion for basic structures
  * This is a fallback if full parsing fails
+ * @param {string} c4Code - The input C4 diagram code
+ * @returns {string} The converted D2 diagram code
  */
 export const simpleC4ToD2 = (c4Code: string): string => {
   if (!c4Code || typeof c4Code !== 'string') {
@@ -263,6 +270,8 @@ export const simpleC4ToD2 = (c4Code: string): string => {
 /**
  * Detect if code is C4 syntax (even without language marker)
  * Supports both Mermaid-style and PlantUML-style C4 diagrams
+ * @param {string} code - The code to check
+ * @returns {boolean} True if C4 syntax is detected
  */
 export const looksLikeC4 = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
@@ -287,6 +296,8 @@ export const looksLikeC4 = (code: string): boolean => {
 
 /**
  * Get C4 level from code
+ * @param {string} code - The C4 code
+ * @returns {string} The detected C4 level (Context, Container, etc.) or 'Unknown'
  */
 export const extractC4Level = (code: string): string => {
   const match = code.match(/C4(Context|Container|Component|Dynamic|Deployment)/i);

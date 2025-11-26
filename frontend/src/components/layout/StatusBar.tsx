@@ -23,6 +23,11 @@ const { Text } = Typography;
  * LogEvent type definition
  * 
  * Describes the structure and properties of LogEvent
+ * @interface LogEvent
+ * @property {string} timestamp - The timestamp of the log event
+ * @property {string} level - The log level (INFO, WARNING, ERROR)
+ * @property {string} message - The log message
+ * @property {string} logger - The logger name
  */
 interface LogEvent {
   timestamp: string;
@@ -35,6 +40,17 @@ interface LogEvent {
  * StatusBarProps type definition
  * 
  * Describes the structure and properties of StatusBarProps
+ * @interface StatusBarProps
+ * @property {'ready' | 'loading' | 'error'} status - The current status of the application
+ * @property {string} [provider] - The current AI provider
+ * @property {string} [model] - The current AI model
+ * @property {string} [directory] - The current working directory
+ * @property {number} [fileCount] - The number of files in the context
+ * @property {number} [totalSize] - The total size of files in bytes
+ * @property {number} [tokenCount] - The total number of tokens used
+ * @property {Function} [onOpenDirectory] - Callback to open the directory selector
+ * @property {string} [errorMessage] - Error message if status is error
+ * @property {string} [conversationId] - The ID of the current conversation
  */
 interface StatusBarProps {
   status: 'ready' | 'loading' | 'error';
@@ -51,6 +67,17 @@ interface StatusBarProps {
 
 /**
  * StatusBar component
+ *
+ * Displays status information at the bottom of the application window.
+ * Includes:
+ * - Application status (Ready, Loading, Error)
+ * - Active provider and model
+ * - Token usage
+ * - File context statistics
+ * - Real-time log viewer
+ *
+ * @param {StatusBarProps} props - Component props
+ * @returns {JSX.Element} Rendered status bar
  */
 export const StatusBar: React.FC<StatusBarProps> = ({
   status,
