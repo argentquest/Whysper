@@ -1,23 +1,12 @@
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
+
 
 class DiagramSessionStore:
-    """
-    Thread-safe in-memory session store with configurable time-to-live.
-
-    Manages diagram generation sessions, including creation, retrieval,
-    updates, deletion, and expiration cleanup.
-    """
-
     def __init__(self, ttl_seconds: int = 3600):
-        """
-        Initialize the session store.
-
-        Args:
-            ttl_seconds (int): Session expiration time in seconds. Defaults to 3600.
-        """
+        # Initialize thread-safe in-memory session store with configurable time-to-live
         self._sessions: Dict[str, Dict[str, Any]] = {}  # Dictionary to store sessions
         self._ttl = ttl_seconds  # Session expiration time in seconds
         self._lock = asyncio.Lock()  # Async lock for thread-safe operations
@@ -29,18 +18,6 @@ class DiagramSessionStore:
         initial_prompt: str,
         diagram_type: str,
     ) -> str:
-        """
-        Create a new session.
-
-        Args:
-            user_id (str): The user ID.
-            conversation_id (str): The conversation ID.
-            initial_prompt (str): The initial prompt from the user.
-            diagram_type (str): The requested diagram type.
-
-        Returns:
-            str: The unique session ID.
-        """
         # Create a unique session ID using user ID and current timestamp
         async with self._lock:
             session_id = f"diagram_{user_id}_{int(time.time())}"
@@ -67,18 +44,6 @@ class DiagramSessionStore:
             return session_id
 
     async def get_session(self, session_id: str) -> Dict[str, Any]:
-        """
-        Retrieve a session by ID.
-
-        Args:
-            session_id (str): The session ID.
-
-        Returns:
-            Dict[str, Any]: The session data.
-
-        Raises:
-            ValueError: If the session is not found or has expired.
-        """
         # Retrieve a session, ensuring it's valid and not expired
         async with self._lock:
             session = self._sessions.get(session_id)
@@ -100,16 +65,6 @@ class DiagramSessionStore:
         session_id: str,
         updates: Dict[str, Any],
     ) -> None:
-        """
-        Update session state.
-
-        Args:
-            session_id (str): The session ID.
-            updates (Dict[str, Any]): The updates to apply.
-
-        Raises:
-            ValueError: If the session is not found or has expired.
-        """
         # Update session state with thread-safe checks
         async with self._lock:
             session = self._sessions.get(session_id)
@@ -128,23 +83,11 @@ class DiagramSessionStore:
             session.update(updates)
 
     async def delete_session(self, session_id: str) -> None:
-        """
-        Delete a session.
-
-        Args:
-            session_id (str): The session ID to delete.
-        """
         # Remove a session from the store safely
         async with self._lock:
             self._sessions.pop(session_id, None)
 
     async def cleanup_expired(self) -> int:
-        """
-        Cleanup expired sessions.
-
-        Returns:
-            int: The number of expired sessions removed.
-        """
         # Automatically remove all expired sessions
         async with self._lock:
             now = datetime.utcnow()
@@ -163,15 +106,6 @@ class DiagramSessionStore:
             return len(expired)
 
     async def list_active_sessions(self, user_id: str) -> List[str]:
-        """
-        List active sessions for a user.
-
-        Args:
-            user_id (str): The user ID.
-
-        Returns:
-            List[str]: A list of active session IDs.
-        """
         # List all non-expired sessions for a specific user
         async with self._lock:
             now = datetime.utcnow()

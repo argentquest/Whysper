@@ -10,8 +10,6 @@ Handles tool configuration for D2, Mermaid, and PlantUML with:
 
 import subprocess
 import tempfile
-import os
-from pathlib import Path
 from typing import Tuple, List, Dict, Any
 from enum import Enum
 

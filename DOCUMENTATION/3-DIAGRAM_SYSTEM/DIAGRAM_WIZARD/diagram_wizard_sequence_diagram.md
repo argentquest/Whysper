@@ -69,7 +69,7 @@ sequenceDiagram
     %% JSON Representation Generation
     LangGraph->>Nodes: generate_json_representation(state)
     Nodes->>Nodes: Call LLM with JSON_GENERATION prompt
-    Nodes->>Nodes: Generate Structurizr workspace + clean_d2 + json_representation
+    Nodes->>Nodes: Generate Structurizr workspace + clean_structurizr + json_representation
     Nodes->>Nodes: Validate against ArchitectureSchema
     Nodes->>Frontend: SSE: status=generating_json<br/>message="Validating architecture..."
     Nodes->>Frontend: SSE: status=json_generated
@@ -162,7 +162,7 @@ sequenceDiagram
 
 ### 3. Generation Nodes (`generation_nodes.py`)
 - **`generate_json_representation`**: Architecture representation generation
-  - Generates Structurizr workspace, clean_d2, and legacy JSON
+  - Generates Structurizr workspace, clean_structurizr, and legacy JSON
   - Validates against ArchitectureSchema
   - Provides synchronized multi-format output
   

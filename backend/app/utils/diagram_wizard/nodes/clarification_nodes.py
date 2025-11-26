@@ -5,7 +5,6 @@ Implements the interactive clarification phase where the AI asks
 targeted questions to gather missing architectural details.
 """
 
-import logging
 import json
 import time
 from typing import Dict, Any

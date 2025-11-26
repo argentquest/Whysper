@@ -8,7 +8,6 @@ and diagram-specific keyword heuristics.
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Dict, Tuple
 from .graph_state import DiagramType
@@ -131,7 +130,6 @@ class KeywordScorer:
 
         # Prepare text for analysis
         text_lower = text.lower()
-        word_count = len(text_lower.split())
 
         # Count matches for different keyword sets
         mermaid_diagram_score = self._count_matches(text_lower, self.mermaid_keywords)

@@ -5,12 +5,12 @@ Handles diagram code validation and iterative refinement
 to fix syntax errors and ensure valid output.
 """
 
-import logging
 from typing import Dict, Any
 from ..graph_state import GraphState, DiagramType, SessionState
 from ..prompt_loader import get_prompt
 from .llm_helpers import call_llm, get_diagram_type_str
 from common.logging_decorator import log_method_call
+from common.logger import get_logger
 
 # Import provider registry for validation
 try:
@@ -19,7 +19,7 @@ try:
 except ImportError:
     PROVIDER_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @log_method_call
@@ -48,6 +48,17 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
             "validation_error": "No diagram code provided",
             "validation_details": None,
             "current_state": SessionState.VALIDATION_ERROR
+        }
+
+    # Check if provider system is available
+    if not PROVIDER_AVAILABLE:
+        error_msg = "Provider registry not available for validation"
+        logger.error(error_msg, extra={'session_id': session_id} if session_id else {})
+        return {
+            "is_valid": False,
+            "validation_error": error_msg,
+            "validation_details": None,
+            "current_state": SessionState.ERROR
         }
 
     # Direct provider system call - no fallback
