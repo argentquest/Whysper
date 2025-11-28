@@ -36,6 +36,7 @@ from schemas import (
 from common.logger import get_logger
 from app.utils.session_utils import session_summary_model
 from common.logging_decorator import log_method_call
+from typing import Dict, List, Any
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -43,11 +44,25 @@ router = APIRouter()
 
 
 
-@router.post("/conversations/{conversation_id}/directory", response_model=SetDirectoryResponse)
+@router.post(
+    "/conversations/{conversation_id}/directory",
+    response_model=SetDirectoryResponse,
+    summary="Set directory",
+    description="Set the working directory for a conversation."
+)
 @log_method_call
 def set_directory(conversation_id: str, request: SetDirectoryRequest):
+    """
+    Set the working directory for a conversation.
+
+    Args:
+        conversation_id (str): The conversation ID.
+        request (SetDirectoryRequest): The directory configuration.
+
+    Returns:
+        SetDirectoryResponse: The new directory state and file list.
+    """
     logger.debug(f"set_directory endpoint started for conversation_id: {conversation_id}")
-    """Set the working directory for a conversation."""
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -67,11 +82,25 @@ def set_directory(conversation_id: str, request: SetDirectoryRequest):
     )
     logger.info(f"Set directory to {request.path} completed for conversation: {conversation_id}")
     
-@router.post("/conversations/{conversation_id}/files", response_model=ConversationSummaryModel)
+@router.post(
+    "/conversations/{conversation_id}/files",
+    response_model=ConversationSummaryModel,
+    summary="Update files",
+    description="Update selected files for a conversation."
+)
 @log_method_call
 def update_files(conversation_id: str, request: UpdateFilesRequest):
+    """
+    Update selected files for a conversation.
+
+    Args:
+        conversation_id (str): The conversation ID.
+        request (UpdateFilesRequest): The list of files to select.
+
+    Returns:
+        ConversationSummaryModel: The updated conversation summary.
+    """
     logger.debug(f"update_files endpoint started for conversation_id: {conversation_id}")
-    """Update selected files for a conversation."""
     try:
         session = conversation_manager.get_session(conversation_id)
     except KeyError as exc:
@@ -84,7 +113,12 @@ def update_files(conversation_id: str, request: UpdateFilesRequest):
     return session_summary_model(session)
 
 
-@router.post("/scan", response_model=DirectoryScanResponse)
+@router.post(
+    "/scan",
+    response_model=DirectoryScanResponse,
+    summary="Scan directory",
+    description="Scan a directory for files and build a file tree."
+)
 @log_method_call
 def scan_directory(request: DirectoryScanRequest):
     """
@@ -93,6 +127,12 @@ def scan_directory(request: DirectoryScanRequest):
     This endpoint validates the directory path and returns:
     - List of files with metadata
     - Directory tree structure
+
+    Args:
+        request (DirectoryScanRequest): The path to scan.
+
+    Returns:
+        DirectoryScanResponse: The scan results.
     """
     logger.info(f"Scanning directory: {request.path}")
     validation = file_service.validate_directory(request.path)
@@ -109,16 +149,27 @@ def scan_directory(request: DirectoryScanRequest):
     )
 
 
-@router.post("/content", response_model=FileContentResponse)
+@router.post(
+    "/content",
+    response_model=FileContentResponse,
+    summary="Get file content",
+    description="Read and combine content from multiple files."
+)
 @log_method_call
 def get_file_content(request: FileContentRequest):
-    logger.debug("get_file_content endpoint started")
     """
     Read and combine content from multiple files.
     
     This endpoint reads the specified files and returns their
     combined content for AI processing.
+
+    Args:
+        request (FileContentRequest): The list of files to read.
+
+    Returns:
+        FileContentResponse: The combined content.
     """
+    logger.debug("get_file_content endpoint started")
     try:
         combined = file_service.read_files(request.files)
     except Exception as exc:
@@ -129,7 +180,12 @@ def get_file_content(request: FileContentRequest):
     return FileContentResponse(combinedContent=combined)
 
 
-@router.post("/folder-counts", response_model=FolderFileCountResponse)
+@router.post(
+    "/folder-counts",
+    response_model=FolderFileCountResponse,
+    summary="Get folder file counts",
+    description="Get file counts for subdirectories."
+)
 @log_method_call
 def get_folder_file_counts(request: FolderFileCountRequest):
     """
@@ -137,6 +193,12 @@ def get_folder_file_counts(request: FolderFileCountRequest):
     
     This endpoint returns the number of files in each subdirectory
     of the specified path, useful for directory browsing UIs.
+
+    Args:
+        request (FolderFileCountRequest): The parent path.
+
+    Returns:
+        FolderFileCountResponse: List of folder infos.
     """
     validation = file_service.validate_directory(request.path)
     if not validation["is_valid"]:
@@ -152,7 +214,12 @@ def get_folder_file_counts(request: FolderFileCountRequest):
     return FolderFileCountResponse(folders=folder_infos)
 
 
-@router.get("/top-folders", response_model=TopFoldersResponse)
+@router.get(
+    "/top-folders",
+    response_model=TopFoldersResponse,
+    summary="Get top folders",
+    description="Get top-level folders from the configured CODE_PATH."
+)
 @log_method_call
 def get_top_folders():
     """
@@ -160,6 +227,9 @@ def get_top_folders():
     
     This endpoint returns a list of directories from the CODE_PATH
     environment variable, useful for project browsing.
+
+    Returns:
+        TopFoldersResponse: List of folder names.
     """
     env_vars = env_manager.load_env_file()
     code_path = env_vars.get("CODE_PATH", ".")
@@ -180,7 +250,12 @@ def get_top_folders():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/read/{file_path:path}", response_model=FileReadResponse)
+@router.get(
+    "/read/{file_path:path}",
+    response_model=FileReadResponse,
+    summary="Read file",
+    description="Read content from a single file for editing."
+)
 @log_method_call
 def read_single_file(file_path: str):
     """
@@ -191,6 +266,9 @@ def read_single_file(file_path: str):
     
     Args:
         file_path: Relative path to the file to read
+
+    Returns:
+        FileReadResponse: The file content and metadata.
     """
     try:
         import os
@@ -258,7 +336,12 @@ def read_single_file(file_path: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/save", response_model=FileSaveResponse)
+@router.post(
+    "/save",
+    response_model=FileSaveResponse,
+    summary="Save file",
+    description="Save content to a file."
+)
 @log_method_call
 def save_file(request: FileSaveRequest):
     """
@@ -267,11 +350,11 @@ def save_file(request: FileSaveRequest):
     This endpoint saves the provided content to the specified file path,
     creating directories if necessary.
     
-    Expected request body:
-    {
-        "path": "relative/file/path.py",
-        "content": "file content here"
-    }
+    Args:
+        request (FileSaveRequest): The file save request.
+
+    Returns:
+        FileSaveResponse: Success status.
     """
     try:
         import os
@@ -330,7 +413,12 @@ def save_file(request: FileSaveRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/create", response_model=FileCreateResponse)
+@router.post(
+    "/create",
+    response_model=FileCreateResponse,
+    summary="Create file",
+    description="Create a new file with optional initial content."
+)
 @log_method_call
 def create_new_file(request: FileCreateRequest):
     """
@@ -339,11 +427,11 @@ def create_new_file(request: FileCreateRequest):
     This endpoint creates a new file at the specified path with optional
     initial content. It will create directories if they don't exist.
     
-    Expected request body:
-    {
-        "path": "relative/file/path.py",
-        "content": "optional initial content"
-    }
+    Args:
+        request (FileCreateRequest): The file creation request.
+
+    Returns:
+        FileCreateResponse: Success status.
     """
     try:
         import os
@@ -409,7 +497,11 @@ def create_new_file(request: FileCreateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/")
+@router.get(
+    "/",
+    summary="List files",
+    description="Get files from a directory for frontend compatibility."
+)
 @log_method_call
 def get_files(directory: str = None, recursive: bool = True):
     """
@@ -421,6 +513,9 @@ def get_files(directory: str = None, recursive: bool = True):
     Args:
         directory: Directory path to scan (defaults to CODE_PATH)
         recursive: Whether to recursively scan subdirectories (default: True)
+
+    Returns:
+        dict: List of files in frontend compatible format.
     """
     try:
         import os
@@ -550,7 +645,12 @@ def get_files(directory: str = None, recursive: bool = True):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/upload", response_model=FileUploadResponse)
+@router.post(
+    "/upload",
+    response_model=FileUploadResponse,
+    summary="Upload files",
+    description="Upload files directly to the server, bypassing the local file system."
+)
 @log_method_call
 def upload_files(request: FileUploadRequest):
     """
@@ -560,17 +660,11 @@ def upload_files(request: FileUploadRequest):
     without writing them to the local file system. Files are stored in memory
     and can be used as context for AI conversations.
     
-    Expected request body:
-    {
-        "files": [
-            {
-                "name": "example.py",
-                "content": "print('hello world')",
-                "size": 25
-            }
-        ],
-        "target_directory": "uploads"  # Optional
-    }
+    Args:
+        request (FileUploadRequest): The file upload request.
+
+    Returns:
+        FileUploadResponse: The upload result.
     """
     try:
         import os
@@ -667,7 +761,12 @@ def upload_files(request: FileUploadRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/uploaded")
+@router.get(
+    "/uploaded",
+    response_model=Dict[str, Any],
+    summary="Get uploaded files",
+    description="Get list of uploaded files that can be used as context."
+)
 @log_method_call
 def get_uploaded_files():
     """
@@ -675,6 +774,9 @@ def get_uploaded_files():
     
     This endpoint returns a list of files that have been uploaded
     and are available for use in AI conversations.
+
+    Returns:
+        dict: List of uploaded files.
     """
     try:
         import os
