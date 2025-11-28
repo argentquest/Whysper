@@ -58,7 +58,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, List, Input, Button, Empty, Spin, Space, Tag, Tooltip, Tabs } from 'antd';
-import { SendOutlined, CodeOutlined, EyeOutlined } from '@ant-design/icons';
+import { SendOutlined, CodeOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import JsonPreview from '../components/JsonPreview';
 import styles from '../diagram-wizard.module.css';
@@ -127,7 +127,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
 }) => {
   const [userResponse, setUserResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json'>('preview');
+  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse'>('preview');
   const [editorReady, setEditorReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
@@ -314,7 +314,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
             <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
               <Tabs
                 activeKey={activeResponseTab}
-                onChange={(key) => setActiveResponseTab(key as 'preview' | 'json')}
+                onChange={(key) => setActiveResponseTab(key as 'preview' | 'json' | 'fullResponse')}
                 size="small"
                 destroyInactiveTabPane
                 animated={false}
@@ -369,6 +369,32 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                             automaticLayout: true,
                           }}
                         />
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'fullResponse',
+                    label: (
+                      <span>
+                        <FileTextOutlined style={{ marginRight: 4 }} />
+                        Full AI Response
+                      </span>
+                    ),
+                    children: (
+                      <div className={`${styles.aiResponseContent} ${styles.aiResponseScrollable}`}>
+                        <pre style={{
+                          whiteSpace: 'pre-wrap',
+                          wordWrap: 'break-word',
+                          fontFamily: 'monospace',
+                          fontSize: '12px',
+                          backgroundColor: '#f5f5f5',
+                          padding: '12px',
+                          borderRadius: '4px',
+                          border: '1px solid #d9d9d9',
+                          margin: 0,
+                        }}>
+                          {latestAssistantMessage.fullAiResponse || 'No full AI response available'}
+                        </pre>
                       </div>
                     ),
                   },

@@ -50,7 +50,8 @@
       "Bash(winget install:*)",
       "Bash(git fetch:*)",
       "Bash(git merge:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []

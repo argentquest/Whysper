@@ -5,17 +5,17 @@ Handles JSON/Structurizr generation, diagram type determination,
 and diagram code generation.
 """
 
-import logging
 import json
 from typing import Dict, Any
 from ..graph_state import GraphState, DiagramType, SessionState
 from ..prompt_loader import get_prompt
 from ..keyword_scorer import determine_diagram_type
 from ...architecture_schema import ArchitectureSchema
-from .llm_helpers import call_llm, get_diagram_type_str
+from .llm_helpers import call_llm, get_diagram_type_str, extract_json_from_response
 from common.logging_decorator import log_method_call
+from common.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @log_method_call
@@ -106,8 +106,8 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     )
 
     try:
-        # Parse AI response as JSON
-        response = json.loads(ai_response_str)
+        # Parse AI response as JSON (handles markdown code fences)
+        response = extract_json_from_response(ai_response_str)
 
         # Extract three representations
         structurizr_workspace = response.get("structurizr_workspace", "")

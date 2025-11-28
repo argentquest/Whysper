@@ -6,23 +6,16 @@ and shared helper functions used across multiple nodes.
 """
 
 import asyncio
-import logging
 import httpx
 import json
 import re
 from typing import Dict, Any
 from ..graph_state import DiagramType
 from common.ai import create_ai_processor
+from common.logger import get_logger
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
-
-# Provider mapping constant to avoid duplication
-PROVIDER_MAP = {
-    "Mermaid": "mermaidv1",
-    "D2": "d2v1",
-    "PlantUML": "krokiplantuml"
-}
+logger = get_logger(__name__)
 
 
 def extract_json_from_response(response_text: str) -> Dict[str, Any]:
@@ -44,7 +37,8 @@ def extract_json_from_response(response_text: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         # Try to extract JSON from markdown code blocks
         # Pattern matches ```json ... ``` or ``` ... ```
-        json_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+        # Use greedy match (.*) to capture nested JSON objects like {"a": {"b": "c"}}
+        json_pattern = r'```(?:json)?\s*(\{.*\})\s*```'
         match = re.search(json_pattern, response_text, re.DOTALL)
         
         if match:
@@ -53,7 +47,7 @@ def extract_json_from_response(response_text: str) -> Dict[str, Any]:
         
         # If no code blocks found, try to find JSON object in the text
         # Look for content between curly braces
-        brace_pattern = r'\{.*?\}'
+        brace_pattern = r'\{.*\}'
         match = re.search(brace_pattern, response_text, re.DOTALL)
         
         if match:
@@ -193,7 +187,9 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
             tokens_used = 0
             processing_time = 0.0
         else:
-            response = result.get("response", "")
+            response = result.get("response")
+            if not response:
+                raise ValueError("AI processor returned dict without 'response' key or empty response")
             tokens_used = result.get("tokens_used", 0)
             processing_time = result.get("processing_time", 0.0)
 
@@ -221,4 +217,4 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
 
         logger.error(f"❌ An error occurred during the AI call: {e}",
                     extra={'session_id': session_id} if session_id else {})
-        raise Exception(error_msg)
+        raise Exception(error_msg) from e

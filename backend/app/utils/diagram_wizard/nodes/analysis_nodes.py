@@ -45,8 +45,8 @@ def _parse_ai_response(ai_response_str: str, session_id: str = None) -> Dict[str
         parse_errors.append(f"extraction helper: {err}")
 
     stripped = ai_response_str.strip()
-    stripped = re.sub(r"^```(?:json)?\\s*", "", stripped)
-    stripped = re.sub(r"```\\s*$", "", stripped)
+    stripped = re.sub(r"^```(?:json)?\s*", "", stripped)
+    stripped = re.sub(r"```\s*$", "", stripped)
     brace_match = re.search(r"\{.*\}", stripped, re.DOTALL)
     cleaned = brace_match.group(0) if brace_match else stripped
 
