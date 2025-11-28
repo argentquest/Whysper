@@ -45,7 +45,12 @@
       "Bash(\"backend/app/utils/diagram_wizard/nodes.py\")",
       "Bash(\"C:\\Users\\Hack\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe\" -c \"from app.utils.diagram_wizard.nodes import determine_diagram_type_node; print(''✅ Import successful - no ImportError'')\")",
       "Bash(.venvScriptspython.exe -c \"from app.utils.diagram_wizard.nodes import analyze_request, clarify_prompt, generate_json_representation, determine_diagram_type_node, generate_code, validate_code, refine_code, render_diagram; print(''✅ All node imports successful!'')\")",
-      "Bash(\"/c/Code2025/Whysper/backend/.venv/Scripts/python.exe\" -c \"from app.utils.diagram_wizard.nodes import analyze_request; print(''✅ Import successful!'')\")"
+      "Bash(\"/c/Code2025/Whysper/backend/.venv/Scripts/python.exe\" -c \"from app.utils.diagram_wizard.nodes import analyze_request; print(''✅ Import successful!'')\")",
+      "Bash(gh pr list:*)",
+      "Bash(winget install:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
