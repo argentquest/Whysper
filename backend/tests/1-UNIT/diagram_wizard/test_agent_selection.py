@@ -1,17 +1,11 @@
 """Test to validate agent selection on first chat message."""
-import os
-import sys
+import pytest
 from unittest.mock import MagicMock, patch
-
-# Add the backend directory to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from app.services.conversation_service import ConversationSession
-
+from common.models import ConversationMessage
 
 def test_agent_prompt_on_first_message():
     """Test that agent prompt is used on the first message."""
-    print("Testing agent prompt usage on first message...")
     
     # Create a mock AI processor
     with patch('common.ai.create_ai_processor') as mock_create:
@@ -25,6 +19,7 @@ def test_agent_prompt_on_first_message():
             question, conversation_history, codebase_content, model,
             max_tokens, temperature, update_callback=None
         ):
+            # conversation_history is a list of dicts here because _process_with_ai converts objects to dicts
             captured_messages.extend(conversation_history)
             return "Test response"
         
@@ -37,6 +32,8 @@ def test_agent_prompt_on_first_message():
             "output_tokens": 5,
             "cached_tokens": 0
         }
+        # Explicitly mock _last_token_usage as property returning int
+        type(mock_processor)._last_token_usage = 10
         
         # Create a conversation session
         session = ConversationSession(
@@ -64,24 +61,12 @@ def test_agent_prompt_on_first_message():
             msg for msg in captured_messages if msg.get("role") == "system"
         ]
         
-        if system_messages:
-            system_content = system_messages[0].get("content", "")
-            if "Python expert" in system_content:
-                print("✅ SUCCESS: Agent prompt was used in system message")
-                print(f"System message: {system_content[:200]}...")
-                return True
-            else:
-                print("❌ FAILURE: Agent prompt was NOT used in system message")
-                print(f"System message: {system_content[:200]}...")
-                return False
-        else:
-            print("❌ FAILURE: No system message found")
-            return False
-
+        assert system_messages, "No system message found"
+        system_content = system_messages[0].get("content", "")
+        assert "Python expert" in system_content, f"Agent prompt NOT found in system message: {system_content[:200]}..."
 
 def test_agent_prompt_on_subsequent_message():
     """Test that agent prompt is used on subsequent messages."""
-    print("\nTesting agent prompt usage on subsequent message...")
     
     # Create a mock AI processor
     with patch('common.ai.create_ai_processor') as mock_create:
@@ -107,6 +92,7 @@ def test_agent_prompt_on_subsequent_message():
             "output_tokens": 5,
             "cached_tokens": 0
         }
+        type(mock_processor)._last_token_usage = 10
         
         # Create a conversation session
         session = ConversationSession(
@@ -119,11 +105,12 @@ def test_agent_prompt_on_subsequent_message():
         
         # Add a test file and simulate first message to create history
         session.add_file("test.py")
-        session.app_state.conversation_history.append(
-            {"role": "system", "content": "Default system message"},
-            {"role": "user", "content": "First question"},
-            {"role": "assistant", "content": "First response"}
-        )
+        # Initialize with history using objects!
+        session.app_state.conversation_history = [
+            ConversationMessage(role="system", content="Default system message"),
+            ConversationMessage(role="user", content="First question"),
+            ConversationMessage(role="assistant", content="First response")
+        ]
         
         # Define a test agent prompt
         test_agent_prompt = "You are a JavaScript expert. {codebase_content}"
@@ -139,38 +126,6 @@ def test_agent_prompt_on_subsequent_message():
             msg for msg in captured_messages if msg.get("role") == "system"
         ]
         
-        if system_messages:
-            system_content = system_messages[0].get("content", "")
-            if "JavaScript expert" in system_content:
-                print("✅ SUCCESS: Agent prompt updated system message")
-                print(f"System message: {system_content[:200]}...")
-                return True
-            else:
-                print("❌ FAILURE: Agent prompt was NOT used to update")
-                print(f"System message: {system_content[:200]}...")
-                return False
-        else:
-            print("❌ FAILURE: No system message found")
-            return False
-
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("AGENT SELECTION VALIDATION TEST")
-    print("=" * 60)
-    
-    test1_passed = test_agent_prompt_on_first_message()
-    test2_passed = test_agent_prompt_on_subsequent_message()
-    
-    print("\n" + "=" * 60)
-    print("TEST RESULTS:")
-    print(f"First message test: {'PASSED' if test1_passed else 'FAILED'}")
-    print(f"Subsequent message test: {'PASSED' if test2_passed else 'FAILED'}")
-    
-    if not test1_passed:
-        print("\n❌ ISSUE CONFIRMED: Agent prompt not used on first message")
-        print("The system uses default system message instead of agent")
-    else:
-        print("\n✅ Agent selection is working correctly")
-    
-    print("=" * 60)
+        assert system_messages, "No system message found"
+        system_content = system_messages[0].get("content", "")
+        assert "JavaScript expert" in system_content, f"Agent prompt NOT found in updated system message: {system_content[:200]}..."

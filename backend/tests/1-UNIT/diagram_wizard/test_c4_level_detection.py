@@ -1,15 +1,12 @@
-#!/usr/bin/env python3
-"""
-Test script for C4 level detection in rendering_api.py
-
-Tests the detect_c4_level function with various prompts to ensure
-it correctly identifies C1, C2, C3, and C4 levels.
-"""
-
+"""Test script for C4 level detection."""
 import re
 from typing import Optional
+import pytest
 
-# Import the detection function (copy of it for testing)
+# Note: Ideally this should be imported from the actual codebase.
+# Currently, the detection logic is embedded here for unit testing purposes
+# as the original function location was not definitive.
+
 def detect_c4_level(prompt: str) -> Optional[str]:
     """
     Detect C4 level (C1, C2, C3, C4) from user prompt.
@@ -33,7 +30,6 @@ def detect_c4_level(prompt: str) -> Optional[str]:
             return level
 
     return None
-
 
 # Test cases
 test_cases = [
@@ -64,37 +60,8 @@ test_cases = [
     ("Show the system flow", None),
 ]
 
-
-def run_tests():
-    """Run all test cases and report results."""
-    print("=" * 70)
-    print("C4 Level Detection Tests")
-    print("=" * 70)
-
-    passed = 0
-    failed = 0
-
-    for prompt, expected_level in test_cases:
-        detected_level = detect_c4_level(prompt)
-        status = "✓ PASS" if detected_level == expected_level else "✗ FAIL"
-
-        if detected_level == expected_level:
-            passed += 1
-        else:
-            failed += 1
-
-        print(f"\n{status}")
-        print(f"  Prompt: {prompt}")
-        print(f"  Expected: {expected_level}")
-        print(f"  Detected: {detected_level}")
-
-    print("\n" + "=" * 70)
-    print(f"Results: {passed} passed, {failed} failed out of {passed + failed} total")
-    print("=" * 70)
-
-    return failed == 0
-
-
-if __name__ == "__main__":
-    success = run_tests()
-    exit(0 if success else 1)
+@pytest.mark.parametrize("prompt, expected_level", test_cases)
+def test_c4_level_detection(prompt, expected_level):
+    """Test C4 level detection logic."""
+    detected_level = detect_c4_level(prompt)
+    assert detected_level == expected_level, f"Failed for prompt: {prompt}"
