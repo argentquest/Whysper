@@ -13,20 +13,38 @@ from app.utils.code_extraction import (
 from app.services.conversation_service import conversation_manager
 from common.logger import get_logger
 from common.logging_decorator import log_method_call
+from schemas import CodeExtractionRequest, CodeExtractionResponse
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/extract")
+@router.post(
+    "/extract",
+    response_model=CodeExtractionResponse,
+    summary="Extract code blocks",
+    description="Extract code blocks from a message content or by message ID."
+)
 @log_method_call
-def extract_code_blocks(request: dict) -> Dict[str, Any]:
+def extract_code_blocks(request: CodeExtractionRequest):
+    """
+    Extract code blocks from a message content or by message ID.
+
+    Args:
+        request (CodeExtractionRequest): The request containing messageId and optional content.
+
+    Returns:
+        CodeExtractionResponse: The extracted code blocks.
+
+    Raises:
+        HTTPException: If messageId is missing or extraction fails.
+    """
     # Start logging the method call for debugging purposes
     logger.debug("extract_code_blocks endpoint started")
 
     # Extract messageId and content from the incoming request
-    message_id = request.get("messageId")
-    message_content = request.get("content")
+    message_id = request.messageId
+    message_content = request.content
     
     # Validate that messageId is provided, raising an error if missing
     if not message_id:

@@ -16,16 +16,29 @@ from schemas import (
 )
 from common.logger import get_logger
 from common.logging_decorator import log_method_call
+from pydantic import BaseModel
 
 logger = get_logger(__name__)
 router = APIRouter()
 
+class RestartServerResponse(BaseModel):
+    success: bool
+    message: str
+
+class AgentPromptResponse(BaseModel):
+    filename: str
+    content: str
 
 # ---------------------------------------------------------------------------
 # Application Settings
 # ---------------------------------------------------------------------------
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=Dict[str, Any],
+    summary="Get settings",
+    description="Retrieve current application settings and configuration."
+)
 @log_method_call
 def get_settings() -> Dict[str, Any]:
     """
@@ -56,7 +69,12 @@ def get_settings() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve settings: {str(e)}")
 
 
-@router.get("/agent-prompts/{filename}")
+@router.get(
+    "/agent-prompts/{filename}",
+    response_model=AgentPromptResponse,
+    summary="Get agent prompt",
+    description="Retrieve the content of a specific agent prompt file."
+)
 @log_method_call
 def get_agent_prompt(filename: str) -> Dict[str, str]:
     """
@@ -98,7 +116,12 @@ def get_agent_prompt(filename: str) -> Dict[str, str]:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve agent prompt: {str(e)}")
 
 
-@router.put("/env")
+@router.put(
+    "/env",
+    response_model=Dict[str, Any],
+    summary="Update environment variables",
+    description="Update environment variables and application configuration."
+)
 @log_method_call
 def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
     """
@@ -148,7 +171,12 @@ def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
 # Theme Management
 # ---------------------------------------------------------------------------
 
-@router.put("/theme", response_model=ThemeToggleResponse)
+@router.put(
+    "/theme",
+    response_model=ThemeToggleResponse,
+    summary="Set theme",
+    description="Set the application theme to a specific value."
+)
 @log_method_call
 def set_theme(request: ThemeSetRequest):
     """
@@ -187,7 +215,12 @@ def set_theme(request: ThemeSetRequest):
         raise HTTPException(status_code=500, detail=f"Failed to set theme: {str(e)}")
 
 
-@router.post("/theme/toggle", response_model=ThemeToggleResponse)
+@router.post(
+    "/theme/toggle",
+    response_model=ThemeToggleResponse,
+    summary="Toggle theme",
+    description="Toggle between light and dark themes."
+)
 @log_method_call
 def toggle_theme():
     """
@@ -221,27 +254,52 @@ def toggle_theme():
 # Agents and Subagents
 # ---------------------------------------------------------------------------
 
-@router.get("/agents")
+@router.get(
+    "/agents",
+    response_model=List[Dict[str, Any]],
+    summary="List agents",
+    description="List all available agent prompts."
+)
 @log_method_call
 def list_agents() -> List[Dict[str, Any]]:
-    """List all available agent prompts."""
+    """
+    List all available agent prompts.
+
+    Returns:
+        List[Dict[str, Any]]: List of agent configurations.
+    """
     logger.debug("list_agents endpoint called")
     result = settings_service.get_agent_prompts()
     logger.debug(f"Returning {len(result)} agent prompts")
     return result
 
 
-@router.get("/subagents")
+@router.get(
+    "/subagents",
+    response_model=List[Dict[str, Any]],
+    summary="List subagents",
+    description="List all available subagent commands."
+)
 @log_method_call
 def list_subagents() -> List[Dict[str, Any]]:
-    """List all available subagent commands."""
+    """
+    List all available subagent commands.
+
+    Returns:
+        List[Dict[str, Any]]: List of subagent commands.
+    """
     logger.debug("list_subagents endpoint called")
     result = settings_service.get_subagent_commands()
     logger.debug(f"Returning {len(result)} subagent commands")
     return result
 
 
-@router.post("/restart")
+@router.post(
+    "/restart",
+    response_model=RestartServerResponse,
+    summary="Restart server",
+    description="Restart the backend server by touching the entry file."
+)
 @log_method_call
 def restart_server() -> Dict[str, Any]:
     """
@@ -289,7 +347,12 @@ def restart_server() -> Dict[str, Any]:
 
 
 
-@router.get("/studio-agents")
+@router.get(
+    "/studio-agents",
+    response_model=List[Dict[str, Any]],
+    summary="List studio agents",
+    description="List all available architecture agents for the Studio application."
+)
 @log_method_call
 def list_studio_agents() -> List[Dict[str, Any]]:
     """List all available architecture agents for the Studio application.
@@ -303,7 +366,12 @@ def list_studio_agents() -> List[Dict[str, Any]]:
     return result
 
 
-@router.get("/agents/{agent_id}/options")
+@router.get(
+    "/agents/{agent_id}/options",
+    response_model=List[Dict[str, Any]],
+    summary="Get agent options",
+    description="Get agent options for a specific agent."
+)
 @log_method_call
 def get_agent_options(agent_id: str) -> List[Dict[str, Any]]:
     """Get agent options for a specific agent.

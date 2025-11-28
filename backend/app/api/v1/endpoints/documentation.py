@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 from app.services.documentation_service import documentation_service, DocumentationRequest
 from common.logging_decorator import log_method_call
 from fastapi.responses import StreamingResponse
@@ -19,9 +19,27 @@ class GenerateDocumentationRequest(BaseModel):
     include_diagrams: bool = True
     target_audience: str = "developers"
 
-@router.post("/generate")
+class GenerateDocumentationResponse(BaseModel):
+    session_guid: str
+    documentation_results: Dict[str, str]
+
+@router.post(
+    "/generate",
+    response_model=GenerateDocumentationResponse,
+    summary="Generate documentation",
+    description="Generate documentation for specified files."
+)
 @log_method_call
 async def generate_documentation(request: GenerateDocumentationRequest):
+    """
+    Generate documentation for specified files.
+
+    Args:
+        request (GenerateDocumentationRequest): The documentation generation request.
+
+    Returns:
+        GenerateDocumentationResponse: The generated documentation result.
+    """
     # Convert the incoming request to a documentation service request
     # This allows standardized processing across different service layers
     try:
@@ -42,9 +60,22 @@ async def generate_documentation(request: GenerateDocumentationRequest):
         # Catch and convert any errors to an HTTP 500 server error
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/download/{session_guid}")
+@router.get(
+    "/download/{session_guid}",
+    summary="Download documentation",
+    description="Retrieve and download documentation for a specific session."
+)
 @log_method_call
 async def download_documentation(session_guid: str):
+    """
+    Retrieve and download documentation for a specific session.
+
+    Args:
+        session_guid (str): The session GUID.
+
+    Returns:
+        StreamingResponse: The documentation zip file.
+    """
     # Retrieve and download documentation for a specific session
     # Uses the session GUID to fetch cached documentation results
     try:

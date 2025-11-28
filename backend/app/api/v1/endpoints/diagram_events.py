@@ -35,11 +35,20 @@ class DiagramEventPayload(BaseModel):
     extra_data: Optional[Dict[str, Any]] = None  # Flexible additional metadata
 
 
+class DiagramEventResponse(BaseModel):
+    """Response model for diagram event logging"""
+    success: bool
+    message: str
+    event_type: str
+    diagram_type: str
+
+
 @router.post(
     "/log-diagram-event",
     tags=["diagrams", "logging"],
     summary="Log a diagram event",
-    description="Log diagram-related events for debugging and analytics"
+    description="Log diagram-related events for debugging and analytics",
+    response_model=DiagramEventResponse
 )
 @log_method_call
 def log_diagram_event(event: DiagramEventPayload):
@@ -48,6 +57,12 @@ def log_diagram_event(event: DiagramEventPayload):
 
     This endpoint captures diagram rendering, validation, and error events
     for debugging and analytics purposes.
+
+    Args:
+        event (DiagramEventPayload): The event data to log.
+
+    Returns:
+        DiagramEventResponse: Confirmation of the logged event.
     """
     try:
         # Construct a comprehensive log message with key event details

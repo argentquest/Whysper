@@ -1,7 +1,7 @@
 """Pydantic schemas for the web backend."""
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -210,8 +210,57 @@ class ChatResponse(BaseModel):
     message: dict  # Message object with role, content, timestamp, etc.
     conversationId: str = Field(alias="conversationId")
     usage: Optional[dict] = None
+    debug: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class CodeExtractionRequest(BaseModel):
+    messageId: str = Field(..., description="ID of the message to extract code from")
+    content: Optional[str] = Field(None, description="Optional content override")
+
+
+class CodeExtractionResponse(BaseModel):
+    success: bool
+    data: List[Dict[str, Any]]
+    message: str
+
+
+# Diagram Wizard Schemas
+class DiagramStartRequest(BaseModel):
+    initial_prompt: str
+    diagram_type: str = "Mermaid"
+    model_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+
+class DiagramSessionResponse(BaseModel):
+    session_id: str
+    status: Dict[str, Any]
+    message: str
+
+
+class DiagramClarifyRequest(BaseModel):
+    session_id: str
+    response: str
+
+
+class DiagramConfirmReadyRequest(BaseModel):
+    session_id: str
+
+
+class DiagramSelectTypeRequest(BaseModel):
+    session_id: str
+    diagram_type: str
+
+
+class DiagramApproveRenderRequest(BaseModel):
+    session_id: str
+
+
+class DiagramRenderWizardRequest(BaseModel):
+    session_id: str
+    code: Optional[str] = None
 
 
 class FileSaveRequest(BaseModel):
