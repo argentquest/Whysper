@@ -1,16 +1,9 @@
-"""Simple test to verify agent selection fix."""
-import sys
-import os
-
-# Add the backend directory to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+"""Test to verify agent selection fix in ConversationSession."""
+import pytest
 from app.services.conversation_service import ConversationSession
-from common.models import ConversationMessage
 
 def test_agent_fix():
     """Test that agent prompt is preserved in system message."""
-    print("Testing agent prompt preservation...")
     
     # Create a mock AI processor
     class MockAIProcessor:
@@ -35,15 +28,11 @@ def test_agent_fix():
             if conversation_history and conversation_history[0].get("role") == "system":
                 content = conversation_history[0].get("content", "")
                 if "Python expert" in content:
-                    print("✅ SUCCESS: Agent prompt found in system message")
-                    return "Test response"
+                    return "SUCCESS: Agent prompt found"
                 else:
-                    print("❌ FAILURE: Agent prompt NOT found in system message")
-                    print(f"System message: {content[:200]}...")
-                    return "Test response"
+                    return f"FAILURE: Agent prompt NOT found in: {content[:100]}..."
             else:
-                print("❌ FAILURE: No system message found")
-                return "Test response"
+                return "FAILURE: No system message found"
     
     # Create a conversation session with mock processor
     session = ConversationSession(
@@ -64,15 +53,8 @@ def test_agent_fix():
         agent_prompt=agent_prompt
     )
     
-    return result
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("AGENT SELECTION FIX TEST")
-    print("=" * 60)
+    # The return value from ask_question is a dict with 'response', 'rawMarkdown', etc.
+    # We returned "SUCCESS: Agent prompt found" from the mock AI processor.
+    # So we should check if that string is in result['response'] or result['rawMarkdown']
     
-    test_agent_fix()
-    
-    print("=" * 60)
-    print("Test completed")
-    print("=" * 60)
+    assert "SUCCESS: Agent prompt found" in result["rawMarkdown"]

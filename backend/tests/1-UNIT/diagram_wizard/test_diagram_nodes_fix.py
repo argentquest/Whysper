@@ -1,10 +1,4 @@
 import pytest
-import sys
-import os
-
-# Ensure backend is in path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 from app.utils.diagram_wizard.nodes import validation_nodes, rendering_nodes
 from app.utils.diagram_wizard.graph_state import SessionState, DiagramType
 

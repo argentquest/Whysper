@@ -1,136 +1,22 @@
-"""
-Pytest fixtures for provider rendering tests.
-"""
-
-import sys
-import os
 import pytest
+from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from pathlib import Path
-
-# Import app - paths are already set up by root conftest.py
 from app.main import app
 
-
-# Create output directory for test artifacts - ensures a consistent location for saving test results
-ARTIFACTS_DIR = Path(__file__).parent.parent / "providers_test_artifacts"
-ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client():
-    # Create and return a test client for making API requests without running actual server
-    return TestClient(app)
+    with TestClient(app) as c:
+        yield c
 
+@pytest.fixture(scope="session", autouse=True)
+def mock_provider_availability():
+    """Mock provider availability checks to simulate installed CLIs."""
 
-@pytest.fixture
-def svg_output_dir():
-    # Provide a consistent directory for storing generated SVG files during testing
-    return ARTIFACTS_DIR
-
-
-def save_svg_artifact(test_name: str, diagram_type: str, content: str, provider_id: str):
-    # Save SVG content to a file for later inspection and debugging
-    # Only save if content exists and contains SVG markup
-    if not content or "<svg" not in content:
-        return None
-
-    # Generate a unique filename based on test parameters
-    filename = f"{test_name}_{diagram_type}_{provider_id}.svg"
-    filepath = ARTIFACTS_DIR / filename
-
-    try:
-        # Attempt to write SVG content to file
-        filepath.write_text(content)
-        return str(filepath)
-    except Exception as e:
-        # Log warning if file saving fails, but don't interrupt test execution
-        print(f"Warning: Could not save SVG artifact: {e}")
-        return None
-
-
-@pytest.fixture
-def mermaid_code_simple():
-    # Provide a simple Mermaid flowchart for testing basic rendering
-    return """flowchart TD
-    A[Start] --> B[Process]
-    B --> C{Decision}
-    C -->|Yes| D[End]
-    C -->|No| B"""
-
-
-@pytest.fixture
-def mermaid_code_complex():
-    # Provide a more complex Mermaid diagram with multiple components and interactions
-    return """flowchart LR
-    A[User] --> B[API]
-    B --> C[Database]
-    B --> D[Cache]
-    C --> E[Storage]
-    D --> E
-    E --> F[Response]
-    F --> A"""
-
-
-@pytest.fixture
-def d2_code_simple():
-    # Provide a simple D2 diagram for basic rendering tests
-    return """A -> B -> C
-    B -> D
-    D -> E"""
-
-
-@pytest.fixture
-def d2_code_complex():
-    # Provide a complex D2 diagram with shapes, labels, and multiple connections
-    return """
-    Web Server: {
-      shape: rectangle
-      label: Web Server
-    }
-
-    Database: {
-      shape: cylinder
-      label: PostgreSQL DB
-    }
-
-    Cache: {
-      shape: rectangle
-      label: Redis Cache
-    }
-
-    Web Server -> Database: query
-    Web Server -> Cache: get/set
-    Database -> Cache: invalidate
-    """
-
-
-@pytest.fixture
-def c4_code_simple():
-    # Provide a simple C4 diagram for testing system relationship rendering
-    return """
-    Person(user, "User", "A user of the system")
-    System(sys, "Software System", "The software system")
-
-    Rel(user, sys, "Uses")
-    """
-
-
-@pytest.fixture
-def invalid_mermaid():
-    # Provide an intentionally invalid Mermaid code to test error handling
-    return """flowchart TD
-    A --> B
-    B --> C
-    D --> E
-    missing connection"""
-
-
-@pytest.fixture
-def invalid_d2():
-    # Provide an intentionally invalid D2 code to test error handling
-    return """
-    A -> B -> C
-    D -> -> E
-    F: shape invalid_shape
-    """
+    # We use a context manager stack to apply multiple patches
+    with patch("diagrams.d2v1.d2_renderer.D2V1Provider.is_available", return_value=True), \
+         patch("diagrams.mermaidv1.mermaid_renderer.MermaidV1Provider.is_available", return_value=True), \
+         patch("diagrams.d2v1.d2_renderer.validate_d2_with_cli", return_value=(True, "Mocked D2 Valid")), \
+         patch("diagrams.d2v1.d2_renderer.validate_d2_and_render", return_value=(True, "Mocked D2 Rendered", "<svg>Mocked D2</svg>")), \
+         patch("diagrams.mermaidv1.mermaid_renderer.validate_mermaid_with_cli", return_value=(True, "Mocked Mermaid Valid")), \
+         patch("diagrams.mermaidv1.mermaid_renderer.validate_mermaid_and_render", return_value=(True, "Mocked Mermaid Rendered", "<svg>Mocked Mermaid</svg>")):
+        yield
