@@ -124,6 +124,7 @@ function App() {
   
   // Global loading state for API operations
   const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Application settings: AI provider, model, system prompt, etc.
   const [settings, setSettings] = useState<AppSettings>({
@@ -141,9 +142,7 @@ function App() {
 
   const [contextModalOpen, setContextModalOpen] = useState(false);           // File selection modal
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);        // Settings configuration modal
-
-  // Check if this is the first time in this session to show About modal
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);              // About modal
   const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
   const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
   const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
@@ -155,7 +154,7 @@ function App() {
   const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
   const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
   const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Skip authentication
   
   // ==================== Data State Management ====================
 
@@ -358,28 +357,14 @@ function App() {
   // Initialize the application when component mounts (only once)
   // NOTE: Message history is reset on every full page reload since state is not persisted
   useEffect(() => {
-    const storedAuth = sessionStorage.getItem('whysper_authenticated');
-    if (storedAuth === 'true') {
-      setIsAuthenticated(true);
-    } else {
-      // Check if authentication is required
-      const checkAuth = async () => {
-        const result = await ApiService.checkAuthRequired();
-        if (result.success && result.data?.auth_disabled) {
-          // Authentication is disabled (ACCESS_KEY is blank), auto-authenticate
-          sessionStorage.setItem('whysper_authenticated', 'true');
-          setIsAuthenticated(true);
-        }
-      };
-      checkAuth();
-    }
+    // Authentication disabled - skip auth checks
 
     // Reset message history: Clear any in-memory state from previous sessions
     // This ensures a fresh start after each full browser reload
     setConversations({});
     setTabs([]);
     setActiveTabId('');
-    
+
     // Load user settings from backend (API keys, preferences, etc.)
     const initializeApp = async () => {
       await loadSettings();
@@ -446,10 +431,11 @@ function App() {
     }));
 
     // Mark tab as dirty
-    setTabs(prev => prev.map(tab => 
+    setTabs(prev => prev.map(tab =>
       tab.id === activeTabId ? { ...tab, isDirty: true } : tab
     ));
 
+    console.log('🔴 [APP] Setting loading = true');
     setLoading(true);
 
     try {
@@ -485,9 +471,13 @@ function App() {
       console.log('🗂️ Selected files count:', selectedFiles.length);
       console.log('🗂️ Selected files:', selectedFiles.map(f => f.path));
       console.log('🔴 apiRequest.contextFiles:', apiRequest.contextFiles);
-      
+
       const response = await ApiService.sendMessage(apiRequest);
       console.log('📡 Chat API response:', response);
+
+      // Mark as processing when we start receiving the response
+      console.log('🟡 [APP] Setting isProcessing = true');
+      setIsProcessing(true);
 
       if (response.success && response.data) {
         const assistantMessage = response.data.message;
@@ -526,7 +516,9 @@ function App() {
       console.error('❌ Send message error:', error);
       message.error('Error sending message');
     } finally {
+      console.log('🟢 [APP] Setting loading = false, isProcessing = false');
       setLoading(false);
+      setIsProcessing(false);
       console.groupEnd();
     }
   };
@@ -1487,13 +1479,8 @@ function App() {
       {/* Status Bar */}
       <StatusBar
         status={loading ? 'loading' : 'ready'}
-        provider={settings.provider}
+        isProcessing={isProcessing}
         model={settings.model}
-        directory={codePath || 'Not configured'}
-        fileCount={selectedFiles.length}
-        totalSize={selectedFiles.reduce((sum, file) => sum + (file.size || 0), 0)}
-        tokenCount={currentMessages.reduce((sum, msg) => sum + (msg.metadata?.tokens || 0), 0)}
-        onOpenDirectory={() => setContextModalOpen(true)}
       />
 
       {/* Modals */}

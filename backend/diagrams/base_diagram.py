@@ -103,6 +103,10 @@ class BaseDiagramProvider(ABC):
         Args:
             provider_folder: Path to the provider's folder (contains config.json)
         """
+        logging.getLogger(__name__).info(
+            "Initializing BaseDiagramProvider",
+            extra={"provider_folder": str(provider_folder)}
+        )
         self.provider_folder = provider_folder
         self.config = self._load_config()
         self.logger = self._setup_logging()
@@ -118,30 +122,51 @@ class BaseDiagramProvider(ABC):
             f"(LLM retries: {self.config.llm_correction.max_retries}, "
             f"strategy: {self.config.correction_strategy})"
         )
+        self.logger.info("Completed BaseDiagramProvider initialization")
 
     @log_method_call
     def _load_config(self) -> Optional[ProviderConfig]:
         """Load configuration from config.json in provider folder"""
+        logging.getLogger(__name__).info(
+            "Loading provider config",
+            extra={"provider_folder": str(self.provider_folder)}
+        )
         config = load_provider_config(self.provider_folder)
 
         if config:
             self.logger = logging.getLogger(f"diagrams.{config.provider_id}")
             self.logger.info(f"Loaded config for {config.provider_name}")
 
+        logging.getLogger(__name__).info(
+            "Completed provider config load",
+            extra={"provider_id": getattr(config, 'provider_id', None)}
+        )
         return config
 
     @log_method_call
     def _validate_config(self):
         """Validate that config matches provider implementation"""
+        self.logger.info(
+            "Validating provider config",
+            extra={
+                "config_provider_id": self.config.provider_id,
+                "impl_provider_id": self.provider_id
+            }
+        )
         if self.config.provider_id != self.provider_id:
             self.logger.info(
                 f"Config provider_id '{self.config.provider_id}' does not match "
                 f"implementation provider_id '{self.provider_id}'"
             )
+        self.logger.info("Completed provider config validation")
 
     @log_method_call
     def _setup_logging(self):
         """Setup logging for this provider"""
+        logging.getLogger(__name__).info(
+            "Setting up provider logger",
+            extra={"provider_id": getattr(self, 'provider_id', None)}
+        )
         if hasattr(self, 'config') and self.config:
             return logging.getLogger(f"diagrams.{self.config.provider_id}")
         return logging.getLogger(f"diagrams.{self.provider_folder.name}")
@@ -266,13 +291,22 @@ class BaseDiagramProvider(ABC):
         Returns:
             ValidationResult with fixed code if successful
         """
+        self.logger.info(
+            "Starting default auto_fix_pattern_based",
+            extra={"code_length": len(code)}
+        )
         # Default implementation: no pattern-based fixing
-        return ValidationResult(
+        result = ValidationResult(
             is_valid=False,
             error=error_message,
             auto_fixed=False,
             code_length=len(code)
         )
+        self.logger.info(
+            "Completed default auto_fix_pattern_based",
+            extra={"auto_fixed": result.auto_fixed}
+        )
+        return result
 
     @log_method_call
     def get_llm_correction_rules(self) -> Optional[str]:
@@ -283,6 +317,7 @@ class BaseDiagramProvider(ABC):
         Returns:
             String with provider-specific correction rules
         """
+        self.logger.info("Retrieving LLM correction rules (base default)")
         return None
 
     # =====================================================================
@@ -323,6 +358,7 @@ class BaseDiagramProvider(ABC):
         Returns:
             True if reload successful, False otherwise
         """
+        self.logger.info("Starting config reload", extra={"provider_id": self.provider_id})
         try:
             new_config = load_provider_config(self.provider_folder)
             if new_config:
@@ -333,10 +369,13 @@ class BaseDiagramProvider(ABC):
         except Exception as e:
             self.logger.error(f"Failed to reload config: {e}")
             return False
+        finally:
+            self.logger.info("Completed config reload attempt", extra={"provider_id": self.provider_id})
 
     @log_method_call
     def get_metadata(self) -> ProviderMetadata:
         """Get comprehensive metadata about this provider"""
+        self.logger.info("Gathering provider metadata", extra={"provider_id": self.provider_id})
         return ProviderMetadata(
             provider_id=self.provider_id,
             provider_name=self.provider_name,
@@ -352,11 +391,19 @@ class BaseDiagramProvider(ABC):
     @log_method_call
     def supports_capability(self, capability: ProviderCapability) -> bool:
         """Check if this provider supports a specific capability"""
+        self.logger.info(
+            "Checking capability support",
+            extra={"provider_id": self.provider_id, "capability": capability.name}
+        )
         return capability in self.capabilities
 
     @log_method_call
     def supports_output_format(self, output_format: str) -> bool:
         """Check if this provider supports a specific output format"""
+        self.logger.info(
+            "Checking output format support",
+            extra={"provider_id": self.provider_id, "format": output_format}
+        )
         return output_format.lower() in [fmt.lower() for fmt in self.supported_output_formats]
 
     @log_method_call
@@ -591,6 +638,10 @@ class BaseDiagramProvider(ABC):
         else:
             self.logger.error(f"[{self.provider_id}] ❌ Render failed ({duration:.2f}s)")
 
+        self.logger.info(
+            "Completed render_with_validation",
+            extra={"provider_id": self.provider_id, "duration_sec": duration, "success": render_result.success}
+        )
         return render_result
 
     @log_method_call
@@ -603,6 +654,10 @@ class BaseDiagramProvider(ABC):
         **options
     ) -> ValidationResult:
         """Attempt LLM-based correction with retries"""
+        self.logger.info(
+            "Starting _attempt_llm_correction",
+            extra={"provider_id": self.provider_id, "max_retries": max_retries}
+        )
 
         if not self._llm_correction_service or not self._llm_correction_service.is_available():
             self.logger.info(f"[{self.provider_id}] LLM correction service not available")
@@ -651,6 +706,10 @@ class BaseDiagramProvider(ABC):
                 validation_result.fixed_code = corrected_code
                 validation_result.correction_method = "llm"
                 self.logger.info(f"[{self.provider_id}] ✅ LLM correction succeeded on attempt {attempt}")
+                self.logger.info(
+                    "Completed _attempt_llm_correction",
+                    extra={"provider_id": self.provider_id, "attempt": attempt, "success": True}
+                )
                 return validation_result
             else:
                 # Try again with new error
@@ -663,16 +722,25 @@ class BaseDiagramProvider(ABC):
 
         # All attempts failed
         self.logger.error(f"[{self.provider_id}] ❌ LLM correction failed after {max_retries} attempts")
-        return ValidationResult(
+        result = ValidationResult(
             is_valid=False,
             error=current_error,
             llm_corrected=False,
             code_length=len(current_code)
         )
+        self.logger.info(
+            "Completed _attempt_llm_correction",
+            extra={"provider_id": self.provider_id, "success": result.is_valid}
+        )
+        return result
 
     @log_method_call
     def _create_metadata(self, start_time: datetime) -> Dict[str, Any]:
         """Create standard metadata dictionary"""
+        self.logger.info(
+            "Creating metadata",
+            extra={"provider_id": self.provider_id}
+        )
         return {
             "provider": self.provider_id,
             "provider_name": self.provider_name,
@@ -697,6 +765,10 @@ class BaseDiagramProvider(ABC):
         Default implementation renders one by one.
         Subclasses can override for more efficient batch processing.
         """
+        self.logger.info(
+            "Starting batch render",
+            extra={"provider_id": self.provider_id, "count": len(codes), "format": output_format}
+        )
         if not self.supports_capability(ProviderCapability.BATCH):
             raise NotImplementedError(
                 f"Provider {self.provider_id} does not support batch rendering"
@@ -708,4 +780,8 @@ class BaseDiagramProvider(ABC):
             result = self.render_with_validation(code, output_format, **options)
             results.append(result)
 
+        self.logger.info(
+            "Completed batch render",
+            extra={"provider_id": self.provider_id, "count": len(results)}
+        )
         return results

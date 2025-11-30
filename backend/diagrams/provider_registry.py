@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Type
 import importlib
 import logging
+import json
 
 from .base_diagram import BaseDiagramProvider
 from .models import ProviderMetadata

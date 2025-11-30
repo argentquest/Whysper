@@ -38,31 +38,21 @@ interface LogEvent {
 
 /**
  * StatusBarProps type definition
- * 
+ *
  * Describes the structure and properties of StatusBarProps
  * @interface StatusBarProps
  * @property {'ready' | 'loading' | 'error'} status - The current status of the application
- * @property {string} [provider] - The current AI provider
- * @property {string} [model] - The current AI model
- * @property {string} [directory] - The current working directory
- * @property {number} [fileCount] - The number of files in the context
- * @property {number} [totalSize] - The total size of files in bytes
- * @property {number} [tokenCount] - The total number of tokens used
- * @property {Function} [onOpenDirectory] - Callback to open the directory selector
+ * @property {boolean} [isProcessing] - Whether AI response is being processed
  * @property {string} [errorMessage] - Error message if status is error
  * @property {string} [conversationId] - The ID of the current conversation
+ * @property {string} [model] - The current AI model name
  */
 interface StatusBarProps {
   status: 'ready' | 'loading' | 'error';
-  provider?: string;
-  model?: string;
-  directory?: string;
-  fileCount?: number;
-  totalSize?: number;
-  tokenCount?: number;
-  onOpenDirectory?: () => void;
+  isProcessing?: boolean;
   errorMessage?: string;
   conversationId?: string;  // For session-specific log filtering
+  model?: string;
 }
 
 /**
@@ -81,15 +71,10 @@ interface StatusBarProps {
  */
 export const StatusBar: React.FC<StatusBarProps> = ({
   status,
-  provider = 'openrouter',
-  model = 'x-ai/grok-code-fast-1',
-  directory = 'none',
-  fileCount = 0,
-  totalSize = 0,
-  tokenCount = 0,
-  onOpenDirectory,
+  isProcessing = false,
   errorMessage,
   conversationId,
+  model = 'Not configured',
 }) => {
   // Real-time log streaming state
   const [currentLog, setCurrentLog] = useState<LogEvent | null>(null);
@@ -98,9 +83,50 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
+  // Track detected states from logs
+  const [detectedActivity, setDetectedActivity] = useState<string>('');
+
+  // Debug: Log status changes
+  useEffect(() => {
+    console.log('🔵 [STATUS BAR] Status changed:', status);
+  }, [status]);
+
+  // Detect activity patterns from log messages
+  useEffect(() => {
+    if (!currentLog) return;
+
+    const message = currentLog.message.toLowerCase();
+
+    // Detect AI API calls
+    if (message.includes('calling ai provider') ||
+        message.includes('sending request to') ||
+        message.includes('openrouter') ||
+        message.includes('making api call')) {
+      setDetectedActivity('ai_call');
+    }
+    // Detect response processing
+    else if (message.includes('received response') ||
+             message.includes('processing response') ||
+             message.includes('parsing ai response')) {
+      setDetectedActivity('processing');
+    }
+    // Detect errors
+    else if (currentLog.level === 'ERROR' ||
+             message.includes('error') ||
+             message.includes('failed')) {
+      setDetectedActivity('error');
+    }
+    // Detect completion
+    else if (message.includes('completed') ||
+             message.includes('finished') ||
+             message.includes('success')) {
+      setDetectedActivity('ready');
+    }
+  }, [currentLog]);
+
   // Connect to SSE log stream on mount (reconnect when conversationId changes)
   useEffect(() => {
-    const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003';
+    const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000';
     const API_BASE_URL = import.meta.env.DEV
       ? `http://localhost:${BACKEND_PORT}/api/v1`
       : '/api/v1';
@@ -171,26 +197,55 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     }
   };
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
+  const getWaitingStatus = () => {
+    // Use detected activity from logs if available
+    if (detectedActivity === 'ai_call') {
+      return 'Calling AI Provider';
+    } else if (detectedActivity === 'processing') {
+      return 'Processing AI Response';
+    } else if (detectedActivity === 'error') {
+      return 'Error Detected';
     }
-    return num.toString();
+
+    // Fall back to prop-based status
+    if (status === 'loading') {
+      if (isProcessing) {
+        return 'Processing AI Response';
+      }
+      return 'Waiting for AI Response';
+    } else if (status === 'error') {
+      return 'Error - Ready for Input';
+    }
+    return 'Ready for Input';
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  const getWaitingStatusColor = () => {
+    // Use detected activity from logs if available
+    if (detectedActivity === 'ai_call') {
+      return '#1890ff'; // Blue - waiting for AI
+    } else if (detectedActivity === 'processing') {
+      return '#faad14'; // Orange - processing
+    } else if (detectedActivity === 'error') {
+      return '#ff4d4f'; // Red - error
+    } else if (detectedActivity === 'ready') {
+      return '#52c41a'; // Green - ready
+    }
+
+    // Fall back to prop-based status
+    if (status === 'loading') {
+      if (isProcessing) {
+        return '#faad14'; // Orange - processing
+      }
+      return '#1890ff'; // Blue - waiting
+    } else if (status === 'error') {
+      return '#ff4d4f'; // Red - error
+    }
+    return '#52c41a'; // Green - ready
   };
 
   // Log history popover content (reversed to show newest first)
   const logHistoryContent = (
-    <div style={{ width: '500px', maxHeight: '300px', overflowY: 'auto' }}>
+    <div style={{ width: '1000px', maxHeight: '600px', overflowY: 'auto' }}>
       {logHistory.length === 0 ? (
         <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
           No logs yet
@@ -251,42 +306,21 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   return (
     <div
-      className="h-10 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between text-xs"
+      className="h-12 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between"
       style={{
         backgroundColor: BrandColors.tertiary,
         boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.04)',
-        borderTop: `1px solid ${BrandColors.tertiary}`
+        borderTop: `1px solid ${BrandColors.tertiary}`,
+        fontSize: '14px'
       }}
     >
       {/* Left Section - Status */}
-      <Space size="large">
-        <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <Text className="text-xs font-medium">
-            {getStatusText()}
-          </Text>
-        </div>
-
-        {/* Provider Information */}
-        <Tooltip title={`Provider: ${provider}`}>
-          <div className="flex items-center gap-1">
-            <CloudOutlined className="text-gray-500" />
-            <Text className="text-xs text-gray-600 dark:text-gray-400">
-              Provider: {provider}
-            </Text>
-          </div>
-        </Tooltip>
-
-        {/* Model Information */}
-        <Tooltip title={`Active model: ${model}`}>
-          <div className="flex items-center gap-1">
-            <ApiOutlined className="text-gray-500" />
-            <Text className="text-xs text-gray-600 dark:text-gray-400">
-              Model: {model}
-            </Text>
-          </div>
-        </Tooltip>
-      </Space>
+      <div className="flex items-center gap-2">
+        {getStatusIcon()}
+        <Text className="font-medium" style={{ fontSize: '14px' }}>
+          {getStatusText()}
+        </Text>
+      </div>
 
       {/* Center Section - Real-Time Logs */}
       <Popover
@@ -305,7 +339,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         <div
           style={{
             flex: 1,
-            maxWidth: '600px',
             margin: '0 16px',
             overflow: 'hidden',
             cursor: logHistory.length > 0 ? 'pointer' : 'default',
@@ -317,13 +350,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                 status={isLogConnected ? 'processing' : 'default'}
                 text=""
               />
-              <Text style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>
+              <Text style={{ fontSize: '13px', color: '#64748b', fontFamily: 'monospace' }}>
                 {new Date(currentLog.timestamp).toLocaleTimeString()}
               </Text>
               <Text
                 style={{
-                  fontSize: '11px',
-                  color: currentLog.level === 'INFO' ? '#10b981' : '#ef4444',
+                  fontSize: '13px',
+                  color: currentLog.level === 'ERROR' ? '#ef4444' :
+                         currentLog.level === 'WARNING' ? '#faad14' : '#10b981',
                   fontWeight: 500,
                 }}
               >
@@ -331,12 +365,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </Text>
               <Text
                 style={{
-                  fontSize: '11px',
-                  color: '#1e293b',
+                  fontSize: '13px',
+                  color: currentLog.level === 'ERROR' ? '#dc2626' : '#1e293b',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   fontFamily: 'monospace',
+                  fontWeight: currentLog.level === 'ERROR' ? 600 : 400,
                 }}
               >
                 {currentLog.message}
@@ -349,62 +384,30 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             </div>
           )}
           {!currentLog && isLogConnected && (
-            <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
+            <Text style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
               Waiting for logs...
             </Text>
           )}
           {!isLogConnected && (
-            <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
+            <Text style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
               Connecting to log stream...
             </Text>
           )}
         </div>
       </Popover>
 
-      {/* Right Section - Context & Stats */}
-      <Space size="large">
-        {/* Token Count */}
-        {tokenCount > 0 && (
-          <Tooltip title={`Total tokens in conversation: ${tokenCount.toLocaleString()}`}>
-            <Tag className="text-xs">
-              {formatNumber(tokenCount)} tokens
-            </Tag>
-          </Tooltip>
-        )}
-
-        {/* File Count, Total Size & Directory */}
+      {/* Right Section - Waiting Status & Model */}
+      <div className="flex items-center gap-4">
+        <Text className="font-medium" style={{ color: getWaitingStatusColor(), fontSize: '14px' }}>
+          {getWaitingStatus()}
+        </Text>
         <div className="flex items-center gap-2">
-          <Tooltip title={`${fileCount} files in context${totalSize > 0 ? `, total size: ${formatFileSize(totalSize)}` : ''}`}>
-            <div className="flex items-center gap-1">
-              <FileTextOutlined className="text-gray-500" />
-              <Text className="text-xs text-gray-600 dark:text-gray-400">
-                Files: {fileCount}
-                {totalSize > 0 && (
-                  <span className="ml-1 text-gray-500">
-                    ({formatFileSize(totalSize)})
-                  </span>
-                )}
-              </Text>
-            </div>
-          </Tooltip>
-
-          <Tooltip title={`Current directory: ${directory}`}>
-            <Button
-              type="text"
-              size="small"
-              className="!p-0 !h-auto"
-              onClick={onOpenDirectory}
-            >
-              <div className="flex items-center gap-1">
-                <FolderOpenOutlined className="text-gray-500" />
-                <Text className="text-xs text-gray-600 dark:text-gray-400 max-w-[200px] truncate">
-                  Directory: {directory}
-                </Text>
-              </div>
-            </Button>
-          </Tooltip>
+          <ApiOutlined className="text-gray-500" />
+          <Text className="font-medium" style={{ fontSize: '14px', color: '#64748b' }}>
+            {model}
+          </Text>
         </div>
-      </Space>
+      </div>
     </div>
   );
 };

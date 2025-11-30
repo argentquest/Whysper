@@ -71,7 +71,7 @@ class LogBroadcaster:
                        If None, log is sent to all clients.
         """
         # Truncate message to 100 characters
-        truncated_message = message[:100] if len(message) > 100 else message
+        truncated_message = message[:300] if len(message) > 300 else message
 
         log_event = {
             'timestamp': datetime.now().isoformat(),

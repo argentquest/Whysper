@@ -25,6 +25,62 @@ logger = logging.getLogger(__name__)
 
 
 # =====================================================================
+# D2 ICON STRIPPER
+# =====================================================================
+
+def strip_d2_icons(code: str) -> str:
+    """
+    Remove icon attributes from D2 code to avoid 403 errors.
+
+    Icons from terrastruct.com return 403/AccessDenied errors during validation,
+    causing diagram generation to fail. This function strips all icon attributes
+    from D2 code while preserving the rest of the diagram structure.
+
+    Args:
+        code: The D2 code potentially containing icon URLs
+
+    Returns:
+        str: D2 code with icon attributes removed
+
+    Example:
+        >>> code = '''
+        ... database: Database {
+        ...   icon: "https://icons.terrastruct.com/tech/mssql.svg"
+        ...   shape: cylinder
+        ... }
+        ... '''
+        >>> print(strip_d2_icons(code))
+        database: Database {
+          shape: cylinder
+        }
+    """
+    logger.info("Starting strip_d2_icons process")
+    
+    # Pattern to find icon URLs (matches entire line with icon attribute)
+    icon_pattern = re.compile(
+        r'^\s*(?:[\w\-]+\.)*icon:\s*["\'].*?["\'].*?$',
+        re.MULTILINE | re.IGNORECASE
+    )
+
+    # Count removals for logging
+    icon_lines = icon_pattern.findall(code)
+
+    # Remove icon attribute lines
+    cleaned_code = icon_pattern.sub('', code)
+
+    # Remove multiple consecutive blank lines (keep max 1)
+    cleaned_code = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned_code)
+
+    if icon_lines:
+        logger.info(f"Removed {len(icon_lines)} icon attribute(s) from D2 code")
+    else:
+        logger.info("No icon attributes found to remove")
+
+    logger.info("Completed strip_d2_icons process")
+    return cleaned_code.strip()
+
+
+# =====================================================================
 # D2 SYNTAX FIXER (Self-contained)
 # =====================================================================
 
@@ -75,6 +131,8 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     corrections: List[str] = []
     corrected_code = code
 
+    logger.info("Starting fix_d2_syntax")
+
     # ===== Fix 1: Ensure proper brace matching =====
     # D2 uses braces {} to define containers (nested scopes).
     # Common error: Users forget to close containers, leading to syntax errors.
@@ -87,6 +145,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         missing_braces = open_braces - close_braces
         corrected_code += '\n}' * missing_braces
         corrections.append(f'Added {missing_braces} missing closing brace(s)')
+        logger.info(f"fix_d2_syntax: added {missing_braces} missing closing brace(s)")
     elif close_braces > open_braces:
         # Cannot auto-fix: Too many closing braces means user error
         errors.append(f'Too many closing braces: {close_braces - open_braces} extra brace(s)')
@@ -111,6 +170,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         label = label.strip()
         if not (label.startswith('"') and label.endswith('"')):
             corrections.append(f'Added quotes to connection label: {label}')
+            logger.info(f'fix_d2_syntax: quoted connection label "{label}"')
             return f'{from_node} -> {to_node}: "{label}"'
         return match.group(0)
 
@@ -124,6 +184,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     if 'direction:' not in corrected_code and '->' in corrected_code:
         corrected_code = 'direction: right\n\n' + corrected_code
         corrections.append('Added default direction: right')
+        logger.info("fix_d2_syntax: added default direction: right")
 
     # ===== Final validation =====
     # Run structural validation to catch any remaining errors
@@ -131,6 +192,10 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     errors.extend(validation_errors)
 
     is_valid = len(errors) == 0
+    logger.info(
+        "Completed fix_d2_syntax",
+        extra={"is_valid": is_valid, "corrections": len(corrections), "errors": len(errors)}
+    )
 
     return D2SyntaxFixResult(is_valid, corrected_code, errors, corrections)
 
@@ -145,6 +210,7 @@ def _validate_d2_structure(code: str) -> List[str]:
     Returns:
         List of validation errors
     """
+    logger.info("Starting _validate_d2_structure")
     errors: List[str] = []
     lines = code.split('\n')
 
@@ -163,6 +229,7 @@ def _validate_d2_structure(code: str) -> List[str]:
     if brace_stack > 0:
         errors.append(f'Unmatched opening braces: {brace_stack} braces not closed')
 
+    logger.info("Completed _validate_d2_structure", extra={"error_count": len(errors)})
     return errors
 
 
@@ -212,6 +279,8 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         D2 Syntax Error:
         direction is required for diagrams with connections
     """
+    logger.info("Starting validate_d2_with_cli", extra={"length": len(d2_code)})
+
     # Create temporary file with .d2 extension
     # delete=False because we need the file to persist for subprocess
     with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_file:
@@ -233,24 +302,29 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         )
 
         # Exit code 0 means valid syntax
+        logger.info("Completed validate_d2_with_cli successfully")
         return (True, "D2 Syntax is Valid.")
 
     except subprocess.CalledProcessError as e:
         # Exit code != 0 means syntax error
         # D2 CLI writes errors to stderr
         error_message = e.stderr.strip() or e.stdout.strip() or "Unknown D2 syntax error"
+        logger.info("Completed validate_d2_with_cli with syntax error")
         return (False, f"D2 Syntax Error:\n{error_message}")
 
     except subprocess.TimeoutExpired:
         # Process didn't complete within 10 seconds
+        logger.info("validate_d2_with_cli timed out")
         return (False, "D2 validation timed out")
 
     except FileNotFoundError:
         # d2 executable not found in PATH or at specified path
+        logger.info("validate_d2_with_cli failed - d2 executable not found")
         return (False, "D2 executable not found. Install from: https://d2lang.com/tour/install")
 
     except Exception as e:
         # Catch-all for unexpected errors
+        logger.info("validate_d2_with_cli encountered unexpected error")
         return (False, f"Unexpected error during validation: {str(e)}")
 
     finally:
@@ -273,6 +347,7 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
     Returns:
         bool: True if available, False otherwise
     """
+    logger.info("Checking D2 CLI availability")
     try:
         result = subprocess.run(
             [d2_executable, "--version"],
@@ -281,8 +356,10 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
             check=True,
             timeout=10
         )
+        logger.info("D2 CLI availability check succeeded")
         return True
     except Exception:
+        logger.info("D2 CLI availability check failed")
         return False
 
 
@@ -302,6 +379,8 @@ def validate_d2_and_render(
     Returns:
         Tuple[bool, str, Optional[str]]: (is_valid, message, rendered_output)
     """
+    logger.info("Starting validate_d2_and_render", extra={"format": output_format})
+
     with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(d2_code)
@@ -328,13 +407,19 @@ def validate_d2_and_render(
             else:
                 rendered_output = f.read()
 
+        logger.info(
+            "Completed validate_d2_and_render successfully",
+            extra={"output_format": output_format, "size_bytes": len(rendered_output)}
+        )
         return (True, "D2 diagram rendered successfully", rendered_output)
 
     except subprocess.CalledProcessError as e:
         error_message = e.stderr.strip() or e.stdout.strip() or "Unknown D2 error"
+        logger.info("validate_d2_and_render failed with CLI error")
         return (False, f"D2 Rendering Error:\n{error_message}", None)
 
     except Exception as e:
+        logger.info("validate_d2_and_render failed with unexpected error")
         return (False, f"Unexpected error during rendering: {str(e)}", None)
 
     finally:
@@ -451,6 +536,7 @@ class D2V1Provider(BaseDiagramProvider):
         Args:
             provider_folder: Path to d2v1 folder containing config.json
         """
+        self.logger.info("Initializing D2V1Provider")
         super().__init__(provider_folder)
 
         # Get executable path from config or use default
@@ -462,9 +548,11 @@ class D2V1Provider(BaseDiagramProvider):
         self._cli_available = None
 
         self.logger.info(f"D2 provider using executable: {self.d2_executable}")
+        self.logger.info("Completed D2V1Provider initialization")
 
     def is_available(self) -> bool:
         """Check if D2 CLI is available"""
+        self.logger.info("Checking if D2V1Provider is available")
         if self._cli_available is None:
             self._cli_available = is_d2_cli_available(self.d2_executable)
 
@@ -473,11 +561,14 @@ class D2V1Provider(BaseDiagramProvider):
             else:
                 self.logger.info("D2 CLI not found - install from: https://d2lang.com/tour/install")
 
+        self.logger.info("D2V1Provider availability check completed", extra={"available": self._cli_available})
         return self._cli_available
 
     def get_version(self) -> Optional[str]:
         """Get D2 CLI version"""
+        self.logger.info("Checking D2 CLI version")
         if not self.is_available():
+            self.logger.info("Skipping version check - D2 CLI unavailable")
             return None
 
         try:
@@ -487,12 +578,16 @@ class D2V1Provider(BaseDiagramProvider):
                 text=True,
                 timeout=5
             )
-            return result.stdout.strip()
+            version = result.stdout.strip()
+            self.logger.info("D2 CLI version retrieved", extra={"version": version})
+            return version
         except Exception:
+            self.logger.info("D2 CLI version retrieval failed")
             return "Unknown"
 
     def validate_code(self, code: str, **options) -> ValidationResult:
         """Validate D2 code using CLI"""
+        self.logger.info("Starting validate_code", extra={"length": len(code)})
         if not self.is_available():
             return ValidationResult(
                 is_valid=False,
@@ -500,10 +595,13 @@ class D2V1Provider(BaseDiagramProvider):
                 code_length=len(code)
             )
 
-        self.logger.debug(f"Validating D2 code ({len(code)} chars)")
+        self.logger.info(f"Validating D2 code ({len(code)} chars)")
+
+        # Strip icon attributes to avoid 403 errors from terrastruct.com
+        cleaned_code = strip_d2_icons(code)
 
         try:
-            is_valid, message = validate_d2_with_cli(code, self.d2_executable)
+            is_valid, message = validate_d2_with_cli(cleaned_code, self.d2_executable)
 
             return ValidationResult(
                 is_valid=is_valid,
@@ -513,19 +611,24 @@ class D2V1Provider(BaseDiagramProvider):
 
         except Exception as e:
             error_msg = f"Validation exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return ValidationResult(
                 is_valid=False,
                 error=error_msg,
                 code_length=len(code)
             )
+        finally:
+            self.logger.info("Completed validate_code")
 
     def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
         """Attempt pattern-based auto-fix"""
-        self.logger.info("Attempting pattern-based auto-fix...")
+        self.logger.info("Starting pattern-based auto-fix")
+
+        # Strip icon attributes first to avoid 403 errors
+        cleaned_code = strip_d2_icons(code)
 
         try:
-            fix_result = fix_d2_syntax(code)
+            fix_result = fix_d2_syntax(cleaned_code)
 
             if fix_result.corrections:
                 self.logger.info(f"Applied {len(fix_result.corrections)} pattern fix(es):")
@@ -541,7 +644,7 @@ class D2V1Provider(BaseDiagramProvider):
                 validation_result.correction_method = "pattern"
                 self.logger.info("Pattern-based fix successful")
             else:
-                self.logger.debug("Pattern-based fix did not resolve errors")
+                self.logger.info("Pattern-based fix did not resolve errors")
 
             return validation_result
 
@@ -553,9 +656,12 @@ class D2V1Provider(BaseDiagramProvider):
                 auto_fixed=False,
                 code_length=len(code)
             )
+        finally:
+            self.logger.info("Completed pattern-based auto-fix")
 
     def render(self, code: str, output_format: str = "svg", **options) -> RenderResult:
         """Render D2 diagram to specified format"""
+        self.logger.info("Starting render", extra={"length": len(code), "format": output_format})
         if not self.is_available():
             return RenderResult(
                 success=False,
@@ -595,11 +701,14 @@ class D2V1Provider(BaseDiagramProvider):
                 error=f"Unsupported output format: {output_format}"
             )
 
-        self.logger.debug(f"Rendering D2 to {output_format.upper()}...")
+        self.logger.info(f"Rendering D2 to {output_format.upper()}...")
+
+        # Strip icon attributes to avoid 403 errors from terrastruct.com
+        cleaned_code = strip_d2_icons(code)
 
         try:
             is_valid, message, rendered_output = validate_d2_and_render(
-                code,
+                cleaned_code,
                 output_format=output_format.lower(),
                 d2_executable=self.d2_executable
             )
@@ -623,7 +732,7 @@ class D2V1Provider(BaseDiagramProvider):
                     }
                 )
             else:
-                self.logger.error(f"Rendering failed: {message[:200]}")
+                self.logger.info(f"Rendering failed: {message[:200]}")
                 return RenderResult(
                     success=False,
                     content=None,
@@ -639,7 +748,7 @@ class D2V1Provider(BaseDiagramProvider):
 
         except Exception as e:
             error_msg = f"Rendering exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return RenderResult(
                 success=False,
                 content=None,
@@ -652,6 +761,8 @@ class D2V1Provider(BaseDiagramProvider):
                 metadata={"provider": self.provider_id},
                 error=error_msg
             )
+        finally:
+            self.logger.info("Completed render")
 
     def get_llm_correction_rules(self) -> Optional[str]:
         """Provide D2-specific rules for LLM correction"""

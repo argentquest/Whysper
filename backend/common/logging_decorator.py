@@ -8,7 +8,7 @@ def log_method_call(func):
         # Truncate args and kwargs representations to 200 chars for readability
         arg_reprs = [repr(a)[:200] for a in args[1:]]
         kwarg_reprs = {k: repr(v)[:200] for k, v in kwargs.items()}
-        logger.debug(f"Entering {func_name} with args: {arg_reprs}, kwargs: {kwarg_reprs}")
+        logger.info(f"Entering {func_name} with args: {arg_reprs}, kwargs: {kwarg_reprs}")
 
     # Helper function to log method exit with result
     def _log_exit(logger, func_name, result):

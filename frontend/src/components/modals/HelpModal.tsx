@@ -27,8 +27,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ open, onCancel }) => {
   useEffect(() => {
     // Fetch guide content only when modal is opened
     if (open) {
-      // Determine backend port from environment, default to 8003
-      const backendPort = import.meta.env.VITE_BACKEND_PORT || '8003';
+      // Determine backend port from environment, default to 8000
+      const backendPort = import.meta.env.VITE_BACKEND_PORT || '8000';
       
       // Set guide URL based on development or production environment
       const guideUrl = import.meta.env.DEV ? `http://localhost:${backendPort}/static/QUICKGUIDE.MD` : '/static/QUICKGUIDE.MD';

@@ -192,7 +192,8 @@ export const getMermaidDiagramType = (code: string): string => {
  * @returns {boolean} True if it should be rendered as D2
  */
 export const isD2Code = (language: string, inline: boolean): boolean => {
-  const isD2 = !inline && (language === 'd2' || language === 'd2lang');
+  const lang = (language || '').toLowerCase();
+  const isD2 = !inline && (lang === 'd2' || lang === 'd2lang');
   if (isD2) {
     console.log('🎯 [DIAGRAM DETECTION] D2 diagram detected (language marker)', { language, inline });
     // Log to backend
