@@ -24,56 +24,61 @@ class KrokiPlantUMLProvider(KrokiBaseProvider):
     - Fast response: Direct API calls without CLI overhead
     - Error handling: Parses Kroki error responses
 
-    Supported Diagrams:
-    - Use case diagrams
-    - Sequence diagrams
-    - Class diagrams
-    - Activity diagrams
-    - Component diagrams
-    - Deployment diagrams
-    - State diagrams
-    - Object diagrams
-    - All PlantUML diagram types
-
-    Capabilities:
-    - VALIDATE: Check PlantUML syntax via Kroki
-    - RENDER_SVG: Generate SVG output
-    - RENDER_PNG: Generate PNG output
-    - AUTO_FIX: Pattern-based syntax correction
-    - LLM_CORRECTION: AI-powered diagram correction
-
-    Configuration:
-    - server_url: Kroki server URL (default: http://localhost:8000)
-    - timeout_seconds: Request timeout (default: 30)
-    - diagram_endpoint: API endpoint for PlantUML (plantuml)
-
-    Installation:
-    - Requires local Kroki server running at configured URL
-    - No additional dependencies beyond requests library
+    Attributes:
+        provider_id (str): Unique identifier for this provider.
+        provider_name (str): Human-readable name for this provider.
+        diagram_type (str): Primary diagram type this provider handles.
+        diagram_endpoint (str): Specific Kroki API endpoint for PlantUML.
     """
 
     @property
     def provider_id(self) -> str:
-        """Unique identifier matching folder name: 'krokiplantuml'"""
+        """
+        Unique identifier for this provider (same as folder name).
+
+        Returns:
+            str: "krokiplantuml"
+        """
         return "krokiplantuml"
 
     @property
     def provider_name(self) -> str:
-        """Human-readable name shown in UI"""
+        """
+        Human-readable name for this provider.
+
+        Returns:
+            str: "Kroki PlantUML Renderer"
+        """
         return "Kroki PlantUML Renderer"
 
     @property
     def diagram_type(self) -> str:
-        """Primary diagram type: 'plantuml'"""
+        """
+        Primary diagram type this provider handles.
+
+        Returns:
+            str: "plantuml"
+        """
         return "plantuml"
 
     @property
     def diagram_endpoint(self) -> str:
-        """Kroki API endpoint for PlantUML diagrams"""
+        """
+        Kroki API endpoint for PlantUML diagrams.
+
+        Returns:
+            str: "plantuml"
+        """
         return "plantuml"
 
     def get_llm_correction_rules(self) -> Optional[str]:
-        """Provide PlantUML-specific rules for LLM correction"""
+        """
+        Provide PlantUML-specific rules for LLM correction.
+
+        Returns:
+            str: A string containing specific rules and hints for the LLM to generate valid PlantUML syntax.
+        """
+        self.logger.info("Retrieving PlantUML-specific LLM correction rules.")
         return """
 PLANTUML-SPECIFIC RULES:
 - Start with @startuml and end with @enduml

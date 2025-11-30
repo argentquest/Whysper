@@ -6,11 +6,10 @@ Renders D2 diagrams using Kroki service at http://localhost:8000
 This provider delegates all HTTP-based operations to KrokiBaseProvider.
 """
 
-from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from diagrams.kroki_base import KrokiBaseProvider
-from diagrams.models import ProviderCapability
+
 
 class KrokiD2Provider(KrokiBaseProvider):
     """
@@ -25,53 +24,61 @@ class KrokiD2Provider(KrokiBaseProvider):
     - Fast response: Direct API calls without CLI overhead
     - Error handling: Parses Kroki error responses
 
-    Supported Diagrams:
-    - Architecture diagrams (boxes and arrows)
-    - Network topology diagrams
-    - Database schemas (ER diagrams)
-    - Cloud infrastructure diagrams
-    - Sequence diagrams
-    - Any diagram that can be described as nodes and connections
-
-    Capabilities:
-    - VALIDATE: Check D2 syntax via Kroki
-    - RENDER_SVG: Generate SVG output
-    - RENDER_PNG: Generate PNG output
-    - AUTO_FIX: Pattern-based syntax correction
-    - LLM_CORRECTION: AI-powered diagram correction
-
-    Configuration:
-    - server_url: Kroki server URL (default: http://localhost:8000)
-    - timeout_seconds: Request timeout (default: 30)
-    - diagram_endpoint: API endpoint for D2 (d2)
-
-    Installation:
-    - Requires local Kroki server running at configured URL
-    - No additional dependencies beyond requests library
+    Attributes:
+        provider_id (str): Unique identifier for this provider.
+        provider_name (str): Human-readable name for this provider.
+        diagram_type (str): Primary diagram type this provider handles.
+        diagram_endpoint (str): Specific Kroki API endpoint for D2.
     """
 
     @property
     def provider_id(self) -> str:
-        """Unique identifier matching folder name: 'krokid2'"""
+        """
+        Unique identifier for this provider (same as folder name).
+
+        Returns:
+            str: "krokid2"
+        """
         return "krokid2"
 
     @property
     def provider_name(self) -> str:
-        """Human-readable name shown in UI"""
+        """
+        Human-readable name for this provider.
+
+        Returns:
+            str: "Kroki D2 Renderer"
+        """
         return "Kroki D2 Renderer"
 
     @property
     def diagram_type(self) -> str:
-        """Primary diagram type: 'd2'"""
+        """
+        Primary diagram type this provider handles.
+
+        Returns:
+            str: "d2"
+        """
         return "d2"
 
     @property
     def diagram_endpoint(self) -> str:
-        """Kroki API endpoint for D2 diagrams"""
+        """
+        Kroki API endpoint for D2 diagrams.
+
+        Returns:
+            str: "d2"
+        """
         return "d2"
 
     def get_llm_correction_rules(self) -> Optional[str]:
-        """Provide D2-specific rules for LLM correction"""
+        """
+        Provide D2-specific rules for LLM correction.
+
+        Returns:
+            str: A string containing specific rules and hints for the LLM to generate valid D2 syntax.
+        """
+        self.logger.info("Retrieving D2-specific LLM correction rules.")
         return """
 D2-SPECIFIC RULES:
 - Use proper connection syntax: A -> B or A -- B
