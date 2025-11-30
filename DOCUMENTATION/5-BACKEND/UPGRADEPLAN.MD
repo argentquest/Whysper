@@ -1101,7 +1101,7 @@ async def render_mermaid(request: MermaidRenderRequest):
             logger.info(f"diagram_factory result: {result['success']}")
             return result
     except Exception as e:
-        logger.warning(f"Diagram factory failed: {e}")
+        logger.info(f"Diagram factory failed: {e}")
 
     # Fallback to legacy system
     return await legacy_mermaid_render(request)

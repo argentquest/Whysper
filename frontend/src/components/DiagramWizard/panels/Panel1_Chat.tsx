@@ -57,9 +57,10 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Card, List, Input, Button, Empty, Spin, Space, Tag, Tooltip, Tabs } from 'antd';
-import { SendOutlined, CodeOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Card, List, Button, Empty, Spin, Tag, Tooltip, Tabs } from 'antd';
+import { SendOutlined, CodeOutlined, EyeOutlined, FileTextOutlined, LoadingOutlined, RobotOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
 import JsonPreview from '../components/JsonPreview';
 import styles from '../diagram-wizard.module.css';
 
@@ -78,6 +79,8 @@ interface ConversationMessage {
   score?: number;
   jsonData?: Record<string, unknown>;
   fullAiResponse?: string;  // Full raw AI response for debugging
+  analysisSummary?: string;  // Analysis summary from AI
+  question?: string;  // Clarification question from AI
 }
 
 /**
@@ -108,10 +111,7 @@ interface Panel1ChatProps {
   onSubmit?: (message: string) => Promise<void>;
   isLoading?: boolean;
   sessionActive?: boolean;
-  onViewResponseDetails?: (messageIndex: number) => void;
   isClarifying?: boolean;
-  canConfirmReady?: boolean;
-  onConfirmReady?: () => void;
 }
 
 const Panel1_Chat: React.FC<Panel1ChatProps> = ({
@@ -120,10 +120,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   onSubmit,
   isLoading = false,
   sessionActive = false,
-  onViewResponseDetails,
   isClarifying = false,
-  canConfirmReady = false,
-  onConfirmReady,
 }) => {
   const [userResponse, setUserResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -132,6 +129,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const inputEditorRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && typeof messagesEndRef.current.scrollIntoView === 'function') {
@@ -183,9 +181,19 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
     msg.role === 'assistant' && (msg.jsonData || msg.fullAiResponse)
   );
 
+  // Strip markdown code fences from full AI response
+  const cleanFullAiResponse = (response: string | undefined): string => {
+    if (!response) return 'No full AI response available';
+
+    // Remove markdown code fences (```json ... ``` or ``` ... ```)
+    return response
+      .replace(/^```(?:json)?\s*\n?/i, '')  // Remove opening fence
+      .replace(/\n?```\s*$/i, '')           // Remove closing fence
+      .trim();
+  };
+
   return (
     <Card
-      title="Conversation"
       className={styles.chatPanel}
       style={{
         height: '100%',
@@ -196,9 +204,9 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
       }}
     >
       <div style={{ flex: 1, display: 'flex', gap: '16px', overflow: 'hidden', minHeight: 0 }}>
-        {/* Left: Chat Messages */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', minHeight: 0 }}>
-          <div className={styles.messagesList} style={{ flex: 1, overflow: 'auto' }}>
+        {/* Left: Chat Messages - Scrollable */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+          <div className={styles.messagesList} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             {messages.length === 0 ? (
               <Empty description="No messages yet" />
             ) : (
@@ -231,9 +239,58 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                           minWidth: '200px',
                         }}
                       >
-                        <p style={{ margin: 0, fontSize: 14, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
-                          {msg.content}
-                        </p>
+                        {/* Display two-column table if both analysisSummary and question are available */}
+                        {msg.role === 'assistant' && msg.analysisSummary && msg.question ? (
+                          <div style={{ width: '100%' }}>
+                            <table style={{
+                              width: '100%',
+                              borderCollapse: 'collapse',
+                              fontSize: 14,
+                            }}>
+                              <thead>
+                                <tr style={{ borderBottom: '2px solid #d9d9d9' }}>
+                                  <th style={{
+                                    padding: '8px',
+                                    textAlign: 'left',
+                                    backgroundColor: '#f0f0f0',
+                                    fontWeight: 600,
+                                  }}>
+                                    Analysis Summary
+                                  </th>
+                                  <th style={{
+                                    padding: '8px',
+                                    textAlign: 'left',
+                                    backgroundColor: '#f0f0f0',
+                                    fontWeight: 600,
+                                  }}>
+                                    Question
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td style={{
+                                    padding: '8px',
+                                    verticalAlign: 'top',
+                                    borderRight: '1px solid #d9d9d9',
+                                  }}>
+                                    {msg.analysisSummary}
+                                  </td>
+                                  <td style={{
+                                    padding: '8px',
+                                    verticalAlign: 'top',
+                                  }}>
+                                    {msg.question}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p style={{ margin: 0, fontSize: 14, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+                            {msg.content}
+                          </p>
+                        )}
 
                         {/* Display LLM Score for assistant messages */}
                         {msg.role === 'assistant' && typeof msg.score === 'number' && (
@@ -252,73 +309,117 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
               />
             )}
 
+            {/* AI Thinking Indicator */}
+            {isLoading && (
+              <div className={styles.aiThinkingIndicator}>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 20, color: '#1890ff' }} spin />} />
+                <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+                  <div className={styles.aiThinkingTitle}>
+                    <RobotOutlined style={{ marginRight: '6px' }} />
+                    AI is thinking...
+                  </div>
+                  <div className={styles.aiThinkingSubtitle}>
+                    Analyzing your response and preparing next question
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Response Input Section OR Confirm Ready Button */}
-          {sessionActive && (
+          {/* Response Input Section */}
+          {sessionActive && isClarifying && (
             <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
-              {canConfirmReady && onConfirmReady ? (
-                // Show Confirm Ready Button when clarifications are complete
-                <Button
-                  type="primary"
-                  size="large"
-                  onClick={onConfirmReady}
-                  loading={isLoading}
-                  style={{ width: '100%' }}
-                >
-                  ✓ Confirm Ready to Generate Diagram
-                </Button>
-              ) : isClarifying ? (
-                // Show input for clarifications
-                <Space.Compact style={{ width: '100%' }}>
-                  <Input
-                    placeholder="Enter your response to the clarification..."
+              {/* Monaco Editor for clarifications */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  minHeight: '120px'
+                }}>
+                  <Editor
+                    height="120px"
+                    defaultLanguage="plaintext"
                     value={userResponse}
-                    onChange={(e) => setUserResponse(e.target.value)}
-                    onPressEnter={handleSubmit}
-                    disabled={isLoading || submitting}
-                    autoFocus
+                    onChange={(value) => setUserResponse(value || '')}
+                    onMount={(editor) => {
+                      inputEditorRef.current = editor;
+                      // Focus the editor when it mounts
+                      editor.focus();
+                      // Add keyboard shortcut for submit (Ctrl+Enter or Cmd+Enter)
+                      editor.addCommand(
+                        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                        () => handleSubmit()
+                      );
+                    }}
+                    options={{
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      fontSize: 14,
+                      lineNumbers: 'off',
+                      wordWrap: 'on',
+                      wrappingStrategy: 'advanced',
+                      automaticLayout: true,
+                      scrollbar: {
+                        vertical: 'auto',
+                        horizontal: 'auto',
+                      },
+                      padding: { top: 8, bottom: 8 },
+                      readOnly: isLoading || submitting,
+                    }}
+                    loading={<Spin />}
                   />
+                </div>
 
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', color: '#999' }}>
+                    Press Ctrl+Enter to send
+                  </span>
                   <Button
                     type="primary"
                     icon={<SendOutlined />}
                     onClick={handleSubmit}
                     loading={isLoading || submitting}
+                    disabled={!userResponse.trim()}
                   >
                     Send
                   </Button>
-                </Space.Compact>
-              ) : null}
+                </div>
+              </div>
             </div>
           )}
-
-          {isLoading && <Spin style={{ marginTop: 16 }} />}
         </div>
 
-        {/* Right: AI Response */}
+        {/* Right: AI Response - Fixed, No Scroll */}
         <div style={{
-          flex: '0 0 400px',
+          flex: '0 0 40%',
+          minWidth: '350px',
+          maxWidth: '500px',
           borderLeft: '1px solid #f0f0f0',
           paddingLeft: '16px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          height: '100%',
           minHeight: 0,
+          maxHeight: '100%',
         }}>
           <h4 style={{ marginTop: 0, marginBottom: 12, flexShrink: 0 }}>AI Response</h4>
 
           {latestAssistantMessage ? (
-            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
               <Tabs
                 activeKey={activeResponseTab}
                 onChange={(key) => setActiveResponseTab(key as 'preview' | 'json' | 'fullResponse')}
-                size="small"
-                destroyInactiveTabPane
+                size="middle"
                 animated={false}
                 className={styles.aiResponseTabs}
+                tabBarStyle={{
+                  marginBottom: '12px',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid #f0f0f0'
+                }}
                 items={[
                   {
                     key: 'preview',
@@ -329,7 +430,13 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                       </span>
                     ),
                     children: (
-                      <div className={`${styles.aiResponseContent} ${styles.aiResponseScrollable}`}>
+                      <div style={{
+                        height: '100%',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                        padding: '8px',
+                        backgroundColor: '#fafafa'
+                      }}>
                         <JsonPreview data={latestAssistantMessage.jsonData || {}} />
                       </div>
                     ),
@@ -381,20 +488,26 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                       </span>
                     ),
                     children: (
-                      <div className={`${styles.aiResponseContent} ${styles.aiResponseScrollable}`}>
-                        <pre style={{
-                          whiteSpace: 'pre-wrap',
-                          wordWrap: 'break-word',
-                          fontFamily: 'monospace',
-                          fontSize: '12px',
-                          backgroundColor: '#f5f5f5',
-                          padding: '12px',
-                          borderRadius: '4px',
-                          border: '1px solid #d9d9d9',
-                          margin: 0,
-                        }}>
-                          {latestAssistantMessage.fullAiResponse || 'No full AI response available'}
-                        </pre>
+                      <div
+                        className={styles.aiResponseContent}
+                        style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}
+                      >
+                        <Editor
+                          height="700px"
+                          width="100%"
+                          defaultLanguage="json"
+                          value={cleanFullAiResponse(latestAssistantMessage.fullAiResponse)}
+                          theme="vs-light"
+                          options={{
+                            readOnly: true,
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            fontSize: 12,
+                            lineNumbers: 'on',
+                            wordWrap: 'on',
+                            automaticLayout: true,
+                          }}
+                        />
                       </div>
                     ),
                   },

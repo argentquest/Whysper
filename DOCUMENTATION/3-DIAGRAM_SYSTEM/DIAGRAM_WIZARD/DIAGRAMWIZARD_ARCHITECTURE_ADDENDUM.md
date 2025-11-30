@@ -111,7 +111,7 @@ async def validate_code(state: GraphState) -> GraphState:
     provider = provider_registry.get_provider_for_type(diagram_type.value)
 
     if not provider:
-        logger.warning(f"[{session_id}] No provider found for {diagram_type.value}, skipping validation")
+        logger.info(f"[{session_id}] No provider found for {diagram_type.value}, skipping validation")
         return {
             **state,
             "is_valid": True,  # Optimistic - will fail at render if invalid
@@ -130,7 +130,7 @@ async def validate_code(state: GraphState) -> GraphState:
             "current_state": SessionState.VALIDATING,
         }
     else:
-        logger.warning(f"[{session_id}] Validation failed: {len(validation_result.errors)} errors")
+        logger.info(f"[{session_id}] Validation failed: {len(validation_result.errors)} errors")
         return {
             **state,
             "is_valid": False,
@@ -677,7 +677,7 @@ async def validate_code(state: GraphState) -> GraphState:
                 result = await provider.validate_code(code)
                 # Use provider result
         except Exception as e:
-            logger.warning(f"Provider validation failed, using fallback: {e}")
+            logger.info(f"Provider validation failed, using fallback: {e}")
             # Fall back to existing validation
 
     # Existing validation logic as fallback

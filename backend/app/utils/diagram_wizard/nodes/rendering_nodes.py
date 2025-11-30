@@ -35,8 +35,10 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     session_id = state.get("_session_id")
 
-    logger.info(f"🎨 Rendering {diagram_type} diagram to SVG using provider system",
-                extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"🎨 Rendering {diagram_type} diagram to SVG using provider system",
+        extra={'session_id': session_id} if session_id else {}
+    )
 
     if not diagram_code.strip():
         return {
@@ -48,7 +50,10 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     # Check if provider system is available
     if not PROVIDER_AVAILABLE:
         error_msg = "Provider registry not available for rendering"
-        logger.error(error_msg, extra={'session_id': session_id} if session_id else {})
+        logger.error(
+            error_msg,
+            extra={'session_id': session_id} if session_id else {}
+        )
         return {
             "svg_output": "",
             "error_message": error_msg,
@@ -62,20 +67,45 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")
 
-    # Provider methods are synchronous, do not await
-    result = provider.render_with_validation(
+    # Send rendering status update to frontend
+    update_callback = state.get("_update_callback")
+    if update_callback:
+        await update_callback({
+            "status": "rendering",
+            "message": f"Rendering {diagram_type.value} diagram to SVG...",
+        })
+
+    # Provider's render_with_validation is now async to support long LLM
+    # operations (30-90s) without blocking the event loop
+    result = await provider.render_with_validation(
         code=diagram_code,
         output_format="svg",
-        auto_fix=False,  # Validation already done
-        llm_correction=False
+        auto_fix=False,
+        llm_correction=False,
+        progress_callback=update_callback  # Pass for detailed progress
     )
 
     if result.success:
+        # Send rendered status update with SVG to frontend
+        if update_callback:
+            await update_callback({
+                "status": "rendered",
+                "message": "✅ Diagram rendered successfully",
+            })
+
         return {
             "svg_output": result.content,
             "current_state": SessionState.READY
         }
     else:
+        # Send error status update
+        if update_callback:
+            await update_callback({
+                "status": "error",
+                "message": f"Rendering failed: {result.error}",
+                "error": result.error,
+            })
+
         return {
             "svg_output": "",
             "error_message": f"Rendering failed: {result.error}",

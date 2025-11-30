@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, message, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import ApiService from '../../services/api';
+import { Brand } from 'branding';
 
 const { Title, Paragraph } = Typography;
 
@@ -61,12 +62,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
   };
 
   // Render welcome screen with access key form and guide content
+  const brandTagline = Brand.tagline || Brand.name || 'AI Assistant';
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ width: 800, padding: 40, background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)', display: 'flex' }}>
         {/* Access key input section */}
         <div style={{ flex: 1, paddingRight: 40 }}>
-          <Title level={2} style={{ textAlign: 'center' }}>Welcome to Whysper</Title>
+          <Title level={2} style={{ textAlign: 'center' }}>Welcome to {brandTagline}</Title>
           <Paragraph style={{ textAlign: 'center', marginBottom: 24 }}>
             Please enter the access key to continue.
           </Paragraph>

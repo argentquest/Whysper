@@ -167,6 +167,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
             await update_callback({
                 "status": "analysis_complete",
                 "message": analysis_summary,
+                "analysis_summary": analysis_summary,
                 "assessment_score": assessment_score,
                 "score": assessment_score,
                 "score_target": score_target,

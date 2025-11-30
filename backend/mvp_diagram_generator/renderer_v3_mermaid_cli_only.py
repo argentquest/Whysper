@@ -136,8 +136,8 @@ def is_mmdc_available() -> bool:
         if available:
             logger.debug(f"mmdc is available: {result.stdout.strip()}")
         else:
-            logger.warning(f"mmdc check failed: {result.stderr}")
+            logger.info(f"mmdc check failed: {result.stderr}")
         return available
     except Exception as e:
-        logger.warning(f"Could not check mmdc availability: {str(e)}")
+        logger.info(f"Could not check mmdc availability: {str(e)}")
         return False

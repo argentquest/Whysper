@@ -10,8 +10,8 @@
  */
 
 import React from 'react';
-import { Layout, Space, Tag, Badge, Spin } from 'antd';
-import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Layout, Space, Tag, Badge, Spin, Button, Steps, Tooltip } from 'antd';
+import { CheckCircleOutlined, ExclamationCircleOutlined, SearchOutlined, MessageOutlined, EditOutlined, BulbOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 import type { ModelId } from '../screens/ModelSelectionScreen';
 
@@ -34,6 +34,10 @@ interface DiagramWizardHeaderProps {
   // Progress phases
   currentPhase: number;
   phases: Array<{ title: string; description: string; icon: React.ReactNode }>;
+
+  // Confirm Ready button
+  canConfirmReady?: boolean;
+  onConfirmReady?: () => void;
 }
 
 /**
@@ -51,6 +55,8 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   scoreTarget = 80, // Default to 80 if not provided by backend
   currentPhase,
   phases,
+  canConfirmReady = false,
+  onConfirmReady,
 }) => {
   // Get model display name
   const getModelDisplayName = (model: ModelId): string => {
@@ -76,13 +82,29 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
     return 'orange';
   };
 
+  // Map phase icons to Ant Design icons
+  const getPhaseIcon = (phaseTitle: string): React.ReactNode => {
+    switch (phaseTitle) {
+      case 'Analysis':
+        return <SearchOutlined />;
+      case 'Clarification':
+        return <MessageOutlined />;
+      case 'Generation':
+        return <EditOutlined />;
+      case 'Rendering':
+        return <BulbOutlined />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Layout.Header className={styles.header}>
       <div className={styles.headerContent}>
-        {/* Compact Single-Row Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        {/* Single Row Header with Progress */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
           {/* Left: Title + Score */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
             <h2 className={styles.title} style={{ margin: 0 }}>
               {title}
               {isComplete && (
@@ -112,13 +134,42 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
             )}
           </div>
 
-          {/* Right: Phase + Model + Session + Status */}
+          {/* Center: Progress Steps */}
+          <div className={styles.progressSteps}>
+            <Steps
+              current={currentPhase}
+              size="small"
+              items={phases.map((phase, index) => ({
+                title: (
+                  <Tooltip title={phase.description} placement="bottom">
+                    <span className={styles.progressStepTitle}>{phase.title}</span>
+                  </Tooltip>
+                ),
+                icon: getPhaseIcon(phase.title),
+                status: index < currentPhase ? 'finish' : index === currentPhase ? 'process' : 'wait',
+              }))}
+            />
+          </div>
+
+          {/* Right: Confirm Button + Model + Session + Status */}
           <Space size="middle" className={styles.headerMeta}>
-            {/* Current Phase - Simplified */}
-            <Tag color="purple" style={{ fontSize: '12px', padding: '4px 10px' }}>
-              {phases[Math.min(currentPhase, phases.length - 1)].icon}{' '}
-              {phases[Math.min(currentPhase, phases.length - 1)].title}
-            </Tag>
+            {/* Confirm Ready Button - Prominent placement */}
+            {canConfirmReady && onConfirmReady && (
+              <Button
+                type="primary"
+                size="large"
+                onClick={onConfirmReady}
+                loading={loading}
+                style={{
+                  backgroundColor: '#52c41a',
+                  borderColor: '#52c41a',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)',
+                }}
+              >
+                ✓ Confirm Ready
+              </Button>
+            )}
 
             {selectedModel && (
               <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
@@ -127,7 +178,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
             )}
             {sessionId && (
               <>
-                <span className={styles.sessionId} style={{ fontSize: '11px' }}>
+                <span className={styles.sessionId}>
                   {sessionId.substring(0, 8)}...
                 </span>
                 <Badge

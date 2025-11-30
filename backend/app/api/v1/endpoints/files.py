@@ -691,7 +691,7 @@ def upload_files(request: FileUploadRequest):
             try:
                 # Validate file data
                 if not all(key in file_data for key in ['name', 'content']):
-                    logger.warning(f"Skipping invalid file data: missing required fields")
+                    logger.info(f"Skipping invalid file data: missing required fields")
                     continue
                 
                 file_name = file_data['name']
@@ -700,7 +700,7 @@ def upload_files(request: FileUploadRequest):
                 
                 # Security check: validate file name
                 if not file_name or '/' in file_name or '\\' in file_name:
-                    logger.warning(f"Skipping invalid file name: {file_name}")
+                    logger.info(f"Skipping invalid file name: {file_name}")
                     continue
                 
                 # Generate a unique filename to avoid conflicts
@@ -838,7 +838,7 @@ def get_uploaded_files():
                         uploaded_files.append(uploaded_file)
                         
                     except (UnicodeDecodeError, PermissionError) as e:
-                        logger.warning(f"Could not read uploaded file {filename}: {str(e)}")
+                        logger.info(f"Could not read uploaded file {filename}: {str(e)}")
                         continue
                         
         except (OSError, PermissionError) as e:

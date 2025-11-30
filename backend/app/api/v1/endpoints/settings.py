@@ -102,7 +102,7 @@ def get_agent_prompt(filename: str) -> Dict[str, str]:
     try:
         content = settings_service.get_agent_prompt_content(filename)
         if not content:
-            logger.warning(f"Agent prompt not found: {filename}")
+            logger.info(f"Agent prompt not found: {filename}")
             raise HTTPException(status_code=404, detail="Agent prompt not found")
 
         logger.debug(f"Successfully retrieved agent prompt '{filename}' with {len(content)} characters")
@@ -158,7 +158,7 @@ def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
         logger.debug(f"Environment update completed: {len(result.get('updated', []))} variables updated")
 
         if result.get('errors'):
-            logger.warning(f"Environment update had {len(result['errors'])} validation errors")
+            logger.info(f"Environment update had {len(result['errors'])} validation errors")
 
         return result
 
@@ -205,7 +205,7 @@ def set_theme(request: ThemeSetRequest):
             logger.info(f"Theme successfully changed to: {theme}")
             return ThemeToggleResponse(theme=theme, message="Theme updated")
         else:
-            logger.warning(f"Failed to set theme to: {request.theme}")
+            logger.info(f"Failed to set theme to: {request.theme}")
             raise HTTPException(status_code=400, detail="Invalid theme")
 
     except HTTPException:
@@ -330,7 +330,7 @@ def restart_server() -> Dict[str, Any]:
                 "message": "Server restart triggered. The server will reload in a few seconds."
             }
         else:
-            logger.warning(f"main.py not found at {main_file}")
+            logger.info(f"main.py not found at {main_file}")
             return {
                 "success": False,
                 "message": "Could not locate main.py for restart"

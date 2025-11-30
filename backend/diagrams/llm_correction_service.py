@@ -88,7 +88,7 @@ class LLMCorrectionService:
             Tuple of (success, corrected_code, correction_message)
         """
         if not self.is_available():
-            logger.warning("LLM correction service not available")
+            logger.info("LLM correction service not available")
             return False, invalid_code, "LLM correction service not initialized"
 
         # Build correction prompt
@@ -124,7 +124,7 @@ class LLMCorrectionService:
                 logger.info(f"[LLM CORRECTION] ✅ Successfully extracted corrected code")
                 return True, corrected_code, "LLM correction applied"
             else:
-                logger.warning(f"[LLM CORRECTION] ❌ Could not extract code from response")
+                logger.info(f"[LLM CORRECTION] ❌ Could not extract code from response")
                 return False, invalid_code, "Could not extract corrected code from LLM response"
 
         except Exception as e:
@@ -247,7 +247,7 @@ The code must be complete and valid."""
                     return extracted
 
         # Last resort: return entire response stripped
-        logger.warning("[LLM CORRECTION] No code blocks found, using full response")
+        logger.info("[LLM CORRECTION] No code blocks found, using full response")
         return response.strip()
 
 

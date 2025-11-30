@@ -189,7 +189,7 @@ class HistoryService:
                             history_data["created_at"] = existing_created_at
                             self._conversation_start_times[conversation_id] = existing_created_at
                 except Exception as e:
-                    logger.warning(f"Could not read existing history file {filepath}: {e}")
+                    logger.info(f"Could not read existing history file {filepath}: {e}")
             
             # Write updated history
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -264,7 +264,7 @@ class HistoryService:
                     })
                     
                 except Exception as e:
-                    logger.warning(f"Could not read history file {filepath}: {e}")
+                    logger.info(f"Could not read history file {filepath}: {e}")
             
             # Sort by last_updated descending
             histories.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
@@ -300,7 +300,7 @@ class HistoryService:
                 
                 return True
             else:
-                logger.warning(f"History file not found for conversation {conversation_id}")
+                logger.info(f"History file not found for conversation {conversation_id}")
                 return False
                 
         except Exception as e:

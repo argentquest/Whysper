@@ -171,7 +171,7 @@ When events are logged, they appear in the structured logs:
 ### Logging Levels
 ```python
 if event.error_message:
-    logger.warning(f"{log_message}: {event.error_message}")
+    logger.info(f"{log_message}: {event.error_message}")
 else:
     logger.info(log_message)
 ```

@@ -167,7 +167,7 @@ class MCPHistoryService:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         session_data = json.load(f)
                 except Exception as e:
-                    logger.warning(f"Could not read existing session file {filepath}: {e}")
+                    logger.info(f"Could not read existing session file {filepath}: {e}")
             
             # Initialize session data if needed
             if session_data is None:
@@ -261,7 +261,7 @@ class MCPHistoryService:
                     })
                     
                 except Exception as e:
-                    logger.warning(f"Could not read MCP session file {filepath}: {e}")
+                    logger.info(f"Could not read MCP session file {filepath}: {e}")
             
             # Sort by last_updated descending
             histories.sort(key=lambda x: x.get("last_updated", ""), reverse=True)

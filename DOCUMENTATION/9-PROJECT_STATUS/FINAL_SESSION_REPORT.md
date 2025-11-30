@@ -160,7 +160,7 @@ if request.diagram_type == "c4":
             image_data = await render_diagram(...)
     except Exception as e:
         # Graceful error handling with fallback
-        logger.warning(f"Provider rendering failed: {e}, falling back...")
+        logger.info(f"Provider rendering failed: {e}, falling back...")
         image_data = await render_diagram(...)
 ```
 

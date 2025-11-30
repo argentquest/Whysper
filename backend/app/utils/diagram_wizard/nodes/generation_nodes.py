@@ -116,13 +116,13 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Validate Structurizr syntax (basic check)
         if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
-            logger.warning(
+            logger.info(
                 "Structurizr workspace missing or invalid format",
                 extra={'session_id': session_id}
             )
 
         if not clean_structurizr or not clean_structurizr.startswith("model"):
-            logger.warning(
+            logger.info(
                 "clean_structurizr missing or invalid format",
                 extra={'session_id': session_id}
             )
@@ -131,7 +131,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         if json_representation:
             is_valid, errors = ArchitectureSchema.validate(json_representation)
             if not is_valid:
-                logger.warning(
+                logger.info(
                     f"Legacy JSON schema validation issues: {errors}",
                     extra={'session_id': session_id}
                 )
@@ -145,12 +145,14 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             await update_callback({
                 "status": "json_generated",
                 "message": "Successfully validated and finalized architecture representation.",
+                "json_generation_output": ai_response_str,
             })
 
         return {
             "structurizr_workspace": structurizr_workspace,
             "clean_structurizr": clean_structurizr,
             "json_representation": json_representation,
+            "json_generation_output": ai_response_str,
         }
 
     except json.JSONDecodeError as e:
@@ -168,6 +170,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             "structurizr_workspace": state.get("structurizr_workspace", ""),
             "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
+            "json_generation_output": ai_response_str,
         }
 
     except Exception as e:
@@ -202,20 +205,61 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
         - awaiting_diagram_type_selection: True (pauses workflow for user input)
     """
     session_id = state.get("_session_id")
+
+    # Check if user has already selected a diagram type (resuming after selection)
+    if state.get("user_selected_diagram_type", False):
+        logger.info("✅ User has already selected diagram type, proceeding to code generation...",
+                   extra={'session_id': session_id} if session_id else {})
+        # Return existing state values without changing anything
+        return {
+            "keyword_scores": state.get("keyword_scores", {}),
+            "user_selected_diagram_type": True,  # Keep the selection flag
+            "analysis_text": state.get("analysis_text", ""),
+            "json_generation_output": state.get("json_generation_output", ""),
+            "current_state": SessionState.GENERATING
+        }
+
     final_design_summary = state.get("final_design_summary", "")
     json_representation = state.get("json_representation", {})
+    json_generation_output = state.get("json_generation_output", "")
+    clarification_history = state.get("clarification_history", [])
+    json_generation_output = state.get("json_generation_output", "")
 
     logger.info("🎯 Analyzing diagram type options based on clarification results...",
                extra={'session_id': session_id} if session_id else {})
 
     # Combine design summary and JSON metadata for better keyword analysis
-    analysis_text = final_design_summary
+    analysis_parts = []
+    if final_design_summary:
+        analysis_parts.append(final_design_summary)
+
     if json_representation and isinstance(json_representation, dict):
         metadata = json_representation.get("metadata", {})
         if metadata:
             description = metadata.get("description", "")
             if description:
-                analysis_text = f"{analysis_text}\n{description}"
+                analysis_parts.append(description)
+        # As a fallback, include the JSON structure for keyword matching
+        try:
+            analysis_parts.append(json.dumps(json_representation))
+        except Exception:
+            pass
+
+    # Include clarification history text as additional context
+    if clarification_history and isinstance(clarification_history, list):
+        history_text = "\n".join(
+            msg.get("content", "")
+            for msg in clarification_history
+            if isinstance(msg, dict)
+        )
+        if history_text:
+            analysis_parts.append(history_text)
+
+    # Include raw JSON generation output for richer keyword context
+    if json_generation_output:
+        analysis_parts.append(json_generation_output)
+
+    analysis_text = "\n".join(part for part in analysis_parts if part).strip()
 
     # Determine diagram type using keyword scoring (get recommended type and all scores)
     recommended_type, keyword_scores = determine_diagram_type(analysis_text)
@@ -233,6 +277,8 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
             "message": "Please select your preferred diagram type",
             "recommended_diagram_type": recommended_type.value,
             "keyword_scores": keyword_scores,
+            "analysis_text": analysis_text,
+            "json_generation_output": json_generation_output,
             "awaiting_user_selection": True,
             "message_type": "diagram_type_selection"
         })
@@ -240,6 +286,8 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     return {
         "keyword_scores": keyword_scores,
         "user_selected_diagram_type": False,  # Waiting for user selection
+        "analysis_text": analysis_text,
+        "json_generation_output": json_generation_output,
         "current_state": SessionState.GENERATING
     }
 
@@ -255,14 +303,24 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     Returns:
         diagram_code: The generated diagram code
     """
+
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     diagram_type_str = get_diagram_type_str(diagram_type)
     json_representation = state.get("json_representation", {})
+    json_generation_output = state.get("json_generation_output", "")
     model_id = state.get("model_id")  # Get selected model from state
+    session_id = state.get("_session_id")
 
-    # Get code generation prompt template
-    prompt_key = f"generate_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(prompt_key, model_id=model_id)
+    # Try specialized first-pass system prompt per diagram type
+    firstpass_key = f"firstpass_{diagram_type_str.lower()}"
+    prompt_template = get_prompt(firstpass_key, model_id=model_id)
+    prompt_source = firstpass_key
+
+    # Fallback to standard generation prompt template
+    if not prompt_template:
+        prompt_key = f"generate_{diagram_type_str.lower()}"
+        prompt_template = get_prompt(prompt_key, model_id=model_id)
+        prompt_source = prompt_key
 
     if not prompt_template:
         # Fallback prompt if specific prompt not found
@@ -274,12 +332,13 @@ JSON Representation:
 {json.dumps(json_representation, indent=2)}
 
 Generate clean, syntactically correct {diagram_type_str} code:"""
-
-    # Get session ID for SSE logging
-    session_id = state.get("_session_id")
+        prompt_source = "inline_fallback"
 
     logger.info(f"Generating {diagram_type_str} code using AI (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
+
+    # Prefer the raw JSON generation output if available; otherwise use structured JSON
+    llm_input_payload = json_generation_output if json_generation_output else json.dumps(json_representation, indent=2)
 
     # Send progress update to frontend
     update_callback = state.get("_update_callback")
@@ -287,11 +346,22 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         await update_callback({
             "status": "generating",
             "message": f"AI is generating {diagram_type_str} diagram code...",
-            "message_type": "progress"
+            "message_type": "progress",
+            "diagram_type": diagram_type_str,
+            "generation_payload_preview": llm_input_payload[:1000],  # truncate for safety
         })
 
+    logger.info(
+        f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={len(llm_input_payload)}",
+        extra={'session_id': session_id} if session_id else {}
+    )
+    logger.info(
+        f"Payload preview (first 800 chars): {llm_input_payload[:800]}",
+        extra={'session_id': session_id} if session_id else {}
+    )
+
     try:
-        ai_response = await call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id, model_id=model_id)
+        ai_response = await call_llm(prompt_template, llm_input_payload, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
         logger.error(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})

@@ -57,6 +57,8 @@ interface DiagramTypeSelectionScreenProps {
   loading: boolean;
   recommendedDiagramType: string;
   keywordScores: { [key: string]: number };
+  analysisText?: string;
+  jsonGenerationOutput?: string;
   onSelectDiagramType: (diagramType: string) => void;
 }
 
@@ -108,6 +110,8 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
   loading,
   recommendedDiagramType,
   keywordScores,
+  analysisText,
+  jsonGenerationOutput,
   onSelectDiagramType,
 }) => {
   return (
@@ -135,6 +139,50 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
               Choose your preferred option below.
             </Paragraph>
           </div>
+
+          {analysisText && (
+            <Card
+              title="AI Response"
+              size="small"
+              style={{ marginBottom: 24, borderRadius: 8 }}
+              bodyStyle={{ background: '#fafafa' }}
+            >
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                {analysisText}
+              </pre>
+            </Card>
+          )}
+
+          {jsonGenerationOutput && (
+            <Card
+              title="JSON Generation Output"
+              size="small"
+              style={{ marginBottom: 24, borderRadius: 8 }}
+              bodyStyle={{ background: '#fafafa' }}
+            >
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                {jsonGenerationOutput}
+              </pre>
+            </Card>
+          )}
 
           {/* Summary Table of Diagram Type Scores */}
           <div style={{ marginBottom: 32 }}>

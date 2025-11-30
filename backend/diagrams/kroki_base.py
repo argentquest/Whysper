@@ -96,13 +96,13 @@ class KrokiBaseProvider(BaseDiagramProvider):
                         f"Kroki server is available at {self.server_url}"
                     )
                 else:
-                    self.logger.warning(
+                    self.logger.info(
                         f"Kroki server health check failed: "
                         f"{response.status_code}"
                     )
             except Exception as e:
                 # Handle network errors and mark server as unavailable
-                self.logger.warning(f"Kroki server not reachable: {e}")
+                self.logger.info(f"Kroki server not reachable: {e}")
                 self._server_available = False
 
         return self._server_available

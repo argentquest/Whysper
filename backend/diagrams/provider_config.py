@@ -212,7 +212,7 @@ class ProviderConfigLoader:
         root_config_file = self.diagrams_root / "config.json"
 
         if not root_config_file.exists():
-            logger.warning("No root config.json found, creating default")
+            logger.info("No root config.json found, creating default")
             default_config = RootConfig()
             self._save_root_config(default_config)
             return default_config
@@ -264,7 +264,7 @@ class ProviderConfigLoader:
 
         # If no provider config exists, create minimal default
         if not provider_config_file.exists():
-            logger.warning(f"No config.json in {provider_id}, using defaults only")
+            logger.info(f"No config.json in {provider_id}, using defaults only")
             return self._create_minimal_provider_config(provider_id)
 
         try:

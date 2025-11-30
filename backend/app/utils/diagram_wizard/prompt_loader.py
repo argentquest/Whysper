@@ -100,6 +100,12 @@ def load_prompts() -> Dict[str, str]:
                 generate_path, "Structurizr Generation Prompt"
             )
 
+    # Load first-pass diagram code generation prompts (diagram-type specific system prompts)
+    for diag_type in ["mermaid", "d2", "plantuml", "structurizr"]:
+        firstpass_path = prompt_dir / f"FIRSTPASS_{diag_type.upper()}.md"
+        if firstpass_path.exists():
+            _prompt_cache[f"firstpass_{diag_type}"] = _load_full_file(firstpass_path)
+
     # Load refinement prompts for different diagram formats
     refine_path = prompt_dir / "REFINE_PROMPTS.md"
     if refine_path.exists():

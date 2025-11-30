@@ -189,7 +189,7 @@ class DiagramFactoryService:
                        f"{len(self.structure_words)} structure words from keywords.json")
                        
         except FileNotFoundError:
-            logger.warning("keywords.json file not found, using default keywords")
+            logger.info("keywords.json file not found, using default keywords")
             # Fallback to default keywords if file not found
             self.entity_words = [
                 "user", "system", "database", "service", "component", "server",
@@ -396,16 +396,19 @@ class DiagramFactoryService:
             
             result = await self.graph.ainvoke(initial_state)
 
+            # Always update session with latest results first
+            self.session.graph_state = result
+            self.session.diagram_code = result.get("diagram_code", "")
+            self.session.svg_output = result.get("svg_output", "")
+
             # Check if the result is the end of the graph
             if result.get("message") == "__end__":
                 await self._push_update({
-                    "status": "completed", 
+                    "status": "completed",
                     "message": "Diagram generation completed",
                     "message_role": "assistant"
                 })
                 return
-
-            self.session.graph_state = result
 
             # If the graph is still waiting for clarification, do not progress further yet.
             if not result.get("llm_ready"):
@@ -540,6 +543,7 @@ class DiagramFactoryService:
             diagram_type: Selected diagram type (Mermaid, D2, PlantUML, Structurizr)
         """
         try:
+            logger.info(f"[select_diagram_type] received selection: {diagram_type} for session {self.session.session_id}")
             if self.session.graph_state:
                 # Import DiagramType enum to validate and set the selection
                 from app.utils.diagram_wizard.graph_state import DiagramType
@@ -558,6 +562,7 @@ class DiagramFactoryService:
                 # Set the user's selected diagram type
                 self.session.graph_state["diagram_type"] = diagram_type_map[diagram_type]
                 self.session.graph_state["user_selected_diagram_type"] = True
+                logger.info(f"[select_diagram_type] graph_state updated with type {diagram_type_map[diagram_type]} for session {self.session.session_id}")
 
             await self._push_update({
                 "status": "diagram_type_selected",
@@ -565,9 +570,11 @@ class DiagramFactoryService:
                 "diagram_type": diagram_type,
                 "message_role": "assistant"
             })
+            logger.info(f"[select_diagram_type] pushed diagram_type_selected update for session {self.session.session_id}")
 
             # Resume the workflow now that the user selected diagram type
             self._resume_graph_if_idle("user selected diagram type")
+            logger.info(f"[select_diagram_type] resumed graph workflow for session {self.session.session_id}")
 
         except Exception as e:
             logger.error(f"Error selecting diagram type: {e}")
@@ -614,7 +621,7 @@ class DiagramFactoryService:
             reason (str): The reason for resuming (for logging purposes).
         """
         if not self.session.graph_state:
-            logger.warning(
+            logger.info(
                 "Cannot resume LangGraph workflow without state",
                 extra={'session_id': self.session.session_id}
             )
@@ -698,4 +705,7 @@ class DiagramFactoryService:
             "diagramType": self.session.diagram_type,
             "isRunning": self.session.is_running,
             "jsonRepresentation": self.session.graph_state.get("json_representation") if self.session.graph_state else None,
+            "structurizr_workspace": self.session.graph_state.get("structurizr_workspace") if self.session.graph_state else None,
+            "clean_structurizr": self.session.graph_state.get("clean_structurizr") if self.session.graph_state else None,
+            "json_generation_output": self.session.graph_state.get("json_generation_output") if self.session.graph_state else None,
         }

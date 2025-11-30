@@ -6,7 +6,7 @@
 // @ts-nocheck
 import React from 'react';
 import type { AgentPrompt } from '../../types';
-import { Layout, Button, Select, Typography, Tooltip, Dropdown, theme as antdTheme } from 'antd';
+import { Layout, Button, Select, Typography, Tooltip, theme as antdTheme } from 'antd';
 import {
   MoonOutlined,
   SunOutlined,
@@ -47,6 +47,7 @@ const { Option } = Select;
  * @property {Function} onD2Tester - Callback to open D2 tester
  * @property {Function} onDiagramWizard - Callback to open Diagram Wizard
  * @property {Function} onArchStudio - Callback to open Architecture Studio
+ * @property {Function} onHome - Callback to return to landing page
  * @property {string} [currentSystem] - Currently selected system prompt
  * @property {Function} onSystemChange - Callback when system prompt changes
  * @property {Function} onRunSystemPrompt - Callback to execute system prompt
@@ -69,6 +70,7 @@ interface HeaderProps {
   onD2Tester: () => void;
   onDiagramWizard: () => void;
   onArchStudio: () => void;
+  onHome: () => void;
   currentSystem?: string;
   onSystemChange: (system: string) => void;
   onRunSystemPrompt: (systemName: string) => void;
@@ -104,6 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
   onD2Tester,
   onDiagramWizard,
   onArchStudio,
+  onHome,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -122,78 +125,14 @@ export const Header: React.FC<HeaderProps> = ({
   const headerBorder = brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? BrandColors.primary;
   const headerText = brandTokens.colorBrandHeaderText ?? '#ffffff';
   const mastheadActions = [
-    { label: 'Set Context', handler: onSetContext, tooltip: 'Select files to give the assistant context' },
-    { label: 'New Session', handler: onNewSession, tooltip: 'Reset everything and start fresh' },
-    { label: 'Generate Docs', handler: onGenerateDocumentation, tooltip: 'Create documentation from the current context' },
-    { label: 'New Chat', handler: onNewConversation, tooltip: 'Open a new conversation tab' },
-    { label: 'Edit File', handler: onEditFile, tooltip: 'Jump into edit mode for a file' },
-    { label: 'ArchStudio', handler: onArchStudio, tooltip: 'Open Architecture Studio' },
-    { label: 'DiagramWizard', handler: onDiagramWizard, tooltip: 'Launch Diagram Wizard' },
+    { label: 'Home', handler: onHome, tooltip: 'Return to landing page' },
+    { label: 'Settings', handler: onOpenSettings, tooltip: 'Configure application settings' },
   ];
   const actionSurface = brandTokens.colorBgContainer ?? BrandColors.brand?.white ?? '#ffffff';
   const actionText = brandTokens.colorText ?? BrandColors.text?.primary ?? '#231f20';
   const actionSubtleText = brandTokens.colorTextSecondary ?? BrandColors.text?.secondary ?? '#5d5550';
   const neutralBorder = brandTokens.colorBorder ?? BrandColors.neutral?.stroke ?? '#d9d9d9';
   const containerPadding = 'clamp(16px, 4vw, 48px)';
-  const toolMenuItems = [
-    {
-      key: 'system-message',
-      label: 'System Message',
-      icon: <BookOutlined />,
-      onClick: onSystemMessage,
-    },
-    {
-      key: 'code-fragments',
-      label: 'Code Fragments',
-      icon: <CodeOutlined />,
-      onClick: onCodeFragments,
-    },
-    {
-      key: 'toggle-theme',
-      label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} Theme`,
-      icon: theme === 'light' ? <MoonOutlined /> : <SunOutlined />,
-      onClick: onToggleTheme,
-    },
-    {
-      key: 'theme-picker',
-      label: 'Choose Theme',
-      icon: <BgColorsOutlined />,
-      onClick: onOpenThemePicker,
-    },
-    {
-      key: 'settings',
-      label: 'Settings',
-      icon: <SettingOutlined />,
-      onClick: onOpenSettings,
-    },
-    {
-      key: 'mermaid-tester',
-      label: 'Mermaid Tester',
-      icon: <PlayCircleOutlined />,
-      onClick: onMermaidTester,
-    },
-    {
-      key: 'd2-tester',
-      label: 'D2 Tester',
-      icon: <PlayCircleOutlined />,
-      onClick: onD2Tester,
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'about',
-      label: 'About',
-      icon: <InfoCircleOutlined />,
-      onClick: onAbout,
-    },
-    {
-      key: 'help',
-      label: 'Help',
-      icon: <QuestionCircleOutlined />,
-      onClick: onHelp,
-    },
-  ];
 
   const renderBrandLogo = () => {
     if (Brand.logo?.type === 'image' && Brand.logo.src) {
@@ -414,29 +353,6 @@ export const Header: React.FC<HeaderProps> = ({
                     </Tooltip>
                   </li>
                 ))}
-                <li>
-                  <Tooltip title="Open tools & settings">
-                    <Dropdown
-                      menu={{ items: toolMenuItems }}
-                      trigger={['click']}
-                    >
-                      <button
-                        type="button"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: headerText,
-                          fontSize: 13,
-                          letterSpacing: 0.5,
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Setting
-                      </button>
-                    </Dropdown>
-                  </Tooltip>
-                </li>
               </ul>
             </nav>
 

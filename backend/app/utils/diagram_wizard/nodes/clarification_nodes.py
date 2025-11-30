@@ -109,7 +109,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
     if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
-        logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+        logger.info(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
                       extra={'session_id': state.get("_session_id")})
         # Send update to frontend asking for user confirmation even though timeout reached
         update_callback = state.get("_update_callback")
@@ -212,6 +212,7 @@ Determine if you have enough information or need to ask more questions."""
                    extra={'session_id': session_id} if session_id else {})
 
         question = ai_response.get("question")
+        analysis_summary = ai_response.get("analysis_summary", "")
         clarity_score = ai_response.get("clarity_score", 50)
         ready = ai_response.get("ready", False)
         json_representation = ai_response.get("json_representation", {})
@@ -238,6 +239,7 @@ Determine if you have enough information or need to ask more questions."""
             await update_callback({
                 "status": "clarifying",
                 "question": question,
+                "analysis_summary": analysis_summary,
                 "clarity_score": clarity_score,
                 "score_target": score_target,
                 "json_representation": json_representation,
@@ -263,6 +265,7 @@ Determine if you have enough information or need to ask more questions."""
                 await update_callback({
                     "status": "clarification_ready",
                     "message": summary,
+                    "analysis_summary": analysis_summary,
                     "clarity_score": clarity_score,
                     "score_target": score_target,
                     "clarity_scores": updated_clarity_scores,

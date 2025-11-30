@@ -88,7 +88,7 @@ class ProviderRegistry:
                     self.register(provider)
                     logger.info(f"✅ Registered provider: {provider_id}")
                 else:
-                    logger.warning(f"⚠️  No provider class found in {provider_id}")
+                    logger.info(f"⚠️  No provider class found in {provider_id}")
 
             except ImportError as e:
                 logger.debug(f"⚠️  Could not import provider {provider_id}: {e}")
@@ -277,7 +277,7 @@ class ProviderRegistry:
                             if p.provider_id == preferred_provider_id:
                                 logger.debug(f"Using configured preference for {diagram_type}: {preferred_provider_id}")
                                 return p
-                        logger.warning(f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
+                        logger.info(f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
         except Exception as e:
             logger.debug(f"Could not load provider preferences from config: {e}")
 

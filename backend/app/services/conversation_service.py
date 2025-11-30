@@ -278,7 +278,7 @@ class ConversationSession:
         # Validate the directory using the codebase scanner
         is_valid, error_message = self.codebase_scanner.validate_directory(directory)
         if not is_valid:
-            logger.warning(f"Directory validation failed for {directory}: {error_message}")
+            logger.info(f"Directory validation failed for {directory}: {error_message}")
             return False, error_message, []
 
         logger.debug(f"Directory validated successfully: {directory}")
@@ -402,7 +402,7 @@ class ConversationSession:
             logger.info(f"✅ FILE ADDED SUCCESSFULLY! Total files: {len(self.selected_files)}")
             logger.info(f"📋 Current selected files: {self.selected_files}")
         else:
-            logger.warning(f"⚠️ File already in selection: {safe_path}")
+            logger.info(f"⚠️ File already in selection: {safe_path}")
 
         if make_persistent:
             self.app_state.set_persistent_files(self.selected_files)
@@ -600,7 +600,7 @@ class ConversationSession:
             if "```mermaid" in response_text:
                 logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response contains Mermaid code block"))
             else:
-                logger.warning(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response does NOT contain Mermaid code block"))
+                logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response does NOT contain Mermaid code block"))
 
         # Calculate timing and resources
         processing_time = time.time() - start_time
@@ -868,9 +868,9 @@ class ConversationSession:
                     return self._load_files(persistent_files)
             
             if is_first_message:
-                logger.warning("⚠️ First message but NO SELECTED FILES")
+                logger.info("⚠️ First message but NO SELECTED FILES")
             else:
-                logger.warning("⚠️ No selected files or persistent files available")
+                logger.info("⚠️ No selected files or persistent files available")
             
             return ""
 

@@ -35,6 +35,9 @@ export interface DiagramStatus {
   diagramType: string;
   isRunning: boolean;
   jsonRepresentation?: Record<string, unknown>;
+  structurizr_workspace?: string;
+  clean_structurizr?: string;
+  json_generation_output?: string;
   score?: number;
   score_info?: ScoreInfo;
   clarity_score?: number;
@@ -48,12 +51,15 @@ export interface DiagramUpdate extends DiagramStatus {
   message?: string;
   type?: string;
   question?: string;
+  analysis_summary?: string;
+  analysis_text?: string;
   message_role?: 'assistant' | 'user';
   error?: string;
   error_message?: string;
   validation_error?: string;
   recommended_diagram_type?: string;
   keyword_scores?: { [key: string]: number };
+  awaiting_user_confirmation?: boolean;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';

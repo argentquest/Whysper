@@ -157,7 +157,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
             connect_timeout = 30
             read_timeout = 120
         total_timeout = connect_timeout + read_timeout + 15
-
+  
         # Make the AI call in a worker thread with an overall timeout
         try:
             result = await asyncio.wait_for(
@@ -195,6 +195,13 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
 
         # Log successful AI response (visible via SSE)
         logger.info(f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s",
+                   extra={'session_id': session_id} if session_id else {})
+
+        # Log the FULL raw AI response for debugging
+        logger.info(f"📄 FULL USER HISTORY :\n{conversation_history}",
+                   extra={'session_id': session_id} if session_id else {})
+
+        logger.info(f"📄 FULL HISTORY :\n{user_content}",
                    extra={'session_id': session_id} if session_id else {})
 
         # Log the FULL raw AI response for debugging

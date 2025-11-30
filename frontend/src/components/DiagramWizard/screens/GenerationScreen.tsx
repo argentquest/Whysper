@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Layout, Button, Alert, Space, message } from 'antd';
+import { Layout, Button, Alert, Space, message, Tabs } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import styles from '../diagram-wizard.module.css';
 import ChatPanel from '../panels/Panel1_Chat';
@@ -41,6 +41,9 @@ interface GenerationScreenProps {
   clarifications: Array<{ question: string; answer?: string }>;
   sseConnected: boolean;
   exportModalOpen: boolean;
+  structurizrWorkspace?: string;
+  cleanStructurizr?: string;
+  jsonRepresentation?: Record<string, unknown> | null;
   onChangeModel: () => void;
   onNewDiagram: () => void;
   onExportClick: () => void;
@@ -68,6 +71,9 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   clarifications,
   sseConnected,
   exportModalOpen,
+  structurizrWorkspace,
+  cleanStructurizr,
+  jsonRepresentation,
   onExportModalClose,
   onCodeChange,
   error,
@@ -117,66 +123,159 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
           />
         )}
 
-        {/* Three-Panel Layout */}
-        <div style={{ display: 'flex', gap: '16px', padding: '0 24px', height: '100%', overflow: 'hidden' }}>
-          {/* Left Panel: Chat */}
-          <div style={{ flex: '0 0 25%', minWidth: '250px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <h4 style={{ marginBottom: '12px', flexShrink: 0 }}>Conversation</h4>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <ChatPanel
-                  messages={chatHistory}
-                  clarifications={clarifications}
-                  onSubmitClarification={() => {}}
-                  isClarifying={false}
-                  canConfirmReady={false}
-                  onConfirmReady={() => {}}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Center Panel: Preview */}
-          <div style={{ flex: '1', minWidth: '400px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <h4 style={{ marginBottom: '12px', flexShrink: 0 }}>Preview</h4>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <PreviewPanel
-                  svgOutput={svgOutput}
-                  isLoading={loading && !svgOutput}
-                  diagramType={status?.diagramType || "Mermaid"}
-                  error={status?.error_message || status?.error || error?.message || null}
-                  validationError={status?.validation_error || null}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel: Code Editor - Should not scroll and use full height */}
-          <div style={{ flex: '0 0 25%', minWidth: '250px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', flexShrink: 0 }}>
-                <h4 style={{ margin: 0 }}>Code</h4>
-                <Space size="small">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<CopyOutlined />}
-                    onClick={handleCopyCode}
-                    title="Copy code"
-                  />
-                </Space>
-              </div>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <CodeEditorPanel
-                  code={diagramCode}
-                  onChange={async (code: string) => onCodeChange?.(code)}
-                  diagramType="Mermaid"
-                  isLoading={loading}
-                />
-              </div>
-            </div>
-          </div>
+        {/* Tabbed layout for Conversation / Preview / Diagram Code */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 24px', minHeight: 0 }}>
+          <Tabs
+            defaultActiveKey="preview"
+            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            destroyOnHidden={false}
+            items={[
+              {
+                key: 'conversation',
+                label: 'Conversation',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <ChatPanel
+                        messages={chatHistory}
+                        clarifications={clarifications}
+                        onSubmitClarification={() => {}}
+                        isClarifying={false}
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'preview',
+                label: 'Preview',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <PreviewPanel
+                        svgOutput={svgOutput}
+                        isLoading={loading && !svgOutput}
+                        diagramType={status?.diagramType || status?.diagram_type || "Mermaid"}
+                        error={status?.error_message || status?.error || error?.message || null}
+                        validationError={status?.validation_error || null}
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'code',
+                label: 'Diagram Code',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={handleCopyCode}
+                          title="Copy code"
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <CodeEditorPanel
+                          code={diagramCode}
+                          onChange={async (code: string) => onCodeChange?.(code)}
+                          diagramType={status?.diagramType || status?.diagram_type || "Mermaid"}
+                          isLoading={loading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'workspace',
+                label: 'Workspace',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => structurizrWorkspace && navigator.clipboard.writeText(structurizrWorkspace)}
+                          title="Copy workspace"
+                          disabled={!structurizrWorkspace}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <CodeEditorPanel
+                          code={structurizrWorkspace || ''}
+                          onChange={(code: string) => {}}
+                          diagramType="Structurizr"
+                          isLoading={loading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'cleanWorkspace',
+                label: 'Clean Workspace',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => cleanStructurizr && navigator.clipboard.writeText(cleanStructurizr)}
+                          title="Copy clean workspace"
+                          disabled={!cleanStructurizr}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <CodeEditorPanel
+                          code={cleanStructurizr || ''}
+                          onChange={(code: string) => {}}
+                          diagramType="Structurizr"
+                          isLoading={loading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'fullJson',
+                label: 'Full JSON',
+                children: (
+                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => jsonRepresentation && navigator.clipboard.writeText(JSON.stringify(jsonRepresentation, null, 2))}
+                          title="Copy JSON"
+                          disabled={!jsonRepresentation}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <CodeEditorPanel
+                          code={jsonRepresentation ? JSON.stringify(jsonRepresentation, null, 2) : ''}
+                          onChange={(code: string) => {}}
+                          diagramType="JSON"
+                          isLoading={loading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
 
         {/* Footer with Actions */}

@@ -173,7 +173,7 @@ class SettingsService:
                     commands = json.load(f)
                 return commands
             else:
-                logger.warning(f"Subagent commands file not found: {commands_file}")
+                logger.info(f"Subagent commands file not found: {commands_file}")
                 return []
 
         except Exception as e:
@@ -199,7 +199,7 @@ class SettingsService:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     return f.read()
             else:
-                logger.warning(f"Agent prompt file not found: {file_path}")
+                logger.info(f"Agent prompt file not found: {file_path}")
                 return ""
 
         except Exception as e:
@@ -330,7 +330,7 @@ class SettingsService:
                     logger.debug(f"Loaded {len(options)} options for agent '{agent_id}'")
                     return options
             else:
-                logger.warning(f"Agent options file not found: {agentoption_file}")
+                logger.info(f"Agent options file not found: {agentoption_file}")
                 return []
 
         except json.JSONDecodeError as e:

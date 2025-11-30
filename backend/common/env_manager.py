@@ -308,7 +308,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             score_target_str = env_vars.get("SCORE_TARGET", "80")
             return int(score_target_str)
         except (ValueError, TypeError) as e:
-            logger.warning(f"Invalid SCORE_TARGET value, using default 80: {e}")
+            logger.info(f"Invalid SCORE_TARGET value, using default 80: {e}")
             return 80
 
 

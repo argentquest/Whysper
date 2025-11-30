@@ -2,6 +2,17 @@
 
 A modern, full-stack web application that provides AI-powered chat functionality with code analysis, file management, and multi-provider AI integration.
 
+## 🎉 Recent Updates (November 29, 2025)
+
+**Critical Bug Fixes & Performance Enhancements:**
+
+- ✅ Fixed diagram type selection not proceeding to code generation
+- ✅ Fixed SVG not displaying in Preview tab
+- ✅ Made provider system async to support long-running LLM operations (30-90s) without blocking
+- ✅ Added real-time progress updates during diagram rendering
+
+📖 **See:** [Bug Fixes Documentation](DOCUMENTATION/3-DIAGRAM_SYSTEM/DIAGRAM_WIZARD/BUGFIXES_2025_11_29.md)
+
 ## 📚 Documentation
 
 For detailed documentation, please refer to the `DOCUMENTATION/` directory:
@@ -268,5 +279,3 @@ This project is provided as-is for educational and development purposes.
 
 ## Change History
 
-- **2025-11-05:** Implemented LLM-powered diagram generation system with OpenRouter integration, provider infrastructure with multi-provider support, SSE streaming for real-time updates, and 13 architecture agents. Backend fully tested and production ready.
-- **2025-10-11, GEMINI:** Fixed a bug in the C4 diagram detection logic. The detection is now case-sensitive, which aligns with the documentation. Also fixed build errors caused by unused variables.

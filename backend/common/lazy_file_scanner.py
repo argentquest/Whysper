@@ -158,7 +158,7 @@ class LazyCodebaseScanner:
                             if folder_name:
                                 self.ignore_folders.add(folder_name)
             except Exception as e:
-                logger.warning(
+                logger.info(
                     "Failed to parse .gitignore for ignore_folders",
                     path=gitignore_path,
                     error=str(e),
@@ -199,7 +199,7 @@ class LazyCodebaseScanner:
         start_time = time.time()
 
         if not self._is_directory_valid(directory):
-            logger.warning("Invalid directory for scanning", directory=directory)
+            logger.info("Invalid directory for scanning", directory=directory)
             return
 
         # Load gitignore patterns for file exclusion
@@ -219,7 +219,7 @@ class LazyCodebaseScanner:
                         f"Loaded {len(gitignore_patterns)} gitignore patterns"
                     )
             except Exception as e:
-                logger.warning(
+                logger.info(
                     "Failed to load .gitignore", path=gitignore_path, error=str(e)
                 )
                 pass
@@ -359,7 +359,7 @@ class LazyCodebaseScanner:
                     return cached_content.content
             except OSError:
                 # File doesn't exist anymore, remove from cache
-                logger.warning(
+                logger.info(
                     "Cached file no longer exists, removing from cache", file=file_path
                 )
                 self._remove_from_cache(file_path)
@@ -452,7 +452,7 @@ class LazyCodebaseScanner:
                     files_skipped += 1
                     continue
             except OSError:
-                logger.warning("Could not get file size, skipping", file=file_path)
+                logger.info("Could not get file size, skipping", file=file_path)
                 files_skipped += 1
                 continue
 

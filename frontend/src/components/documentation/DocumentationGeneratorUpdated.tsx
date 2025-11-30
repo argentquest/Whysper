@@ -1,5 +1,5 @@
 /**
- * Updated Documentation Generator component for Whysper.
+ * Updated Documentation Generator component for the active brand.
  * 
  * This component provides a user interface for generating documentation
  * from selected code files with various options and formats, including export.
@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Select, Switch, Card, Space, Typography, Divider, Alert, Spin, Tabs, Radio } from 'antd';
 import { FileTextOutlined, SettingOutlined, ExportOutlined } from '@ant-design/icons';
 import ApiService from '../../services/api';
+import { Brand } from 'branding';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -66,6 +67,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
   const [templates, setTemplates] = useState<Array<Record<string, any>>>([]);
   const [exportFormats, setExportFormats] = useState<ExportFormatOption[]>([]);
   const [activeTab, setActiveTab] = useState<string>('generate');
+  const brandTagline = Brand.tagline || Brand.name || 'AI Assistant';
   const [request, setRequest] = useState<DocumentationRequest>({
     file_paths: selectedFiles,
     documentation_type: 'api',
@@ -78,7 +80,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     format: 'html',
     template: 'default',
     title: 'Documentation',
-    author: 'Whysper'
+    author: brandTagline
   });
 
   // Load available templates

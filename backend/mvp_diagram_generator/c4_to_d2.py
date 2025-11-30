@@ -94,7 +94,7 @@ def convert_c4_to_d2(c4_code: str) -> str:
     
     # Input validation - handle None and invalid inputs
     if not c4_code or not isinstance(c4_code, str):
-        logger.warning("Empty or invalid C4 code provided")
+        logger.info("Empty or invalid C4 code provided")
         return ""
     
     logger.debug(f"C4 code length: {len(c4_code)} characters")

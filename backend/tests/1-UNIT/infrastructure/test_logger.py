@@ -363,7 +363,7 @@ class TestCodeChatLogger:
             name="test_logger",
             log_dir=str(log_file_path.parent)
         )
-        logger.warning("Warning message")
+        logger.info("Warning message")
         assert True
 
     def test_logger_error_level(self, log_file_path):
@@ -504,7 +504,7 @@ class TestLoggerIntegration:
         # Log at different levels
         logger.debug("Debug message")
         logger.info("Info message")
-        logger.warning("Warning message")
+        logger.info("Warning message")
         logger.error("Error message")
 
         # Check file was written

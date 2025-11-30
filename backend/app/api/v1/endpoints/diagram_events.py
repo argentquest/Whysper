@@ -82,7 +82,7 @@ def log_diagram_event(event: DiagramEventPayload):
 
         # Log errors as warnings, successful events as info
         if event.error_message:
-            logger.warning(f"{log_message}: {event.error_message}")
+            logger.info(f"{log_message}: {event.error_message}")
         else:
             logger.info(log_message)
 

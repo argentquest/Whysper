@@ -471,7 +471,7 @@ class D2V1Provider(BaseDiagramProvider):
             if self._cli_available:
                 self.logger.info("D2 CLI is available")
             else:
-                self.logger.warning("D2 CLI not found - install from: https://d2lang.com/tour/install")
+                self.logger.info("D2 CLI not found - install from: https://d2lang.com/tour/install")
 
         return self._cli_available
 

@@ -189,7 +189,7 @@ class CorrectionSessionManager:
         session = self._sessions.get(session_id)
 
         if session and session.check_expired():
-            logger.warning(f"[SESSION {session_id[:8]}] Session has expired")
+            logger.info(f"[SESSION {session_id[:8]}] Session has expired")
             return None
 
         return session

@@ -14,6 +14,7 @@ import {
   DesktopOutlined,
 } from '@ant-design/icons';
 import { Modal } from '../common/Modal';
+import { Brand } from 'branding';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -69,6 +70,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 }) => {
   const version = '2.0.0';
   const buildDate = new Date().toLocaleDateString();
+  const brandTagline = Brand.tagline || Brand.name || 'AI Assistant';
 
   /**
    * Handles creating a new chat tab
@@ -90,7 +92,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
   return (
     <Modal
-      title="About Whysper"
+      title={`About ${brandTagline}`}
       open={open}
       onCancel={onCancel}
       width={600}
@@ -106,7 +108,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Logo and Title */}
         <div>
           <div className="text-6xl mb-4">🧠</div>
-          <Title level={2} className="!mb-2">Whysper</Title>
+          <Title level={2} className="!mb-2">{brandTagline}</Title>
           <Text type="secondary" className="text-lg">
             AI-Powered Code Analysis & Development Assistant
           </Text>
@@ -129,7 +131,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Description */}
         <div className="text-left space-y-4">
           <Paragraph>
-            Whysper is a modern, full-stack web application that brings AI assistance 
+            {brandTagline} is a modern, full-stack web application that brings AI assistance 
             directly to your development workflow. It enables developers to select any 
             codebase, choose from specialized AI experts, and get intelligent insights, 
             code reviews, and architectural guidance through an intuitive web interface.
@@ -227,7 +229,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         {/* Credits */}
         <div className="text-center">
           <Text type="secondary" className="text-sm flex items-center justify-center gap-1">
-            Made with <HeartOutlined className="text-red-500" /> by the Whysper Team
+            Made with <HeartOutlined className="text-red-500" /> by the {brandTagline} Team
           </Text>
         </div>
       </div>

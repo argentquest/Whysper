@@ -7,9 +7,10 @@ Provides common functionality and enforces provider interface.
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Callable, Awaitable
 from datetime import datetime
 import logging
+import asyncio
 
 from .provider_config import ProviderConfig, load_provider_config
 from .models import (
@@ -133,7 +134,7 @@ class BaseDiagramProvider(ABC):
     def _validate_config(self):
         """Validate that config matches provider implementation"""
         if self.config.provider_id != self.provider_id:
-            self.logger.warning(
+            self.logger.info(
                 f"Config provider_id '{self.config.provider_id}' does not match "
                 f"implementation provider_id '{self.provider_id}'"
             )
@@ -288,6 +289,21 @@ class BaseDiagramProvider(ABC):
     # CONCRETE METHODS - Provided by base class
     # =====================================================================
 
+    async def _send_progress(
+        self,
+        progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]],
+        update: Dict[str, Any]
+    ):
+        """
+        Send progress update via callback if provided.
+
+        Args:
+            progress_callback: Optional async callback function
+            update: Progress update data to send
+        """
+        if progress_callback:
+            await progress_callback(update)
+
     @log_method_call
     def set_llm_correction_service(self, service):
         """Set LLM correction service for this provider"""
@@ -344,13 +360,14 @@ class BaseDiagramProvider(ABC):
         return output_format.lower() in [fmt.lower() for fmt in self.supported_output_formats]
 
     @log_method_call
-    def render_with_validation(
+    async def render_with_validation(
         self,
         code: str,
         output_format: str = "svg",
         auto_fix: Optional[bool] = None,
         llm_correction: Optional[bool] = None,
         max_retries: Optional[int] = None,
+        progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
         **options
     ) -> RenderResult:
         """
@@ -479,12 +496,24 @@ class BaseDiagramProvider(ABC):
 
         # Step 1: Initial validation
         self.logger.info(f"[{self.provider_id}] Step 1/4: Validating code...")
+        await self._send_progress(progress_callback, {
+            "status": "validating",
+            "message": f"Validating {self.diagram_type} code...",
+            "step": "1/4"
+        })
+
         validation_result = self.validate_code(code, **options)
         current_code = code
 
         # Step 2: Pattern-based auto-fix
         if not validation_result.is_valid and auto_fix and self.supports_capability(ProviderCapability.AUTO_FIX):
             self.logger.info(f"[{self.provider_id}] Step 2/4: Attempting pattern-based auto-fix...")
+            await self._send_progress(progress_callback, {
+                "status": "auto_fixing",
+                "message": f"Attempting pattern-based auto-fix for {self.diagram_type}...",
+                "step": "2/4"
+            })
+
             validation_result = self.auto_fix_pattern_based(
                 current_code, validation_result.error, **options
             )
@@ -492,17 +521,34 @@ class BaseDiagramProvider(ABC):
             if validation_result.auto_fixed and validation_result.fixed_code:
                 current_code = validation_result.fixed_code
                 self.logger.info(f"[{self.provider_id}] ✅ Pattern-based fix successful")
+                await self._send_progress(progress_callback, {
+                    "status": "auto_fixed",
+                    "message": f"✅ Pattern-based fix successful",
+                    "step": "2/4"
+                })
 
         # Step 3: LLM-based correction
         if not validation_result.is_valid and llm_correction and self.supports_capability(ProviderCapability.LLM_CORRECTION):
             self.logger.info(f"[{self.provider_id}] Step 3/4: Attempting LLM-based correction...")
-            validation_result = self._attempt_llm_correction(
-                current_code, validation_result.error, max_retries, **options
+            await self._send_progress(progress_callback, {
+                "status": "llm_correcting",
+                "message": f"Attempting AI-powered correction for {self.diagram_type}...",
+                "step": "3/4",
+                "max_retries": max_retries
+            })
+
+            validation_result = await self._attempt_llm_correction(
+                current_code, validation_result.error, max_retries, progress_callback, **options
             )
 
             if validation_result.llm_corrected and validation_result.fixed_code:
                 current_code = validation_result.fixed_code
                 self.logger.info(f"[{self.provider_id}] ✅ LLM correction successful")
+                await self._send_progress(progress_callback, {
+                    "status": "llm_corrected",
+                    "message": f"✅ AI correction successful",
+                    "step": "3/4"
+                })
 
         # If still invalid, return error
         if not validation_result.is_valid:
@@ -520,7 +566,20 @@ class BaseDiagramProvider(ABC):
 
         # Step 4: Render
         self.logger.info(f"[{self.provider_id}] Step 4/4: Rendering to {output_format}...")
+        await self._send_progress(progress_callback, {
+            "status": "rendering",
+            "message": f"Rendering {self.diagram_type} to {output_format.upper()}...",
+            "step": "4/4"
+        })
+
         render_result = self.render(current_code, output_format, **options)
+
+        if render_result.success:
+            await self._send_progress(progress_callback, {
+                "status": "render_complete",
+                "message": f"✅ {self.diagram_type} rendered successfully",
+                "step": "4/4"
+            })
 
         # Update metadata
         duration = (datetime.now() - start_time).total_seconds()
@@ -535,17 +594,18 @@ class BaseDiagramProvider(ABC):
         return render_result
 
     @log_method_call
-    def _attempt_llm_correction(
+    async def _attempt_llm_correction(
         self,
         code: str,
         error_message: str,
         max_retries: int,
+        progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
         **options
     ) -> ValidationResult:
         """Attempt LLM-based correction with retries"""
 
         if not self._llm_correction_service or not self._llm_correction_service.is_available():
-            self.logger.warning(f"[{self.provider_id}] LLM correction service not available")
+            self.logger.info(f"[{self.provider_id}] LLM correction service not available")
             return ValidationResult(
                 is_valid=False,
                 error=error_message,
@@ -559,6 +619,15 @@ class BaseDiagramProvider(ABC):
         for attempt in range(1, max_retries + 1):
             self.logger.info(f"[{self.provider_id}] LLM correction attempt {attempt}/{max_retries}")
 
+            # Send progress update for retry attempt
+            await self._send_progress(progress_callback, {
+                "status": "llm_correcting",
+                "message": f"AI correction attempt {attempt}/{max_retries}...",
+                "step": "3/4",
+                "attempt": attempt,
+                "max_retries": max_retries
+            })
+
             # Request correction from LLM
             success, corrected_code, message = self._llm_correction_service.correct_diagram_code(
                 diagram_type=self.diagram_type,
@@ -570,7 +639,7 @@ class BaseDiagramProvider(ABC):
             )
 
             if not success:
-                self.logger.warning(f"[{self.provider_id}] LLM correction failed: {message}")
+                self.logger.info(f"[{self.provider_id}] LLM correction failed: {message}")
                 continue
 
             # Validate corrected code
@@ -587,7 +656,7 @@ class BaseDiagramProvider(ABC):
                 # Try again with new error
                 current_code = corrected_code
                 current_error = validation_result.error
-                self.logger.warning(
+                self.logger.info(
                     f"[{self.provider_id}] LLM correction attempt {attempt} still invalid: "
                     f"{current_error[:100] if current_error else 'Unknown error'}"
                 )

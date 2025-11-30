@@ -151,6 +151,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     PlantUML: 25,
     Structurizr: 25,
   }); // Suitability scores for each diagram type
+  const [diagramAnalysisText, setDiagramAnalysisText] = useState<string>(''); // Text shown on diagram type selection screen
+  const [diagramTypeSelected, setDiagramTypeSelected] = useState<boolean>(false); // Whether user picked a type yet
+  const [jsonGenerationOutput, setJsonGenerationOutput] = useState<string>(''); // Raw AI output from JSON generation
 
   // UI state - controls modal visibility and error display
   const [exportModalVisible, setExportModalVisible] = useState(false); // Export options modal
@@ -193,6 +196,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       if (typeof update.score_target === 'number') {
         setScoreTarget(update.score_target);
       }
+      if (update.json_generation_output) {
+        setJsonGenerationOutput(update.json_generation_output);
+      }
 
       // Handle different session status values and update UI accordingly
       // Status transitions: started -> analyzing -> clarifying -> generating -> rendering -> completed
@@ -229,67 +235,93 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // AI determined it has sufficient information to generate diagram
           message.success('Ready to proceed with diagram generation!');
           break;
-        case 'awaiting_diagram_type_selection':
-          // AI has analyzed diagram options and is waiting for user to select preferred type
-          message.info('Please select your preferred diagram type');
-          // Extract diagram type options and scores from update
-          if (update.recommended_diagram_type) {
-            setRecommendedDiagramType(update.recommended_diagram_type);
-          }
-          if (update.keyword_scores) {
-            setKeywordScores(update.keyword_scores);
-          }
-          // Navigate to diagram type selection screen
+      case 'json_generated':
+        // JSON representations produced
+        message.success('Architecture JSON generated!');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'awaiting_diagram_type_selection':
+        // AI has analyzed diagram options and is waiting for user to select preferred type
+        message.info('Analyzing content to recommend the best diagram type...');
+        setIsInAnalysisPhase(false);
+        // Extract diagram type options and scores from update
+        if (update.recommended_diagram_type) {
+          setRecommendedDiagramType(update.recommended_diagram_type);
+        }
+        if (update.keyword_scores) {
+        setKeywordScores(update.keyword_scores);
+      }
+      if (update.analysis_text) {
+        setDiagramAnalysisText(update.analysis_text);
+      }
+      setDiagramTypeSelected(false);
+      // Navigate to diagram type selection screen
+      setCurrentScreen('diagramTypeSelection');
+      break;
+      case 'diagram_type_selected':
+        // User selected diagram type, AI proceeding to code generation
+        message.success('Diagram type selected');
+        setDiagramTypeSelected(true);
+        setIsInAnalysisPhase(false);
+        // Navigate to generation screen
+        setCurrentScreen('generation');
+        break;
+      case 'generating_json':
+        // AI creating structured JSON representation of system architecture
+        setCurrentPhase(2); // Stay in preparation phase
+        message.loading('Preparing structured data...');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'generating':
+        // AI actively generating diagram code from structured data
+        setCurrentPhase(3); // Move to "Generation" phase in UI
+        message.loading('Generating diagram code...');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'code_generated':
+        // Diagram code has been successfully generated
+        message.success('Code generated!');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'refining':
+        // Diagram code had validation errors, AI attempting to fix them
+        message.warning('Refining code...');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'fallback_fix':
+        // Primary refinement failed, attempting fallback fix strategy
+        message.warning('Attempting fallback fix...');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'code_refined':
+        // Validation errors resolved, code is now valid
+        message.success('Code fixed!');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'rendering':
+        // Backend rendering diagram code to SVG using appropriate renderer
+        message.loading('Rendering SVG...');
+        setIsInAnalysisPhase(false);
+        break;
+      case 'rendered':
+        // SVG successfully generated and ready for display
+        message.success('Preview ready!');
+        setIsInAnalysisPhase(false);
+        if (!diagramTypeSelected) {
+          // If user hasn't picked a type yet, stay on selection screen
           setCurrentScreen('diagramTypeSelection');
           break;
-        case 'diagram_type_selected':
-          // User selected diagram type, AI proceeding to code generation
-          message.success('Diagram type selected');
-          // Navigate to generation screen
-          setCurrentScreen('generation');
-          break;
-        case 'generating_json':
-          // AI creating structured JSON representation of system architecture
-          setCurrentPhase(2); // Stay in preparation phase
-          message.loading('Preparing structured data...');
-          break;
-        case 'generating':
-          // AI actively generating diagram code from structured data
-          setCurrentPhase(3); // Move to "Generation" phase in UI
-          message.loading('Generating diagram code...');
-          break;
-        case 'code_generated':
-          // Diagram code has been successfully generated
-          message.success('Code generated!');
-          break;
-        case 'refining':
-          // Diagram code had validation errors, AI attempting to fix them
-          message.warning('Refining code...');
-          break;
-        case 'fallback_fix':
-          // Primary refinement failed, attempting fallback fix strategy
-          message.warning('Attempting fallback fix...');
-          break;
-        case 'code_refined':
-          // Validation errors resolved, code is now valid
-          message.success('Code fixed!');
-          break;
-        case 'rendering':
-          // Backend rendering diagram code to SVG using appropriate renderer
-          message.loading('Rendering SVG...');
-          break;
-        case 'rendered':
-          // SVG successfully generated and ready for display
-          message.success('Preview ready!');
-          break;
-        case 'completed':
-          // Entire workflow complete: analysis -> clarification -> generation -> rendering
-          setCurrentPhase(4); // Move to final "Rendering" phase
-          message.success('Complete! ✅');
+        }
+        break;
+      case 'completed':
+        // Entire workflow complete: analysis -> clarification -> generation -> rendering
+        setCurrentPhase(4); // Move to final "Rendering" phase
+        message.success('Complete! ✅');
+        setIsInAnalysisPhase(false);
 
-          // Navigate to generation screen if user is still on description screen
-          if (currentScreen === 'description') {
-            setCurrentScreen('generation');
+        // Navigate to generation screen if user is still on description screen
+        if (currentScreen === 'description' && diagramTypeSelected) {
+          setCurrentScreen('generation');
           }
 
           // Persist completed session to localStorage for history/replay
@@ -373,6 +405,14 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       if (status?.full_ai_response) {
         messageObj.fullAiResponse = status.full_ai_response;
       }
+
+      // Include analysis summary and question for table display
+      if (status?.analysis_summary) {
+        messageObj.analysisSummary = status.analysis_summary;
+      }
+      if (status?.question) {
+        messageObj.question = status.question;
+      }
     }
 
     return messageObj;
@@ -383,6 +423,17 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // Extract rendered SVG output (ready for display/export)
   const svgOutput = status?.svgOutput ?? '';
+
+  // Debug: Log SVG output length when it changes
+  React.useEffect(() => {
+    if (svgOutput) {
+      console.log('[DiagramWizard] SVG Output received:', svgOutput.substring(0, 100) + '... (length: ' + svgOutput.length + ')');
+    }
+  }, [svgOutput]);
+
+  const structurizrWorkspace = (status as any)?.structurizr_workspace || '';
+  const cleanStructurizr = (status as any)?.clean_structurizr || '';
+  const jsonRepresentation = status?.jsonRepresentation ?? null;
 
   // Extract clarification questions from AI, normalizing to object format
   const clarifications = (status?.clarifications ?? []).map(q =>
@@ -538,9 +589,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // Signal backend that user is satisfied with clarification
       await confirmReady();
 
-      // Note: Don't navigate to generation screen here anymore
-      // Backend will send 'awaiting_diagram_type_selection' status
-      // which will trigger navigation to diagram type selection screen
+      // Wait for backend to send 'awaiting_diagram_type_selection' before navigating
     } catch (err) {
       console.error('Confirm ready failed:', err);
       message.error('Failed to confirm ready');
@@ -559,6 +608,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // Send diagram type selection to backend
       await DiagramApi.selectDiagramType(sessionId, diagramType);
       message.success(`${diagramType} diagram selected`);
+      setDiagramTypeSelected(true);
+
+      // Immediately move to generation screen while backend continues workflow
+      setCurrentScreen('generation');
+      setCurrentPhase(3); // Generation phase indicator
 
       // Note: Navigation to generation screen happens via SSE update
       // Backend sends 'diagram_type_selected' status which triggers navigation
@@ -591,6 +645,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setCurrentPhase(0);
     setIsInAnalysisPhase(false);
     setScore(0);
+    setDiagramAnalysisText('');
 
     // Clear persisted model preference
     localStorage.removeItem('diagramWizard.selectedModel');
@@ -613,6 +668,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       // No active session means no valid score - reset to defaults
       setScore(0);
       setScoreTarget(80);
+      setDiagramAnalysisText('');
+      setDiagramTypeSelected(false);
+      setJsonGenerationOutput('');
     }
   }, [sessionId]);
 
@@ -706,6 +764,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         loading={loading}
         recommendedDiagramType={recommendedDiagramType}
         keywordScores={keywordScores}
+        analysisText={diagramAnalysisText}
         onSelectDiagramType={handleSelectDiagramType}
       />
     );
@@ -729,6 +788,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         clarifications={clarifications}
         sseConnected={sseConnected}
         exportModalOpen={exportModalVisible}
+        structurizrWorkspace={structurizrWorkspace}
+        cleanStructurizr={cleanStructurizr}
+        jsonRepresentation={jsonRepresentation}
         onChangeModel={handleChangeModel}
         onNewDiagram={handleNewDiagram}
         onExportClick={handleExportClick}

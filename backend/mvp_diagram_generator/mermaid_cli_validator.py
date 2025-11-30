@@ -62,7 +62,7 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
 
     except subprocess.TimeoutExpired:
         error_message = "Mermaid validation timed out (10s limit)"
-        logger.warning(error_message)
+        logger.info(error_message)
         return (False, error_message)
 
     except FileNotFoundError:
@@ -83,13 +83,13 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
             if os.path.exists(temp_input_name):
                 os.unlink(temp_input_name)
         except Exception as e:
-            logger.warning(f"Failed to clean up temp input file {temp_input_name}: {e}")
+            logger.info(f"Failed to clean up temp input file {temp_input_name}: {e}")
 
         try:
             if os.path.exists(temp_output_name):
                 os.unlink(temp_output_name)
         except Exception as e:
-            logger.warning(f"Failed to clean up temp output file {temp_output_name}: {e}")
+            logger.info(f"Failed to clean up temp output file {temp_output_name}: {e}")
 
 def clean_mermaid_error(error_message: str) -> str:
     """
@@ -205,19 +205,19 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
             for i, correction in enumerate(fix_result.corrections, 1):
                 logger.info(f"[MERMAID AUTO-FIX]   {i}. {correction}")
         else:
-            logger.warning(f"[MERMAID AUTO-FIX] No corrections could be applied")
+            logger.info(f"[MERMAID AUTO-FIX] No corrections could be applied")
 
         if fix_result.warnings:
-            logger.warning(f"[MERMAID AUTO-FIX] {len(fix_result.warnings)} warning(s):")
+            logger.info(f"[MERMAID AUTO-FIX] {len(fix_result.warnings)} warning(s):")
             for warning in fix_result.warnings:
-                logger.warning(f"[MERMAID AUTO-FIX]   - {warning}")
+                logger.info(f"[MERMAID AUTO-FIX]   - {warning}")
 
         current_code = fix_result.corrected_code
         logger.debug(f"[MERMAID AUTO-FIX] Code length after fixes: {len(current_code)} chars")
 
         # If no corrections were made, don't try again
         if not fix_result.corrections:
-            logger.warning(f"[MERMAID AUTO-FIX] No corrections possible, stopping attempts")
+            logger.info(f"[MERMAID AUTO-FIX] No corrections possible, stopping attempts")
             return (False, current_code, message)
 
     logger.error(f"[MERMAID AUTO-FIX] ❌ Failed to fix after all attempts")
@@ -289,10 +289,10 @@ def validate_mermaid_and_render(
             if os.path.exists(temp_input_name):
                 os.unlink(temp_input_name)
         except Exception as e:
-            logger.warning(f"Failed to clean up temp input file: {e}")
+            logger.info(f"Failed to clean up temp input file: {e}")
 
         try:
             if os.path.exists(temp_output_name):
                 os.unlink(temp_output_name)
         except Exception as e:
-            logger.warning(f"Failed to clean up temp output file: {e}")
+            logger.info(f"Failed to clean up temp output file: {e}")

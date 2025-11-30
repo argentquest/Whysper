@@ -134,7 +134,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                 else:
                     state["json_representation"] = architecture_json
             except json.JSONDecodeError as json_err:
-                logger.warning(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
+                logger.info(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
                 state["json_representation"] = {}
 
         # ANALYZE phase always shows results and moves to CLARIFY loop
@@ -384,13 +384,13 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Validate Structurizr syntax (basic check)
         if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
-            logger.warning(
+            logger.info(
                 "Structurizr workspace missing or invalid format",
                 extra={'session_id': session_id}
             )
 
         if not clean_d2 or not clean_d2.startswith("model"):
-            logger.warning(
+            logger.info(
                 "clean_d2 missing or invalid format",
                 extra={'session_id': session_id}
             )
@@ -399,7 +399,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         if json_representation:
             is_valid, errors = ArchitectureSchema.validate(json_representation)
             if not is_valid:
-                logger.warning(
+                logger.info(
                     f"Legacy JSON schema validation issues: {errors}",
                     extra={'session_id': session_id}
                 )
@@ -545,7 +545,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
     if question_count >= 10 or (current_time - start_time) > 300:  # 5 minutes
-        logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+        logger.info(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
                       extra={'session_id': state.get("_session_id")})
         return {
             "llm_ready": True,

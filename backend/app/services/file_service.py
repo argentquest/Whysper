@@ -71,7 +71,7 @@ class FileService:
                 "directory": directory
             }
         else:
-            logger.warning(f"Failed to set base directory: {validation['error']}")
+            logger.info(f"Failed to set base directory: {validation['error']}")
             return {
                 "success": False,
                 "message": validation["error"],

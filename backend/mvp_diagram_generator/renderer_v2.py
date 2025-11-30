@@ -188,10 +188,10 @@ def is_mmdc_available() -> bool:
         if available:
             logger.debug(f"mmdc is available: {result.stdout.strip()}")
         else:
-            logger.warning(f"mmdc check failed: {result.stderr}")
+            logger.info(f"mmdc check failed: {result.stderr}")
         return available
     except Exception as e:
-        logger.warning(f"Could not check mmdc availability: {str(e)}")
+        logger.info(f"Could not check mmdc availability: {str(e)}")
         return False
 
 
@@ -253,7 +253,7 @@ async def render_with_playwright(
                 react_server_available = True
                 logger.debug("React dev server loaded successfully")
         except Exception as e:
-            logger.warning(f"React dev server not available: {str(e)}")
+            logger.info(f"React dev server not available: {str(e)}")
         
         if not react_server_available:
             logger.info("Falling back to static HTML renderer...")
@@ -861,7 +861,7 @@ async def cleanup_temp_file(file_path: str):
         os.unlink(file_path)
         logger.debug(f"Cleaned up temp file: {file_path}")
     except Exception as e:
-        logger.warning(f"Failed to clean up temp file {file_path}: {e}")
+        logger.info(f"Failed to clean up temp file {file_path}: {e}")
 
 
 async def test_render():

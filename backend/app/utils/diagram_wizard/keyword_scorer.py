@@ -105,9 +105,9 @@ class KeywordScorer:
                     self.structure_words = keywords_data.get('structure_words', [])
                     logger.info(f"Loaded base keywords from {keywords_path}")
             else:
-                logger.warning(f"keywords.json not found at {keywords_path}")
+                logger.info(f"keywords.json not found at {keywords_path}")
         except Exception as e:
-            logger.warning(f"Error loading base keywords from keywords.json: {e}")
+            logger.info(f"Error loading base keywords from keywords.json: {e}")
 
     def score_text(self, text: str) -> Dict[str, float]:
         """

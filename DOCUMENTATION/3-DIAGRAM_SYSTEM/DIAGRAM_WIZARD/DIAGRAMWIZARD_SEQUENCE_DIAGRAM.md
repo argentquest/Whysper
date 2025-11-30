@@ -87,15 +87,37 @@ This document provides a detailed sequence diagram of the DiagramWizard workflow
                                         │ Actions:                              │
                                         │  • Analyzes final_design_summary      │
                                         │  • Keyword-based scoring for types    │
-                                        │  • Rates Mermaid vs D2 vs PlantUML   │
-                                        │  • Selects highest-scoring type       │
-                                        │ Exit:    Always proceeds to [4]       │
-                                        │ Outputs: diagram_type (enum),         │
+                                        │  • Rates Mermaid, D2, PlantUML,       │
+                                        │    Structurizr (percentages)          │
+                                        │  • Sends scores to frontend via SSE   │
+                                        │  • Waits for user selection           │
+                                        │ Conditional Exit:                     │
+                                        │  ├─ IF user_selected_diagram_type     │
+                                        │  │  = False ──► END (await selection) │
+                                        │  └─ IF user_selected_diagram_type     │
+                                        │     = True ──► Proceed to [4]         │
+                                        │ Outputs: diagram_type (user-selected),│
                                         │          keyword_scores (dict),       │
                                         │          current_state=GENERATING     │
                                         └────┬──────────────────────────────────┘
                                              │
-                                             ▼
+                                        ┌────┴────────────────┐
+                                        │                     │
+                       ┌────────────────▼───────────┐    ┌───▼────────────────────┐
+                       │ USER SELECTED TYPE         │    │ AWAITING SELECTION     │
+                       │ user_selected_diagram_type │    │ user_selected_diagram  │
+                       │ = TRUE                     │    │ _type = FALSE          │
+                       └────────────┬───────────────┘    └───┬────────────────────┘
+                                    │                        │
+                                    │                   ┌────▼──────┐
+                                    │                   │   END     │
+                                    │                   │ (PAUSE)   │
+                                    │                   │ Wait for  │
+                                    │                   │ user to   │
+                                    │                   │ click type│
+                                    │                   └───────────┘
+                                    │
+                                    ▼
                                         ┌────────────────────────────────────────┐
                                         │ [4] GENERATE_CODE                      │
                                         ├────────────────────────────────────────┤
@@ -172,19 +194,31 @@ This document provides a detailed sequence diagram of the DiagramWizard workflow
                                     │
                                     ▼
                            ┌────────────────────────────────────────┐
-                           │ [6] RENDER_DIAGRAM                     │
+                           │ [6] RENDER_DIAGRAM (ASYNC)             │
                            ├────────────────────────────────────────┤
                            │ Entry:   After VALIDATE_CODE (valid)   │
                            │ Trigger: is_valid = True               │
                            │ Actions:                               │
-                           │  • Calls provider system with render   │
-                           │  • Generates SVG output                │
-                           │  • Validates SVG structure             │
-                           │  • Sets final svg_output               │
+                           │  • Sends progress update: "rendering"  │
+                           │  • Calls provider.render_with_         │
+                           │    validation() (async)                │
+                           │  • Provider sends progress updates:    │
+                           │    - Step 1/4: Validating code         │
+                           │    - Step 2/4: Pattern auto-fix (opt)  │
+                           │    - Step 3/4: LLM correction (opt,    │
+                           │      shows retry count: "attempt 3/8") │
+                           │    - Step 4/4: Rendering to SVG        │
+                           │  • Receives SVG output from provider   │
+                           │  • Sends progress: "rendered"          │
+                           │  • Updates session.svg_output          │
+                           │  • Sets final svg_output in state      │
                            │ Exit:    Always proceeds to END        │
                            │ Outputs: svg_output (SVG string),      │
                            │          current_state=READY,          │
                            │          success flag                  │
+                           │ Note:    Non-blocking async operation, │
+                           │          supports long LLM corrections │
+                           │          (30-90s) without freezing     │
                            └────┬───────────────────────────────────┘
                                 │
                                 ▼
@@ -211,11 +245,11 @@ This document provides a detailed sequence diagram of the DiagramWizard workflow
 |------|-------|---------------|----------------|---|---|
 | **analyze_request** | INIT | Graph.ainvoke() called | Always | → clarify_prompt | clarity_score, json_representation |
 | **clarify_prompt** | CLARIFYING | After analyze_request | User response OR clarity ≥ 8 OR timeout | Conditional: llm_ready flag | final_design_summary, llm_ready |
-| **determine_diagram_type** | GENERATING | llm_ready = True | Always | → generate_code | diagram_type, keyword_scores |
+| **determine_diagram_type** | GENERATING | llm_ready = True | User selection | Conditional: user_selected_diagram_type | diagram_type, keyword_scores |
 | **generate_code** | GENERATING | After determine_type | Always | → validate_code | diagram_code |
 | **validate_code** | VALIDATING | After generate_code | Always (but splits) | Conditional: is_valid flag | is_valid, validation_error |
 | **refine_code** | VALIDATING | is_valid = False | attempts < 3 | → validate_code | diagram_code (refined) |
-| **render_diagram** | RENDERING | is_valid = True | Always | → END | svg_output, READY state |
+| **render_diagram** | RENDERING (ASYNC) | is_valid = True | Always | → END | svg_output, READY state |
 
 ---
 

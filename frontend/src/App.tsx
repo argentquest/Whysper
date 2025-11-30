@@ -61,6 +61,7 @@ import ThemePickerModal from './components/modals/ThemePickerModal';
 import { FileEditorView } from './components/editor/FileEditorView';
 import { DocumentationView } from './components/documentation/DocumentationView';
 import { WelcomeScreen } from './components/welcome/WelcomeScreen';
+import { LandingPage } from './components/welcome/LandingPage';
 
 // Tab-specific components
 import { DiagramWizard } from './components/DiagramWizard/DiagramWizard';
@@ -377,37 +378,14 @@ function App() {
     // This ensures a fresh start after each full browser reload
     setConversations({});
     setTabs([]);
+    setActiveTabId('');
     
     // Load user settings from backend (API keys, preferences, etc.)
     const initializeApp = async () => {
       await loadSettings();
-      const defaultAgentTitle = await loadAgentPrompts(); // Get default agent title
+      await loadAgentPrompts();
       await loadSubagentCommands();
-
-      // Create initial conversation and tab (like app initialization)
-      const initialTabId = `tab-${Date.now()}`;
-      const initialConversationId = `conv-${Date.now()}`;
-
-      const initialTab: Tab = {
-        id: initialTabId,
-        conversationId: initialConversationId,
-        title: defaultAgentTitle ? defaultAgentTitle.substring(0, 50) : 'Chat 1', // Use default agent title or fallback
-        isActive: true,
-        isDirty: false,
-        type: 'chat',
-      };
-
-      const initialConversation: Conversation = {
-        id: initialConversationId,
-        title: defaultAgentTitle ? defaultAgentTitle.substring(0, 50) : 'New Conversation', // Use default agent title or fallback
-        messages: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setTabs([initialTab]);
-      setConversations({ [initialConversationId]: initialConversation });
-      setActiveTabId(initialTabId);
+      // Keep tabs empty so the landing page remains until the user picks an action
     };
 
     initializeApp();
@@ -867,6 +845,12 @@ function App() {
       console.error('❌ Failed to start new session:', error);
       message.error('Failed to start new session');
     }
+  };
+
+  const handleHome = () => {
+    // Close all tabs and return to landing page
+    setTabs([]);
+    setActiveTabId('');
   };
 
   const handleNewTab = (title?: string) => {
@@ -1392,6 +1376,7 @@ function App() {
         onD2Tester={() => setD2TesterModalOpen(true)}
         onDiagramWizard={handleNewDiagramWizardTab}
         onArchStudio={handleNewArchStudioTab}
+        onHome={handleHome}
         currentSystem={activeAgentName}
         onSystemChange={handleSystemChange}
         onRunSystemPrompt={handleRunSystemPrompt}
@@ -1418,7 +1403,16 @@ function App() {
           ? 'transparent'
           : 'inherit'
       }}>
-        {activeTab?.type === 'file' ? (
+        {tabs.length === 0 || !activeTab ? (
+          // Landing Page - shown when no tabs are open
+          <LandingPage
+            onNewChat={handleNewTab}
+            onOpenFile={() => setFileSelectionModalOpen(true)}
+            onDiagramWizard={handleNewDiagramWizardTab}
+            onDocumentation={handleGenerateDocumentation}
+            onSetContext={() => setContextModalOpen(true)}
+          />
+        ) : activeTab?.type === 'file' ? (
           // File Editor View
           <FileEditorView
             tab={activeTab}

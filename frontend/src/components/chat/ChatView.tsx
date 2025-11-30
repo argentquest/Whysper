@@ -40,7 +40,9 @@ import {
   processMixedHtmlContent
 } from '../../utils/mermaidUtils';
 import { useTheme } from '../../themes';
-import { BrandColors } from 'branding';
+import { BrandColors, Brand } from 'branding';
+
+const assistantName = Brand.tagline || Brand.name || 'AI Assistant';
 
 
 // Function to print the visual output of a message element
@@ -92,7 +94,7 @@ const printMessageElement = (messageId: string) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Whysper AI Response</title>
+      <title>${assistantName} Response</title>
       <style>
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -138,7 +140,7 @@ const printMessageElement = (messageId: string) => {
       </style>
     </head>
     <body>
-      <h1>Whysper AI Response</h1>
+      <h1>${assistantName} Response</h1>
       <div id="printed-content"></div>
     </body>
     </html>
@@ -846,7 +848,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     letterSpacing: '0.5px'
                   }}
                 >
-                  {message.role === 'user' ? 'You' : 'Whysper AI'}
+                  {message.role === 'user' ? 'You' : assistantName}
                 </span>
                 <span 
                   style={{ 
@@ -1131,7 +1133,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     letterSpacing: '0.5px'
                   }}
                 >
-                  {message.role === 'user' ? 'You' : 'Whysper AI'}
+                  {message.role === 'user' ? 'You' : assistantName}
                 </span>
                 <span 
                   style={{ 
@@ -1509,7 +1511,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                     letterSpacing: '0.5px'
                   }}
                 >
-                  Whysper AI
+                  {assistantName}
                 </span>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70"></div>

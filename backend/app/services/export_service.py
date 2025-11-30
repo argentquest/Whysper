@@ -69,7 +69,7 @@ class ExportService:
                 self.logger.info("PDF export completed with WeasyPrint")
                 return pdf_bytes
             except ImportError:
-                self.logger.warning("WeasyPrint not available, trying ReportLab")
+                self.logger.info("WeasyPrint not available, trying ReportLab")
             
             # Fallback to ReportLab
             pdf_bytes = self._export_to_pdf_with_reportlab(content, options)
@@ -208,10 +208,10 @@ class ExportService:
                 return buffer.getvalue()
                 
             except ImportError:
-                self.logger.warning("python-docx not available")
+                self.logger.info("python-docx not available")
             
             # Fallback: return markdown as bytes
-            self.logger.warning("Returning markdown content as fallback")
+            self.logger.info("Returning markdown content as fallback")
             return content.encode('utf-8')
             
         except Exception as e:
@@ -271,7 +271,7 @@ class ExportService:
                 
                 return template
             else:
-                self.logger.warning(f"Template not found: {template_path}")
+                self.logger.info(f"Template not found: {template_path}")
                 return content
                 
         except Exception as e:
@@ -340,7 +340,7 @@ class ExportService:
             return pdf_bytes
             
         except ImportError:
-            self.logger.warning("ReportLab not available")
+            self.logger.info("ReportLab not available")
             return content.encode('utf-8')
         except Exception as e:
             self.logger.error(f"Error with ReportLab PDF export: {e}")

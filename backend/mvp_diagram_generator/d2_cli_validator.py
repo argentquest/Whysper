@@ -88,7 +88,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool,
     except subprocess.TimeoutExpired:
         # Handle cases where validation takes too long
         error_message = "D2 validation timed out (10s limit)"
-        logger.warning(error_message)
+        logger.info(error_message)
         return (False, error_message)
         
     except FileNotFoundError:
@@ -109,7 +109,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool,
             if os.path.exists(temp_file_name):
                 os.unlink(temp_file_name)
         except Exception as e:
-            logger.warning(f"Failed to clean up temp file {temp_file_name}: {e}")
+            logger.info(f"Failed to clean up temp file {temp_file_name}: {e}")
 
 def is_d2_cli_available(d2_executable: str = None) -> bool:
     """

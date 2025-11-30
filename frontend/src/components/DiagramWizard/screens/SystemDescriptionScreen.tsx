@@ -55,9 +55,10 @@
  * - Cleanup happens automatically when tab closes
  */
 
-import React from 'react';
-import { Layout, Button, Input, Alert, message, Space, Tag, Modal } from 'antd';
+import React, { useRef } from 'react';
+import { Layout, Button, Alert, message, Space, Tag, Modal } from 'antd';
 import { SendOutlined, ClearOutlined, LeftOutlined } from '@ant-design/icons';
+import Editor from '@monaco-editor/react';
 import styles from '../diagram-wizard.module.css';
 import ChatPanel from '../panels/Panel1_Chat';
 import DiagramWizardHeader from '../components/DiagramWizardHeader';
@@ -142,6 +143,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   onConfirmReady,
   error,
 }) => {
+  const promptEditorRef = useRef<any>(null);
   // Show input field during clarification phase (includes initial analysis and follow-up questions)
   // Keep input visible as long as we're in analysis phase (hasn't moved to generation yet)
   const isClarifying = !!(isInAnalysisPhase && sessionId && (
@@ -150,7 +152,9 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
     status?.status === 'waiting' ||
     status?.status === 'analyzing'
   ));
-  const canConfirmReady = status?.status === 'can_proceed' || status?.status === 'clarification_ready';
+  // Loosen visibility: allow confirm button anytime we're in an active analysis/clarification session
+  // Hide only after we leave the analysis phase (e.g., generating/rendering/completed/failed)
+  const canConfirmReady = !!(sessionId && isInAnalysisPhase);
 
   // Debug logging
   console.log('[SystemDescriptionScreen] Debug:', {
@@ -160,7 +164,18 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
     sessionActive: !!sessionId,
     isInAnalysisPhase,
     isLoading: loading,
-    sessionId
+    sessionId,
+    score,
+    scoreTarget,
+    awaiting_user_confirmation: status?.awaiting_user_confirmation
+  });
+
+  // Additional debug for button visibility
+  console.log('[SystemDescriptionScreen] Button visibility:', {
+    canConfirmReady,
+    'status?.status': status?.status,
+    'status === can_proceed': status?.status === 'can_proceed',
+    'status === clarification_ready': status?.status === 'clarification_ready'
   });
 
   const handleStart = () => {
@@ -195,6 +210,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
         scoreTarget={scoreTarget}
         currentPhase={currentPhase}
         phases={phases}
+        canConfirmReady={canConfirmReady}
+        onConfirmReady={onConfirmReady}
       />
 
       <Layout.Content className={styles.content}>
@@ -225,8 +242,6 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               clarifications={clarifications}
               onSubmitClarification={onSubmitClarification}
               isClarifying={isClarifying}
-              canConfirmReady={canConfirmReady}
-              onConfirmReady={onConfirmReady}
               sessionActive={!!sessionId}
               isLoading={loading}
             />
@@ -266,18 +281,45 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               </div>
             </div>
 
-            <Input.TextArea
-              placeholder={`Describe the system, process, or architecture you want to diagram. For example:
+            <div style={{
+              marginBottom: 16,
+              border: '1px solid #d9d9d9',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              minHeight: '200px'
+            }}>
+              <Editor
+                height="200px"
+                defaultLanguage="plaintext"
+                value={userInput}
+                onChange={(value) => onInputChange(value || '')}
+                onMount={(editor) => {
+                  promptEditorRef.current = editor;
+                  // Focus the editor when it mounts
+                  editor.focus();
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 13,
+                  lineNumbers: 'on',
+                  wordWrap: 'on',
+                  wrappingStrategy: 'advanced',
+                  automaticLayout: true,
+                  scrollbar: {
+                    vertical: 'auto',
+                    horizontal: 'auto',
+                  },
+                  padding: { top: 12, bottom: 12 },
+                  readOnly: loading,
+                  placeholder: `Describe the system, process, or architecture you want to diagram. For example:
 • A user authentication flow for a web application
 • The architecture of a microservices system
 • A data processing pipeline
-• An organizational hierarchy`}
-              value={userInput}
-              onChange={(e) => onInputChange(e.target.value)}
-              rows={8}
-              disabled={loading}
-              style={{ marginBottom: 16, fontFamily: 'monospace', fontSize: '13px' }}
-            />
+• An organizational hierarchy`,
+                }}
+              />
+            </div>
 
             <Space style={{ marginBottom: 16 }}>
               <Button

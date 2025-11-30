@@ -21,7 +21,7 @@ try:
     doc_service = DocumentationService()
     export_service = ExportService()
 except ImportError as e:
-    logger.warning(f"Services not available: {e}")
+    logger.info(f"Services not available: {e}")
     doc_service = None
     export_service = None
 

@@ -401,7 +401,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             if self._cli_available:
                 self.logger.info("Mermaid CLI is available")
             else:
-                self.logger.warning("Mermaid CLI not found - install with: npm install -g @mermaid-js/mermaid-cli")
+                self.logger.info("Mermaid CLI not found - install with: npm install -g @mermaid-js/mermaid-cli")
 
         return self._cli_available
 

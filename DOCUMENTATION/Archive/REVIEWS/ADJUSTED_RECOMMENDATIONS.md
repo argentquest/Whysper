@@ -262,7 +262,7 @@ def determine_diagram_type(analysis_text: str) -> Tuple[DiagramType, Dict[str, f
 
     # FALLBACK: If no clear winner (all scores very low), use default
     if best_score < 0.1:  # Threshold for "no matches"
-        logger.warning(f"No strong keyword match (score: {best_score:.1%}). Defaulting to Mermaid")
+        logger.info(f"No strong keyword match (score: {best_score:.1%}). Defaulting to Mermaid")
         diagram_type = DiagramType.MERMAID
         # Ensure score shows it's a default fallback
         scores = {

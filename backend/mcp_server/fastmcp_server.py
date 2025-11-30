@@ -219,7 +219,7 @@ System_1 -> System_2"""
                 "fallback_reason": str(ai_error)
             }
             
-            logger.warning(f"Used fallback placeholder for {diagram_type} diagram")
+            logger.info(f"Used fallback placeholder for {diagram_type} diagram")
             return json.dumps(result, indent=2)
         
     except Exception as e:

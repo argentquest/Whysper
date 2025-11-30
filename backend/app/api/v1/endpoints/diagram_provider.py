@@ -522,7 +522,7 @@ async def download_diagram(filename: str):
     """
     # Validate filename to prevent directory traversal
     if ".." in filename or "/" in filename or "\\" in filename:
-        logger.warning(f"[DOWNLOAD] Attempted directory traversal: {filename}")
+        logger.info(f"[DOWNLOAD] Attempted directory traversal: {filename}")
         raise HTTPException(status_code=400, detail="Invalid filename")
 
     # Ensure filename has valid extension
@@ -539,7 +539,7 @@ async def download_diagram(filename: str):
 
     # Check if file exists
     if not file_path.exists() or not file_path.is_file():
-        logger.warning(f"[DOWNLOAD] File not found: {file_path}")
+        logger.info(f"[DOWNLOAD] File not found: {file_path}")
         raise HTTPException(
             status_code=404,
             detail=f"Diagram file '{filename}' not found"
@@ -686,7 +686,7 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
 _pending_requests: Dict[str, Dict[str, Any]] = {}
 
 
-def _generate_diagram_async(
+async def _generate_diagram_async(
     request_id: str,
     agent_id: str,
     agent_system_prompt: str,
@@ -751,7 +751,7 @@ def _generate_diagram_async(
         diagram_code = _extract_diagram_code(llm_response, diagram_type)
 
         if not diagram_code:
-            logger.warning(f"[GENERATE_ASYNC] No {diagram_type} code found in LLM response")
+            logger.info(f"[GENERATE_ASYNC] No {diagram_type} code found in LLM response")
             raise ValueError(f"Could not extract {diagram_type} diagram code from LLM response")
 
         logger.info(f"[GENERATE_ASYNC] Extracted diagram code length: {len(diagram_code)} characters")
@@ -765,9 +765,9 @@ def _generate_diagram_async(
         # Use provider's render_with_validation which handles:
         # - Validation
         # - Pattern-based auto-fix
-        # - LLM-based correction (if enabled)
+        # - LLM-based correction (if enabled, may take 30-90s)
         # - Rendering to SVG/PNG
-        render_result = provider.render_with_validation(
+        render_result = await provider.render_with_validation(
             code=diagram_code,
             output_format="svg",
             auto_fix=True,
@@ -928,7 +928,7 @@ def stream_diagram(requestId: str):
                             logger.info(f"[STREAM] Sending completed diagram for request {requestId}")
                             yield f"event: diagram\ndata: {json.dumps(diagram_response)}\n\n"
                         else:
-                            logger.warning(f"[STREAM] Diagram generation failed for request {requestId}")
+                            logger.info(f"[STREAM] Diagram generation failed for request {requestId}")
                             diagram_response["error"] = render_result.error
                             yield f"event: error\ndata: {json.dumps(diagram_response)}\n\n"
 

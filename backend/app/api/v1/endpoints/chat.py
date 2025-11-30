@@ -476,7 +476,7 @@ def send_chat_message(request: ChatRequest):
             logger.info(f"📋 Final selected files list: {session.selected_files}", extra={'session_id': conversation_id})
             logger.info(f"📝 Initialized context tracking with {len(context_files)} files", extra={'session_id': conversation_id})
         else:
-            logger.warning(
+            logger.info(
                 "⚠️ NO CONTEXT FILES PROVIDED - proceeding without file context"
             )
             # Initialize empty context tracking
@@ -601,7 +601,7 @@ def send_chat_message(request: ChatRequest):
                     f"✅ Conversation history saved for {conversation_id} ({len(all_messages)} total messages)"
                 )
             else:
-                logger.warning(
+                logger.info(
                     f"⚠️ Failed to save conversation history for {conversation_id}"
                 )
 
@@ -953,10 +953,10 @@ def clear_conversation(conversation_id: str):
                 "conversationId": conversation_id
             }
         else:
-            logger.warning(f"Conversation session not found: {conversation_id}")
+            logger.info(f"Conversation session not found: {conversation_id}")
             return {"success": False, "error": "Conversation not found"}
     except KeyError:
-        logger.warning(f"Conversation session not found: {conversation_id}")
+        logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found"}
     except Exception as e:
         logger.error(
@@ -996,10 +996,10 @@ def get_conversation_files(conversation_id: str):
                 "count": len(files)
             }
         else:
-            logger.warning(f"Conversation session not found: {conversation_id}")
+            logger.info(f"Conversation session not found: {conversation_id}")
             return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
     except KeyError:
-        logger.warning(f"Conversation session not found: {conversation_id}")
+        logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
     except Exception as e:
         logger.error(

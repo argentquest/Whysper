@@ -201,7 +201,7 @@ json_representation = response.get("json_representation", {})
 if json_representation:
     is_valid, errors = ArchitectureSchema.validate(json_representation)
     if not is_valid:
-        logger.warning(f"Legacy JSON schema invalid: {errors}")
+        logger.info(f"Legacy JSON schema invalid: {errors}")
 
 return {
     "structurizr_workspace": structurizr_workspace,
@@ -452,7 +452,7 @@ workspace_systems = extract_systems(structurizr_workspace)
 clean_systems = extract_systems(clean_d2)
 
 if workspace_systems != clean_systems:
-    logger.warning(f"Workspace and clean_d2 mismatch: {workspace_systems} vs {clean_systems}")
+    logger.info(f"Workspace and clean_d2 mismatch: {workspace_systems} vs {clean_systems}")
     # Could return error or use best guess
 ```
 

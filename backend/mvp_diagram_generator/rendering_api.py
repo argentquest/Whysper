@@ -273,19 +273,19 @@ async def generate_diagram(
                         image_data = render_result.content
                     else:
                         # Fallback to MVP renderer if provider fails
-                        logger.warning("Provider rendering failed, falling back to MVP renderer")
+                        logger.info("Provider rendering failed, falling back to MVP renderer")
                         image_data = await render_diagram(
                             diagram_code, request.diagram_type, request.output_format
                         )
                 else:
                     # Fallback if no provider is available
-                    logger.warning("C4 provider not available, falling back to MVP renderer")
+                    logger.info("C4 provider not available, falling back to MVP renderer")
                     image_data = await render_diagram(
                         diagram_code, request.diagram_type, request.output_format
                     )
             except Exception as e:
                 # Handle any rendering exceptions
-                logger.warning(f"Provider rendering failed: {e}, falling back to MVP renderer")
+                logger.info(f"Provider rendering failed: {e}, falling back to MVP renderer")
                 image_data = await render_diagram(
                     diagram_code, request.diagram_type, request.output_format
                 )

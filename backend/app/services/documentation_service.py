@@ -185,7 +185,7 @@ class DocumentationService:
                     structures.append(structure)
                     self.logger.debug(f"Analyzed {file_path} ({language})")
                 else:
-                    self.logger.warning(f"Unsupported language for file: {file_path}")
+                    self.logger.info(f"Unsupported language for file: {file_path}")
                     
             except Exception as e:
                 self.logger.error(f"Error analyzing file {file_path}: {e}")
@@ -1671,7 +1671,7 @@ class DocumentationService:
             
             # If none found, log all attempted paths
             paths_str = ", ".join(prompt_paths)
-            self.logger.warning(f"Documentation agent prompt not found at any of: {paths_str}")
+            self.logger.info(f"Documentation agent prompt not found at any of: {paths_str}")
             return self._get_default_agent_prompt()
                 
         except Exception as e:
