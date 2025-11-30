@@ -109,7 +109,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
     if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
-        logger.info(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+        logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
                       extra={'session_id': state.get("_session_id")})
         # Send update to frontend asking for user confirmation even though timeout reached
         update_callback = state.get("_update_callback")
@@ -182,7 +182,7 @@ Determine if you have enough information or need to ask more questions."""
     # Call AI for clarification decision
     logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1} (model: {model_id})",
                extra={'session_id': session_id} if session_id else {})
-    logger.info(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
+    logger.debug(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
                extra={'session_id': session_id} if session_id else {})
 
     try:
@@ -208,7 +208,7 @@ Determine if you have enough information or need to ask more questions."""
         ai_response = extract_json_from_response(ai_response_str)
 
         # Log the parsed JSON structure for debugging
-        logger.info(f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",
+        logger.debug(f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",
                    extra={'session_id': session_id} if session_id else {})
 
         question = ai_response.get("question")

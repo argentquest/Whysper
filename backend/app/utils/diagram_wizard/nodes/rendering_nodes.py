@@ -28,8 +28,14 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     Renders valid diagram code to SVG format using provider system directly.
     No fallback logic - simplified approach requires provider system.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        svg_output: SVG representation of diagram
+        Dict[str, Any]: Updates to the graph state including the generated SVG output.
+
+    Raises:
+        ValueError: If no provider is available for the diagram type.
     """
     diagram_code = state.get("diagram_code", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)

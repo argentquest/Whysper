@@ -9,7 +9,7 @@ import asyncio
 import httpx
 import json
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from ..graph_state import DiagramType
 from common.ai import create_ai_processor
 from common.logger import get_logger
@@ -57,14 +57,14 @@ def extract_json_from_response(response_text: str) -> Dict[str, Any]:
         raise
 
 
-def get_diagram_type_str(diagram_type: DiagramType) -> str:
+def get_diagram_type_str(diagram_type: Union[DiagramType, str]) -> str:
     """
     Helper function to convert DiagramType enum to string.
 
     Handles both enum values and string fallbacks.
 
     Args:
-        diagram_type (DiagramType): The diagram type enum or value.
+        diagram_type (Union[DiagramType, str]): The diagram type enum or value.
 
     Returns:
         str: The string representation of the diagram type.
@@ -198,14 +198,14 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
                    extra={'session_id': session_id} if session_id else {})
 
         # Log the FULL raw AI response for debugging
-        logger.info(f"📄 FULL USER HISTORY :\n{conversation_history}",
+        logger.debug(f"📄 FULL USER HISTORY :\n{conversation_history}",
                    extra={'session_id': session_id} if session_id else {})
 
-        logger.info(f"📄 FULL HISTORY :\n{user_content}",
+        logger.debug(f"📄 FULL HISTORY :\n{user_content}",
                    extra={'session_id': session_id} if session_id else {})
 
         # Log the FULL raw AI response for debugging
-        logger.info(f"📄 FULL LLM RAW RESPONSE:\n{response}",
+        logger.debug(f"📄 FULL LLM RAW RESPONSE:\n{response}",
                    extra={'session_id': session_id} if session_id else {})
 
         return response

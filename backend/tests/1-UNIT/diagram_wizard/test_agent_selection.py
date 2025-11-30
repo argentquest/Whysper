@@ -25,13 +25,14 @@ def test_agent_prompt_on_first_message():
         
         mock_processor.process_question.side_effect = capture_process_question
         
-        # Mock the token usage to avoid TypeError
-        mock_processor._last_detailed_usage = {
-            "total_tokens": 10,
-            "input_tokens": 5,
-            "output_tokens": 5,
-            "cached_tokens": 0
-        }
+        # Properly mock the token usage
+        # The code likely accesses processor._provider._last_detailed_usage.get()
+        # So we need to ensure the chain exists and returns an int
+
+        mock_provider = MagicMock()
+        mock_processor._provider = mock_provider
+        mock_provider._last_detailed_usage.get.return_value = 10
+
         # Explicitly mock _last_token_usage as property returning int
         type(mock_processor)._last_token_usage = 10
         
@@ -44,17 +45,19 @@ def test_agent_prompt_on_first_message():
             default_model="gpt-4"
         )
         
-        # Add a test file
-        session.add_file("test.py")
-        
-        # Define a test agent prompt
-        test_agent_prompt = "You are a Python expert. {codebase_content}"
-        
-        # Ask a question with the agent prompt (simulating first message)
-        session.ask_question(
-            question="What is this code about?",
-            agent_prompt=test_agent_prompt
-        )
+        # Mock add_file to avoid filesystem issues
+        with patch.object(session, 'add_file') as mock_add_file:
+            # Add a test file
+            session.add_file("test.py")
+
+            # Define a test agent prompt
+            test_agent_prompt = "You are a Python expert. {codebase_content}"
+
+            # Ask a question with the agent prompt (simulating first message)
+            session.ask_question(
+                question="What is this code about?",
+                agent_prompt=test_agent_prompt
+            )
         
         # Check if the agent prompt was used in the system message
         system_messages = [
@@ -85,13 +88,11 @@ def test_agent_prompt_on_subsequent_message():
         
         mock_processor.process_question.side_effect = capture_process_question
         
-        # Mock the token usage to avoid TypeError
-        mock_processor._last_detailed_usage = {
-            "total_tokens": 10,
-            "input_tokens": 5,
-            "output_tokens": 5,
-            "cached_tokens": 0
-        }
+        # Properly mock the token usage
+        mock_provider = MagicMock()
+        mock_processor._provider = mock_provider
+        mock_provider._last_detailed_usage.get.return_value = 10
+
         type(mock_processor)._last_token_usage = 10
         
         # Create a conversation session
@@ -103,23 +104,25 @@ def test_agent_prompt_on_subsequent_message():
             default_model="gpt-4"
         )
         
-        # Add a test file and simulate first message to create history
-        session.add_file("test.py")
-        # Initialize with history using objects!
-        session.app_state.conversation_history = [
-            ConversationMessage(role="system", content="Default system message"),
-            ConversationMessage(role="user", content="First question"),
-            ConversationMessage(role="assistant", content="First response")
-        ]
-        
-        # Define a test agent prompt
-        test_agent_prompt = "You are a JavaScript expert. {codebase_content}"
-        
-        # Ask a question with the agent prompt (subsequent message)
-        session.ask_question(
-            question="What about this code?",
-            agent_prompt=test_agent_prompt
-        )
+        # Mock add_file
+        with patch.object(session, 'add_file'):
+            session.add_file("test.py")
+
+            # Initialize with history using objects!
+            session.app_state.conversation_history = [
+                ConversationMessage(role="system", content="Default system message"),
+                ConversationMessage(role="user", content="First question"),
+                ConversationMessage(role="assistant", content="First response")
+            ]
+
+            # Define a test agent prompt
+            test_agent_prompt = "You are a JavaScript expert. {codebase_content}"
+
+            # Ask a question with the agent prompt (subsequent message)
+            session.ask_question(
+                question="What about this code?",
+                agent_prompt=test_agent_prompt
+            )
         
         # Check if the agent prompt was used to update the system message
         system_messages = [

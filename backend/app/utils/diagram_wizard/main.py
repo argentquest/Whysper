@@ -1,5 +1,4 @@
-"""
-Main entry point for diagram factory system.
+"""Main entry point for diagram factory system.
 
 Provides a standalone CLI interface for testing the LangGraph-based
 diagram generation workflow.
@@ -9,9 +8,11 @@ import asyncio
 import sys
 from typing import Dict, Any
 
+from common.logger import get_logger
 from .langgraph_builder import get_diagram_factory_graph
 from .graph_state import GraphState, DiagramType
-from .session_store import DiagramSessionStore
+
+logger = get_logger(__name__)
 
 
 async def run_diagram_factory(
@@ -20,6 +21,21 @@ async def run_diagram_factory(
     user_id: str = "test_user",
     conversation_id: str = "test_conversation"
 ) -> Dict[str, Any]:
+    """Runs the diagram factory workflow.
+
+    Args:
+        design_prompt (str): The user's description of the desired diagram.
+        diagram_type (str, optional): The type of diagram to generate (e.g., "Mermaid", "D2").
+                                      Defaults to "Mermaid".
+        user_id (str, optional): The ID of the user requesting the diagram.
+                                 Defaults to "test_user".
+        conversation_id (str, optional): The ID of the conversation session.
+                                         Defaults to "test_conversation".
+
+    Returns:
+        Dict[str, Any]: The final state of the diagram generation workflow,
+                        including the generated code and SVG output if successful.
+    """
     # Construct initial state with configuration parameters
     # Ensures correct diagram type and sets up initial tracking variables
     initial_state: GraphState = {
@@ -33,11 +49,12 @@ async def run_diagram_factory(
     }
     
     # Retrieve the pre-configured LangGraph workflow for diagram generation
-    graph = get_diagram_factory_graph()
+    # Pass None as service since we are in standalone mode
+    graph = get_diagram_factory_graph(service=None)
     
     # Log the start of diagram generation process
-    print(f"Starting diagram factory for {diagram_type} diagram...")
-    print(f"Initial prompt: {design_prompt}")
+    logger.info(f"Starting diagram factory for {diagram_type} diagram...")
+    logger.info(f"Initial prompt: {design_prompt}")
     
     # Execute the graph workflow and handle potential errors
     try:
@@ -45,24 +62,24 @@ async def run_diagram_factory(
         result = await graph.ainvoke(initial_state)
         
         # Provide detailed logging of the diagram generation result
-        print("\n=== Diagram Factory Result ===")
-        print(f"Final state: {result.get('current_state', 'unknown')}")
-        print(f"Diagram code generated: {'Yes' if result.get('diagram_code') else 'No'}")
-        print(f"Diagram rendered: {'Yes' if result.get('svg_output') else 'No'}")
+        logger.info("\n=== Diagram Factory Result ===")
+        logger.info(f"Final state: {result.get('current_state', 'unknown')}")
+        logger.info(f"Diagram code generated: {'Yes' if result.get('diagram_code') else 'No'}")
+        logger.info(f"Diagram rendered: {'Yes' if result.get('svg_output') else 'No'}")
         
         # Log any validation errors
         if result.get('validation_error'):
-            print(f"Validation error: {result['validation_error']}")
+            logger.info(f"Validation error: {result['validation_error']}")
         
         # Log SVG output size for diagnostics
         if result.get('svg_output'):
-            print(f"SVG length: {len(result['svg_output'])} characters")
+            logger.info(f"SVG length: {len(result['svg_output'])} characters")
         
         return result
         
     except Exception as e:
         # Capture and log any unexpected errors during diagram generation
-        print(f"Error running diagram factory: {e}")
+        logger.error(f"Error running diagram factory: {e}")
         return {
             "current_state": "error",
             "error_message": str(e)
@@ -70,9 +87,13 @@ async def run_diagram_factory(
 
 
 async def interactive_mode():
-    # Provide an interactive CLI for users to generate diagrams
-    print("=== Diagram Factory Interactive Mode ===")
-    print("Enter 'quit' to exit")
+    """Runs the diagram factory in interactive CLI mode.
+
+    Allows users to input diagram descriptions and types via standard input,
+    generates the diagrams, and optionally saves the output to a file.
+    """
+    logger.info("=== Diagram Factory Interactive Mode ===")
+    logger.info("Enter 'quit' to exit")
     
     while True:
         try:
@@ -100,18 +121,23 @@ async def interactive_mode():
                     filename = f"diagram_{len(prompt)}.svg"
                     with open(filename, 'w') as f:
                         f.write(result['svg_output'])
-                    print(f"Saved to {filename}")
+                    logger.info(f"Saved to {filename}")
             
-            print("\n" + "="*50 + "\n")
+            logger.info("\n" + "="*50 + "\n")
             
         except KeyboardInterrupt:
-            print("\nExiting...")
+            logger.info("\nExiting...")
             break
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error: {e}")
 
 
 async def demo_mode():
+    """Runs the diagram factory with predefined demo examples.
+
+    Iterates through a list of example prompts and diagram types,
+    generating diagrams for each to showcase capabilities.
+    """
     # Predefined examples to showcase diagram generation capabilities
     examples = [
         {
@@ -128,13 +154,13 @@ async def demo_mode():
         }
     ]
     
-    print("=== Diagram Factory Demo Mode ===")
+    logger.info("=== Diagram Factory Demo Mode ===")
     
     # Iterate through examples and generate diagrams
     for i, example in enumerate(examples, 1):
-        print(f"\n--- Example {i} ---")
-        print(f"Prompt: {example['prompt']}")
-        print(f"Type: {example['type']}")
+        logger.info(f"\n--- Example {i} ---")
+        logger.info(f"Prompt: {example['prompt']}")
+        logger.info(f"Type: {example['type']}")
         
         # Generate diagram for each example
         result = await run_diagram_factory(example['prompt'], example['type'])
@@ -144,14 +170,15 @@ async def demo_mode():
             filename = f"demo_{i}_{example['type'].lower()}.svg"
             with open(filename, 'w') as f:
                 f.write(result['svg_output'])
-            print(f"Saved to {filename}")
+            logger.info(f"Saved to {filename}")
         
-        print("\n" + "="*50 + "\n")
+        logger.info("\n" + "="*50 + "\n")
 
 
 def print_usage():
+    """Prints usage instructions for the command-line interface."""
     # Display command-line usage instructions
-    print("""
+    logger.info("""
 Diagram Factory - LangGraph-based Diagram Generation
 
 Usage:
@@ -169,6 +196,10 @@ Examples:
 
 
 async def main():
+    """Main entry point for script execution.
+
+    Parses command-line arguments and dispatches to the appropriate mode.
+    """
     # Parse command-line arguments and execute corresponding mode
     args = sys.argv[1:]
     
@@ -185,7 +216,7 @@ async def main():
     elif mode == "demo":
         await demo_mode()
     else:
-        print(f"Unknown mode: {mode}")
+        logger.info(f"Unknown mode: {mode}")
         print_usage()
 
 
