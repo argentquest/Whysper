@@ -142,8 +142,8 @@ class Settings(BaseSettings):
     debug: bool = False  # Enable debug mode for development (auto-reload, detailed errors)
     
     # ==================== Server Configuration ====================
-    host: str = Field(default="0.0.0.0", env="API_HOST")  # Server host (0.0.0.0 allows external connections)
-    port: int = Field(default=8003, env="API_PORT")       # Server port (8003 to avoid conflicts with other services)
+    host: str = Field(default="0.0.0.0", validation_alias="API_HOST")  # Server host (0.0.0.0 allows external connections)
+    port: int = Field(default=8003, validation_alias="API_PORT")       # Server port (8003 to avoid conflicts with other services)
     reload: bool = True    # Auto-reload on code changes (development only)
     
     # ==================== CORS Configuration ====================
@@ -166,7 +166,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5176",
         "http://127.0.0.1:5177",
     ]
-    frontend_url: Optional[str] = Field(default=None, env="FRONTEND_URL")
+    frontend_url: Optional[str] = Field(default=None, validation_alias="FRONTEND_URL")
 
     @log_method_call
     def __init__(self, **values: Any):
@@ -253,7 +253,7 @@ class Settings(BaseSettings):
     )
     active_brand: str = Field(
         default="WF",
-        env="ACTIVE_BRAND",
+        validation_alias="ACTIVE_BRAND",
         description="Active brand for frontend (e.g., WF for Wells Fargo)"
     )
     openrouter_api_url: str = Field(

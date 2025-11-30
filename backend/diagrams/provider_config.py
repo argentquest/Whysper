@@ -121,8 +121,9 @@ class ProviderConfig(BaseModel):
     # Provider-specific custom settings (not in defaults)
     custom: Dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class ConfigMerger:

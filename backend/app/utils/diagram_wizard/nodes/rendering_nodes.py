@@ -75,39 +75,48 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
             "message": f"Rendering {diagram_type.value} diagram to SVG...",
         })
 
-    # Provider's render_with_validation is now async to support long LLM
-    # operations (30-90s) without blocking the event loop
-    result = await provider.render_with_validation(
-        code=diagram_code,
-        output_format="svg",
-        auto_fix=False,
-        llm_correction=False,
-        progress_callback=update_callback  # Pass for detailed progress
-    )
+    try:
+        # Provider's render_with_validation is now async to support long LLM
+        # operations (30-90s) without blocking the event loop
+        result = await provider.render_with_validation(
+            code=diagram_code,
+            output_format="svg",
+            auto_fix=False,
+            llm_correction=False,
+            progress_callback=update_callback  # Pass for detailed progress
+        )
 
-    if result.success:
-        # Send rendered status update with SVG to frontend
-        if update_callback:
-            await update_callback({
-                "status": "rendered",
-                "message": "✅ Diagram rendered successfully",
-            })
+        if result.success:
+            # Send rendered status update with SVG to frontend
+            if update_callback:
+                await update_callback({
+                    "status": "rendered",
+                    "message": "✅ Diagram rendered successfully",
+                })
 
-        return {
-            "svg_output": result.content,
-            "current_state": SessionState.READY
-        }
-    else:
-        # Send error status update
-        if update_callback:
-            await update_callback({
-                "status": "error",
-                "message": f"Rendering failed: {result.error}",
-                "error": result.error,
-            })
+            return {
+                "svg_output": result.content,
+                "current_state": SessionState.READY
+            }
+        else:
+            # Send error status update
+            if update_callback:
+                await update_callback({
+                    "status": "error",
+                    "message": f"Rendering failed: {result.error}",
+                    "error": result.error,
+                })
 
+            return {
+                "svg_output": "",
+                "error_message": f"Rendering failed: {result.error}",
+                "current_state": SessionState.ERROR
+            }
+    except Exception as e:
+        error_msg = f"Critical provider error during rendering: {str(e)}"
+        logger.error(error_msg, exc_info=True, extra={'session_id': session_id} if session_id else {})
         return {
             "svg_output": "",
-            "error_message": f"Rendering failed: {result.error}",
+            "error_message": error_msg,
             "current_state": SessionState.ERROR
         }

@@ -18,6 +18,7 @@ import asyncio
 import logging
 import json
 import os
+import time
 from typing import Dict, Any, List, Tuple, Optional
 
 from app.utils.diagram_wizard.langgraph_builder import (
@@ -90,6 +91,9 @@ class DiagramSessionStore:
         Creates a new DiagramSession instance and stores it in the
         session registry.
 
+        Also performs cleanup of old sessions (simple TTL implementation)
+        to prevent memory leaks.
+
         Args:
             session_id: Optional pre-assigned session ID from frontend tab.
                        If not provided, a UUID will be generated.
@@ -97,15 +101,50 @@ class DiagramSessionStore:
         Returns:
             DiagramSession: The newly created session instance
         """
+        # Periodic cleanup: Check on every session creation for simplicity
+        # In high-load production, this should be a background task
+        cls._cleanup_stale_sessions()
+
         # Use provided session_id or generate a new UUID
         if not session_id:
             session_id = str(uuid.uuid4())
 
         session = DiagramSession(session_id)
+        # Store creation time for TTL using standard time.time() for consistency
+        session.created_at = time.time()
+
         cls._sessions[session_id] = session
         logger.debug(f"✅ Created session {session_id}")
         logger.debug(f"📊 Total sessions in store: {len(cls._sessions)}")
         return session
+
+    @classmethod
+    def _cleanup_stale_sessions(cls, ttl_seconds: int = 3600):
+        """
+        Remove sessions older than ttl_seconds.
+        Default TTL is 1 hour (3600 seconds).
+        """
+        try:
+            current_time = time.time()
+            keys_to_delete = []
+
+            for sid, session in cls._sessions.items():
+                # Check created_at if it exists (for backward compatibility)
+                created_at = getattr(session, 'created_at', 0)
+                # Ensure we don't compare monotonic time with epoch time
+                # If created_at seems too small (monotonic), ignore it or treat as very old
+                # But since we standardized on time.time(), this should be consistent now.
+                if created_at > 0 and (current_time - created_at > ttl_seconds):
+                    keys_to_delete.append(sid)
+
+            if keys_to_delete:
+                logger.info(f"🧹 Cleaning up {len(keys_to_delete)} stale sessions")
+                for sid in keys_to_delete:
+                    del cls._sessions[sid]
+
+        except Exception as e:
+            # Don't let cleanup crash the request
+            logger.error(f"Error during session cleanup: {e}")
 
     @classmethod
     @log_method_call
