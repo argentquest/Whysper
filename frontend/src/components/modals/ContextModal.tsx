@@ -1,31 +1,32 @@
 /**
  * ContextModal Component
- * 
+ *
  * This module exports the ContextModal component for the application.
  */
-import React, { useState, useEffect, useRef } from 'react';
-import { Select, Button, Checkbox, Input, Space, Typography, Spin, message, Segmented } from 'antd';
 import {
-  ReloadOutlined,
-  FolderOutlined,
-  FileOutlined,
-  UnorderedListOutlined,
   ApartmentOutlined,
-  UploadOutlined,
   CloudUploadOutlined,
-} from '@ant-design/icons';
-import { Modal } from '../common/Modal';
-import type { FileItem, UploadedFile } from '../../types';
-import ApiService from '../../services/api';
-import FileTreeModal from './FileTreeModal';
+  FileOutlined,
+  FolderOutlined,
+  ReloadOutlined,
+  UnorderedListOutlined,
+  UploadOutlined,
+} from '@ant-design/icons'
+import { Button, Checkbox, Input, message, Segmented,Select, Space, Spin, Typography } from 'antd'
+import React, { useEffect, useRef,useState } from 'react'
 
-const { Option } = Select;
-const { Search } = Input;
-const { Text } = Typography;
+import ApiService from '../../services/api'
+import type { FileItem, UploadedFile } from '../../types'
+import { Modal } from '../common/Modal'
+import FileTreeModal from './FileTreeModal'
+
+const { Option } = Select
+const { Search } = Input
+const { Text } = Typography
 
 /**
  * Props interface for the ContextModal component
- * 
+ *
  * @interface ContextModalProps
  * @property {boolean} open - Controls modal visibility state
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
@@ -34,24 +35,24 @@ const { Text } = Typography;
  */
 /**
  * ContextModalProps type definition
- * 
+ *
  * Describes the structure and properties of ContextModalProps
  */
 interface ContextModalProps {
-  open: boolean;
-  onCancel: () => void;
-  onApply: (selectedFiles: FileItem[]) => void;
-  initialFiles?: FileItem[];
+  open: boolean
+  onCancel: () => void
+  onApply: (selectedFiles: FileItem[]) => void
+  initialFiles?: FileItem[]
 }
 
 /**
  * ContextModal Component
- * 
+ *
  * A comprehensive file selection modal that provides multiple ways to select files for AI conversation context:
  * - List view: Traditional file listing with search and filtering
  * - Tree view: Hierarchical directory navigation (delegated to FileTreeModal)
  * - Uploaded files view: Files uploaded in the current session
- * 
+ *
  * Features:
  * - Multi-view mode interface (List, Tree, Uploaded)
  * - File upload functionality with drag-and-drop support
@@ -60,7 +61,7 @@ interface ContextModalProps {
  * - File size formatting and type detection
  * - Real-time file selection tracking
  * - Integration with backend file system API
- * 
+ *
  * @param {ContextModalProps} props - Component props
  * @returns {JSX.Element} Rendered context selection modal
  */
@@ -74,27 +75,27 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   initialFiles = [],
 }) => {
   // View mode state: 'list', 'tree', or 'uploaded'
-  const [viewMode, setViewMode] = useState<'list' | 'tree' | 'uploaded'>('list');
-  const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentDirectory, setCurrentDirectory] = useState('Root (All Files)');
-  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([]);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'tree' | 'uploaded'>('list')
+  const [loading, setLoading] = useState(false)
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentDirectory, setCurrentDirectory] = useState('Root (All Files)')
+  const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([])
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   /**
    * Initialize selected files from props when component mounts or initialFiles changes
    * Converts FileItem array to Set of file paths for efficient lookup
-   * 
+   *
    * @param {FileItem[]} initialFiles - Array of pre-selected files
    */
   useEffect(() => {
     if (initialFiles.length > 0) {
-      setSelectedFiles(new Set(initialFiles.map(f => f.path)));
+      setSelectedFiles(new Set(initialFiles.map((f) => f.path)))
     }
-  }, [initialFiles]);
+  }, [initialFiles])
 
   /**
    * Load files from backend when modal opens
@@ -102,9 +103,9 @@ export const ContextModal: React.FC<ContextModalProps> = ({
    */
   useEffect(() => {
     if (open) {
-      loadFiles();
+      loadFiles()
     }
-  }, [open]);
+  }, [open])
 
   /**
    * Load uploaded files when modal opens
@@ -112,237 +113,238 @@ export const ContextModal: React.FC<ContextModalProps> = ({
    */
   useEffect(() => {
     if (open) {
-      loadUploadedFiles();
+      loadUploadedFiles()
     }
-  }, [open]);
+  }, [open])
 
   /**
    * Loads files from the backend API
    * Updates files state and handles loading states
-   * 
+   *
    * @async
    * @returns {Promise<void>}
    */
   const loadFiles = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await ApiService.getFiles();
+      const response = await ApiService.getFiles()
       if (response.success && response.data) {
-        setFiles(response.data);
+        setFiles(response.data)
       } else {
-        message.error(response.error || 'Failed to load files');
+        message.error(response.error || 'Failed to load files')
       }
     } catch (error) {
-      message.error('Error loading files');
-      console.error('Error loading files:', error);
+      message.error('Error loading files')
+      console.error('Error loading files:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   /**
    * Loads uploaded files from the backend
    * Retrieves files that were uploaded in the current session
-   * 
+   *
    * @async
    * @returns {Promise<void>}
    */
   const loadUploadedFiles = async () => {
     try {
-      const response = await ApiService.getUploadedFiles();
+      const response = await ApiService.getUploadedFiles()
       if (response.success && response.data) {
-        setUploadedFiles(response.data);
+        setUploadedFiles(response.data)
       }
     } catch (error) {
-      console.error('Error loading uploaded files:', error);
+      console.error('Error loading uploaded files:', error)
     }
-  };
+  }
 
   /**
    * Loads files from a specific directory
    * Updates current directory state and fetches files for that path
-   * 
+   *
    * @param {string} [path] - Directory path to load, undefined for root
    * @async
    * @returns {Promise<void>}
    */
   const loadDirectory = async (path?: string) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await ApiService.getFiles(path === 'Root (All Files)' ? undefined : path);
+      const response = await ApiService.getFiles(path === 'Root (All Files)' ? undefined : path)
       if (response.success && response.data) {
-        setFiles(response.data);
-        setCurrentDirectory(path || 'Root (All Files)');
-        message.success('Directory loaded successfully');
+        setFiles(response.data)
+        setCurrentDirectory(path || 'Root (All Files)')
+        message.success('Directory loaded successfully')
       } else {
-        message.error(response.error || 'Failed to load directory');
+        message.error(response.error || 'Failed to load directory')
       }
     } catch (error) {
-      message.error('Error loading directory');
-      console.error('Error loading directory:', error);
+      message.error('Error loading directory')
+      console.error('Error loading directory:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   /**
    * Handles file upload functionality
    * Reads selected files, uploads them to backend, and updates uploaded files list
-   * 
+   *
    * @param {File[]} fileList - Array of files to upload
    * @async
    * @returns {Promise<void>}
    */
   const handleFileUpload = async (fileList: File[]) => {
-    if (fileList.length === 0) return;
+    if (fileList.length === 0) return
 
-    setUploadLoading(true);
-    
+    setUploadLoading(true)
+
     try {
-      const uploadedFiles: UploadedFile[] = [];
-      
+      const uploadedFiles: UploadedFile[] = []
+
       // Process each file: read content and create UploadedFile objects
       for (const file of fileList) {
-        const content = await readFileAsText(file);
+        const content = await readFileAsText(file)
         uploadedFiles.push({
           name: file.name,
           content,
           size: file.size,
-          type: file.type || 'text/plain'
-        });
+          type: file.type || 'text/plain',
+        })
       }
 
       // Upload files to backend
       const response = await ApiService.uploadFiles({
         files: uploadedFiles,
-        target_directory: 'uploads'
-      });
+        target_directory: 'uploads',
+      })
 
       if (response.success && response.data) {
-        message.success(`Successfully uploaded ${uploadedFiles.length} file(s)`);
-        
+        message.success(`Successfully uploaded ${uploadedFiles.length} file(s)`)
+
         // Refresh uploaded files list
-        await loadUploadedFiles();
-        
+        await loadUploadedFiles()
+
         // Switch to uploaded files view
-        setViewMode('uploaded');
-        
+        setViewMode('uploaded')
+
         // Auto-select uploaded files
-        const newPaths = response.data.data.files.map((f: FileItem) => f.path);
-        setSelectedFiles(new Set([...selectedFiles, ...newPaths]));
+        const newPaths = response.data.data.files.map((f: FileItem) => f.path)
+        setSelectedFiles(new Set([...selectedFiles, ...newPaths]))
       } else {
-        message.error(response.error || 'Failed to upload files');
+        message.error(response.error || 'Failed to upload files')
       }
     } catch (error) {
-      console.error('Error uploading files:', error);
-      message.error('Error uploading files');
+      console.error('Error uploading files:', error)
+      message.error('Error uploading files')
     } finally {
-      setUploadLoading(false);
+      setUploadLoading(false)
     }
-  };
+  }
 
   /**
    * Reads a File object as text content
    * Utility function for file upload processing
-   * 
+   *
    * @param {File} file - File object to read
    * @returns {Promise<string>} File content as string
    */
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target?.result as string)
+      reader.onerror = reject
+      reader.readAsText(file)
+    })
+  }
 
   /**
    * Triggers file input click for upload functionality
    */
   const handleUploadButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+    fileInputRef.current?.click()
+  }
 
   /**
    * Filters files based on search term
    * Searches both file name and path for matches
-   * 
+   *
    * @param {FileItem[]} files - Array of files to filter
    * @returns {FileItem[]} Filtered array of files
    */
-  const filteredFiles = files.filter(file =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    file.path.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFiles = files.filter(
+    (file) =>
+      file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.path.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   /**
    * Handles individual file selection/deselection
    * Updates selected files set and provides debug logging
-   * 
+   *
    * @param {string} filePath - Path of the file to toggle
    * @param {boolean} checked - Whether the file should be selected
    */
   const handleFileToggle = (filePath: string, checked: boolean) => {
-    const newSelected = new Set(selectedFiles);
+    const newSelected = new Set(selectedFiles)
     if (checked) {
-      newSelected.add(filePath);
-      console.log('🔍 File selected:', filePath);
+      newSelected.add(filePath)
+      console.log('🔍 File selected:', filePath)
     } else {
-      newSelected.delete(filePath);
-      console.log('🔍 File deselected:', filePath);
+      newSelected.delete(filePath)
+      console.log('🔍 File deselected:', filePath)
     }
-    setSelectedFiles(newSelected);
-    console.log('🔍 Total selected files count:', newSelected.size);
-    console.log('🔍 Selected files paths:', Array.from(newSelected));
-  };
+    setSelectedFiles(newSelected)
+    console.log('🔍 Total selected files count:', newSelected.size)
+    console.log('🔍 Selected files paths:', Array.from(newSelected))
+  }
 
   /**
    * Selects all currently filtered files
    */
   const handleSelectAll = () => {
-    const allFilePaths = filteredFiles.map(f => f.path);
-    setSelectedFiles(new Set([...selectedFiles, ...allFilePaths]));
-  };
+    const allFilePaths = filteredFiles.map((f) => f.path)
+    setSelectedFiles(new Set([...selectedFiles, ...allFilePaths]))
+  }
 
   /**
    * Deselects all currently selected files
    */
   const handleSelectNone = () => {
-    setSelectedFiles(new Set());
-  };
+    setSelectedFiles(new Set())
+  }
 
   /**
    * Formats file size in human-readable format
    * Converts bytes to appropriate unit (B, KB, MB, GB)
-   * 
+   *
    * @param {number} bytes - File size in bytes
    * @returns {string} Formatted file size string
    */
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  };
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+  }
 
   /**
    * Returns appropriate icon component for file type
-   * 
+   *
    * @param {FileItem} file - File item to get icon for
    * @returns {JSX.Element} Icon component
    */
   const getFileIcon = (file: FileItem) => {
     if (file.is_uploaded) {
-      return <CloudUploadOutlined className="text-green-500" />;
+      return <CloudUploadOutlined className="text-green-500" />
     }
     return file.type === 'directory' ? (
       <FolderOutlined className="text-blue-500" />
     ) : (
       <FileOutlined className="text-gray-500" />
-    );
-  };
+    )
+  }
 
   /**
    * Handles apply action with selected files
@@ -350,18 +352,21 @@ export const ContextModal: React.FC<ContextModalProps> = ({
    */
   const handleApply = () => {
     // Combine regular files and uploaded files
-    const allFiles = [...files, ...uploadedFiles];
-    const selectedFileItems = allFiles.filter(file => selectedFiles.has(file.path));
-    
+    const allFiles = [...files, ...uploadedFiles]
+    const selectedFileItems = allFiles.filter((file) => selectedFiles.has(file.path))
+
     // Debug logging to track the issue
-    console.log('🔍 ContextModal handleApply debug:');
-    console.log('🔍 Total files available:', allFiles.length);
-    console.log('🔍 Selected files paths:', Array.from(selectedFiles));
-    console.log('🔍 Selected file items:', selectedFileItems.map(f => ({ path: f.path, name: f.name })));
-    
-    onApply(selectedFileItems);
-    onCancel();
-  };
+    console.log('🔍 ContextModal handleApply debug:')
+    console.log('🔍 Total files available:', allFiles.length)
+    console.log('🔍 Selected files paths:', Array.from(selectedFiles))
+    console.log(
+      '🔍 Selected file items:',
+      selectedFileItems.map((f) => ({ path: f.path, name: f.name }))
+    )
+
+    onApply(selectedFileItems)
+    onCancel()
+  }
 
   /**
    * Predefined directory options for quick navigation
@@ -383,7 +388,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     'frontend/src/types/',
     'prompts/',
     'prompts/coding/agent/',
-  ];
+  ]
 
   // If tree view mode is selected, render the FileTreeModal
   if (viewMode === 'tree') {
@@ -394,11 +399,11 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         onApply={onApply}
         initialFiles={initialFiles}
       />
-    );
+    )
   }
 
   // Use uploaded files for the uploaded view mode
-  const displayFiles = viewMode === 'uploaded' ? uploadedFiles : files;
+  const displayFiles = viewMode === 'uploaded' ? uploadedFiles : files
 
   // Otherwise render the list view
   return (
@@ -438,7 +443,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         </div>
 
         {/* File Upload Button - Show in all views except tree */}
-                {String(viewMode) !== 'tree' && (
+        {String(viewMode) !== 'tree' && (
           <div className="flex items-center gap-4">
             <Button
               type="primary"
@@ -458,12 +463,12 @@ export const ContextModal: React.FC<ContextModalProps> = ({
               aria-label="Upload files for context"
               title="Upload files to use as context in conversations"
               onChange={(e) => {
-                const files = e.target.files;
+                const files = e.target.files
                 if (files) {
-                  handleFileUpload(Array.from(files));
+                  handleFileUpload(Array.from(files))
                 }
                 // Reset input value to allow uploading the same file again
-                e.target.value = '';
+                e.target.value = ''
               }}
             />
             {viewMode === 'uploaded' && (
@@ -482,66 +487,58 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         {/* Directory Selection - Hide in uploaded view */}
         {viewMode !== 'uploaded' && (
           <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <Text className="block mb-2 text-sm font-medium">Select Folder</Text>
-            <Select
-              value={currentDirectory}
-              onChange={(value) => {
-                setCurrentDirectory(value);
-                loadDirectory(value);
-              }}
-              className="w-full"
-              placeholder="Choose directory"
+            <div className="flex-1">
+              <Text className="mb-2 block text-sm font-medium">Select Folder</Text>
+              <Select
+                value={currentDirectory}
+                onChange={(value) => {
+                  setCurrentDirectory(value)
+                  loadDirectory(value)
+                }}
+                className="w-full"
+                placeholder="Choose directory"
+              >
+                {directoryOptions.map((dir) => (
+                  <Option key={dir} value={dir}>
+                    {dir}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => loadDirectory(currentDirectory)}
+              loading={loading}
+              className="mt-6"
             >
-              {directoryOptions.map(dir => (
-                <Option key={dir} value={dir}>{dir}</Option>
-              ))}
-            </Select>
-          </div>
-          
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => loadDirectory(currentDirectory)}
-            loading={loading}
-            className="mt-6"
-          >
-            Load Directory
-          </Button>
+              Load Directory
+            </Button>
           </div>
         )}
 
         {/* File Selection Status */}
-        <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between border-b border-gray-200 py-2 dark:border-gray-700">
           <Text className="text-sm text-gray-600">
             {selectedFiles.size > 0
               ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? 's' : ''} selected`
-              : 'No files selected'
-            }
+              : 'No files selected'}
           </Text>
-          
+
           <Text className="text-sm text-gray-600">
             {viewMode === 'uploaded'
               ? `${uploadedFiles.length} uploaded file${uploadedFiles.length !== 1 ? 's' : ''}`
-              : 'Directory scanned successfully'
-            }
+              : 'Directory scanned successfully'}
           </Text>
         </div>
 
         {/* File Actions - Hide search in uploaded view */}
         <div className="flex items-center justify-between">
           <Space>
-            <Button
-              onClick={handleSelectAll}
-              size="small"
-              disabled={displayFiles.length === 0}
-            >
+            <Button onClick={handleSelectAll} size="small" disabled={displayFiles.length === 0}>
               Select All ({displayFiles.length})
             </Button>
-            <Button
-              onClick={handleSelectNone}
-              size="small"
-              disabled={selectedFiles.size === 0}
-            >
+            <Button onClick={handleSelectNone} size="small" disabled={selectedFiles.size === 0}>
               Select None
             </Button>
           </Space>
@@ -558,29 +555,31 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         </div>
 
         {/* File List */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
-          <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
             <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 dark:text-gray-400">
-              <div className="col-span-7">{viewMode === 'uploaded' ? 'File Name' : 'File Path'}</div>
+              <div className="col-span-7">
+                {viewMode === 'uploaded' ? 'File Name' : 'File Path'}
+              </div>
               <div className="col-span-3">Size</div>
               <div className="col-span-2 text-right">Type</div>
             </div>
           </div>
-          
+
           <div className="max-h-96 overflow-y-auto">
-            {(loading || uploadLoading) ? (
+            {loading || uploadLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spin size="large" />
               </div>
             ) : displayFiles.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-gray-500">
                 {viewMode === 'uploaded' ? 'No uploaded files found' : 'No files found'}
               </div>
             ) : (
               displayFiles.map((file) => (
                 <div
                   key={file.path}
-                  className="grid grid-cols-12 gap-4 px-4 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className="grid grid-cols-12 gap-4 border-b border-gray-100 px-4 py-1.5 last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
                 >
                   <div className="col-span-7 flex items-center gap-2">
                     <Checkbox
@@ -588,23 +587,21 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                       onChange={(e) => handleFileToggle(file.path, e.target.checked)}
                     />
                     {getFileIcon(file)}
-                    <Text className="text-sm truncate">
+                    <Text className="truncate text-sm">
                       {viewMode === 'uploaded' ? file.name : file.path}
                     </Text>
                     {file.is_uploaded && (
-                      <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800 dark:bg-green-900 dark:text-green-200">
                         Uploaded
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="col-span-3 flex items-center">
-                    <Text className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
-                    </Text>
+                    <Text className="text-xs text-gray-500">{formatFileSize(file.size)}</Text>
                   </div>
-                  
-                  <div className="col-span-2 flex justify-end items-center">
+
+                  <div className="col-span-2 flex items-center justify-end">
                     {file.is_uploaded ? (
                       <Text className="text-xs text-green-600 dark:text-green-400">Upload</Text>
                     ) : (
@@ -618,14 +615,15 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         </div>
 
         {/* Selection Summary */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+        <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
           <Text className="text-sm">
             <strong>{selectedFiles.size}</strong> files selected
             {selectedFiles.size > 0 && (
-              <span className="text-gray-600 dark:text-gray-400 ml-2">
-                Total size: {formatFileSize(
+              <span className="ml-2 text-gray-600 dark:text-gray-400">
+                Total size:{' '}
+                {formatFileSize(
                   [...files, ...uploadedFiles]
-                    .filter(f => selectedFiles.has(f.path))
+                    .filter((f) => selectedFiles.has(f.path))
                     .reduce((sum, f) => sum + f.size, 0)
                 )}
               </span>
@@ -634,7 +632,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         </div>
       </div>
     </Modal>
-  );
-};
+  )
+}
 
-export default ContextModal;
+export default ContextModal

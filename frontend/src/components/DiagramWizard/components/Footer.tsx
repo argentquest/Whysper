@@ -1,24 +1,24 @@
-import React from 'react';
-import { Space, Badge, Tooltip, Typography } from 'antd';
 import {
-  CheckCircleOutlined,
-  SyncOutlined,
-  CloseCircleOutlined,
   ApiOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   HistoryOutlined,
   RocketOutlined,
-} from '@ant-design/icons';
+  SyncOutlined,
+} from '@ant-design/icons'
+import { Badge, Space, Tooltip, Typography } from 'antd'
+import React from 'react'
 
-const { Text } = Typography;
+const { Text } = Typography
 
 // Define the structure of props for the Footer component
 interface FooterProps {
-  sessionId?: string | null;
-  sseConnected: boolean;
-  currentStatus?: string;
-  totalSessions?: number;
-  successfulGenerations?: number;
-  lastMessage?: string;
+  sessionId?: string | null
+  sseConnected: boolean
+  currentStatus?: string
+  totalSessions?: number
+  successfulGenerations?: number
+  lastMessage?: string
 }
 
 const Footer: React.FC<FooterProps> = ({
@@ -38,7 +38,7 @@ const Footer: React.FC<FooterProps> = ({
         status: 'default' as const,
         text: 'No active session',
         icon: <CloseCircleOutlined />,
-      };
+      }
     }
 
     // Map different status states to visual representations
@@ -49,13 +49,13 @@ const Footer: React.FC<FooterProps> = ({
           status: 'success' as const,
           text: 'Completed',
           icon: <CheckCircleOutlined />,
-        };
+        }
       case 'error':
         return {
           status: 'error' as const,
           text: 'Error',
           icon: <CloseCircleOutlined />,
-        };
+        }
       case 'running':
       case 'analyzing':
       case 'generating':
@@ -66,18 +66,18 @@ const Footer: React.FC<FooterProps> = ({
           status: 'processing' as const,
           text: currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1),
           icon: <SyncOutlined spin />,
-        };
+        }
       default:
         return {
           status: 'default' as const,
           text: 'Ready',
           icon: <CheckCircleOutlined />,
-        };
+        }
     }
-  };
+  }
 
   // Compute status configuration for current session
-  const statusConfig = getStatusConfig();
+  const statusConfig = getStatusConfig()
 
   return (
     <div
@@ -105,20 +105,14 @@ const Footer: React.FC<FooterProps> = ({
         <Tooltip title={sseConnected ? 'Real-time updates active' : 'Not connected'}>
           <Space size="small">
             <ApiOutlined style={{ color: sseConnected ? '#52c41a' : '#d9d9d9' }} />
-            <Text type="secondary">
-              {sseConnected ? 'Connected' : 'Disconnected'}
-            </Text>
+            <Text type="secondary">{sseConnected ? 'Connected' : 'Disconnected'}</Text>
           </Space>
         </Tooltip>
 
         {/* Show the most recent message if available */}
         {lastMessage && (
           <Tooltip title="Latest update">
-            <Text
-              type="secondary"
-              ellipsis
-              style={{ maxWidth: '300px', fontStyle: 'italic' }}
-            >
+            <Text type="secondary" ellipsis style={{ maxWidth: '300px', fontStyle: 'italic' }}>
               {lastMessage}
             </Text>
           </Tooltip>
@@ -158,7 +152,7 @@ const Footer: React.FC<FooterProps> = ({
         )}
       </Space>
     </div>
-  );
-};
+  )
+}
 
-export default Footer;
+export default Footer

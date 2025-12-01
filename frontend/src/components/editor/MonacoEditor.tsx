@@ -1,34 +1,40 @@
 /**
  * MonacoEditor Component
- * 
+ *
  * This module exports the MonacoEditor component for the application.
  */
-import React, { useRef, useState } from 'react';
-import Editor from '@monaco-editor/react';
-import { Button, Tooltip, Space, message } from 'antd';
-import { SaveOutlined, UndoOutlined, RedoOutlined, ExpandOutlined, CompressOutlined } from '@ant-design/icons';
-import type { editor } from 'monaco-editor';
+import {
+  CompressOutlined,
+  ExpandOutlined,
+  RedoOutlined,
+  SaveOutlined,
+  UndoOutlined,
+} from '@ant-design/icons'
+import Editor from '@monaco-editor/react'
+import { Button, message,Space, Tooltip } from 'antd'
+import type { editor } from 'monaco-editor'
+import React, { useRef, useState } from 'react'
 
 /**
  * MonacoEditorProps type definition
- * 
+ *
  * Describes the structure and properties of MonacoEditorProps
  */
 interface MonacoEditorProps {
-  value: string;
-  language: string;
-  onChange: (value: string | undefined) => void;
-  onSave?: () => void;
-  readOnly?: boolean;
-  height?: string | number;
-  theme?: 'light' | 'dark';
-  showToolbar?: boolean;
-  className?: string;
+  value: string
+  language: string
+  onChange: (value: string | undefined) => void
+  onSave?: () => void
+  readOnly?: boolean
+  height?: string | number
+  theme?: 'light' | 'dark'
+  showToolbar?: boolean
+  className?: string
 }
 
 // Type definitions for Monaco Editor handlers
-type OnMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => void;
-type OnChange = (value: string | undefined, event: any) => void;
+type OnMount = (editor: editor.IStandaloneCodeEditor, monaco: any) => void
+type OnChange = (value: string | undefined, event: any) => void
 
 /**
  * MonacoEditor component
@@ -44,19 +50,20 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
   showToolbar = true,
   className = '',
 }) => {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Handle editor mount
   const handleEditorDidMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
+    editorRef.current = editor
 
     // Configure editor options
     editor.updateOptions({
       automaticLayout: true,
       fontSize: 14,
       lineHeight: 20,
-      fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace",
+      fontFamily:
+        "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace",
       minimap: { enabled: true },
       scrollBeyondLastLine: false,
       wordWrap: 'on',
@@ -86,18 +93,18 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
       mouseWheelZoom: true,
       formatOnPaste: true,
       formatOnType: true,
-    });
+    })
 
     // Add keyboard shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       if (onSave) {
-        onSave();
+        onSave()
       }
-    });
+    })
 
     // Set up language-specific features
-    setupLanguageFeatures(monaco, language);
-  };
+    setupLanguageFeatures(monaco, language)
+  }
 
   // Setup language-specific features like auto-completion
   const setupLanguageFeatures = (monaco: any, lang: string) => {
@@ -116,18 +123,18 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
           reactNamespace: 'React',
           allowJs: true,
           typeRoots: ['node_modules/@types'],
-        });
+        })
 
         monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
           target: monaco.languages.typescript.ScriptTarget.ES2020,
           allowNonTsExtensions: true,
           allowJs: true,
-        });
-        break;
+        })
+        break
 
       case 'python':
         // Python-specific configuration
-        break;
+        break
 
       case 'json':
         // JSON schema validation
@@ -135,71 +142,71 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
           validate: true,
           allowComments: false,
           schemas: [],
-        });
-        break;
+        })
+        break
 
       default:
-        break;
+        break
     }
-  };
+  }
 
   // Handle content change
   const handleChange: OnChange = (newValue) => {
-    onChange(newValue);
-  };
+    onChange(newValue)
+  }
 
   // Get Monaco theme based on app theme
   const getMonacoTheme = () => {
-    return theme === 'dark' ? 'vs-dark' : 'vs';
-  };
+    return theme === 'dark' ? 'vs-dark' : 'vs'
+  }
 
   // Detect language from file extension or content
   const getLanguageFromExtension = (lang: string): string => {
     const languageMap: { [key: string]: string } = {
-      'ts': 'typescript',
-      'tsx': 'typescript',
-      'js': 'javascript',
-      'jsx': 'javascript',
-      'py': 'python',
-      'json': 'json',
-      'html': 'html',
-      'css': 'css',
-      'scss': 'scss',
-      'md': 'markdown',
-      'yml': 'yaml',
-      'yaml': 'yaml',
-      'xml': 'xml',
-      'sql': 'sql',
-      'sh': 'shell',
-      'bash': 'shell',
-      'dockerfile': 'dockerfile',
-    };
+      ts: 'typescript',
+      tsx: 'typescript',
+      js: 'javascript',
+      jsx: 'javascript',
+      py: 'python',
+      json: 'json',
+      html: 'html',
+      css: 'css',
+      scss: 'scss',
+      md: 'markdown',
+      yml: 'yaml',
+      yaml: 'yaml',
+      xml: 'xml',
+      sql: 'sql',
+      sh: 'shell',
+      bash: 'shell',
+      dockerfile: 'dockerfile',
+    }
 
-    return languageMap[lang.toLowerCase()] || lang;
-  };
+    return languageMap[lang.toLowerCase()] || lang
+  }
 
   // Toolbar actions
   const handleUndo = () => {
-    editorRef.current?.trigger('keyboard', 'undo', null);
-  };
+    editorRef.current?.trigger('keyboard', 'undo', null)
+  }
 
   const handleRedo = () => {
-    editorRef.current?.trigger('keyboard', 'redo', null);
-  };
+    editorRef.current?.trigger('keyboard', 'redo', null)
+  }
 
   const handleFormat = () => {
-    editorRef.current?.getAction('editor.action.formatDocument')?.run();
-    message.success('Code formatted');
-  };
+    editorRef.current?.getAction('editor.action.formatDocument')?.run()
+    message.success('Code formatted')
+  }
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+    setIsFullscreen(!isFullscreen)
+  }
 
-  const currentLanguage = getLanguageFromExtension(language);
+  const currentLanguage = getLanguageFromExtension(language)
 
   return (
-    <div 
+    <div
       className={`monaco-editor-container ${className} ${isFullscreen ? 'fullscreen' : ''}`}
       style={{
         height: isFullscreen ? '100vh' : height,
@@ -214,8 +221,8 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
     >
       {/* Toolbar */}
       {showToolbar && (
-        <div 
-          className="editor-toolbar flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-600"
+        <div
+          className="editor-toolbar flex items-center justify-between border-b border-gray-200 p-2 dark:border-gray-600"
           style={{
             backgroundColor: theme === 'dark' ? '#2d2d30' : '#f8f9fa',
           }}
@@ -228,47 +235,28 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
 
           <Space>
             <Tooltip title="Undo (Ctrl+Z)">
-              <Button
-                type="text"
-                size="small"
-                icon={<UndoOutlined />}
-                onClick={handleUndo}
-              />
+              <Button type="text" size="small" icon={<UndoOutlined />} onClick={handleUndo} />
             </Tooltip>
 
             <Tooltip title="Redo (Ctrl+Y)">
-              <Button
-                type="text"
-                size="small"
-                icon={<RedoOutlined />}
-                onClick={handleRedo}
-              />
+              <Button type="text" size="small" icon={<RedoOutlined />} onClick={handleRedo} />
             </Tooltip>
 
             <Tooltip title="Format Code">
-              <Button
-                type="text"
-                size="small"
-                onClick={handleFormat}
-              >
+              <Button type="text" size="small" onClick={handleFormat}>
                 Format
               </Button>
             </Tooltip>
 
             {onSave && (
               <Tooltip title="Save (Ctrl+S)">
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<SaveOutlined />}
-                  onClick={onSave}
-                >
+                <Button type="primary" size="small" icon={<SaveOutlined />} onClick={onSave}>
                   Save
                 </Button>
               </Tooltip>
             )}
 
-            <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+            <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
               <Button
                 type="text"
                 size="small"
@@ -294,9 +282,9 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
             automaticLayout: true,
           }}
           loading={
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
                 <div className="text-sm text-gray-500">Loading editor...</div>
               </div>
             </div>
@@ -304,7 +292,7 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MonacoEditor;
+export default MonacoEditor

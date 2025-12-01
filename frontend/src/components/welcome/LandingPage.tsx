@@ -4,29 +4,30 @@
  * Initial welcome screen showcasing main features of Whysper
  * with a modern card-based layout similar to AI model selection
  */
-import React from 'react';
-import { Card, Button, Typography, Row, Col } from 'antd';
-import { Brand } from 'branding';
-import {
-  MessageOutlined,
-  FileTextOutlined,
-  DeploymentUnitOutlined,
-  BookOutlined,
-  ThunderboltOutlined,
-  CodeOutlined,
-} from '@ant-design/icons';
-import './LandingPage.css';
+import './LandingPage.css'
 
-const { Title, Paragraph } = Typography;
+import {
+  BookOutlined,
+  CodeOutlined,
+  DeploymentUnitOutlined,
+  FileTextOutlined,
+  MessageOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons'
+import { Button, Card, Col,Row, Typography } from 'antd'
+import { Brand } from 'branding'
+import React from 'react'
+
+const { Title, Paragraph } = Typography
 
 interface FeatureCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  bestFor: string[];
-  onSelect: () => void;
-  buttonText?: string;
+  title: string
+  description: string
+  icon: React.ReactNode
+  color: string
+  bestFor: string[]
+  onSelect: () => void
+  buttonText?: string
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({
@@ -68,15 +69,15 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         {buttonText}
       </Button>
     </Card>
-  );
-};
+  )
+}
 
 interface LandingPageProps {
-  onNewChat: () => void;
-  onOpenFile: () => void;
-  onDiagramWizard: () => void;
-  onDocumentation: () => void;
-  onSetContext: () => void;
+  onNewChat: () => void
+  onOpenFile: () => void
+  onDiagramWizard: () => void
+  onDocumentation: () => void
+  onSetContext: () => void
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -86,7 +87,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onDocumentation,
   onSetContext,
 }) => {
-  const brandTagline = Brand.tagline || Brand.name || 'Our AI Assistant';
+  const brandTagline = Brand.tagline || Brand.name || 'Our AI Assistant'
 
   const features = [
     {
@@ -150,16 +151,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       description: 'Browse and search project documentation',
       icon: <BookOutlined style={{ fontSize: '30px' }} />,
       color: '#fa8c16',
-      bestFor: [
-        'API documentation',
-        'Code examples',
-        'Architecture guides',
-        'Best practices',
-      ],
+      bestFor: ['API documentation', 'Code examples', 'Architecture guides', 'Best practices'],
       onSelect: onDocumentation,
       buttonText: 'Browse Docs',
     },
-  ];
+  ]
 
   return (
     <div className="landing-page">
@@ -169,7 +165,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             Welcome to {brandTagline}
           </Title>
           <Paragraph className="landing-subtitle">
-            Choose a feature to get started. Each tool is designed to enhance your development workflow with AI-powered assistance.
+            Choose a feature to get started. Each tool is designed to enhance your development
+            workflow with AI-powered assistance.
           </Paragraph>
         </div>
 
@@ -189,7 +186,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LandingPage;
+export default LandingPage

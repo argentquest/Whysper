@@ -5,6 +5,7 @@
  */
 
 import type { ThemeConfig } from 'antd';
+
 import { WFColors } from './colors';
 
 /**

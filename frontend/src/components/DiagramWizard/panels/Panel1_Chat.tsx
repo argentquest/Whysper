@@ -56,13 +56,21 @@
  * Scroll error handling ensures compatibility across browsers (scrollIntoView check).
  */
 
-import React, { useRef, useEffect, useState } from 'react';
-import { Card, List, Button, Empty, Spin, Tag, Tooltip, Tabs } from 'antd';
-import { SendOutlined, CodeOutlined, EyeOutlined, FileTextOutlined, LoadingOutlined, RobotOutlined } from '@ant-design/icons';
-import Editor from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
-import JsonPreview from '../components/JsonPreview';
-import styles from '../diagram-wizard.module.css';
+import {
+  CodeOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  LoadingOutlined,
+  RobotOutlined,
+  SendOutlined,
+} from '@ant-design/icons'
+import Editor from '@monaco-editor/react'
+import { Button, Card, Empty, List, Spin, Tabs,Tag, Tooltip } from 'antd'
+import * as monaco from 'monaco-editor'
+import React, { useEffect, useRef, useState } from 'react'
+
+import JsonPreview from '../components/JsonPreview'
+import styles from '../diagram-wizard.module.css'
 
 /**
  * Represents a single message in the conversation
@@ -74,13 +82,13 @@ import styles from '../diagram-wizard.module.css';
  * @property {Object} [jsonData] - Optional structured data (only on latest assistant message during clarification)
  */
 interface ConversationMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  score?: number;
-  jsonData?: Record<string, unknown>;
-  fullAiResponse?: string;  // Full raw AI response for debugging
-  analysisSummary?: string;  // Analysis summary from AI
-  question?: string;  // Clarification question from AI
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  score?: number
+  jsonData?: Record<string, unknown>
+  fullAiResponse?: string // Full raw AI response for debugging
+  analysisSummary?: string // Analysis summary from AI
+  question?: string // Clarification question from AI
 }
 
 /**
@@ -105,13 +113,13 @@ interface ConversationMessage {
  * - Both callbacks should handle async operations (AI processing)
  */
 interface Panel1ChatProps {
-  messages: ConversationMessage[];
-  clarifications: any[];
-  onSubmitClarification?: (message: string) => void | Promise<void>;
-  onSubmit?: (message: string) => Promise<void>;
-  isLoading?: boolean;
-  sessionActive?: boolean;
-  isClarifying?: boolean;
+  messages: ConversationMessage[]
+  clarifications: Array<{ question: string; answer?: string }>
+  onSubmitClarification?: (message: string) => void | Promise<void>
+  onSubmit?: (message: string) => Promise<void>
+  isLoading?: boolean
+  sessionActive?: boolean
+  isClarifying?: boolean
 }
 
 const Panel1_Chat: React.FC<Panel1ChatProps> = ({
@@ -122,75 +130,77 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   sessionActive = false,
   isClarifying = false,
 }) => {
-  const [userResponse, setUserResponse] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse'>('preview');
-  const [editorReady, setEditorReady] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<any>(null);
-  const editorContainerRef = useRef<HTMLDivElement>(null);
-  const inputEditorRef = useRef<any>(null);
+  const [userResponse, setUserResponse] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse'>(
+    'preview'
+  )
+  const [editorReady, setEditorReady] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
+  const inputEditorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && typeof messagesEndRef.current.scrollIntoView === 'function') {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  };
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   useEffect(() => {
     if (activeResponseTab === 'json' && editorRef.current) {
-      requestAnimationFrame(() => editorRef.current?.layout());
+      requestAnimationFrame(() => editorRef.current?.layout())
     }
-  }, [activeResponseTab]);
+  }, [activeResponseTab])
 
   useEffect(() => {
     if (!editorReady || !editorContainerRef.current || !editorRef.current) {
-      return;
+      return
     }
     const observer = new ResizeObserver(() => {
-      editorRef.current?.layout();
-    });
-    observer.observe(editorContainerRef.current);
-    return () => observer.disconnect();
-  }, [editorReady]);
+      editorRef.current?.layout()
+    })
+    observer.observe(editorContainerRef.current)
+    return () => observer.disconnect()
+  }, [editorReady])
 
   const handleSubmit = async () => {
-    if (!userResponse.trim()) return;
+    if (!userResponse.trim()) return
 
     try {
-      setSubmitting(true);
+      setSubmitting(true)
       // Use onSubmitClarification if available (new interface), otherwise use onSubmit (legacy)
-      const handler = onSubmitClarification || onSubmit;
+      const handler = onSubmitClarification || onSubmit
       if (handler) {
-        await handler(userResponse);
-        setUserResponse('');
+        await handler(userResponse)
+        setUserResponse('')
       }
     } catch (err) {
-      console.error('Failed to submit clarification:', err);
+      console.error('Failed to submit clarification:', err)
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   // Get the latest assistant message with AI response data
-  const latestAssistantMessage = [...messages].reverse().find(msg =>
-    msg.role === 'assistant' && (msg.jsonData || msg.fullAiResponse)
-  );
+  const latestAssistantMessage = [...messages]
+    .reverse()
+    .find((msg) => msg.role === 'assistant' && (msg.jsonData || msg.fullAiResponse))
 
   // Strip markdown code fences from full AI response
   const cleanFullAiResponse = (response: string | undefined): string => {
-    if (!response) return 'No full AI response available';
+    if (!response) return 'No full AI response available'
 
     // Remove markdown code fences (```json ... ``` or ``` ... ```)
     return response
-      .replace(/^```(?:json)?\s*\n?/i, '')  // Remove opening fence
-      .replace(/\n?```\s*$/i, '')           // Remove closing fence
-      .trim();
-  };
+      .replace(/^```(?:json)?\s*\n?/i, '') // Remove opening fence
+      .replace(/\n?```\s*$/i, '') // Remove closing fence
+      .trim()
+  }
 
   return (
     <Card
@@ -205,8 +215,20 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
     >
       <div style={{ flex: 1, display: 'flex', gap: '16px', overflow: 'hidden', minHeight: 0 }}>
         {/* Left: Chat Messages - Scrollable */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
-          <div className={styles.messagesList} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            className={styles.messagesList}
+            style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
+          >
             {messages.length === 0 ? (
               <Empty description="No messages yet" />
             ) : (
@@ -233,8 +255,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                         style={{
                           padding: '8px 12px',
                           borderRadius: 8,
-                          backgroundColor:
-                            msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
+                          backgroundColor: msg.role === 'user' ? '#e6f7ff' : '#f6ffed',
                           wordBreak: 'break-word',
                           minWidth: '200px',
                         }}
@@ -242,44 +263,54 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                         {/* Display two-column table if both analysisSummary and question are available */}
                         {msg.role === 'assistant' && msg.analysisSummary && msg.question ? (
                           <div style={{ width: '100%' }}>
-                            <table style={{
-                              width: '100%',
-                              borderCollapse: 'collapse',
-                              fontSize: 14,
-                            }}>
+                            <table
+                              style={{
+                                width: '100%',
+                                borderCollapse: 'collapse',
+                                fontSize: 14,
+                              }}
+                            >
                               <thead>
                                 <tr style={{ borderBottom: '2px solid #d9d9d9' }}>
-                                  <th style={{
-                                    padding: '8px',
-                                    textAlign: 'left',
-                                    backgroundColor: '#f0f0f0',
-                                    fontWeight: 600,
-                                  }}>
+                                  <th
+                                    style={{
+                                      padding: '8px',
+                                      textAlign: 'left',
+                                      backgroundColor: '#f0f0f0',
+                                      fontWeight: 600,
+                                    }}
+                                  >
                                     Analysis Summary
                                   </th>
-                                  <th style={{
-                                    padding: '8px',
-                                    textAlign: 'left',
-                                    backgroundColor: '#f0f0f0',
-                                    fontWeight: 600,
-                                  }}>
+                                  <th
+                                    style={{
+                                      padding: '8px',
+                                      textAlign: 'left',
+                                      backgroundColor: '#f0f0f0',
+                                      fontWeight: 600,
+                                    }}
+                                  >
                                     Question
                                   </th>
                                 </tr>
                               </thead>
                               <tbody>
                                 <tr>
-                                  <td style={{
-                                    padding: '8px',
-                                    verticalAlign: 'top',
-                                    borderRight: '1px solid #d9d9d9',
-                                  }}>
+                                  <td
+                                    style={{
+                                      padding: '8px',
+                                      verticalAlign: 'top',
+                                      borderRight: '1px solid #d9d9d9',
+                                    }}
+                                  >
                                     {msg.analysisSummary}
                                   </td>
-                                  <td style={{
-                                    padding: '8px',
-                                    verticalAlign: 'top',
-                                  }}>
+                                  <td
+                                    style={{
+                                      padding: '8px',
+                                      verticalAlign: 'top',
+                                    }}
+                                  >
                                     {msg.question}
                                   </td>
                                 </tr>
@@ -287,7 +318,13 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                             </table>
                           </div>
                         ) : (
-                          <p style={{ margin: 0, fontSize: 14, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 14,
+                              textAlign: msg.role === 'user' ? 'right' : 'left',
+                            }}
+                          >
                             {msg.content}
                           </p>
                         )}
@@ -296,7 +333,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                         {msg.role === 'assistant' && typeof msg.score === 'number' && (
                           <div style={{ marginTop: 8, marginBottom: 8 }}>
                             <Tooltip title="LLM assessment score for this response">
-                              <Tag color={msg.score >= 80 ? 'green' : msg.score >= 60 ? 'blue' : 'orange'}>
+                              <Tag
+                                color={
+                                  msg.score >= 80 ? 'green' : msg.score >= 60 ? 'blue' : 'orange'
+                                }
+                              >
                                 📊 Score: {msg.score}/100
                               </Tag>
                             </Tooltip>
@@ -312,7 +353,9 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
             {/* AI Thinking Indicator */}
             {isLoading && (
               <div className={styles.aiThinkingIndicator}>
-                <Spin indicator={<LoadingOutlined style={{ fontSize: 20, color: '#1890ff' }} spin />} />
+                <Spin
+                  indicator={<LoadingOutlined style={{ fontSize: 20, color: '#1890ff' }} spin />}
+                />
                 <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
                   <div className={styles.aiThinkingTitle}>
                     <RobotOutlined style={{ marginRight: '6px' }} />
@@ -333,26 +376,27 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
             <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
               {/* Monaco Editor for clarifications */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  minHeight: '120px'
-                }}>
+                <div
+                  style={{
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    minHeight: '120px',
+                  }}
+                >
                   <Editor
                     height="120px"
                     defaultLanguage="plaintext"
                     value={userResponse}
                     onChange={(value) => setUserResponse(value || '')}
                     onMount={(editor) => {
-                      inputEditorRef.current = editor;
+                      inputEditorRef.current = editor
                       // Focus the editor when it mounts
-                      editor.focus();
+                      editor.focus()
                       // Add keyboard shortcut for submit (Ctrl+Enter or Cmd+Enter)
-                      editor.addCommand(
-                        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-                        () => handleSubmit()
-                      );
+                      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+                        handleSubmit()
+                      )
                     }}
                     options={{
                       minimap: { enabled: false },
@@ -373,10 +417,10 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                   />
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: '#999' }}>
-                    Press Ctrl+Enter to send
-                  </span>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <span style={{ fontSize: '12px', color: '#999' }}>Press Ctrl+Enter to send</span>
                   <Button
                     type="primary"
                     icon={<SendOutlined />}
@@ -393,22 +437,33 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
         </div>
 
         {/* Right: AI Response - Fixed, No Scroll */}
-        <div style={{
-          flex: '0 0 40%',
-          minWidth: '350px',
-          maxWidth: '500px',
-          borderLeft: '1px solid #f0f0f0',
-          paddingLeft: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minHeight: 0,
-          maxHeight: '100%',
-        }}>
+        <div
+          style={{
+            flex: '0 0 40%',
+            minWidth: '350px',
+            maxWidth: '500px',
+            borderLeft: '1px solid #f0f0f0',
+            paddingLeft: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            minHeight: 0,
+            maxHeight: '100%',
+          }}
+        >
           <h4 style={{ marginTop: 0, marginBottom: 12, flexShrink: 0 }}>AI Response</h4>
 
           {latestAssistantMessage ? (
-            <div style={{ flex: 1, overflow: 'hidden', minHeight: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div
+              style={{
+                flex: 1,
+                overflow: 'hidden',
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+              }}
+            >
               <Tabs
                 activeKey={activeResponseTab}
                 onChange={(key) => setActiveResponseTab(key as 'preview' | 'json' | 'fullResponse')}
@@ -418,7 +473,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                 tabBarStyle={{
                   marginBottom: '12px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid #f0f0f0'
+                  borderBottom: '1px solid #f0f0f0',
                 }}
                 items={[
                   {
@@ -430,13 +485,15 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                       </span>
                     ),
                     children: (
-                      <div style={{
-                        height: '100%',
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        padding: '8px',
-                        backgroundColor: '#fafafa'
-                      }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          padding: '8px',
+                          backgroundColor: '#fafafa',
+                        }}
+                      >
                         <JsonPreview data={latestAssistantMessage.jsonData || {}} />
                       </div>
                     ),
@@ -452,7 +509,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     children: (
                       <div
                         className={styles.aiResponseContent}
-                        style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}
+                        style={{
+                          border: '1px solid #d9d9d9',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                        }}
                         ref={editorContainerRef}
                       >
                         <Editor
@@ -462,9 +523,9 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                           value={JSON.stringify(latestAssistantMessage.jsonData || {}, null, 2)}
                           theme="vs-light"
                           onMount={(editorInstance) => {
-                            editorRef.current = editorInstance;
-                            editorInstance.layout();
-                            setEditorReady(true);
+                            editorRef.current = editorInstance
+                            editorInstance.layout()
+                            setEditorReady(true)
                           }}
                           options={{
                             readOnly: true,
@@ -490,7 +551,11 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     children: (
                       <div
                         className={styles.aiResponseContent}
-                        style={{ border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden' }}
+                        style={{
+                          border: '1px solid #d9d9d9',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                        }}
                       >
                         <Editor
                           height="700px"
@@ -524,7 +589,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
         </div>
       </div>
     </Card>
-  );
-};
+  )
+}
 
-export default Panel1_Chat;
+export default Panel1_Chat

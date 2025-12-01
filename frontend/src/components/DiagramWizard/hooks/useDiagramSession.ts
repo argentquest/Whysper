@@ -58,10 +58,11 @@
  * ```
  */
 
-import { useState, useCallback, useRef } from 'react';
-import DiagramApi from '../../../services/diagram/diagramApi';
-import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
-import { useSSE } from '../../../hooks/useSSE';
+import { useCallback, useRef,useState } from 'react'
+
+import { useSSE } from '../../../hooks/useSSE'
+import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
+import DiagramApi from '../../../services/diagram/diagramApi'
 
 /**
  * Configuration options for the useDiagramSession hook
@@ -82,50 +83,50 @@ import { useSSE } from '../../../hooks/useSSE';
  * - `initialSessionId`: If provided, hook skips session creation and connects to existing session.
  */
 export interface UseDiagramSessionOptions {
-  onUpdate?: (update: DiagramUpdate) => void;
-  onError?: (error: Error) => void;
-  onComplete?: () => void;
-  initialSessionId?: string;
+  onUpdate?: (update: DiagramUpdate) => void
+  onError?: (error: Error) => void
+  onComplete?: () => void
+  initialSessionId?: string
 }
 
 export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   // Store the pre-assigned session ID from the tab (for linking when we call /start)
   // This should NOT be used to immediately connect to SSE - only passed to /start API call
-  const initialSessionId = options.initialSessionId;
+  const initialSessionId = options.initialSessionId
 
   // Backend session UUID - null until startSession() creates a session
   // Will be set to the result.session_id returned from /start endpoint
   // This triggers SSE connection only AFTER session is created on backend
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   // Latest session status update received via SSE
   // Contains: status, history, clarifications, diagramCode, svgOutput, scores, etc.
-  const [status, setStatus] = useState<DiagramUpdate | null>(null);
+  const [status, setStatus] = useState<DiagramUpdate | null>(null)
 
   // Loading state during API requests (startSession, submitClarification, etc.)
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   // Error state if any operation fails (API calls, SSE connection, etc.)
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<Error | null>(null)
 
   // Track previous status value to detect transitions
   // Used ref instead of state to avoid triggering re-renders
-  const lastStatusRef = useRef<string | null>(null);
+  const lastStatusRef = useRef<string | null>(null)
 
   // Utility function to log session events with consistent formatting
   const logEvent = useCallback((label: string, payload?: unknown) => {
-    // eslint-disable-next-line no-console
-    console.log(`[DiagramSession] ${label}`, payload ?? '');
-  }, []);
+
+    console.log(`[DiagramSession] ${label}`, payload ?? '')
+  }, [])
 
   // Configure SSE connection for real-time backend updates
   // Automatically connects when sessionId is set, disconnects when cleared
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
   const {
-    isConnected: sseConnected,      // Boolean: true when connection is active
-    error: sseError,                 // Error object if SSE connection fails
-    messages: sseMessages,           // Array of received SSE messages (for debugging)
+    isConnected: sseConnected, // Boolean: true when connection is active
+    error: sseError, // Error object if SSE connection fails
+    messages: sseMessages, // Array of received SSE messages (for debugging)
     clearMessages: clearSSEMessages, // Function to clear message history
   } = useSSE<DiagramUpdate>({
     // Construct SSE endpoint URL using session ID
@@ -137,73 +138,77 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     // Handle incoming SSE messages
     onMessage: (message) => {
       // Extract update payload from SSE message
-      const update = message.data;
+      const update = message.data
 
-      logEvent('SSE update', update);
+      logEvent('SSE update', update)
 
       // Ignore keep-alive pings that don't contain session data
       // Backend sends periodic pings to keep connection alive
       if (!update.session_id) {
-        return;
+        return
       }
 
       // Transform snake_case fields to camelCase for consistency
       // Backend sends json_representation, frontend expects jsonRepresentation
-      const transformedUpdate = { ...update };
+      const transformedUpdate = { ...update }
 
-      if ((update as any).json_representation) {
-        (transformedUpdate as any).jsonRepresentation = (update as any).json_representation;
+      if (update.json_representation) {
+        transformedUpdate.jsonRepresentation = update.json_representation
       }
 
       // Merge new update with existing status (preserves fields not in current update)
-      setStatus((prev) => ({ ...(prev ?? {}), ...transformedUpdate }));
+      setStatus((prev) => ({ ...(prev ?? {}), ...transformedUpdate }))
 
       // Notify parent component of the update
-      options.onUpdate?.(update);
+      options.onUpdate?.(update)
 
       // Store status value for transition detection
-      lastStatusRef.current = update.status ?? lastStatusRef.current;
+      lastStatusRef.current = update.status ?? lastStatusRef.current
 
       // Check if processing has reached terminal state
-      if (update.status === 'completed' || update.status === 'error' || update.status === 'failed') {
-        logEvent('SSE completed/failed', update.status);
+      if (
+        update.status === 'completed' ||
+        update.status === 'error' ||
+        update.status === 'failed'
+      ) {
+        logEvent('SSE completed/failed', update.status)
 
         // Notify parent that processing is complete
-        options.onComplete?.();
+        options.onComplete?.()
 
         // Convert 'failed' status into an error for proper error handling
         if (update.status === 'failed') {
-          const errorMessage = update.error || update.message || 'Diagram generation failed';
-          const failedError = new Error(errorMessage);
-          setError(failedError);
-          options.onError?.(failedError);
+          const errorMessage = update.error || update.message || 'Diagram generation failed'
+          const failedError = new Error(errorMessage)
+          setError(failedError)
+          options.onError?.(failedError)
         }
       }
     },
 
     // Handle SSE connection errors
     onError: (err) => {
-      logEvent('SSE error', err);
-      setError(err);
-      options.onError?.(err);
+      logEvent('SSE error', err)
+      setError(err)
+      options.onError?.(err)
     },
 
     // Log when SSE connection is established
     onConnect: () => {
-      logEvent('SSE connected');
+      logEvent('SSE connected')
     },
 
     // Log when SSE connection is lost
     onDisconnect: () => {
-      logEvent('SSE disconnected');
+      logEvent('SSE disconnected')
     },
 
     // Reconnection configuration
-    maxReconnectAttempts: 5,    // Try reconnecting 5 times before giving up
-    reconnectInterval: 2000,     // Wait 2 seconds before first retry (exponential backoff applied)
-    keepAliveTimeout: 30000,     // Consider connection dead if no message for 30 seconds
-    autoClose: true,             // Automatically close connection when component unmounts
-  });
+    maxReconnectAttempts: 5, // Try reconnecting 5 times before giving up
+    reconnectInterval: 2000, // Wait 2 seconds before first retry (exponential backoff applied)
+    keepAliveTimeout: 30000, // Consider connection dead if no message for 30 seconds
+    autoClose: true, // Automatically close connection when component unmounts
+  })
 
   /**
    * Initiates a new diagram generation session on the backend
@@ -234,19 +239,19 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const startSession = useCallback(
     async (initialPrompt: string, diagramType: string = 'Mermaid', modelId?: string) => {
       try {
-        logEvent('Starting session', { initialPrompt, diagramType, modelId, sessionId });
+        logEvent('Starting session', { initialPrompt, diagramType, modelId, sessionId })
 
         // Set loading state to show UI spinner
-        setLoading(true);
+        setLoading(true)
 
         // Clear any previous error state from last session
-        setError(null);
+        setError(null)
 
         // Reset status tracking for new session
-        lastStatusRef.current = null;
+        lastStatusRef.current = null
 
         // Clear old SSE messages from previous session
-        clearSSEMessages();
+        clearSSEMessages()
 
         // Call backend API to create new session and begin AI analysis
         // Pass the pre-assigned initialSessionId (from tab) to link them together
@@ -255,34 +260,34 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
           initialPrompt,
           diagramType,
           modelId,
-          initialSessionId || undefined  // Pass pre-assigned session ID from tab if available
-        );
+          initialSessionId || undefined // Pass pre-assigned session ID from tab if available
+        )
 
         // Store session ID - this triggers SSE connection via useSSE hook
         // Use the returned session_id (which should match what we passed)
-        setSessionId(result.session_id);
+        setSessionId(result.session_id)
 
         // Store initial status from session creation response
-        setStatus(result.status as DiagramUpdate);
+        setStatus(result.status as DiagramUpdate)
 
-        logEvent('Session started', result.status);
+        logEvent('Session started', result.status)
 
         // SSE connection will automatically establish when sessionId changes
       } catch (err) {
         // Handle session creation failure
-        const error = err instanceof Error ? err : new Error('Failed to start session');
-        setError(error);
-        logEvent('Start session failed', error);
+        const error = err instanceof Error ? err : new Error('Failed to start session')
+        setError(error)
+        logEvent('Start session failed', error)
 
         // Notify parent component of the error
-        options.onError?.(error);
+        options.onError?.(error)
       } finally {
         // Clear loading state regardless of success/failure
-        setLoading(false);
+        setLoading(false)
       }
     },
     [logEvent, options, clearSSEMessages, initialSessionId]
-  );
+  )
 
   /**
    * Submits user response to AI clarification question
@@ -307,42 +312,42 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     async (response: string) => {
       // Ensure session exists before submitting clarification
       if (!sessionId) {
-        throw new Error('No active session');
+        throw new Error('No active session')
       }
 
       try {
-        logEvent('Submitting clarification', { sessionId, response });
+        logEvent('Submitting clarification', { sessionId, response })
 
         // Set loading state to show UI spinner
-        setLoading(true);
+        setLoading(true)
 
         // Clear previous error state
-        setError(null);
+        setError(null)
 
         // Send clarification response to backend
         // Backend triggers AI to assess response and update clarity score
-        const result = await DiagramApi.submitClarification(sessionId, response);
+        const result = await DiagramApi.submitClarification(sessionId, response)
 
         // Update status with AI's assessment
         // May include new clarity_score and json_representation
-        setStatus(result);
+        setStatus(result)
 
-        logEvent('Clarification response', result);
+        logEvent('Clarification response', result)
       } catch (err) {
         // Handle clarification submission failure
-        const error = err instanceof Error ? err : new Error('Failed to submit clarification');
-        setError(error);
-        logEvent('Clarification failed', error);
+        const error = err instanceof Error ? err : new Error('Failed to submit clarification')
+        setError(error)
+        logEvent('Clarification failed', error)
 
         // Re-throw to allow caller to handle error
-        throw error;
+        throw error
       } finally {
         // Clear loading state regardless of outcome
-        setLoading(false);
+        setLoading(false)
       }
     },
     [logEvent, sessionId]
-  );
+  )
 
   /**
    * Renders diagram with generated or custom code
@@ -364,41 +369,41 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     async (code?: string) => {
       // Ensure session exists before rendering
       if (!sessionId) {
-        throw new Error('No active session');
+        throw new Error('No active session')
       }
 
       try {
-        logEvent('Rendering diagram', { sessionId, hasCustomCode: Boolean(code) });
+        logEvent('Rendering diagram', { sessionId, hasCustomCode: Boolean(code) })
 
         // Set loading state for UI feedback
-        setLoading(true);
+        setLoading(true)
 
         // Clear previous errors
-        setError(null);
+        setError(null)
 
         // Send render request to backend with optional custom code
         // If code provided, use it; otherwise backend uses generated code
-        const result = await DiagramApi.renderDiagram(sessionId, code);
+        const result = await DiagramApi.renderDiagram(sessionId, code)
 
         // Update status with rendered SVG output
-        setStatus(result);
+        setStatus(result)
 
-        logEvent('Render response', result);
+        logEvent('Render response', result)
       } catch (err) {
         // Handle rendering failure
-        const error = err instanceof Error ? err : new Error('Failed to render diagram');
-        setError(error);
-        logEvent('Render failed', error);
+        const error = err instanceof Error ? err : new Error('Failed to render diagram')
+        setError(error)
+        logEvent('Render failed', error)
 
         // Re-throw to allow caller to handle
-        throw error;
+        throw error
       } finally {
         // Clear loading state
-        setLoading(false);
+        setLoading(false)
       }
     },
     [logEvent, sessionId]
-  );
+  )
 
   /**
    * Approves the rendered diagram
@@ -414,38 +419,38 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const approveRender = useCallback(async () => {
     // Ensure session exists before approving
     if (!sessionId) {
-      throw new Error('No active session');
+      throw new Error('No active session')
     }
 
     try {
-      logEvent('Approving render', { sessionId });
+      logEvent('Approving render', { sessionId })
 
       // Set loading state
-      setLoading(true);
+      setLoading(true)
 
       // Clear previous errors
-      setError(null);
+      setError(null)
 
       // Send approval to backend to mark diagram as finalized
-      const result = await DiagramApi.approveRender(sessionId);
+      const result = await DiagramApi.approveRender(sessionId)
 
       // Update status with approval confirmation
-      setStatus(result);
+      setStatus(result)
 
-      logEvent('Approve render response', result);
+      logEvent('Approve render response', result)
     } catch (err) {
       // Handle approval failure
-      const error = err instanceof Error ? err : new Error('Failed to approve render');
-      setError(error);
-      logEvent('Approve render failed', error);
+      const error = err instanceof Error ? err : new Error('Failed to approve render')
+      setError(error)
+      logEvent('Approve render failed', error)
 
       // Re-throw to allow caller to handle
-      throw error;
+      throw error
     } finally {
       // Clear loading state
-      setLoading(false);
+      setLoading(false)
     }
-  }, [logEvent, sessionId]);
+  }, [logEvent, sessionId])
 
   /**
    * Confirms user readiness to proceed with diagram generation
@@ -465,39 +470,39 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const confirmReady = useCallback(async () => {
     // Ensure session exists before confirming
     if (!sessionId) {
-      throw new Error('No active session');
+      throw new Error('No active session')
     }
 
     try {
-      logEvent('Confirming ready', { sessionId });
+      logEvent('Confirming ready', { sessionId })
 
       // Set loading state for UI feedback
-      setLoading(true);
+      setLoading(true)
 
       // Clear previous errors
-      setError(null);
+      setError(null)
 
       // Signal backend that user is satisfied with clarification phase
       // This triggers AI to begin generating diagram code
-      const result = await DiagramApi.confirmReady(sessionId);
+      const result = await DiagramApi.confirmReady(sessionId)
 
       // Update status - should transition to 'generating' status
-      setStatus(result);
+      setStatus(result)
 
-      logEvent('Confirm ready response', result);
+      logEvent('Confirm ready response', result)
     } catch (err) {
       // Handle confirmation failure
-      const error = err instanceof Error ? err : new Error('Failed to confirm ready');
-      setError(error);
-      logEvent('Confirm ready failed', error);
+      const error = err instanceof Error ? err : new Error('Failed to confirm ready')
+      setError(error)
+      logEvent('Confirm ready failed', error)
 
       // Re-throw to allow caller to handle
-      throw error;
+      throw error
     } finally {
       // Clear loading state
-      setLoading(false);
+      setLoading(false)
     }
-  }, [logEvent, sessionId]);
+  }, [logEvent, sessionId])
 
   /**
    * Fetches current session status from backend
@@ -512,30 +517,30 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
   const refreshStatus = useCallback(async () => {
     // Ensure session exists before fetching status
     if (!sessionId) {
-      throw new Error('No active session');
+      throw new Error('No active session')
     }
 
     try {
-      logEvent('Refreshing status', { sessionId });
+      logEvent('Refreshing status', { sessionId })
 
       // Fetch latest status from backend without SSE
       // Useful for manual refresh or when SSE connection is lost
-      const result = await DiagramApi.getDiagramStatus(sessionId);
+      const result = await DiagramApi.getDiagramStatus(sessionId)
 
       // Update local status with fetched data
-      setStatus(result);
+      setStatus(result)
 
-      logEvent('Status refreshed', result);
+      logEvent('Status refreshed', result)
     } catch (err) {
       // Handle fetch failure
-      const error = err instanceof Error ? err : new Error('Failed to refresh status');
-      setError(error);
-      logEvent('Refresh failed', error);
+      const error = err instanceof Error ? err : new Error('Failed to refresh status')
+      setError(error)
+      logEvent('Refresh failed', error)
 
       // Re-throw to allow caller to handle
-      throw error;
+      throw error
     }
-  }, [logEvent, sessionId]);
+  }, [logEvent, sessionId])
 
   // End the session
   /**
@@ -560,44 +565,44 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
    */
   const endSession = useCallback(async () => {
     // Ignore if no active session
-    if (!sessionId) return;
+    if (!sessionId) return
 
     try {
-      logEvent('Ending session', { sessionId });
+      logEvent('Ending session', { sessionId })
 
       // Call backend API to delete session and free resources
       // Backend will cleanup: session data, temp files, LLM connections
-      await DiagramApi.deleteDiagramSession(sessionId);
+      await DiagramApi.deleteDiagramSession(sessionId)
 
       // Reset all local state to initial values
-      setSessionId(null);   // Setting null triggers SSE disconnection via useSSE hook
-      setStatus(null);      // Clear session status data
-      setError(null);       // Clear any error state
-      clearSSEMessages();   // Clear SSE message history
+      setSessionId(null) // Setting null triggers SSE disconnection via useSSE hook
+      setStatus(null) // Clear session status data
+      setError(null) // Clear any error state
+      clearSSEMessages() // Clear SSE message history
     } catch (err) {
       // Handle cleanup failure
-      const error = err instanceof Error ? err : new Error('Failed to end session');
-      setError(error);
+      const error = err instanceof Error ? err : new Error('Failed to end session')
+      setError(error)
       // Don't throw - cleanup should be best-effort
     }
-  }, [sessionId, clearSSEMessages, logEvent]);
+  }, [sessionId, clearSSEMessages, logEvent])
 
   // Return hook API with all session management functions and state
   return {
-    sessionId,           // Current backend session UUID (null if no active session)
-    status,              // Latest session status from SSE (contains history, code, SVG, etc.)
-    loading,             // True during API requests (start, clarify, render, etc.)
-    error,               // Error object if any operation failed
-    sseConnected,        // True when SSE connection is active
-    sseMessages,         // Array of received SSE messages (for debugging)
-    sseError,            // Error object if SSE connection failed
-    startSession,        // Function to create new session
+    sessionId, // Current backend session UUID (null if no active session)
+    status, // Latest session status from SSE (contains history, code, SVG, etc.)
+    loading, // True during API requests (start, clarify, render, etc.)
+    error, // Error object if any operation failed
+    sseConnected, // True when SSE connection is active
+    sseMessages, // Array of received SSE messages (for debugging)
+    sseError, // Error object if SSE connection failed
+    startSession, // Function to create new session
     submitClarification, // Function to answer AI's clarification questions
-    confirmReady,        // Function to skip clarification and proceed to generation
-    renderDiagram,       // Function to generate SVG from diagram code
-    approveRender,       // Function to approve rendered diagram
-    refreshStatus,       // Function to manually fetch latest status
-    endSession,          // Function to cleanup and delete session
-    clearSSEMessages,    // Function to clear SSE message history
-  };
+    confirmReady, // Function to skip clarification and proceed to generation
+    renderDiagram, // Function to generate SVG from diagram code
+    approveRender, // Function to approve rendered diagram
+    refreshStatus, // Function to manually fetch latest status
+    endSession, // Function to cleanup and delete session
+    clearSSEMessages, // Function to clear SSE message history
+  }
 }

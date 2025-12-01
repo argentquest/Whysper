@@ -1,33 +1,29 @@
 /**
  * CodeFragmentsModal Component
- * 
+ *
  * This module exports the CodeFragmentsModal component for the application.
  */
-import React, { useState } from 'react';
-import { Button, Space, Typography, Input, Tag, Tooltip, message } from 'antd';
-import {
-  CopyOutlined,
-  DownloadOutlined,
-  DeleteOutlined,
-  CodeOutlined,
-} from '@ant-design/icons';
-import { Modal } from '../common/Modal';
-import type { CodeBlock } from '../../types';
+import { CodeOutlined,CopyOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons'
+import { Button, Input, message,Space, Tag, Tooltip, Typography } from 'antd'
+import React, { useState } from 'react'
 
-const { Text } = Typography;
-const { Search } = Input;
+import type { CodeBlock } from '../../types'
+import { Modal } from '../common/Modal'
+
+const { Text } = Typography
+const { Search } = Input
 
 /**
  * CodeFragmentsModalProps type definition
- * 
+ *
  * Describes the structure and properties of CodeFragmentsModalProps
  */
 interface CodeFragmentsModalProps {
-  open: boolean;
-  onCancel: () => void;
-  codeBlocks: CodeBlock[];
-  onDeleteBlock?: (blockId: string) => void;
-  onDownloadBlock?: (block: CodeBlock) => void;
+  open: boolean
+  onCancel: () => void
+  codeBlocks: CodeBlock[]
+  onDeleteBlock?: (blockId: string) => void
+  onDownloadBlock?: (block: CodeBlock) => void
 }
 
 /**
@@ -40,44 +36,44 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
   onDeleteBlock,
   onDownloadBlock,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('')
 
-  const filteredBlocks = codeBlocks.filter(block => {
-    const matchesSearch = 
+  const filteredBlocks = codeBlocks.filter((block) => {
+    const matchesSearch =
       block.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       block.filename?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      block.language.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesLanguage = !selectedLanguage || block.language === selectedLanguage;
-    
-    return matchesSearch && matchesLanguage;
-  });
+      block.language.toLowerCase().includes(searchTerm.toLowerCase())
 
-  const languages = [...new Set(codeBlocks.map(block => block.language))].sort();
+    const matchesLanguage = !selectedLanguage || block.language === selectedLanguage
+
+    return matchesSearch && matchesLanguage
+  })
+
+  const languages = [...new Set(codeBlocks.map((block) => block.language))].sort()
 
   const handleCopyCode = async (code: string) => {
     try {
-      await navigator.clipboard.writeText(code);
-      message.success('Code copied to clipboard');
+      await navigator.clipboard.writeText(code)
+      message.success('Code copied to clipboard')
     } catch {
-      message.error('Failed to copy code');
+      message.error('Failed to copy code')
     }
-  };
+  }
 
   const handleDownload = (block: CodeBlock) => {
-    const element = document.createElement('a');
-    const file = new Blob([block.code], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = block.filename || `code-block.${getFileExtension(block.language)}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    
+    const element = document.createElement('a')
+    const file = new Blob([block.code], { type: 'text/plain' })
+    element.href = URL.createObjectURL(file)
+    element.download = block.filename || `code-block.${getFileExtension(block.language)}`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+
     if (onDownloadBlock) {
-      onDownloadBlock(block);
+      onDownloadBlock(block)
     }
-  };
+  }
 
   const getFileExtension = (language: string): string => {
     const extensions: { [key: string]: string } = {
@@ -103,9 +99,9 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
       ruby: 'rb',
       swift: 'swift',
       kotlin: 'kt',
-    };
-    return extensions[language.toLowerCase()] || 'txt';
-  };
+    }
+    return extensions[language.toLowerCase()] || 'txt'
+  }
 
   const getLanguageColor = (language: string): string => {
     const colors: { [key: string]: string } = {
@@ -131,17 +127,17 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
       ruby: 'red',
       swift: 'orange',
       kotlin: 'purple',
-    };
-    return colors[language.toLowerCase()] || 'default';
-  };
+    }
+    return colors[language.toLowerCase()] || 'default'
+  }
 
   const formatCode = (code: string, maxLines: number = 10): string => {
-    const lines = code.split('\n');
+    const lines = code.split('\n')
     if (lines.length <= maxLines) {
-      return code;
+      return code
     }
-    return lines.slice(0, maxLines).join('\n') + '\n...';
-  };
+    return lines.slice(0, maxLines).join('\n') + '\n...'
+  }
 
   return (
     <Modal
@@ -174,7 +170,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
             className="flex-1"
             allowClear
           />
-          
+
           <div className="flex items-center gap-2">
             <Text className="whitespace-nowrap">Language:</Text>
             <div className="flex flex-wrap gap-1">
@@ -185,7 +181,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
               >
                 All
               </Tag>
-              {languages.map(language => (
+              {languages.map((language) => (
                 <Tag
                   key={language}
                   className="cursor-pointer"
@@ -200,14 +196,16 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
         </div>
 
         {/* Code Blocks */}
-        <div className="max-h-96 overflow-y-auto space-y-4">
+        <div className="max-h-96 space-y-4 overflow-y-auto">
           {filteredBlocks.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="py-8 text-center text-gray-500">
               {codeBlocks.length === 0 ? (
                 <>
-                  <CodeOutlined className="text-4xl mb-2" />
+                  <CodeOutlined className="mb-2 text-4xl" />
                   <div>No code blocks extracted yet</div>
-                  <div className="text-sm">Code blocks will appear here when extracted from AI responses</div>
+                  <div className="text-sm">
+                    Code blocks will appear here when extracted from AI responses
+                  </div>
                 </>
               ) : (
                 <>No code blocks match your search criteria</>
@@ -217,22 +215,18 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
             filteredBlocks.map((block) => (
               <div
                 key={block.id}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
               >
                 {/* Header */}
-                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center justify-between bg-gray-50 px-4 py-2 dark:bg-gray-800">
                   <div className="flex items-center gap-2">
-                    <Tag color={getLanguageColor(block.language)}>
-                      {block.language}
-                    </Tag>
-                    {block.filename && (
-                      <Text className="text-sm font-mono">{block.filename}</Text>
-                    )}
+                    <Tag color={getLanguageColor(block.language)}>{block.language}</Tag>
+                    {block.filename && <Text className="font-mono text-sm">{block.filename}</Text>}
                     <Text type="secondary" className="text-xs">
                       {block.code.split('\n').length} lines
                     </Text>
                   </div>
-                  
+
                   <Space>
                     <Tooltip title="Copy Code">
                       <Button
@@ -242,7 +236,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
                         onClick={() => handleCopyCode(block.code)}
                       />
                     </Tooltip>
-                    
+
                     <Tooltip title="Download File">
                       <Button
                         type="text"
@@ -251,7 +245,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
                         onClick={() => handleDownload(block)}
                       />
                     </Tooltip>
-                    
+
                     {onDeleteBlock && (
                       <Tooltip title="Delete Block">
                         <Button
@@ -268,10 +262,10 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
 
                 {/* Code Content */}
                 <div className="relative">
-                  <pre className="bg-gray-900 text-gray-100 p-4 overflow-x-auto text-sm font-mono max-h-60 overflow-y-auto">
+                  <pre className="max-h-60 overflow-auto bg-gray-900 p-4 font-mono text-sm text-gray-100">
                     <code>{formatCode(block.code)}</code>
                   </pre>
-                  
+
                   {block.code.split('\n').length > 10 && (
                     <div className="absolute bottom-2 right-2">
                       <Button
@@ -292,7 +286,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
 
         {/* Summary */}
         {codeBlocks.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+          <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
             <div className="flex items-center justify-between text-sm">
               <div>
                 <Text strong>Total: {codeBlocks.length} code blocks</Text>
@@ -304,10 +298,13 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
                 <Button
                   size="small"
                   onClick={() => {
-                    const allCode = codeBlocks.map(block => 
-                      `// ${block.filename || 'Code Block'} (${block.language})\n${block.code}`
-                    ).join('\n\n---\n\n');
-                    handleCopyCode(allCode);
+                    const allCode = codeBlocks
+                      .map(
+                        (block) =>
+                          `// ${block.filename || 'Code Block'} (${block.language})\n${block.code}`
+                      )
+                      .join('\n\n---\n\n')
+                    handleCopyCode(allCode)
                   }}
                 >
                   Copy All
@@ -318,7 +315,7 @@ export const CodeFragmentsModal: React.FC<CodeFragmentsModalProps> = ({
         )}
       </div>
     </Modal>
-  );
-};
+  )
+}
 
-export default CodeFragmentsModal;
+export default CodeFragmentsModal

@@ -9,35 +9,43 @@
  * - Connection status indicator
  */
 
-import React from 'react';
-import { Layout, Space, Tag, Badge, Spin, Button, Steps, Tooltip } from 'antd';
-import { CheckCircleOutlined, ExclamationCircleOutlined, SearchOutlined, MessageOutlined, EditOutlined, BulbOutlined } from '@ant-design/icons';
-import styles from '../diagram-wizard.module.css';
-import type { ModelId } from '../screens/ModelSelectionScreen';
+import {
+  BulbOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined,
+  MessageOutlined,
+  SearchOutlined,
+} from '@ant-design/icons'
+import { Badge, Button, Layout, Space, Spin, Steps, Tag, Tooltip } from 'antd'
+import React from 'react'
+
+import styles from '../diagram-wizard.module.css'
+import type { ModelId } from '../screens/ModelSelectionScreen'
 
 interface DiagramWizardHeaderProps {
   // Title and status
-  title?: string;
-  isComplete?: boolean;
-  isError?: boolean;
+  title?: string
+  isComplete?: boolean
+  isError?: boolean
 
   // Model and session info
-  selectedModel: ModelId;
-  sessionId: string | null;
-  sseConnected: boolean;
-  loading?: boolean;
+  selectedModel: ModelId
+  sessionId: string | null
+  sseConnected: boolean
+  loading?: boolean
 
   // LLM Score
-  score: number;
-  scoreTarget?: number; // Dynamic score target from backend .env (default: 80)
+  score: number
+  scoreTarget?: number // Dynamic score target from backend .env (default: 80)
 
   // Progress phases
-  currentPhase: number;
-  phases: Array<{ title: string; description: string; icon: React.ReactNode }>;
+  currentPhase: number
+  phases: Array<{ title: string; description: string; icon: React.ReactNode }>
 
   // Confirm Ready button
-  canConfirmReady?: boolean;
-  onConfirmReady?: () => void;
+  canConfirmReady?: boolean
+  onConfirmReady?: () => void
 }
 
 /**
@@ -62,47 +70,55 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   const getModelDisplayName = (model: ModelId): string => {
     switch (model) {
       case 'gpt5':
-        return 'Deep';
+        return 'Deep'
       case 'grok':
-        return 'Fast';
+        return 'Fast'
       case 'claude':
-        return 'Thinking';
+        return 'Thinking'
       case 'gemini':
-        return 'Efficient';
+        return 'Efficient'
       default:
-        return model;
+        return model
     }
-  };
+  }
 
   // Get score tag color (1-100 scale)
   // Uses dynamic scoreTarget from backend .env (default: 80)
   const getScoreTagColor = (score: number): string => {
-    if (score >= scoreTarget) return 'green';
-    if (score >= scoreTarget * 0.75) return 'blue'; // 75% of target
-    return 'orange';
-  };
+    if (score >= scoreTarget) return 'green'
+    if (score >= scoreTarget * 0.75) return 'blue' // 75% of target
+    return 'orange'
+  }
 
   // Map phase icons to Ant Design icons
   const getPhaseIcon = (phaseTitle: string): React.ReactNode => {
     switch (phaseTitle) {
       case 'Analysis':
-        return <SearchOutlined />;
+        return <SearchOutlined />
       case 'Clarification':
-        return <MessageOutlined />;
+        return <MessageOutlined />
       case 'Generation':
-        return <EditOutlined />;
+        return <EditOutlined />
       case 'Rendering':
-        return <BulbOutlined />;
+        return <BulbOutlined />
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <Layout.Header className={styles.header}>
       <div className={styles.headerContent}>
         {/* Single Row Header with Progress */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '20px',
+            flexWrap: 'wrap',
+          }}
+        >
           {/* Left: Title + Score */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
             <h2 className={styles.title} style={{ margin: 0 }}>
@@ -146,7 +162,8 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
                   </Tooltip>
                 ),
                 icon: getPhaseIcon(phase.title),
-                status: index < currentPhase ? 'finish' : index === currentPhase ? 'process' : 'wait',
+                status:
+                  index < currentPhase ? 'finish' : index === currentPhase ? 'process' : 'wait',
               }))}
             />
           </div>
@@ -178,9 +195,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
             )}
             {sessionId && (
               <>
-                <span className={styles.sessionId}>
-                  {sessionId.substring(0, 8)}...
-                </span>
+                <span className={styles.sessionId}>{sessionId.substring(0, 8)}...</span>
                 <Badge
                   status={sseConnected ? 'success' : 'error'}
                   text={sseConnected ? 'Connected' : 'Disconnected'}
@@ -193,7 +208,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
         </div>
       </div>
     </Layout.Header>
-  );
-};
+  )
+}
 
-export default DiagramWizardHeader;
+export default DiagramWizardHeader

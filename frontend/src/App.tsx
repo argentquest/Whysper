@@ -1,10 +1,10 @@
 /**
  * Whysper Web2 - Main Application Component
- * 
+ *
  * This is the root component of the Whysper Web2 React application.
  * It provides a modern AI chat interface with multi-tab support, real-time
  * AI integration, and comprehensive conversation management.
- * 
+ *
  * Key Features:
  * - Multi-tab conversation management
  * - Real AI integration with multiple providers (OpenRouter, Anthropic, OpenAI)
@@ -13,7 +13,7 @@
  * - Theme switching (light/dark mode)
  * - Conversation persistence and history
  * - Settings management and system prompt configuration
- * 
+ *
  * Architecture:
  * - State management using React hooks (useState, useEffect)
  * - Ant Design components for UI consistency
@@ -23,336 +23,350 @@
  */
 
 // React core and hooks
-import { useState, useEffect, useCallback } from 'react';
-
+import { CloseOutlined,CopyOutlined, SaveOutlined } from '@ant-design/icons'
 // Ant Design UI components
-import { Layout, Modal, Button, App as AntdApp } from 'antd';
-import { CopyOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
+import { App as AntdApp,Button, Layout, Modal } from 'antd'
+import { useCallback,useEffect, useState } from 'react'
 
+import { ChatView } from './components/chat/ChatView'
+import { InputPanel } from './components/chat/InputPanel'
 // Layout components
-import { Header } from './components/layout/Header';
-import { TabManager } from './components/layout/TabManager';
-import { ChatView } from './components/chat/ChatView';
-import { InputPanel } from './components/chat/InputPanel';
-import { StatusBar } from './components/layout/StatusBar';
+import { Header } from './components/layout/Header'
+import { StatusBar } from './components/layout/StatusBar'
+import { TabManager } from './components/layout/TabManager'
 
 // Helper function to convert theme key to editor theme mode
 const getEditorTheme = (themeKey: string): 'light' | 'dark' => {
-  const darkThemes = ['dark', 'proDark'];
-  return darkThemes.includes(themeKey) ? 'dark' : 'light';
-};
+  const darkThemes = ['dark', 'proDark']
+  return darkThemes.includes(themeKey) ? 'dark' : 'light'
+}
 
 // Modal components for secondary interfaces
+// Tab-specific components
+import { DiagramWizard } from './components/DiagramWizard/DiagramWizard'
+import { DocumentationView } from './components/documentation/DocumentationView'
+// File editor components
+import { FileEditorView } from './components/editor/FileEditorView'
 import {
-  ContextModal,      // File selection and context management
-  SettingsModal,     // Application settings and AI configuration
-  AboutModal,        // Application information and version details
-  SystemMessageModal,// System prompt customization
-  CodeFragmentsModal,// Extracted code blocks management
+  AboutModal, // Application information and version details
+  CodeFragmentsModal, // Extracted code blocks management
+  ContextModal, // File selection and context management
+  D2TesterModal, // D2 diagram testing and validation
   FileSelectionModal, // File selection for editing
-  NewFileModal,
   HelpModal,
   MermaidTesterModal, // Mermaid diagram testing and validation
-  D2TesterModal,      // D2 diagram testing and validation
-} from './components/modals';
-import ThemePickerModal from './components/modals/ThemePickerModal';
-
-// File editor components
-import { FileEditorView } from './components/editor/FileEditorView';
-import { DocumentationView } from './components/documentation/DocumentationView';
-import { WelcomeScreen } from './components/welcome/WelcomeScreen';
-import { LandingPage } from './components/welcome/LandingPage';
-
-// Tab-specific components
-import { DiagramWizard } from './components/DiagramWizard/DiagramWizard';
+  NewFileModal,
+  SettingsModal, // Application settings and AI configuration
+  SystemMessageModal, // System prompt customization
+} from './components/modals'
+import ThemePickerModal from './components/modals/ThemePickerModal'
+import { LandingPage } from './components/welcome/LandingPage'
+import { WelcomeScreen } from './components/welcome/WelcomeScreen'
 
 // Placeholder Architecture Studio component (to be implemented)
 const ArchitectureGenStudio = () => {
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-600 mb-4">Architecture Studio</h2>
+        <h2 className="mb-4 text-2xl font-bold text-gray-600">Architecture Studio</h2>
         <p className="text-gray-500">Coming soon...</p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-// Terminal components  
+// Terminal components
 
 // Theme management
-import { useTheme } from './themes';
-
 // API service for backend communication
-import ApiService from './services/api';
-
+import ApiService from './services/api'
+import { useTheme } from './themes'
 // TypeScript type definitions
-import type { 
-  Conversation,  // Conversation data structure
-  Message,       // Individual chat message
-  Tab,          // Tab management structure
-  AppSettings,  // Application configuration
-  FileItem,     // File attachment structure
-  CodeBlock,    // Extracted code block structure
-  AgentPrompt,  // Agent prompt structure
-} from './types';
+import type {
+  AgentPrompt, // Agent prompt structure
+  AppSettings, // Application configuration
+  CodeBlock, // Extracted code block structure
+  Conversation, // Conversation data structure
+  FileItem, // File attachment structure
+  Message, // Individual chat message
+  Tab, // Tab management structure
+} from './types'
 
 // Extract Layout.Content for cleaner JSX
-const { Content } = Layout;
+const { Content } = Layout
 
 /**
  * Main App Component
- * 
+ *
  * Manages the entire application state and provides the main UI layout.
  * Orchestrates communication between all child components and the backend API.
  */
 function App() {
   // Theme management hook for light/dark mode switching
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme()
 
   // Get message API from antd App context
-  const { message } = AntdApp.useApp();
-  
+  const { message } = AntdApp.useApp()
+
   // ==================== Core Application State ====================
-  
+
   // Conversation management: stores all conversations by ID
-  const [conversations, setConversations] = useState<{ [key: string]: Conversation }>({});
-  
+  const [conversations, setConversations] = useState<{ [key: string]: Conversation }>({})
+
   // Tab management: supports multiple conversation tabs like a modern IDE
-  const [tabs, setTabs] = useState<Tab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string>('');
-  
+  const [tabs, setTabs] = useState<Tab[]>([])
+  const [activeTabId, setActiveTabId] = useState<string>('')
+
   // Global loading state for API operations
-  const [loading, setLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [loading, setLoading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
   // Application settings: AI provider, model, system prompt, etc.
   const [settings, setSettings] = useState<AppSettings>({
-    theme: theme,                    // Current theme (light/dark)
-    provider: '',                    // AI provider - will be loaded from backend
-    model: '',                       // AI model - will be loaded from backend
-    systemPrompt: '',                // System prompt - will be loaded from backend
-    contextFiles: [],               // Files to include in AI context
-    maxTokens: 4000,                // Maximum tokens for AI responses
-    temperature: 0.7,               // AI creativity/randomness (0.0-1.0)
-  });
-  
+    theme: theme, // Current theme (light/dark)
+    provider: '', // AI provider - will be loaded from backend
+    model: '', // AI model - will be loaded from backend
+    systemPrompt: '', // System prompt - will be loaded from backend
+    contextFiles: [], // Files to include in AI context
+    maxTokens: 4000, // Maximum tokens for AI responses
+    temperature: 0.7, // AI creativity/randomness (0.0-1.0)
+  })
+
   // ==================== Modal State Management ====================
   // Controls visibility of various modal dialogs
 
-  const [contextModalOpen, setContextModalOpen] = useState(false);           // File selection modal
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);        // Settings configuration modal
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);              // About modal
-  const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false); // System prompt editor modal
-  const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false);  // Code extraction results modal
-  const [themePickerModalOpen, setThemePickerModalOpen] = useState(false);  // Theme selection modal
-  const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false); // File editor selection modal
-  const [newFileModalOpen, setNewFileModalOpen] = useState(false);
-  const [helpModalOpen, setHelpModalOpen] = useState(false);         // Help modal
-  const [mermaidTesterModalOpen, setMermaidTesterModalOpen] = useState(false); // Mermaid diagram tester modal
-  const [d2TesterModalOpen, setD2TesterModalOpen] = useState(false); // D2 diagram tester modal
-  const [codeModalOpen, setCodeModalOpen] = useState(false);               // Code fragment display modal
-  const [codeModalData, setCodeModalData] = useState<{code: string, language: string, title?: string}>({code: '', language: ''});
-  const [documentationData, setDocumentationData] = useState<{ content: string; metadata: Record<string, any> } | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Skip authentication
-  
+  const [contextModalOpen, setContextModalOpen] = useState(false) // File selection modal
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false) // Settings configuration modal
+  const [aboutModalOpen, setAboutModalOpen] = useState(false) // About modal
+  const [systemMessageModalOpen, setSystemMessageModalOpen] = useState(false) // System prompt editor modal
+  const [codeFragmentsModalOpen, setCodeFragmentsModalOpen] = useState(false) // Code extraction results modal
+  const [themePickerModalOpen, setThemePickerModalOpen] = useState(false) // Theme selection modal
+  const [fileSelectionModalOpen, setFileSelectionModalOpen] = useState(false) // File editor selection modal
+  const [newFileModalOpen, setNewFileModalOpen] = useState(false)
+  const [helpModalOpen, setHelpModalOpen] = useState(false) // Help modal
+  const [mermaidTesterModalOpen, setMermaidTesterModalOpen] = useState(false) // Mermaid diagram tester modal
+  const [d2TesterModalOpen, setD2TesterModalOpen] = useState(false) // D2 diagram tester modal
+  const [codeModalOpen, setCodeModalOpen] = useState(false) // Code fragment display modal
+  const [codeModalData, setCodeModalData] = useState<{
+    code: string
+    language: string
+    title?: string
+  }>({ code: '', language: '' })
+  const [documentationData, setDocumentationData] = useState<{
+    content: string
+    metadata: Record<string, any>
+  } | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(true) // Skip authentication
+
   // ==================== Data State Management ====================
 
   // Files selected for AI context inclusion
   // Server-side state - managed by backend conversation session
-  const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([])
 
   // Load selectedFiles from localStorage on component mount
   useEffect(() => {
     try {
-      const storedFiles = localStorage.getItem('whysper_selected_files');
+      const storedFiles = localStorage.getItem('whysper_selected_files')
       if (storedFiles) {
-        const parsedFiles = JSON.parse(storedFiles);
-        console.log('📦 Loaded selectedFiles from localStorage:', parsedFiles);
-        setSelectedFiles(parsedFiles);
+        const parsedFiles = JSON.parse(storedFiles)
+        console.log('📦 Loaded selectedFiles from localStorage:', parsedFiles)
+        setSelectedFiles(parsedFiles)
       }
     } catch (error) {
-      console.error('❌ Error loading selectedFiles from localStorage:', error);
+      console.error('❌ Error loading selectedFiles from localStorage:', error)
     }
-  }, []);
+  }, [])
 
   // Save selectedFiles to localStorage whenever it changes
   useEffect(() => {
     try {
       if (selectedFiles.length > 0) {
-        localStorage.setItem('whysper_selected_files', JSON.stringify(selectedFiles));
-        console.log('💾 Saved selectedFiles to localStorage:', selectedFiles);
+        localStorage.setItem('whysper_selected_files', JSON.stringify(selectedFiles))
+        console.log('💾 Saved selectedFiles to localStorage:', selectedFiles)
       } else {
         // Also save empty array to maintain consistency
-        localStorage.setItem('whysper_selected_files', JSON.stringify([]));
-        console.log('💾 Saved empty selectedFiles to localStorage');
+        localStorage.setItem('whysper_selected_files', JSON.stringify([]))
+        console.log('💾 Saved empty selectedFiles to localStorage')
       }
     } catch (error) {
-      console.error('❌ Error saving selectedFiles to localStorage:', error);
+      console.error('❌ Error saving selectedFiles to localStorage:', error)
     }
-  }, [selectedFiles]);
+  }, [selectedFiles])
 
   // DEBUG: Expose selectedFiles to browser console for debugging
   useEffect(() => {
-    (window as any).getSelectedFiles = () => {
-      console.log('📋 Current selectedFiles state:', selectedFiles);
-      console.log('📋 Count:', selectedFiles.length);
-      console.log('📋 Paths:', selectedFiles.map(f => f.path));
-      return selectedFiles;
-    };
-  }, [selectedFiles]);
+    ;(window as any).getSelectedFiles = () => {
+      console.log('📋 Current selectedFiles state:', selectedFiles)
+      console.log('📋 Count:', selectedFiles.length)
+      console.log(
+        '📋 Paths:',
+        selectedFiles.map((f) => f.path)
+      )
+      return selectedFiles
+    }
+  }, [selectedFiles])
 
   // DEBUG: Log whenever selectedFiles changes
   useEffect(() => {
-    console.log('🔄 selectedFiles state changed:', selectedFiles);
-    console.log('🔄 selectedFiles length:', selectedFiles.length);
-  }, [selectedFiles]);
-  
+    console.log('🔄 selectedFiles state changed:', selectedFiles)
+    console.log('🔄 selectedFiles length:', selectedFiles.length)
+  }, [selectedFiles])
+
   // Code blocks extracted from AI responses for download/management
-  const [extractedCodeBlocks, setExtractedCodeBlocks] = useState<CodeBlock[]>([]);
-  
+  const [extractedCodeBlocks, setExtractedCodeBlocks] = useState<CodeBlock[]>([])
+
   // Agent prompts loaded from backend
-  const [agentPrompts, setAgentPrompts] = useState<AgentPrompt[]>([]);
-  const [activeAgentName, setActiveAgentName] = useState<string>('default');
+  const [agentPrompts, setAgentPrompts] = useState<AgentPrompt[]>([])
+  const [activeAgentName, setActiveAgentName] = useState<string>('default')
 
   // Subagent commands loaded from backend
-  const [subagentCommands, setSubagentCommands] = useState<any[]>([]);
+  const [subagentCommands, setSubagentCommands] = useState<any[]>([])
 
   // CODE_PATH from backend settings
-  const [codePath, setCodePath] = useState<string>('');
+  const [codePath, setCodePath] = useState<string>('')
 
   // ==================== Application Initialization ====================
 
   const loadSettings = useCallback(async () => {
-    console.log('🔧 Loading application settings...');
+    console.log('🔧 Loading application settings...')
     try {
-      const response = await ApiService.getSettings();
-      console.log('📡 Settings API response:', response);
+      const response = await ApiService.getSettings()
+      console.log('📡 Settings API response:', response)
       if (response.success && response.data) {
-        const backendSettings = response.data;
+        const backendSettings = response.data
 
         // Map backend settings to frontend settings structure
         const mappedSettings: AppSettings = {
           theme: theme,
           provider: backendSettings.values?.PROVIDER || 'openrouter',
-          model: backendSettings.values?.DEFAULT_MODEL || backendSettings.values?.MODELS?.split(',')[0]?.trim() || '',
-          systemPrompt: backendSettings.values?.SYSTEM_PROMPT || 'You are a helpful AI assistant specialized in code analysis and development.',
+          model:
+            backendSettings.values?.DEFAULT_MODEL ||
+            backendSettings.values?.MODELS?.split(',')[0]?.trim() ||
+            '',
+          systemPrompt:
+            backendSettings.values?.SYSTEM_PROMPT ||
+            'You are a helpful AI assistant specialized in code analysis and development.',
           contextFiles: [],
           maxTokens: parseInt(backendSettings.values?.MAX_TOKENS || '4000', 10),
           temperature: parseFloat(backendSettings.values?.TEMPERATURE || '0.7'),
           timeout: backendSettings.timeout || 120, // Frontend timeout in seconds (default: 120)
-        };
+        }
 
-        console.log('⚙️ Mapped settings:', mappedSettings);
-        setSettings(mappedSettings);
+        console.log('⚙️ Mapped settings:', mappedSettings)
+        setSettings(mappedSettings)
 
         // Apply timeout to API client if provided
         if (mappedSettings.timeout) {
-          ApiService.setRequestTimeout(mappedSettings.timeout);
+          ApiService.setRequestTimeout(mappedSettings.timeout)
         }
 
-        const configuredAgentName = backendSettings.values?.CURRENT_SYSTEM_PROMPT;
+        const configuredAgentName = backendSettings.values?.CURRENT_SYSTEM_PROMPT
         if (configuredAgentName && typeof configuredAgentName === 'string') {
-          setActiveAgentName(configuredAgentName);
+          setActiveAgentName(configuredAgentName)
         }
 
         // Store CODE_PATH for display in footer
-        const codePathValue = backendSettings.values?.CODE_PATH;
+        const codePathValue = backendSettings.values?.CODE_PATH
         if (codePathValue && typeof codePathValue === 'string') {
-          setCodePath(codePathValue);
+          setCodePath(codePathValue)
         }
       }
     } catch (error) {
-      console.error('❌ Failed to load settings:', error);
+      console.error('❌ Failed to load settings:', error)
       // Set fallback defaults if backend is not available
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
         provider: 'openrouter',
         model: 'x-ai/grok-code-fast-1',
-        systemPrompt: 'You are a helpful AI assistant specialized in code analysis and development.',
-      }));
+        systemPrompt:
+          'You are a helpful AI assistant specialized in code analysis and development.',
+      }))
     }
-  }, []);
+  }, [])
 
   const loadAgentPrompts = useCallback(async (): Promise<string | undefined> => {
     try {
-      const response = await ApiService.getAgents();
+      const response = await ApiService.getAgents()
       if (response.success && response.data) {
-        setAgentPrompts(response.data);
+        setAgentPrompts(response.data)
         // Assuming the first agent in the list is the default
         if (response.data.length > 0) {
-          return response.data[0].title; // Return the title of the default agent
+          return response.data[0].title // Return the title of the default agent
         }
       } else {
-        console.warn('Could not load agent prompts:', response.error);
+        console.warn('Could not load agent prompts:', response.error)
       }
     } catch (error) {
-      console.warn('Could not load agent prompts:', error);
+      console.warn('Could not load agent prompts:', error)
     }
-    return undefined;
-  }, []);
+    return undefined
+  }, [])
 
   const loadSubagentCommands = useCallback(async () => {
     try {
-      const response = await ApiService.getSubagents();
+      const response = await ApiService.getSubagents()
       if (response.success && response.data) {
-        setSubagentCommands(response.data);
+        setSubagentCommands(response.data)
       } else {
-        console.warn('Could not load subagent commands:', response.error);
+        console.warn('Could not load subagent commands:', response.error)
       }
     } catch (error) {
-      console.warn('Could not load subagent commands:', error);
+      console.warn('Could not load subagent commands:', error)
     }
-  }, []);
+  }, [])
 
   const loadConversationFiles = useCallback(async (conversationId: string) => {
-    console.log(`🟡 loadConversationFiles() called for conversation: ${conversationId}`);
+    console.log(`🟡 loadConversationFiles() called for conversation: ${conversationId}`)
     try {
-      const response = await ApiService.getConversationFiles(conversationId);
+      const response = await ApiService.getConversationFiles(conversationId)
       if (response.success && response.data) {
-        const { files, count } = response.data;
-        console.log(`🟡 Backend returned ${count} files:`, files);
+        const { files, count } = response.data
+        console.log(`🟡 Backend returned ${count} files:`, files)
 
         // Only update if we actually got files
         // This prevents overwriting user's selection before first message is sent
         if (count > 0) {
-          console.log(`🟡 Updating selectedFiles state with ${count} files`);
+          console.log(`🟡 Updating selectedFiles state with ${count} files`)
           // Convert file paths to FileItem objects
-          const fileItems: FileItem[] = files.map(path => ({
+          const fileItems: FileItem[] = files.map((path) => ({
             path,
             name: path.split(/[/\\]/).pop() || path,
             size: 0, // Size not needed for display
             isSelected: true,
             type: 'file' as const,
-          }));
+          }))
 
-          setSelectedFiles(fileItems);
-          console.log(`🟡 setSelectedFiles() called with ${fileItems.length} items`);
-          console.log(`🟡 getSelectedFiles() after loadConversationFiles:`, (window as any).getSelectedFiles());
+          setSelectedFiles(fileItems)
+          console.log(`🟡 setSelectedFiles() called with ${fileItems.length} items`)
+          console.log(
+            `🟡 getSelectedFiles() after loadConversationFiles:`,
+            (window as any).getSelectedFiles()
+          )
         } else {
-          console.log('🟡 Count is 0, NOT updating state');
+          console.log('🟡 Count is 0, NOT updating state')
         }
       } else {
         // Session doesn't exist yet - that's OK, don't clear selection
-        console.log('🟡 Backend session not found (probably not created yet)');
+        console.log('🟡 Backend session not found (probably not created yet)')
       }
     } catch (error) {
-      console.warn('🟡 Could not load conversation files:', error);
+      console.warn('🟡 Could not load conversation files:', error)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
     if (agentPrompts.length === 0) {
-      return;
+      return
     }
 
-    setActiveAgentName(prev => {
-      if (prev && agentPrompts.some(prompt => prompt.name === prev)) {
-        return prev;
+    setActiveAgentName((prev) => {
+      if (prev && agentPrompts.some((prompt) => prompt.name === prev)) {
+        return prev
       }
-      return agentPrompts[0].name;
-    });
-  }, [agentPrompts]);
+      return agentPrompts[0].name
+    })
+  }, [agentPrompts])
 
   // Initialize the application when component mounts (only once)
   // NOTE: Message history is reset on every full page reload since state is not persisted
@@ -361,50 +375,50 @@ function App() {
 
     // Reset message history: Clear any in-memory state from previous sessions
     // This ensures a fresh start after each full browser reload
-    setConversations({});
-    setTabs([]);
-    setActiveTabId('');
+    setConversations({})
+    setTabs([])
+    setActiveTabId('')
 
     // Load user settings from backend (API keys, preferences, etc.)
     const initializeApp = async () => {
-      await loadSettings();
-      await loadAgentPrompts();
-      await loadSubagentCommands();
+      await loadSettings()
+      await loadAgentPrompts()
+      await loadSubagentCommands()
       // Keep tabs empty so the landing page remains until the user picks an action
-    };
+    }
 
-    initializeApp();
+    initializeApp()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - run only once on mount
+  }, []) // Empty dependency array - run only once on mount
 
   // Chat functions
   const handleSendMessage = async (messageText: string, command?: string) => {
-    console.group('💬 Sending chat message');
-    console.log('Message text:', messageText);
-    console.log('Command:', command);
-    console.log('Active tab ID:', activeTabId);
-    console.log('All tabs:', tabs);
-    console.log('All conversations:', conversations);
+    console.group('💬 Sending chat message')
+    console.log('Message text:', messageText)
+    console.log('Command:', command)
+    console.log('Active tab ID:', activeTabId)
+    console.log('All tabs:', tabs)
+    console.log('All conversations:', conversations)
 
-    const activeTab = tabs.find(tab => tab.id === activeTabId);
+    const activeTab = tabs.find((tab) => tab.id === activeTabId)
     if (!activeTab) {
-      console.error('❌ No active tab found');
-      console.error('Available tabs:', tabs);
-      console.error('Looking for activeTabId:', activeTabId);
-      console.groupEnd();
-      return;
+      console.error('❌ No active tab found')
+      console.error('Available tabs:', tabs)
+      console.error('Looking for activeTabId:', activeTabId)
+      console.groupEnd()
+      return
     }
 
-    const conversation = conversations[activeTab.conversationId];
+    const conversation = conversations[activeTab.conversationId]
     if (!conversation) {
-      console.error('❌ No conversation found for tab');
-      console.error('Looking for conversation ID:', activeTab.conversationId);
-      console.error('Available conversations:', Object.keys(conversations));
-      console.groupEnd();
-      return;
+      console.error('❌ No conversation found for tab')
+      console.error('Looking for conversation ID:', activeTab.conversationId)
+      console.error('Available conversations:', Object.keys(conversations))
+      console.groupEnd()
+      return
     }
 
-    console.log('Active conversation:', conversation.id);
+    console.log('Active conversation:', conversation.id)
 
     // Create user message
     const userMessage: Message = {
@@ -412,248 +426,259 @@ function App() {
       role: 'user',
       content: command ? `${command.toUpperCase()}: ${messageText}` : messageText,
       timestamp: new Date().toISOString(),
-    };
+    }
 
-    console.info('👤 Created user message:', userMessage);
+    console.info('👤 Created user message:', userMessage)
 
     // Update conversation with user message
     const updatedConversation = {
       ...conversation,
       messages: [...conversation.messages, userMessage],
       updatedAt: new Date().toISOString(),
-    };
+    }
 
-    console.info('📝 Updated conversation with user message:', updatedConversation.messages.length, 'total messages');
+    console.info(
+      '📝 Updated conversation with user message:',
+      updatedConversation.messages.length,
+      'total messages'
+    )
 
-    setConversations(prev => ({
+    setConversations((prev) => ({
       ...prev,
       [conversation.id]: updatedConversation,
-    }));
+    }))
 
     // Mark tab as dirty
-    setTabs(prev => prev.map(tab =>
-      tab.id === activeTabId ? { ...tab, isDirty: true } : tab
-    ));
+    setTabs((prev) => prev.map((tab) => (tab.id === activeTabId ? { ...tab, isDirty: true } : tab)))
 
-    console.log('🔴 [APP] Setting loading = true');
-    setLoading(true);
+    console.log('🔴 [APP] Setting loading = true')
+    setLoading(true)
 
     try {
       // Get the latest selectedFiles directly from the global function
-      const currentSelectedFiles = (window as any).getSelectedFiles();
-      
+      const currentSelectedFiles = (window as any).getSelectedFiles()
+
       // DEBUG: Check selectedFiles state RIGHT before creating request
-      console.log('🔴 BEFORE creating apiRequest:');
-      console.log('🔴 selectedFiles (state):', selectedFiles);
-      console.log('🔴 currentSelectedFiles (from getSelectedFiles()):', currentSelectedFiles);
-      console.log('🔴 selectedFiles.length:', selectedFiles.length);
-      console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length);
-      console.log('🔴 Type of selectedFiles:', typeof selectedFiles, Array.isArray(selectedFiles));
-      console.log('🔴 Type of currentSelectedFiles:', typeof currentSelectedFiles, Array.isArray(currentSelectedFiles));
+      console.log('🔴 BEFORE creating apiRequest:')
+      console.log('🔴 selectedFiles (state):', selectedFiles)
+      console.log('🔴 currentSelectedFiles (from getSelectedFiles()):', currentSelectedFiles)
+      console.log('🔴 selectedFiles.length:', selectedFiles.length)
+      console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length)
+      console.log('🔴 Type of selectedFiles:', typeof selectedFiles, Array.isArray(selectedFiles))
+      console.log(
+        '🔴 Type of currentSelectedFiles:',
+        typeof currentSelectedFiles,
+        Array.isArray(currentSelectedFiles)
+      )
 
       // Send to API with ALL selected files (no limit)
       // Use the latest selectedFiles from getSelectedFiles()
-      console.log('🔴 Creating API request with currentSelectedFiles:', currentSelectedFiles);
-      console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length);
-      console.log('🔴 currentSelectedFiles content:', currentSelectedFiles);
-      
-      const contextFiles = currentSelectedFiles.map((f: FileItem) => f.path);
-      console.log('🔴 Mapped contextFiles:', contextFiles);
-      
+      console.log('🔴 Creating API request with currentSelectedFiles:', currentSelectedFiles)
+      console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length)
+      console.log('🔴 currentSelectedFiles content:', currentSelectedFiles)
+
+      const contextFiles = currentSelectedFiles.map((f: FileItem) => f.path)
+      console.log('🔴 Mapped contextFiles:', contextFiles)
+
       const apiRequest = {
         message: messageText,
         conversationId: conversation.id,
         contextFiles: contextFiles,
         settings,
-      };
+      }
 
-      console.log('📡 Sending API request:', apiRequest);
-      console.log('🗂️ Selected files count:', selectedFiles.length);
-      console.log('🗂️ Selected files:', selectedFiles.map(f => f.path));
-      console.log('🔴 apiRequest.contextFiles:', apiRequest.contextFiles);
+      console.log('📡 Sending API request:', apiRequest)
+      console.log('🗂️ Selected files count:', selectedFiles.length)
+      console.log(
+        '🗂️ Selected files:',
+        selectedFiles.map((f) => f.path)
+      )
+      console.log('🔴 apiRequest.contextFiles:', apiRequest.contextFiles)
 
-      const response = await ApiService.sendMessage(apiRequest);
-      console.log('📡 Chat API response:', response);
+      const response = await ApiService.sendMessage(apiRequest)
+      console.log('📡 Chat API response:', response)
 
       // Mark as processing when we start receiving the response
-      console.log('🟡 [APP] Setting isProcessing = true');
-      setIsProcessing(true);
+      console.log('🟡 [APP] Setting isProcessing = true')
+      setIsProcessing(true)
 
       if (response.success && response.data) {
-        const assistantMessage = response.data.message;
-        console.info('📨 Received assistant message:', assistantMessage);
-        console.info('📨 Message content length:', assistantMessage.content?.length);
-        console.info('📨 Message content preview:', assistantMessage.content?.substring(0, 200));
+        const assistantMessage = response.data.message
+        console.info('📨 Received assistant message:', assistantMessage)
+        console.info('📨 Message content length:', assistantMessage.content?.length)
+        console.info('📨 Message content preview:', assistantMessage.content?.substring(0, 200))
 
         // Update conversation with assistant response
         const finalConversation = {
           ...updatedConversation,
           messages: [...updatedConversation.messages, assistantMessage],
           updatedAt: new Date().toISOString(),
-        };
+        }
 
-        console.info('💬 Final conversation state:', finalConversation);
-        console.info('💬 Total messages in conversation:', finalConversation.messages.length);
-        setConversations(prev => ({
+        console.info('💬 Final conversation state:', finalConversation)
+        console.info('💬 Total messages in conversation:', finalConversation.messages.length)
+        setConversations((prev) => ({
           ...prev,
           [conversation.id]: finalConversation,
-        }));
+        }))
 
         // Extract code blocks if any
-        await extractCodeFromMessage(assistantMessage);
+        await extractCodeFromMessage(assistantMessage)
 
         // Note: We don't reload files from backend here because we just sent them!
         // The frontend state is already correct. Only load from backend when:
         // 1. Switching tabs (to get that conversation's files)
         // 2. After page refresh (to restore state)
 
-        console.log('✅ Chat message sent successfully');
+        console.log('✅ Chat message sent successfully')
       } else {
-        console.error('❌ API response failed:', response.error);
-        message.error(response.error || 'Failed to send message');
+        console.error('❌ API response failed:', response.error)
+        message.error(response.error || 'Failed to send message')
       }
     } catch (error) {
-      console.error('❌ Send message error:', error);
-      message.error('Error sending message');
+      console.error('❌ Send message error:', error)
+      message.error('Error sending message')
     } finally {
-      console.log('🟢 [APP] Setting loading = false, isProcessing = false');
-      setLoading(false);
-      setIsProcessing(false);
-      console.groupEnd();
+      console.log('🟢 [APP] Setting loading = false, isProcessing = false')
+      setLoading(false)
+      setIsProcessing(false)
+      console.groupEnd()
     }
-  };
+  }
 
   const extractCodeFromMessage = async (msg: Message) => {
     try {
-      const response = await ApiService.extractCode(msg.id);
+      const response = await ApiService.extractCode(msg.id)
       if (response.success && response.data) {
-        setExtractedCodeBlocks(prev => [...prev, ...(response.data || [])]);
+        setExtractedCodeBlocks((prev) => [...prev, ...(response.data || [])])
       }
     } catch (error) {
-      console.warn('Could not extract code:', error);
+      console.warn('Could not extract code:', error)
     }
-  };
-
+  }
 
   const handleShowCode = (code: string, language: string, title?: string) => {
-    setCodeModalData({ code, language, title });
-    setCodeModalOpen(true);
-  };
+    setCodeModalData({ code, language, title })
+    setCodeModalOpen(true)
+  }
 
   const handleCopyCode = async () => {
     if (codeModalData.code) {
       try {
-        await navigator.clipboard.writeText(codeModalData.code);
-        message.success('Code copied to clipboard');
+        await navigator.clipboard.writeText(codeModalData.code)
+        message.success('Code copied to clipboard')
       } catch (error) {
-        console.error('Failed to copy code:', error);
-        message.error('Failed to copy code');
+        console.error('Failed to copy code:', error)
+        message.error('Failed to copy code')
       }
     }
-  };
+  }
 
   const handleClearInput = () => {
     // Clear any input state if needed
     // This will be passed to InputPanel to clear its internal state
-    message.info('Input cleared');
-  };
+    message.info('Input cleared')
+  }
 
   const handleSystemChange = async (systemType: string) => {
-    console.info('🔄 Agent changed to:', systemType);
-    setActiveAgentName(systemType);
+    console.info('🔄 Agent changed to:', systemType)
+    setActiveAgentName(systemType)
 
     // Find the agent prompt for this system type
-    const agentPrompt = agentPrompts.find(prompt => prompt.name === systemType);
+    const agentPrompt = agentPrompts.find((prompt) => prompt.name === systemType)
 
     if (agentPrompt) {
       try {
         // Load the actual prompt content from the backend
-        const response = await ApiService.getAgentPrompt(agentPrompt.filename);
+        const response = await ApiService.getAgentPrompt(agentPrompt.filename)
         if (response.success && response.data) {
-          const newSystemPrompt = response.data?.content || '';
-          console.info('✅ Loaded agent prompt:', agentPrompt.title);
-          console.info('📝 System prompt preview:', newSystemPrompt.substring(0, 200) + '...');
+          const newSystemPrompt = response.data?.content || ''
+          console.info('✅ Loaded agent prompt:', agentPrompt.title)
+          console.info('📝 System prompt preview:', newSystemPrompt.substring(0, 200) + '...')
 
-          setSettings(prev => ({
+          setSettings((prev) => ({
             ...prev,
             systemPrompt: newSystemPrompt,
-          }));
+          }))
 
-          message.success(`Agent changed to: ${agentPrompt.title} - New conversation started`);
+          message.success(`Agent changed to: ${agentPrompt.title} - New conversation started`)
 
           // Create a new tab with empty message history for the new agent
-          handleNewTab(agentPrompt.title.substring(0, 50));
+          handleNewTab(agentPrompt.title.substring(0, 50))
 
-          console.info('🆕 Created new conversation with agent:', agentPrompt.title);
+          console.info('🆕 Created new conversation with agent:', agentPrompt.title)
         } else {
-          message.error('Failed to load agent prompt');
+          message.error('Failed to load agent prompt')
         }
       } catch (error) {
-        console.error('Error loading agent prompt:', error);
-        message.error('Error loading agent prompt');
+        console.error('Error loading agent prompt:', error)
+        message.error('Error loading agent prompt')
       }
     } else {
       // Fallback to hardcoded prompts
-      const fallbackPrompt = getSystemPromptByType(systemType);
-      console.info('⚠️ Using fallback system prompt for:', systemType);
+      const fallbackPrompt = getSystemPromptByType(systemType)
+      console.info('⚠️ Using fallback system prompt for:', systemType)
 
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
         systemPrompt: fallbackPrompt,
-      }));
+      }))
 
-      message.success(`Agent changed to: ${systemType} - New conversation started`);
-      handleNewTab(systemType.substring(0, 50));
+      message.success(`Agent changed to: ${systemType} - New conversation started`)
+      handleNewTab(systemType.substring(0, 50))
     }
-  };
-
+  }
 
   const handleRunSystemPrompt = async (systemName: string) => {
     // Find the agent prompt for this system
-    const agentPrompt = agentPrompts.find(prompt => prompt.name === systemName);
+    const agentPrompt = agentPrompts.find((prompt) => prompt.name === systemName)
 
     if (agentPrompt) {
       try {
         // Load the actual prompt content from the backend
-        const response = await ApiService.getAgentPrompt(agentPrompt.filename);
+        const response = await ApiService.getAgentPrompt(agentPrompt.filename)
         if (response.success && response.data) {
-          const promptContent = response.data.content;
+          const promptContent = response.data.content
           // Send the system prompt as a regular message
-          await handleSendMessage(`Execute this system prompt: ${promptContent}`);
-          message.success(`Running system prompt: ${agentPrompt.title}`);
+          await handleSendMessage(`Execute this system prompt: ${promptContent}`)
+          message.success(`Running system prompt: ${agentPrompt.title}`)
         } else {
-          message.error('Failed to load agent prompt');
+          message.error('Failed to load agent prompt')
         }
       } catch (error) {
-        console.error('Error loading agent prompt for execution:', error);
-        message.error('Error loading agent prompt');
+        console.error('Error loading agent prompt for execution:', error)
+        message.error('Error loading agent prompt')
       }
     } else {
       // Fallback to hardcoded prompts
-      const promptContent = getSystemPromptByType(systemName);
-      await handleSendMessage(`Execute this system prompt: ${promptContent}`);
-      message.success(`Running system prompt: ${systemName}`);
+      const promptContent = getSystemPromptByType(systemName)
+      await handleSendMessage(`Execute this system prompt: ${promptContent}`)
+      message.success(`Running system prompt: ${systemName}`)
     }
-  };
+  }
 
   const getSystemPromptByType = (systemType: string): string => {
     const systemPrompts: { [key: string]: string } = {
       default: 'You are a helpful AI assistant specialized in code analysis and development.',
-      coding: 'You are an expert software developer and code reviewer. Analyze code thoroughly, suggest improvements, identify bugs, and provide best practices.',
-      documentation: 'You are a technical documentation specialist. Create clear, comprehensive documentation that is easy to understand.',
-      refactoring: 'You are a refactoring specialist. Help improve code by removing code smells, improving readability, and updating to modern standards.',
-      debugging: 'You are a debugging expert. Help identify bugs, analyze error messages, and provide step-by-step troubleshooting.'
-    };
-    return systemPrompts[systemType] || systemPrompts.default;
-  };
+      coding:
+        'You are an expert software developer and code reviewer. Analyze code thoroughly, suggest improvements, identify bugs, and provide best practices.',
+      documentation:
+        'You are a technical documentation specialist. Create clear, comprehensive documentation that is easy to understand.',
+      refactoring:
+        'You are a refactoring specialist. Help improve code by removing code smells, improving readability, and updating to modern standards.',
+      debugging:
+        'You are a debugging expert. Help identify bugs, analyze error messages, and provide step-by-step troubleshooting.',
+    }
+    return systemPrompts[systemType] || systemPrompts.default
+  }
 
   // ==================== File Editor Functions ====================
-  
+
   // Handle file selection for editing
   const handleFileSelect = async (file: FileItem) => {
-    const fileTabId = `file-tab-${Date.now()}`;
-    const fileName = file.name;
-    
+    const fileTabId = `file-tab-${Date.now()}`
+    const fileName = file.name
+
     const newFileTab: Tab = {
       id: fileTabId,
       conversationId: '', // File tabs don't need conversation IDs
@@ -664,56 +689,58 @@ function App() {
       filePath: file.path,
       fileContent: '', // Will be loaded by FileEditorView
       originalContent: '', // Will be set when content is loaded
-    };
+    }
 
-    setTabs(prev => [...prev, newFileTab]);
-    setActiveTabId(fileTabId);
-    message.success(`Opened ${fileName} for editing`);
-  };
+    setTabs((prev) => [...prev, newFileTab])
+    setActiveTabId(fileTabId)
+    message.success(`Opened ${fileName} for editing`)
+  }
 
   // Handle file content change in editor
   const handleFileContentChange = (tabId: string, content: string, isDirty: boolean) => {
-    setTabs(prev => prev.map(tab => 
-      tab.id === tabId 
-        ? { 
-            ...tab, 
-            fileContent: content, 
-            isDirty,
-            // If this is the first load (not dirty), set originalContent to the content
-            originalContent: !isDirty && !tab.originalContent ? content : tab.originalContent
-          } 
-        : tab
-    ));
-  };
+    setTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === tabId
+          ? {
+              ...tab,
+              fileContent: content,
+              isDirty,
+              // If this is the first load (not dirty), set originalContent to the content
+              originalContent: !isDirty && !tab.originalContent ? content : tab.originalContent,
+            }
+          : tab
+      )
+    )
+  }
 
   // Handle file save
   const handleFileSave = async (tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
+    const tab = tabs.find((t) => t.id === tabId)
     if (!tab || tab.type !== 'file' || !tab.filePath || !tab.fileContent) {
-      throw new Error('Invalid file tab or missing content');
+      throw new Error('Invalid file tab or missing content')
     }
 
     try {
       const response = await ApiService.post('/files/save', {
         path: tab.filePath,
         content: tab.fileContent,
-      });
+      })
 
       if (response.data?.success) {
         // Update tab to mark as saved and update original content
-        setTabs(prev => prev.map(t => 
-          t.id === tabId 
-            ? { ...t, isDirty: false, originalContent: tab.fileContent } 
-            : t
-        ));
+        setTabs((prev) =>
+          prev.map((t) =>
+            t.id === tabId ? { ...t, isDirty: false, originalContent: tab.fileContent } : t
+          )
+        )
       } else {
-        throw new Error(response.data?.message || 'Save failed');
+        throw new Error(response.data?.message || 'Save failed')
       }
     } catch (error: any) {
-      console.error('Error saving file:', error);
-      throw error; // Re-throw to be handled by FileEditorView
+      console.error('Error saving file:', error)
+      throw error // Re-throw to be handled by FileEditorView
     }
-  };
+  }
 
   // Handle new file creation
   const handleCreateNewFile = async (filePath: string, initialContent: string = '') => {
@@ -721,13 +748,13 @@ function App() {
       const response = await ApiService.post('/files/create', {
         path: filePath,
         content: initialContent,
-      });
+      })
 
       if (response.data?.success) {
         // Create a new file tab
-        const fileName = filePath.split('/').pop() || filePath;
-        const fileTabId = `file-tab-${Date.now()}`;
-        
+        const fileName = filePath.split('/').pop() || filePath
+        const fileTabId = `file-tab-${Date.now()}`
+
         const newFileTab: Tab = {
           id: fileTabId,
           conversationId: '',
@@ -738,39 +765,39 @@ function App() {
           filePath: filePath,
           fileContent: initialContent,
           originalContent: initialContent,
-        };
+        }
 
-        setTabs(prev => [...prev, newFileTab]);
-        setActiveTabId(fileTabId);
-        message.success(`Created new file: ${filePath}`);
-        
-        return true;
+        setTabs((prev) => [...prev, newFileTab])
+        setActiveTabId(fileTabId)
+        message.success(`Created new file: ${filePath}`)
+
+        return true
       } else {
-        throw new Error(response.data?.message || 'File creation failed');
+        throw new Error(response.data?.message || 'File creation failed')
       }
     } catch (error: any) {
-      console.error('Error creating file:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create file';
-      message.error(`Failed to create file: ${errorMessage}`);
-      throw error;
+      console.error('Error creating file:', error)
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create file'
+      message.error(`Failed to create file: ${errorMessage}`)
+      throw error
     }
-  };
+  }
 
   // Tab management
   const handleTabChange = (tabId: string) => {
     // Only load files if actually switching to a different tab
-    const isTabChange = tabId !== activeTabId;
+    const isTabChange = tabId !== activeTabId
 
-    setActiveTabId(tabId);
+    setActiveTabId(tabId)
 
     // Load context files from backend session when switching to a DIFFERENT chat tab
     if (isTabChange) {
-      const tab = tabs.find(t => t.id === tabId);
+      const tab = tabs.find((t) => t.id === tabId)
       if (tab && tab.type === 'chat' && tab.conversationId) {
-        loadConversationFiles(tab.conversationId);
+        loadConversationFiles(tab.conversationId)
       }
     }
-  };
+  }
 
   /**
    * Handle New Session - Complete reset of the application state
@@ -779,36 +806,36 @@ function App() {
    */
   const handleNewSession = async () => {
     try {
-      console.log('🔄 Starting new session - clearing all state...');
+      console.log('🔄 Starting new session - clearing all state...')
 
       // Clear all active conversation sessions on the backend
-      const conversationIds = Object.keys(conversations);
+      const conversationIds = Object.keys(conversations)
       for (const convId of conversationIds) {
         try {
-          await ApiService.clearConversation(convId);
-          console.log(`✓ Cleared backend conversation: ${convId}`);
+          await ApiService.clearConversation(convId)
+          console.log(`✓ Cleared backend conversation: ${convId}`)
         } catch (error) {
-          console.warn(`Failed to clear conversation ${convId}:`, error);
+          console.warn(`Failed to clear conversation ${convId}:`, error)
         }
       }
 
       // Reset all state to initial values
-      setConversations({});
-      setTabs([]);
+      setConversations({})
+      setTabs([])
       // Don't reset selectedFiles here - let user manage context files explicitly
       // setExtractedCodeBlocks([]);
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
         contextFiles: [],
-      }));
+      }))
 
       // Clear persisted context files from localStorage
-      localStorage.removeItem('whysper_context_files');
-      localStorage.removeItem('whysper_selected_files');
+      localStorage.removeItem('whysper_context_files')
+      localStorage.removeItem('whysper_selected_files')
 
       // Create initial conversation and tab (like app initialization)
-      const initialTabId = `tab-${Date.now()}`;
-      const initialConversationId = `conv-${Date.now()}`;
+      const initialTabId = `tab-${Date.now()}`
+      const initialConversationId = `conv-${Date.now()}`
 
       const initialTab: Tab = {
         id: initialTabId,
@@ -817,7 +844,7 @@ function App() {
         isActive: true,
         isDirty: false,
         type: 'chat',
-      };
+      }
 
       const initialConversation: Conversation = {
         id: initialConversationId,
@@ -825,37 +852,37 @@ function App() {
         messages: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
+      }
 
-      setTabs([initialTab]);
-      setConversations({ [initialConversationId]: initialConversation });
-      setActiveTabId(initialTabId);
+      setTabs([initialTab])
+      setConversations({ [initialConversationId]: initialConversation })
+      setActiveTabId(initialTabId)
 
-      message.success('New session started - all history and context cleared');
-      console.log('✓ New session created successfully');
+      message.success('New session started - all history and context cleared')
+      console.log('✓ New session created successfully')
     } catch (error) {
-      console.error('❌ Failed to start new session:', error);
-      message.error('Failed to start new session');
+      console.error('❌ Failed to start new session:', error)
+      message.error('Failed to start new session')
     }
-  };
+  }
 
   const handleHome = () => {
     // Close all tabs and return to landing page
-    setTabs([]);
-    setActiveTabId('');
-  };
+    setTabs([])
+    setActiveTabId('')
+  }
 
   const handleNewTab = (title?: string) => {
-    const newTabId = `tab-${Date.now()}`;
-    const newConversationId = `conv-${Date.now()}`;
+    const newTabId = `tab-${Date.now()}`
+    const newConversationId = `conv-${Date.now()}`
 
     // Clear extracted data for the new chat session
     // Note: Context files (selectedFiles) persist across tabs - only cleared on "New Session"
-    setExtractedCodeBlocks([]);
+    setExtractedCodeBlocks([])
 
     // Use provided title or generate default
-    const tabTitle = title || `Chat ${tabs.length + 1}`;
-    const conversationTitle = title || 'New Conversation';
+    const tabTitle = title || `Chat ${tabs.length + 1}`
+    const conversationTitle = title || 'New Conversation'
 
     const newTab: Tab = {
       id: newTabId,
@@ -864,7 +891,7 @@ function App() {
       isActive: true,
       isDirty: false,
       type: 'chat',
-    };
+    }
 
     const newConversation: Conversation = {
       id: newConversationId,
@@ -872,75 +899,68 @@ function App() {
       messages: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+    }
 
-    setTabs(prev => [
-      ...prev.map(tab => ({ ...tab, isActive: false })),
-      newTab,
-    ]);
-    setConversations(prev => ({ ...prev, [newConversationId]: newConversation }));
-    setActiveTabId(newTabId);
-  };
+    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
+    setConversations((prev) => ({ ...prev, [newConversationId]: newConversation }))
+    setActiveTabId(newTabId)
+  }
 
   const handleNewDiagramWizardTab = () => {
-    const newTabId = `diagram-tab-${Date.now()}`;
-    const newSessionId = `diagram-session-${Date.now()}`;
+    const newTabId = `diagram-tab-${Date.now()}`
+    const newSessionId = `diagram-session-${Date.now()}`
 
     const newTab: Tab = {
       id: newTabId,
       conversationId: '', // Not needed for diagram wizard
-      title: `Diagram Wizard ${tabs.filter(t => t.type === 'diagramWizard').length + 1}`,
+      title: `Diagram Wizard ${tabs.filter((t) => t.type === 'diagramWizard').length + 1}`,
       isActive: true,
       isDirty: false,
       type: 'diagramWizard',
       sessionId: newSessionId,
-    };
+    }
 
-    setTabs(prev => [
-      ...prev.map(tab => ({ ...tab, isActive: false })),
-      newTab,
-    ]);
-    setActiveTabId(newTabId);
-    message.success('New Diagram Wizard tab created');
-  };
+    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
+    setActiveTabId(newTabId)
+    message.success('New Diagram Wizard tab created')
+  }
 
   const handleNewArchStudioTab = () => {
-    const newTabId = `arch-tab-${Date.now()}`;
-    const newProjectId = `arch-project-${Date.now()}`;
+    const newTabId = `arch-tab-${Date.now()}`
+    const newProjectId = `arch-project-${Date.now()}`
 
     const newTab: Tab = {
       id: newTabId,
       conversationId: '', // Not needed for arch studio
-      title: `Architecture Studio ${tabs.filter(t => t.type === 'archStudio').length + 1}`,
+      title: `Architecture Studio ${tabs.filter((t) => t.type === 'archStudio').length + 1}`,
       isActive: true,
       isDirty: false,
       type: 'archStudio',
       projectId: newProjectId,
-    };
+    }
 
-    setTabs(prev => [
-      ...prev.map(tab => ({ ...tab, isActive: false })),
-      newTab,
-    ]);
-    setActiveTabId(newTabId);
-    message.success('New Architecture Studio tab created');
-  };
+    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
+    setActiveTabId(newTabId)
+    message.success('New Architecture Studio tab created')
+  }
 
   const handleTabClose = (tabId: string) => {
-    if (tabs.length <= 1) return;
+    if (tabs.length <= 1) return
 
-    const tab = tabs.find(t => t.id === tabId);
-    if (!tab) return;
+    const tab = tabs.find((t) => t.id === tabId)
+    if (!tab) return
 
     // If tab is dirty (has unsaved changes), show confirmation dialog
     if (tab.isDirty) {
-      const fileName = tab.type === 'file' ? tab.title : tab.title;
-      
+      const fileName = tab.type === 'file' ? tab.title : tab.title
+
       Modal.confirm({
         title: 'Unsaved Changes',
         content: (
           <div>
-            <p>The file <strong>{fileName}</strong> has unsaved changes.</p>
+            <p>
+              The file <strong>{fileName}</strong> has unsaved changes.
+            </p>
             <p>What would you like to do?</p>
           </div>
         ),
@@ -951,19 +971,19 @@ function App() {
         onOk: async () => {
           try {
             // Save the tab first, then close it
-            await handleTabSave(tabId);
-            performTabClose(tabId);
-            message.success('File saved and closed');
+            await handleTabSave(tabId)
+            performTabClose(tabId)
+            message.success('File saved and closed')
           } catch (error) {
             // If save fails, don't close the tab
-            console.error('Failed to save before closing:', error);
-            message.error('Failed to save file. Tab not closed.');
+            console.error('Failed to save before closing:', error)
+            message.error('Failed to save file. Tab not closed.')
           }
         },
         onCancel: () => {
           // Close without saving
-          performTabClose(tabId);
-          message.info('File closed without saving');
+          performTabClose(tabId)
+          message.info('File closed without saving')
         },
         okButtonProps: {
           icon: <SaveOutlined />,
@@ -972,106 +992,104 @@ function App() {
           danger: true,
           icon: <CloseOutlined />,
         },
-      });
+      })
     } else {
       // Tab is not dirty, close immediately
-      performTabClose(tabId);
+      performTabClose(tabId)
     }
-  };
+  }
 
   // Helper function to perform the actual tab close operation
   const performTabClose = (tabId: string) => {
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
-    
+    const tabIndex = tabs.findIndex((tab) => tab.id === tabId)
+    const newTabs = tabs.filter((tab) => tab.id !== tabId)
+
     // If closing active tab, switch to next available tab
     if (tabId === activeTabId) {
-      const nextTab = newTabs[Math.min(tabIndex, newTabs.length - 1)];
-      setActiveTabId(nextTab.id);
+      const nextTab = newTabs[Math.min(tabIndex, newTabs.length - 1)]
+      setActiveTabId(nextTab.id)
     }
 
-    setTabs(newTabs);
-  };
+    setTabs(newTabs)
+  }
 
   const handleTabSave = async (tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
-    if (!tab) return;
+    const tab = tabs.find((t) => t.id === tabId)
+    if (!tab) return
 
     try {
       if (tab.type === 'file') {
         // Handle file tab save
-        await handleFileSave(tabId);
+        await handleFileSave(tabId)
       } else {
         // Handle chat tab save
-        const conversation = conversations[tab.conversationId];
-        if (!conversation) return;
+        const conversation = conversations[tab.conversationId]
+        if (!conversation) return
 
-        const response = await ApiService.saveConversation(conversation);
+        const response = await ApiService.saveConversation(conversation)
         if (response.success) {
-          setTabs(prev => prev.map(t => 
-            t.id === tabId ? { ...t, isDirty: false } : t
-          ));
-          message.success('Conversation saved');
+          setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, isDirty: false } : t)))
+          message.success('Conversation saved')
         } else {
-          message.error(response.error || 'Failed to save conversation');
+          message.error(response.error || 'Failed to save conversation')
         }
       }
     } catch (error: any) {
-      const errorMessage = tab.type === 'file' 
-        ? 'Error saving file' 
-        : 'Error saving conversation';
-      message.error(errorMessage);
-      console.error('Save error:', error);
+      const errorMessage = tab.type === 'file' ? 'Error saving file' : 'Error saving conversation'
+      message.error(errorMessage)
+      console.error('Save error:', error)
     }
-  };
+  }
 
   const handleTabsAction = (action: string, tabId?: string) => {
     switch (action) {
       case 'duplicate': {
         if (tabId) {
-          const tab = tabs.find(t => t.id === tabId);
-          const conversation = conversations[tab?.conversationId || ''];
+          const tab = tabs.find((t) => t.id === tabId)
+          const conversation = conversations[tab?.conversationId || '']
           if (tab && conversation) {
-            const newTabId = `tab-${Date.now()}`;
-            const newConversationId = `conv-${Date.now()}`;
-            
+            const newTabId = `tab-${Date.now()}`
+            const newConversationId = `conv-${Date.now()}`
+
             const newTab: Tab = {
               ...tab,
               id: newTabId,
               conversationId: newConversationId,
               title: `${tab.title} (Copy)`,
               isDirty: false,
-            };
+            }
 
             const newConversation: Conversation = {
               ...conversation,
               id: newConversationId,
               title: `${conversation.title} (Copy)`,
               createdAt: new Date().toISOString(),
-            };
+            }
 
-            setTabs(prev => [...prev, newTab]);
-            setConversations(prev => ({ ...prev, [newConversationId]: newConversation }));
-            setActiveTabId(newTabId);
-            message.success('Tab duplicated');
+            setTabs((prev) => [...prev, newTab])
+            setConversations((prev) => ({ ...prev, [newConversationId]: newConversation }))
+            setActiveTabId(newTabId)
+            message.success('Tab duplicated')
           }
         }
-        break;
+        break
       }
-        
+
       case 'close-others':
         if (tabId) {
-          const otherTabs = tabs.filter(t => t.id !== tabId);
-          const dirtyOtherTabs = otherTabs.filter(t => t.isDirty);
-          
+          const otherTabs = tabs.filter((t) => t.id !== tabId)
+          const dirtyOtherTabs = otherTabs.filter((t) => t.isDirty)
+
           if (dirtyOtherTabs.length > 0) {
-            const fileNames = dirtyOtherTabs.map(t => t.title).join(', ');
+            const fileNames = dirtyOtherTabs.map((t) => t.title).join(', ')
             Modal.confirm({
               title: 'Unsaved Changes in Other Tabs',
               content: (
                 <div>
                   <p>The following tabs have unsaved changes:</p>
-                  <p><strong>{fileNames}</strong></p>
+                  <p>
+                    <strong>{fileNames}</strong>
+                  </p>
                   <p>What would you like to do?</p>
                 </div>
               ),
@@ -1082,40 +1100,42 @@ function App() {
                 try {
                   // Save all dirty tabs first
                   for (const tab of dirtyOtherTabs) {
-                    await handleTabSave(tab.id);
+                    await handleTabSave(tab.id)
                   }
-                  setTabs(prev => prev.filter(t => t.id === tabId));
-                  setActiveTabId(tabId);
-                  message.success('Other tabs saved and closed');
+                  setTabs((prev) => prev.filter((t) => t.id === tabId))
+                  setActiveTabId(tabId)
+                  message.success('Other tabs saved and closed')
                 } catch (error) {
-                  message.error('Failed to save some tabs. Operation cancelled.');
+                  message.error('Failed to save some tabs. Operation cancelled.')
                 }
               },
               onCancel: () => {
-                setTabs(prev => prev.filter(t => t.id === tabId));
-                setActiveTabId(tabId);
-                message.info('Other tabs closed without saving');
+                setTabs((prev) => prev.filter((t) => t.id === tabId))
+                setActiveTabId(tabId)
+                message.info('Other tabs closed without saving')
               },
-            });
+            })
           } else {
-            setTabs(prev => prev.filter(t => t.id === tabId));
-            setActiveTabId(tabId);
-            message.success('Other tabs closed');
+            setTabs((prev) => prev.filter((t) => t.id === tabId))
+            setActiveTabId(tabId)
+            message.success('Other tabs closed')
           }
         }
-        break;
-        
+        break
+
       case 'close-all': {
-        const dirtyTabs = tabs.filter(t => t.isDirty);
-        
+        const dirtyTabs = tabs.filter((t) => t.isDirty)
+
         if (dirtyTabs.length > 0) {
-          const fileNames = dirtyTabs.map(t => t.title).join(', ');
+          const fileNames = dirtyTabs.map((t) => t.title).join(', ')
           Modal.confirm({
             title: 'Unsaved Changes in Multiple Tabs',
             content: (
               <div>
                 <p>The following tabs have unsaved changes:</p>
-                <p><strong>{fileNames}</strong></p>
+                <p>
+                  <strong>{fileNames}</strong>
+                </p>
                 <p>What would you like to do?</p>
               </div>
             ),
@@ -1126,92 +1146,92 @@ function App() {
               try {
                 // Save all dirty tabs first
                 for (const tab of dirtyTabs) {
-                  await handleTabSave(tab.id);
+                  await handleTabSave(tab.id)
                 }
                 // Keep only one tab
-                const firstTab = tabs[0];
+                const firstTab = tabs[0]
                 if (firstTab) {
-                  setTabs([{ ...firstTab, isDirty: false }]);
-                  setActiveTabId(firstTab.id);
-                  message.success('All tabs saved, all but current closed');
+                  setTabs([{ ...firstTab, isDirty: false }])
+                  setActiveTabId(firstTab.id)
+                  message.success('All tabs saved, all but current closed')
                 }
               } catch (error) {
-                message.error('Failed to save some tabs. Operation cancelled.');
+                message.error('Failed to save some tabs. Operation cancelled.')
               }
             },
             onCancel: () => {
               // Keep only one tab
-              const firstTab = tabs[0];
+              const firstTab = tabs[0]
               if (firstTab) {
-                setTabs([firstTab]);
-                setActiveTabId(firstTab.id);
-                message.info('All tabs closed without saving except current');
+                setTabs([firstTab])
+                setActiveTabId(firstTab.id)
+                message.info('All tabs closed without saving except current')
               }
             },
-          });
+          })
         } else {
           // Keep only one tab
-          const firstTab = tabs[0];
+          const firstTab = tabs[0]
           if (firstTab) {
-            setTabs([firstTab]);
-            setActiveTabId(firstTab.id);
-            message.success('All tabs closed except current');
+            setTabs([firstTab])
+            setActiveTabId(firstTab.id)
+            message.success('All tabs closed except current')
           }
         }
-        break;
+        break
       }
-        
+
       default:
-        message.info(`Tab action: ${action}`);
+        message.info(`Tab action: ${action}`)
     }
-  };
+  }
 
   // Function to clear current conversation
   const handleClearConversation = async () => {
-    const activeTab = tabs.find(tab => tab.id === activeTabId);
-    if (!activeTab || activeTab.type !== 'chat') return;
+    const activeTab = tabs.find((tab) => tab.id === activeTabId)
+    if (!activeTab || activeTab.type !== 'chat') return
 
-    const conversationId = activeTab.conversationId;
-    
+    const conversationId = activeTab.conversationId
+
     try {
       // Call backend to clear conversation history
-      const response = await ApiService.clearConversation(conversationId);
+      const response = await ApiService.clearConversation(conversationId)
       if (response.success) {
         // Clear the conversation history but keep the conversation structure
-        setConversations(prev => ({
+        setConversations((prev) => ({
           ...prev,
           [conversationId]: {
             ...prev[conversationId],
             messages: [],
             updatedAt: new Date().toISOString(),
-          }
-        }));
+          },
+        }))
 
         // Mark tab as not dirty since we cleared it
-        setTabs(prev => prev.map(tab =>
-          tab.id === activeTabId ? { ...tab, isDirty: false } : tab
-        ));
+        setTabs((prev) =>
+          prev.map((tab) => (tab.id === activeTabId ? { ...tab, isDirty: false } : tab))
+        )
 
         // Clear extracted code blocks for fresh start
-        setExtractedCodeBlocks([]);
-        
-        message.success('Conversation cleared - starting fresh with new system prompt');
+        setExtractedCodeBlocks([])
+
+        message.success('Conversation cleared - starting fresh with new system prompt')
       } else {
-        message.error(response.error || 'Failed to clear conversation');
+        message.error(response.error || 'Failed to clear conversation')
       }
     } catch (error) {
-      console.error('Error clearing conversation:', error);
-      message.error('Failed to clear conversation');
+      console.error('Error clearing conversation:', error)
+      message.error('Failed to clear conversation')
     }
-  };
+  }
 
   // Get current conversation
-  const activeTab = tabs.find(tab => tab.id === activeTabId);
-  const currentConversation = activeTab ? conversations[activeTab.conversationId] : null;
-  const currentMessages = currentConversation?.messages || [];
-  
+  const activeTab = tabs.find((tab) => tab.id === activeTabId)
+  const currentConversation = activeTab ? conversations[activeTab.conversationId] : null
+  const currentMessages = currentConversation?.messages || []
+
   // Check if current conversation has history
-  const hasConversationHistory = currentMessages.length > 0;
+  const hasConversationHistory = currentMessages.length > 0
 
   // Get theme-specific background styles
   const getThemeBackgroundStyles = () => {
@@ -1219,75 +1239,75 @@ function App() {
       case 'modernGradient':
         return {
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'modernGradientDark':
         return {
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'proBlue':
         return {
           background: '#fafbfc',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'proDark':
         return {
           background: '#000000',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'dark':
         return {
           background: '#141414',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'purple':
         return {
           background: '#f9f0ff',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'green':
         return {
           background: '#f6ffed',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'orange':
         return {
           background: '#fff7e6',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       case 'red':
         return {
           background: '#fff2f0',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
       default:
         return {
           background: '#ffffff',
-          minHeight: '100vh'
-        };
+          minHeight: '100vh',
+        }
     }
-  };
+  }
 
   const handleGenerateDocumentation = async () => {
     if (selectedFiles.length === 0) {
-      message.warning('Please select at least one file to generate documentation.');
-      return;
+      message.warning('Please select at least one file to generate documentation.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      const file_paths = selectedFiles.map(f => f.path);
+      const file_paths = selectedFiles.map((f) => f.path)
       const response = await ApiService.generateDocumentation({
         file_paths,
         documentation_type: 'all',
-      });
+      })
 
       if (response.success && response.data) {
-        const { content, metadata } = response.data;
-        setDocumentationData({ content, metadata });
+        const { content, metadata } = response.data
+        setDocumentationData({ content, metadata })
 
-        const newTabId = `doc-tab-${Date.now()}`;
+        const newTabId = `doc-tab-${Date.now()}`
         const newDocTab: Tab = {
           id: newTabId,
           conversationId: '', // No conversation for documentation tabs
@@ -1295,343 +1315,359 @@ function App() {
           isActive: true,
           isDirty: false,
           type: 'documentation',
-        };
+        }
 
-        setTabs(prev => [
-          ...prev.map(tab => ({ ...tab, isActive: false })),
-          newDocTab,
-        ]);
-        setActiveTabId(newTabId);
+        setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newDocTab])
+        setActiveTabId(newTabId)
 
-        message.success('Documentation generated successfully!');
+        message.success('Documentation generated successfully!')
       } else {
-        message.error(response.error || 'Failed to generate documentation.');
+        message.error(response.error || 'Failed to generate documentation.')
       }
     } catch (error) {
-      console.error('Error generating documentation:', error);
-      message.error('An error occurred while generating documentation.');
+      console.error('Error generating documentation:', error)
+      message.error('An error occurred while generating documentation.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDownloadDocumentation = async (session_guid: string) => {
     try {
-      const response = await ApiService.get(`/documentation/download/${session_guid}`);
-      const blob = new Blob([response.data], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${session_guid}-documentation.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      message.success('Documentation downloaded successfully!');
+      const response = await ApiService.get(`/documentation/download/${session_guid}`)
+      const blob = new Blob([response.data], { type: 'application/zip' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${session_guid}-documentation.zip`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      message.success('Documentation downloaded successfully!')
     } catch (error) {
-      console.error('Error downloading documentation:', error);
-      message.error('An error occurred while downloading documentation.');
+      console.error('Error downloading documentation:', error)
+      message.error('An error occurred while downloading documentation.')
     }
-  };
+  }
 
   const handleAuthenticationSuccess = () => {
-    sessionStorage.setItem('whysper_authenticated', 'true');
-    setIsAuthenticated(true);
-  };
+    sessionStorage.setItem('whysper_authenticated', 'true')
+    setIsAuthenticated(true)
+  }
 
   const handleToggleHelpModal = () => {
-    setHelpModalOpen(prev => !prev);
-  };
+    setHelpModalOpen((prev) => !prev)
+  }
 
   if (!isAuthenticated) {
-    return <WelcomeScreen onSuccess={handleAuthenticationSuccess} />;
+    return <WelcomeScreen onSuccess={handleAuthenticationSuccess} />
   }
 
   return (
     <AntdApp>
-      <Layout className="h-screen flex flex-col" style={getThemeBackgroundStyles()}>
-      {/* Header */}
-      <Header
-        onSetContext={() => setContextModalOpen(true)}
-        onNewConversation={handleNewTab}
-        onNewSession={handleNewSession}
-        onEditFile={() => setFileSelectionModalOpen(true)}
-        onOpenSettings={() => setSettingsModalOpen(true)}
-        onToggleTheme={toggleTheme}
-        onOpenThemePicker={() => setThemePickerModalOpen(true)}
-        onSystemMessage={() => setSystemMessageModalOpen(true)}
-        onAbout={() => setAboutModalOpen(true)}
-        onCodeFragments={() => setCodeFragmentsModalOpen(true)}
-        onGenerateDocumentation={handleGenerateDocumentation}
-        onHelp={handleToggleHelpModal}
-        onMermaidTester={() => setMermaidTesterModalOpen(true)}
-        onD2Tester={() => setD2TesterModalOpen(true)}
-        onDiagramWizard={handleNewDiagramWizardTab}
-        onArchStudio={handleNewArchStudioTab}
-        onHome={handleHome}
-        currentSystem={activeAgentName}
-        onSystemChange={handleSystemChange}
-        onRunSystemPrompt={handleRunSystemPrompt}
-        agentPrompts={agentPrompts}
-      />
+      <Layout className="flex h-screen flex-col" style={getThemeBackgroundStyles()}>
+        {/* Header */}
+        <Header
+          onSetContext={() => setContextModalOpen(true)}
+          onNewConversation={handleNewTab}
+          onNewSession={handleNewSession}
+          onEditFile={() => setFileSelectionModalOpen(true)}
+          onOpenSettings={() => setSettingsModalOpen(true)}
+          onToggleTheme={toggleTheme}
+          onOpenThemePicker={() => setThemePickerModalOpen(true)}
+          onSystemMessage={() => setSystemMessageModalOpen(true)}
+          onAbout={() => setAboutModalOpen(true)}
+          onCodeFragments={() => setCodeFragmentsModalOpen(true)}
+          onGenerateDocumentation={handleGenerateDocumentation}
+          onHelp={handleToggleHelpModal}
+          onMermaidTester={() => setMermaidTesterModalOpen(true)}
+          onD2Tester={() => setD2TesterModalOpen(true)}
+          onDiagramWizard={handleNewDiagramWizardTab}
+          onArchStudio={handleNewArchStudioTab}
+          onHome={handleHome}
+          currentSystem={activeAgentName}
+          onSystemChange={handleSystemChange}
+          onRunSystemPrompt={handleRunSystemPrompt}
+          agentPrompts={agentPrompts}
+        />
 
-      {/* Tab Manager */}
-      <TabManager
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onTabChange={handleTabChange}
-        onTabClose={handleTabClose}
-        onTabSave={handleTabSave}
-        onNewTab={handleNewTab}
-        onNewDiagramWizardTab={handleNewDiagramWizardTab}
-        onNewArchStudioTab={handleNewArchStudioTab}
-        onTabsAction={handleTabsAction}
-      />
+        {/* Tab Manager */}
+        <TabManager
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabChange={handleTabChange}
+          onTabClose={handleTabClose}
+          onTabSave={handleTabSave}
+          onNewTab={handleNewTab}
+          onNewDiagramWizardTab={handleNewDiagramWizardTab}
+          onNewArchStudioTab={handleNewArchStudioTab}
+          onTabsAction={handleTabsAction}
+        />
 
-      {/* Main Content */}
-      <Content className="flex-1 flex flex-col overflow-hidden" style={{
-        margin: '0',
-        background: theme === 'modernGradient' || theme === 'modernGradientDark'
-          ? 'transparent'
-          : 'inherit'
-      }}>
-        {tabs.length === 0 || !activeTab ? (
-          // Landing Page - shown when no tabs are open
-          <LandingPage
-            onNewChat={handleNewTab}
-            onOpenFile={() => setFileSelectionModalOpen(true)}
-            onDiagramWizard={handleNewDiagramWizardTab}
-            onDocumentation={handleGenerateDocumentation}
-            onSetContext={() => setContextModalOpen(true)}
-          />
-        ) : activeTab?.type === 'file' ? (
-          // File Editor View
-          <FileEditorView
-            tab={activeTab}
-            onContentChange={handleFileContentChange}
-            onSave={handleFileSave}
-            theme={getEditorTheme(theme)}
-          />
-        ) : activeTab?.type === 'documentation' ? (
-          // Documentation View
-          documentationData && (
-            <DocumentationView
-              content={documentationData.content}
-              metadata={documentationData.metadata}
-              onDownload={handleDownloadDocumentation}
+        {/* Main Content */}
+        <Content
+          className="flex flex-1 flex-col overflow-hidden"
+          style={{
+            margin: '0',
+            background:
+              theme === 'modernGradient' || theme === 'modernGradientDark'
+                ? 'transparent'
+                : 'inherit',
+          }}
+        >
+          {tabs.length === 0 || !activeTab ? (
+            // Landing Page - shown when no tabs are open
+            <LandingPage
+              onNewChat={handleNewTab}
+              onOpenFile={() => setFileSelectionModalOpen(true)}
+              onDiagramWizard={handleNewDiagramWizardTab}
+              onDocumentation={handleGenerateDocumentation}
+              onSetContext={() => setContextModalOpen(true)}
             />
-          )
-        ) : activeTab?.type === 'diagramWizard' ? (
-          // Diagram Wizard View
-          <DiagramWizard
-            key={activeTab.id}
-            tabId={activeTab.id}
-            sessionId={activeTab.sessionId}
-            onDiagramGenerated={(code: string, svg: string) => {
-              console.log('Diagram generated:', { code, svg });
-              message.success('Diagram generated successfully!');
-            }}
-            initialPrompt=""
-            onClose={() => handleTabClose(activeTabId)}
-          />
-        ) : activeTab?.type === 'archStudio' ? (
-          // Architecture Studio View
-          <ArchitectureGenStudio />
-        ) : (
-          // Chat View (default)
-          <>
-            <ChatView
-              messages={currentMessages}
-              loading={loading}
-              onExtractCode={(messageId: string) => {
-                const message = currentMessages.find(m => m.id === messageId);
-                if (message) extractCodeFromMessage(message);
-              }}
-              onShowCode={handleShowCode}
+          ) : activeTab?.type === 'file' ? (
+            // File Editor View
+            <FileEditorView
+              tab={activeTab}
+              onContentChange={handleFileContentChange}
+              onSave={handleFileSave}
+              theme={getEditorTheme(theme)}
             />
-            
-            <div style={{
-              background: theme === 'modernGradient' || theme === 'modernGradientDark'
-                ? 'rgba(255, 255, 255, 0.95)'
-                : 'white',
-              borderTop: theme === 'modernGradient' || theme === 'modernGradientDark'
-                ? '1px solid rgba(240, 240, 240, 0.6)'
-                : '1px solid #f0f0f0',
-              boxShadow: theme === 'modernGradient' || theme === 'modernGradientDark'
-                ? '0 -4px 20px rgba(0, 0, 0, 0.1)'
-                : '0 -2px 8px rgba(0, 0, 0, 0.06)',
-              padding: '16px 24px',
-              backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(10px)' : 'none',
-              borderRadius: theme === 'modernGradient' || theme === 'modernGradientDark' ? '20px 20px 0 0' : '0',
-              margin: theme === 'modernGradient' || theme === 'modernGradientDark' ? '0 24px' : '0',
-            }}>
-              <InputPanel
-                onSendMessage={handleSendMessage}
-                onClear={handleClearInput}
-                loading={loading}
-                subagentCommands={subagentCommands}
+          ) : activeTab?.type === 'documentation' ? (
+            // Documentation View
+            documentationData && (
+              <DocumentationView
+                content={documentationData.content}
+                metadata={documentationData.metadata}
+                onDownload={handleDownloadDocumentation}
               />
-            </div>
-          </>
-        )}
-      </Content>
+            )
+          ) : activeTab?.type === 'diagramWizard' ? (
+            // Diagram Wizard View
+            <DiagramWizard
+              key={activeTab.id}
+              tabId={activeTab.id}
+              sessionId={activeTab.sessionId}
+              onDiagramGenerated={(code: string, svg: string) => {
+                console.log('Diagram generated:', { code, svg })
+                message.success('Diagram generated successfully!')
+              }}
+              initialPrompt=""
+              onClose={() => handleTabClose(activeTabId)}
+            />
+          ) : activeTab?.type === 'archStudio' ? (
+            // Architecture Studio View
+            <ArchitectureGenStudio />
+          ) : (
+            // Chat View (default)
+            <>
+              <ChatView
+                messages={currentMessages}
+                loading={loading}
+                onExtractCode={(messageId: string) => {
+                  const message = currentMessages.find((m) => m.id === messageId)
+                  if (message) extractCodeFromMessage(message)
+                }}
+                onShowCode={handleShowCode}
+              />
 
-      {/* Status Bar */}
-      <StatusBar
-        status={loading ? 'loading' : 'ready'}
-        isProcessing={isProcessing}
-        model={settings.model}
-      />
+              <div
+                style={{
+                  background:
+                    theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? 'rgba(255, 255, 255, 0.95)'
+                      : 'white',
+                  borderTop:
+                    theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? '1px solid rgba(240, 240, 240, 0.6)'
+                      : '1px solid #f0f0f0',
+                  boxShadow:
+                    theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? '0 -4px 20px rgba(0, 0, 0, 0.1)'
+                      : '0 -2px 8px rgba(0, 0, 0, 0.06)',
+                  padding: '16px 24px',
+                  backdropFilter:
+                    theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? 'blur(10px)'
+                      : 'none',
+                  borderRadius:
+                    theme === 'modernGradient' || theme === 'modernGradientDark'
+                      ? '20px 20px 0 0'
+                      : '0',
+                  margin:
+                    theme === 'modernGradient' || theme === 'modernGradientDark' ? '0 24px' : '0',
+                }}
+              >
+                <InputPanel
+                  onSendMessage={handleSendMessage}
+                  onClear={handleClearInput}
+                  loading={loading}
+                  subagentCommands={subagentCommands}
+                />
+              </div>
+            </>
+          )}
+        </Content>
 
-      {/* Modals */}
-      <ContextModal
-        open={contextModalOpen}
-        onCancel={() => setContextModalOpen(false)}
-        onApply={(files) => {
-          console.log(`🔵 ContextModal onApply called with ${files.length} files`);
-          console.log('🔵 Files:', files.map(f => f.path));
-          console.log('🔵 File objects:', files);
-          
-          // Use functional state update to ensure we get the latest state
-          setSelectedFiles(prevFiles => {
-            console.log('🔵 Previous selectedFiles:', prevFiles);
-            console.log('🔵 New files to set:', files);
-            return files;
-          });
-          
-          // Force a re-render by updating the state in a callback
-          setTimeout(() => {
-            console.log('🔵 After timeout - selectedFiles:', selectedFiles);
-            console.log('🔵 After timeout - selectedFiles.length:', selectedFiles.length);
-            console.log('🔵 After timeout - getSelectedFiles():', (window as any).getSelectedFiles());
-          }, 0);
-          
-          console.log('🔵 setSelectedFiles called, state should now have', files.length, 'files');
-          setContextModalOpen(false);
-          message.success(`${files.length} files selected for context`);
-        }}
-        initialFiles={selectedFiles}
-      />
+        {/* Status Bar */}
+        <StatusBar
+          status={loading ? 'loading' : 'ready'}
+          isProcessing={isProcessing}
+          model={settings.model}
+        />
 
-      <SettingsModal
-        open={settingsModalOpen}
-        onCancel={() => setSettingsModalOpen(false)}
-        onSave={(newSettings) => {
-          setSettings(newSettings);
-          message.success('Settings saved');
-        }}
-      />
+        {/* Modals */}
+        <ContextModal
+          open={contextModalOpen}
+          onCancel={() => setContextModalOpen(false)}
+          onApply={(files) => {
+            console.log(`🔵 ContextModal onApply called with ${files.length} files`)
+            console.log(
+              '🔵 Files:',
+              files.map((f) => f.path)
+            )
+            console.log('🔵 File objects:', files)
 
-      <AboutModal
-        open={aboutModalOpen}
-        onCancel={() => setAboutModalOpen(false)}
-        onCreateChatTab={() => {
-          handleNewTab();
-          setAboutModalOpen(false);
-        }}
-        onCreateArchStudioTab={() => {
-          handleNewArchStudioTab();
-          setAboutModalOpen(false);
-        }}
-      />
+            // Use functional state update to ensure we get the latest state
+            setSelectedFiles((prevFiles) => {
+              console.log('🔵 Previous selectedFiles:', prevFiles)
+              console.log('🔵 New files to set:', files)
+              return files
+            })
 
-      <SystemMessageModal
-        open={systemMessageModalOpen}
-        onCancel={() => setSystemMessageModalOpen(false)}
-        onSave={(systemMessage) => {
-          setSettings(prev => ({ ...prev, systemPrompt: systemMessage }));
-        }}
-        currentSystemMessage={settings.systemPrompt}
-        currentAgent={activeAgentName}
-        onClearConversation={handleClearConversation}
-        hasConversationHistory={hasConversationHistory}
-      />
+            // Force a re-render by updating the state in a callback
+            setTimeout(() => {
+              console.log('🔵 After timeout - selectedFiles:', selectedFiles)
+              console.log('🔵 After timeout - selectedFiles.length:', selectedFiles.length)
+              console.log(
+                '🔵 After timeout - getSelectedFiles():',
+                (window as any).getSelectedFiles()
+              )
+            }, 0)
 
-      <CodeFragmentsModal
-        open={codeFragmentsModalOpen}
-        onCancel={() => setCodeFragmentsModalOpen(false)}
-        codeBlocks={extractedCodeBlocks}
-        onDeleteBlock={(blockId) => {
-          setExtractedCodeBlocks(prev => prev.filter(block => block.id !== blockId));
-        }}
-      />
+            console.log('🔵 setSelectedFiles called, state should now have', files.length, 'files')
+            setContextModalOpen(false)
+            message.success(`${files.length} files selected for context`)
+          }}
+          initialFiles={selectedFiles}
+        />
 
-      <ThemePickerModal
-        open={themePickerModalOpen}
-        onCancel={() => setThemePickerModalOpen(false)}
-      />
+        <SettingsModal
+          open={settingsModalOpen}
+          onCancel={() => setSettingsModalOpen(false)}
+          onSave={(newSettings) => {
+            setSettings(newSettings)
+            message.success('Settings saved')
+          }}
+        />
 
-      {/* Code Fragment Display Modal */}
-      <Modal
-        title={codeModalData.title || `Code Fragment${codeModalData.language ? ` (${codeModalData.language})` : ''}`}
-        open={codeModalOpen}
-        onCancel={() => setCodeModalOpen(false)}
-        width={900}
-        centered
-        footer={[
-          <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyCode}>
-            Copy Code
-          </Button>,
-          <Button key="close" onClick={() => setCodeModalOpen(false)}>
-            Close
-          </Button>
-        ]}
-      >
-        <div style={{ maxHeight: '70vh', overflow: 'auto' }}>
-          <pre
-            style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              padding: '16px',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              margin: 0,
-              fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-              color: '#212529',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word'
-            }}
-          >
-            <code>{codeModalData.code}</code>
-          </pre>
-        </div>
-      </Modal>
+        <AboutModal
+          open={aboutModalOpen}
+          onCancel={() => setAboutModalOpen(false)}
+          onCreateChatTab={() => {
+            handleNewTab()
+            setAboutModalOpen(false)
+          }}
+          onCreateArchStudioTab={() => {
+            handleNewArchStudioTab()
+            setAboutModalOpen(false)
+          }}
+        />
 
-      {/* File Selection Modal */}
-      <FileSelectionModal
-        open={fileSelectionModalOpen}
-        onCancel={() => setFileSelectionModalOpen(false)}
-        onSelectFile={handleFileSelect}
-        onCreateNewFile={() => setNewFileModalOpen(true)}
-      />
+        <SystemMessageModal
+          open={systemMessageModalOpen}
+          onCancel={() => setSystemMessageModalOpen(false)}
+          onSave={(systemMessage) => {
+            setSettings((prev) => ({ ...prev, systemPrompt: systemMessage }))
+          }}
+          currentSystemMessage={settings.systemPrompt}
+          currentAgent={activeAgentName}
+          onClearConversation={handleClearConversation}
+          hasConversationHistory={hasConversationHistory}
+        />
 
-      {/* New File Creation Modal */}
-      <NewFileModal
-        open={newFileModalOpen}
-        onCancel={() => setNewFileModalOpen(false)}
-        onCreateFile={handleCreateNewFile}
-      />
+        <CodeFragmentsModal
+          open={codeFragmentsModalOpen}
+          onCancel={() => setCodeFragmentsModalOpen(false)}
+          codeBlocks={extractedCodeBlocks}
+          onDeleteBlock={(blockId) => {
+            setExtractedCodeBlocks((prev) => prev.filter((block) => block.id !== blockId))
+          }}
+        />
 
-      <HelpModal
-        open={helpModalOpen}
-        onCancel={handleToggleHelpModal}
-      />
+        <ThemePickerModal
+          open={themePickerModalOpen}
+          onCancel={() => setThemePickerModalOpen(false)}
+        />
 
-      {/* Mermaid Diagram Tester Modal */}
-      <MermaidTesterModal
-        open={mermaidTesterModalOpen}
-        onCancel={() => setMermaidTesterModalOpen(false)}
-      />
+        {/* Code Fragment Display Modal */}
+        <Modal
+          title={
+            codeModalData.title ||
+            `Code Fragment${codeModalData.language ? ` (${codeModalData.language})` : ''}`
+          }
+          open={codeModalOpen}
+          onCancel={() => setCodeModalOpen(false)}
+          width={900}
+          centered
+          footer={[
+            <Button key="copy" type="primary" icon={<CopyOutlined />} onClick={handleCopyCode}>
+              Copy Code
+            </Button>,
+            <Button key="close" onClick={() => setCodeModalOpen(false)}>
+              Close
+            </Button>,
+          ]}
+        >
+          <div style={{ maxHeight: '70vh', overflow: 'auto' }}>
+            <pre
+              style={{
+                background: '#f8f9fa',
+                border: '1px solid #e9ecef',
+                borderRadius: '8px',
+                padding: '16px',
+                fontSize: '14px',
+                lineHeight: '1.5',
+                margin: 0,
+                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                color: '#212529',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              <code>{codeModalData.code}</code>
+            </pre>
+          </div>
+        </Modal>
 
-      {/* D2 Diagram Tester Modal */}
-      <D2TesterModal
-        open={d2TesterModalOpen}
-        onCancel={() => setD2TesterModalOpen(false)}
-      />
-    </Layout>
+        {/* File Selection Modal */}
+        <FileSelectionModal
+          open={fileSelectionModalOpen}
+          onCancel={() => setFileSelectionModalOpen(false)}
+          onSelectFile={handleFileSelect}
+          onCreateNewFile={() => setNewFileModalOpen(true)}
+        />
+
+        {/* New File Creation Modal */}
+        <NewFileModal
+          open={newFileModalOpen}
+          onCancel={() => setNewFileModalOpen(false)}
+          onCreateFile={handleCreateNewFile}
+        />
+
+        <HelpModal open={helpModalOpen} onCancel={handleToggleHelpModal} />
+
+        {/* Mermaid Diagram Tester Modal */}
+        <MermaidTesterModal
+          open={mermaidTesterModalOpen}
+          onCancel={() => setMermaidTesterModalOpen(false)}
+        />
+
+        {/* D2 Diagram Tester Modal */}
+        <D2TesterModal open={d2TesterModalOpen} onCancel={() => setD2TesterModalOpen(false)} />
+      </Layout>
     </AntdApp>
-  );
+  )
 }
 
-export default App;
+export default App

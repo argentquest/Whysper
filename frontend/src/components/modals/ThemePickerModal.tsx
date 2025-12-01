@@ -1,39 +1,37 @@
 /**
  * ThemePickerModal Component
- * 
+ *
  * This module exports the ThemePickerModal component for the application.
  */
-import React from 'react';
-import { Modal, Row, Col, Card, Typography, Button, Space } from 'antd';
-import { CheckOutlined } from '@ant-design/icons';
-import { getThemeList, type ThemeKey } from '../../themes/antd-themes';
-import { useTheme } from '../../themes/useTheme';
+import { CheckOutlined } from '@ant-design/icons'
+import { Button, Card, Col, Modal, Row, Space,Typography } from 'antd'
+import React from 'react'
 
-const { Title, Text } = Typography;
+import { getThemeList, type ThemeKey } from '../../themes/antd-themes'
+import { useTheme } from '../../themes/useTheme'
+
+const { Title, Text } = Typography
 
 /**
  * ThemePickerModalProps type definition
- * 
+ *
  * Describes the structure and properties of ThemePickerModalProps
  */
 interface ThemePickerModalProps {
-  open: boolean;
-  onCancel: () => void;
+  open: boolean
+  onCancel: () => void
 }
 
 /**
  * ThemePickerModal component
  */
-export const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
-  open,
-  onCancel,
-}) => {
-  const { theme: currentTheme, setTheme } = useTheme();
-  const themes = getThemeList();
+export const ThemePickerModal: React.FC<ThemePickerModalProps> = ({ open, onCancel }) => {
+  const { theme: currentTheme, setTheme } = useTheme()
+  const themes = getThemeList()
 
   const handleThemeSelect = (themeKey: ThemeKey) => {
-    setTheme(themeKey);
-  };
+    setTheme(themeKey)
+  }
 
   return (
     <Modal
@@ -67,13 +65,15 @@ export const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
             <Card
               hoverable
               style={{
-                border: currentTheme === themeItem.key ? `2px solid ${themeItem.primary}` : '1px solid #d9d9d9',
+                border:
+                  currentTheme === themeItem.key
+                    ? `2px solid ${themeItem.primary}`
+                    : '1px solid #d9d9d9',
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                boxShadow: currentTheme === themeItem.key 
-                  ? `0 4px 12px ${themeItem.primary}20` 
-                  : undefined,
+                boxShadow:
+                  currentTheme === themeItem.key ? `0 4px 12px ${themeItem.primary}20` : undefined,
               }}
               onClick={() => handleThemeSelect(themeItem.key)}
               bodyStyle={{ padding: 16 }}
@@ -149,12 +149,13 @@ export const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
         <Text strong>💡 Pro Tip:</Text>
         <br />
         <Text type="secondary">
-          Your theme preference is automatically saved and will persist across sessions. 
-          Each theme includes carefully crafted color schemes and component styling optimized for the best user experience.
+          Your theme preference is automatically saved and will persist across sessions. Each theme
+          includes carefully crafted color schemes and component styling optimized for the best user
+          experience.
         </Text>
       </div>
     </Modal>
-  );
-};
+  )
+}
 
-export default ThemePickerModal;
+export default ThemePickerModal

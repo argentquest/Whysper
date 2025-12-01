@@ -55,15 +55,18 @@
  * - Cleanup happens automatically when tab closes
  */
 
-import React, { useRef } from 'react';
-import { Layout, Button, Alert, message, Space, Tag, Modal } from 'antd';
-import { SendOutlined, ClearOutlined, LeftOutlined } from '@ant-design/icons';
-import Editor from '@monaco-editor/react';
-import styles from '../diagram-wizard.module.css';
-import ChatPanel from '../panels/Panel1_Chat';
-import DiagramWizardHeader from '../components/DiagramWizardHeader';
-import type { ModelId } from './ModelSelectionScreen';
-import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
+import { ClearOutlined, LeftOutlined, SendOutlined } from '@ant-design/icons'
+import Editor from '@monaco-editor/react'
+import { Alert, Button, Layout, message, Modal, Space, Tag } from 'antd'
+import type * as Monaco from 'monaco-editor'
+import React, { useRef } from 'react'
+
+import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
+import type { Message } from '../../../types'
+import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import styles from '../diagram-wizard.module.css'
+import ChatPanel from '../panels/Panel1_Chat'
+import type { ModelId } from './ModelSelectionScreen'
 
 /**
  * Props for SystemDescriptionScreen component
@@ -92,30 +95,30 @@ import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
  */
 /**
  * SystemDescriptionScreenProps type definition
- * 
+ *
  * Describes the structure and properties of SystemDescriptionScreenProps
  */
 interface SystemDescriptionScreenProps {
-  selectedModel: ModelId;
-  currentPhase: number;
-  phases: Array<{ title: string; description: string; icon: React.ReactNode }>;
-  userInput: string;
-  loading: boolean;
-  isInAnalysisPhase: boolean;
-  sessionId: string | null;
-  status: DiagramUpdate | null;
-  score: number;
-  scoreTarget: number;
-  clarifications: Array<{ question: string; answer?: string }>;
-  chatHistory: any[];
-  sseConnected: boolean;
-  onChangeModel: () => void;
-  onStartDiagram: (prompt: string) => void;
-  onClearInput: () => void;
-  onInputChange: (value: string) => void;
-  onSubmitClarification: (clarification: string) => void;
-  onConfirmReady: () => void;
-  error?: { message: string };
+  selectedModel: ModelId
+  currentPhase: number
+  phases: Array<{ title: string; description: string; icon: React.ReactNode }>
+  userInput: string
+  loading: boolean
+  isInAnalysisPhase: boolean
+  sessionId: string | null
+  status: DiagramUpdate | null
+  score: number
+  scoreTarget: number
+  clarifications: Array<{ question: string; answer?: string }>
+  chatHistory: Message[]
+  sseConnected: boolean
+  onChangeModel: () => void
+  onStartDiagram: (prompt: string) => void
+  onClearInput: () => void
+  onInputChange: (value: string) => void
+  onSubmitClarification: (clarification: string) => void
+  onConfirmReady: () => void
+  error?: { message: string }
 }
 
 /**
@@ -143,18 +146,20 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   onConfirmReady,
   error,
 }) => {
-  const promptEditorRef = useRef<any>(null);
+  const promptEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   // Show input field during clarification phase (includes initial analysis and follow-up questions)
   // Keep input visible as long as we're in analysis phase (hasn't moved to generation yet)
-  const isClarifying = !!(isInAnalysisPhase && sessionId && (
-    status?.status === 'clarifying' ||
-    status?.status === 'analysis_complete' ||
-    status?.status === 'waiting' ||
-    status?.status === 'analyzing'
-  ));
+  const isClarifying = !!(
+    isInAnalysisPhase &&
+    sessionId &&
+    (status?.status === 'clarifying' ||
+      status?.status === 'analysis_complete' ||
+      status?.status === 'waiting' ||
+      status?.status === 'analyzing')
+  )
   // Loosen visibility: allow confirm button anytime we're in an active analysis/clarification session
   // Hide only after we leave the analysis phase (e.g., generating/rendering/completed/failed)
-  const canConfirmReady = !!(sessionId && isInAnalysisPhase);
+  const canConfirmReady = !!(sessionId && isInAnalysisPhase)
 
   // Debug logging
   console.log('[SystemDescriptionScreen] Debug:', {
@@ -167,36 +172,37 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
     sessionId,
     score,
     scoreTarget,
-    awaiting_user_confirmation: status?.awaiting_user_confirmation
-  });
+    awaiting_user_confirmation: status?.awaiting_user_confirmation,
+  })
 
   // Additional debug for button visibility
   console.log('[SystemDescriptionScreen] Button visibility:', {
     canConfirmReady,
     'status?.status': status?.status,
     'status === can_proceed': status?.status === 'can_proceed',
-    'status === clarification_ready': status?.status === 'clarification_ready'
-  });
+    'status === clarification_ready': status?.status === 'clarification_ready',
+  })
 
   const handleStart = () => {
     if (!userInput.trim()) {
-      message.warning('Please enter a system description');
-      return;
+      message.warning('Please enter a system description')
+      return
     }
-    onStartDiagram(userInput);
-  };
+    onStartDiagram(userInput)
+  }
 
   const handleClearAndChangeModel = () => {
     Modal.confirm({
       title: 'Change AI Model?',
-      content: 'Are you sure you want to select a different model? Your current session will be reset.',
+      content:
+        'Are you sure you want to select a different model? Your current session will be reset.',
       okText: 'Yes, Change Model',
       cancelText: 'Cancel',
       onOk() {
-        onChangeModel();
+        onChangeModel()
       },
-    });
-  };
+    })
+  }
 
   return (
     <Layout className={styles.diagramWizard}>
@@ -260,8 +266,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               <div>
                 <h3>Describe Your System</h3>
                 <p style={{ marginBottom: 0, color: '#666' }}>
-                  Tell us about the system or process you want to visualize. We'll have a conversation
-                  to gather all the details needed.
+                  Tell us about the system or process you want to visualize. We'll have a
+                  conversation to gather all the details needed.
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -281,22 +287,24 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               </div>
             </div>
 
-            <div style={{
-              marginBottom: 16,
-              border: '1px solid #d9d9d9',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              minHeight: '200px'
-            }}>
+            <div
+              style={{
+                marginBottom: 16,
+                border: '1px solid #d9d9d9',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                minHeight: '200px',
+              }}
+            >
               <Editor
                 height="200px"
                 defaultLanguage="plaintext"
                 value={userInput}
                 onChange={(value) => onInputChange(value || '')}
                 onMount={(editor) => {
-                  promptEditorRef.current = editor;
+                  promptEditorRef.current = editor
                   // Focus the editor when it mounts
-                  editor.focus();
+                  editor.focus()
                 }}
                 options={{
                   minimap: { enabled: false },
@@ -346,7 +354,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
         )}
       </Layout.Content>
     </Layout>
-  );
-};
+  )
+}
 
-export default SystemDescriptionScreen;
+export default SystemDescriptionScreen

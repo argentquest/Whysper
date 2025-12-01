@@ -27,39 +27,47 @@
  * ```
  */
 
-import React from 'react';
-import { Layout, Card, Row, Col, Tag, Typography, Table } from 'antd';
 import {
-  CheckCircleOutlined,
-  FileTextOutlined,
-  DeploymentUnitOutlined,
   ApartmentOutlined,
+  CheckCircleOutlined,
   ClusterOutlined,
+  DeploymentUnitOutlined,
+  FileTextOutlined,
   TrophyOutlined,
-} from '@ant-design/icons';
-import styles from '../diagram-wizard.module.css';
-import DiagramWizardHeader from '../components/DiagramWizardHeader';
-import type { ModelId } from './ModelSelectionScreen';
+} from '@ant-design/icons'
+import { Card, Col, Layout, Row, Table, Tag, Typography } from 'antd'
+import React from 'react'
 
-const { Title, Paragraph } = Typography;
+import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import styles from '../diagram-wizard.module.css'
+import type { ModelId } from './ModelSelectionScreen'
+
+const { Title, Paragraph } = Typography
+
+interface DiagramTypeRecord {
+  key: string
+  type: string
+  score: number
+  isRecommended: boolean
+}
 
 /**
  * Props for DiagramTypeSelectionScreen component
  */
 interface DiagramTypeSelectionScreenProps {
-  selectedModel: ModelId;
-  currentPhase: number;
-  phases: Array<{ title: string; description: string; icon: React.ReactNode }>;
-  sessionId: string | null;
-  score: number;
-  scoreTarget: number;
-  sseConnected: boolean;
-  loading: boolean;
-  recommendedDiagramType: string;
-  keywordScores: { [key: string]: number };
-  analysisText?: string;
-  jsonGenerationOutput?: string;
-  onSelectDiagramType: (diagramType: string) => void;
+  selectedModel: ModelId
+  currentPhase: number
+  phases: Array<{ title: string; description: string; icon: React.ReactNode }>
+  sessionId: string | null
+  score: number
+  scoreTarget: number
+  sseConnected: boolean
+  loading: boolean
+  recommendedDiagramType: string
+  keywordScores: { [key: string]: number }
+  analysisText?: string
+  jsonGenerationOutput?: string
+  onSelectDiagramType: (diagramType: string) => void
 }
 
 /**
@@ -94,7 +102,7 @@ const DIAGRAM_TYPES = [
     description: 'C4 model architecture diagrams',
     useCases: ['System context', 'Container views', 'Component views'],
   },
-];
+]
 
 /**
  * DiagramTypeSelectionScreen component
@@ -198,7 +206,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                   title: 'Diagram Type',
                   dataIndex: 'type',
                   key: 'type',
-                  render: (type: string, record: any) => (
+                  render: (type: string, record: DiagramTypeRecord) => (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <strong>{type}</strong>
                       {record.isRecommended && (
@@ -214,7 +222,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                   dataIndex: 'score',
                   key: 'score',
                   align: 'center' as const,
-                  sorter: (a: any, b: any) => b.score - a.score,
+                  sorter: (a: DiagramTypeRecord, b: DiagramTypeRecord) => b.score - a.score,
                   defaultSortOrder: 'descend' as const,
                   render: (score: number) => (
                     <Tag
@@ -231,10 +239,10 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                   key: 'suitability',
                   align: 'center' as const,
                   render: (score: number) => {
-                    if (score >= 40) return <Tag color="green">Excellent</Tag>;
-                    if (score >= 30) return <Tag color="blue">Good</Tag>;
-                    if (score >= 20) return <Tag color="orange">Fair</Tag>;
-                    return <Tag color="default">Low</Tag>;
+                    if (score >= 40) return <Tag color="green">Excellent</Tag>
+                    if (score >= 30) return <Tag color="blue">Good</Tag>
+                    if (score >= 20) return <Tag color="orange">Fair</Tag>
+                    return <Tag color="default">Low</Tag>
                   },
                 },
               ]}
@@ -246,8 +254,8 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
 
           <Row gutter={[24, 24]}>
             {DIAGRAM_TYPES.map((diagramType) => {
-              const isRecommended = diagramType.type === recommendedDiagramType;
-              const scoreValue = keywordScores[diagramType.type] || 0;
+              const isRecommended = diagramType.type === recommendedDiagramType
+              const scoreValue = keywordScores[diagramType.type] || 0
 
               return (
                 <Col xs={24} sm={12} key={diagramType.type}>
@@ -265,9 +273,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                     }}
                     bodyStyle={{ padding: 24 }}
                   >
-                    <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                      {diagramType.icon}
-                    </div>
+                    <div style={{ textAlign: 'center', marginBottom: 16 }}>{diagramType.icon}</div>
 
                     <div style={{ textAlign: 'center', marginBottom: 16 }}>
                       <Title level={4} style={{ marginBottom: 4 }}>
@@ -282,7 +288,9 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                           </Tag>
                         )}
                       </Title>
-                      <Tag color={scoreValue >= 40 ? 'green' : scoreValue >= 25 ? 'blue' : 'orange'}>
+                      <Tag
+                        color={scoreValue >= 40 ? 'green' : scoreValue >= 25 ? 'blue' : 'orange'}
+                      >
                         {scoreValue.toFixed(1)}% Match
                       </Tag>
                     </div>
@@ -312,13 +320,13 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
                     </div>
                   </Card>
                 </Col>
-              );
+              )
             })}
           </Row>
         </div>
       </Layout.Content>
     </Layout>
-  );
-};
+  )
+}
 
-export default DiagramTypeSelectionScreen;
+export default DiagramTypeSelectionScreen

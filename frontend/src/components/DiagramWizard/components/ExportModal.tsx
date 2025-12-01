@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { Modal, Radio, Input, InputNumber, Form, message, Space, Alert } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
-import { exportDiagram, getSVGElement } from '@/services/diagram/exportService';
-import type { ExportFormat } from '@/services/diagram/exportService';
+import { DownloadOutlined } from '@ant-design/icons'
+import { Alert,Form, Input, InputNumber, message, Modal, Radio, Space } from 'antd'
+import React, { useState } from 'react'
+
+import type { ExportFormat } from '@/services/diagram/exportService'
+import { exportDiagram, getSVGElement } from '@/services/diagram/exportService'
 
 interface ExportModalProps {
-  visible: boolean;
-  onClose: () => void;
-  svgContainerRef: React.RefObject<HTMLDivElement | null>;
-  defaultFilename?: string;
+  visible: boolean
+  onClose: () => void
+  svgContainerRef: React.RefObject<HTMLDivElement | null>
+  defaultFilename?: string
 }
 
 const ExportModal: React.FC<ExportModalProps> = ({
@@ -18,28 +19,28 @@ const ExportModal: React.FC<ExportModalProps> = ({
   defaultFilename = 'diagram',
 }) => {
   // Initialize state variables for export configuration and tracking
-  const [format, setFormat] = useState<ExportFormat>('svg');
-  const [filename, setFilename] = useState(defaultFilename);
-  const [scale, setScale] = useState(2);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [exporting, setExporting] = useState(false);
+  const [format, setFormat] = useState<ExportFormat>('svg')
+  const [filename, setFilename] = useState(defaultFilename)
+  const [scale, setScale] = useState(2)
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff')
+  const [exporting, setExporting] = useState(false)
 
   const handleExport = async () => {
     // Verify SVG container exists before attempting export
     if (!svgContainerRef.current) {
-      message.error('No diagram to export');
-      return;
+      message.error('No diagram to export')
+      return
     }
 
     // Extract SVG element to be exported
-    const svgElement = getSVGElement(svgContainerRef.current);
+    const svgElement = getSVGElement(svgContainerRef.current)
     if (!svgElement) {
-      message.error('SVG element not found');
-      return;
+      message.error('SVG element not found')
+      return
     }
 
     // Begin export process and manage loading state
-    setExporting(true);
+    setExporting(true)
     try {
       // Execute diagram export with selected configuration
       await exportDiagram(svgElement, {
@@ -47,20 +48,22 @@ const ExportModal: React.FC<ExportModalProps> = ({
         filename,
         scale,
         backgroundColor,
-      });
-      
+      })
+
       // Display success message and close modal on successful export
-      message.success(`Diagram exported as ${format.toUpperCase()}`);
-      onClose();
+      message.success(`Diagram exported as ${format.toUpperCase()}`)
+      onClose()
     } catch (error) {
       // Handle and log any export errors
-      console.error('Export failed:', error);
-      message.error(`Failed to export diagram: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Export failed:', error)
+      message.error(
+        `Failed to export diagram: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     } finally {
       // Reset exporting state after export attempt
-      setExporting(false);
+      setExporting(false)
     }
-  };
+  }
 
   return (
     <Modal
@@ -106,10 +109,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
         {(format === 'png' || format === 'pdf') && (
           <>
             {/* Allow background color customization for raster exports */}
-            <Form.Item
-              label="Background Color"
-              extra="Set background color for the exported image"
-            >
+            <Form.Item label="Background Color" extra="Set background color for the exported image">
               <Space>
                 <Input
                   type="color"
@@ -151,8 +151,8 @@ const ExportModal: React.FC<ExportModalProps> = ({
             format === 'svg'
               ? 'SVG format preserves vector quality and is editable in design tools.'
               : format === 'png'
-              ? 'PNG format produces a raster image suitable for presentations and documents.'
-              : 'PDF format is ideal for printing and sharing professional documents.'
+                ? 'PNG format produces a raster image suitable for presentations and documents.'
+                : 'PDF format is ideal for printing and sharing professional documents.'
           }
           type="info"
           showIcon
@@ -160,7 +160,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
         />
       </Form>
     </Modal>
-  );
-};
+  )
+}
 
-export default ExportModal;
+export default ExportModal

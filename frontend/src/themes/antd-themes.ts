@@ -1,10 +1,10 @@
 /**
  * antd-themes Theme Configuration
- * 
+ *
  * Theme-related configuration and utilities for the application.
  */
-import { theme } from 'antd';
-import { DefaultLightTheme, DefaultDarkTheme, BrandColors } from 'branding';
+import { theme, type ThemeConfig } from 'antd'
+import { BrandColors, DefaultDarkTheme, DefaultLightTheme } from 'branding'
 
 // Base theme configuration
 const baseTheme = {
@@ -23,7 +23,7 @@ const baseTheme = {
       borderRadius: 8,
     },
   },
-};
+}
 
 // Theme definitions with Pro-inspired designs
 export const themes = {
@@ -454,18 +454,18 @@ export const themes = {
       },
     },
   },
-};
+}
 
-export type ThemeKey = keyof typeof themes;
-export type ThemeMode = ThemeKey; // Updated to support all theme keys
+export type ThemeKey = keyof typeof themes
+export type ThemeMode = ThemeKey // Updated to support all theme keys
 
-export const getThemeConfig = (themeKey: ThemeKey): any => {
-  const selectedTheme = themes[themeKey];
+export const getThemeConfig = (themeKey: ThemeKey): ThemeConfig => {
+  const selectedTheme = themes[themeKey]
   if (!selectedTheme) {
-    console.error(`🎨 getThemeConfig: Theme "${themeKey}" not found in themes object`);
-    console.log(`🎨 Available themes:`, Object.keys(themes));
+    console.error(`🎨 getThemeConfig: Theme "${themeKey}" not found in themes object`)
+    console.log(`🎨 Available themes:`, Object.keys(themes))
     // Fallback to modernGradient
-    return getThemeConfig('modernGradient');
+    return getThemeConfig('modernGradient')
   }
 
   // Validate theme configuration
@@ -473,24 +473,24 @@ export const getThemeConfig = (themeKey: ThemeKey): any => {
     algorithm: selectedTheme.algorithm,
     token: selectedTheme.token,
     components: selectedTheme.components,
-  };
+  }
 
   // Basic validation
   if (!config.token) {
-    console.error(`🎨 getThemeConfig: Theme "${themeKey}" missing token configuration`);
+    console.error(`🎨 getThemeConfig: Theme "${themeKey}" missing token configuration`)
   }
   if (!config.token.colorPrimary) {
-    console.warn(`🎨 getThemeConfig: Theme "${themeKey}" missing colorPrimary token`);
+    console.warn(`🎨 getThemeConfig: Theme "${themeKey}" missing colorPrimary token`)
   }
 
   console.log(`🎨 getThemeConfig: Retrieved config for theme "${themeKey}"`, {
     hasToken: !!config.token,
     hasComponents: !!config.components,
     primaryColor: config.token?.colorPrimary,
-  });
+  })
 
-  return config;
-};
+  return config
+}
 
 /**
  * getThemeList function
@@ -501,5 +501,5 @@ export const getThemeList = () => {
     key: key as ThemeKey,
     name: theme.name,
     primary: theme.token.colorPrimary,
-  }));
-};
+  }))
+}

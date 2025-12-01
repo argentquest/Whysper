@@ -5,22 +5,22 @@
  * Supports real-time validation as the user types in the code editor.
  */
 
-import axios from 'axios';
+import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
 export interface ValidationError {
-  line?: number;
-  column?: number;
-  message: string;
-  severity: 'error' | 'warning' | 'info';
+  line?: number
+  column?: number
+  message: string
+  severity: 'error' | 'warning' | 'info'
 }
 
 export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-  warnings: ValidationError[];
-  suggestions?: string[];
+  isValid: boolean
+  errors: ValidationError[]
+  warnings: ValidationError[]
+  suggestions?: string[]
 }
 
 /**
@@ -34,19 +34,19 @@ export async function validateDiagramCode(
     const response = await axios.post(`${API_BASE}/diagram/validate`, {
       code,
       diagram_type: diagramType,
-    });
+    })
 
     return {
       isValid: response.data.is_valid,
       errors: response.data.errors || [],
       warnings: response.data.warnings || [],
       suggestions: response.data.suggestions || [],
-    };
+    }
   } catch (error) {
-    console.error('Validation failed:', error);
+    console.error('Validation failed:', error)
 
     // Return basic client-side validation on error
-    return performBasicValidation(code, diagramType);
+    return performBasicValidation(code, diagramType)
   }
 }
 
@@ -54,32 +54,32 @@ export async function validateDiagramCode(
  * Basic client-side validation as fallback
  */
 function performBasicValidation(code: string, diagramType: string): ValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
   if (!code || code.trim().length === 0) {
     errors.push({
       message: 'Code cannot be empty',
       severity: 'error',
-    });
-    return { isValid: false, errors, warnings };
+    })
+    return { isValid: false, errors, warnings }
   }
 
-  const trimmedCode = code.trim();
+  const trimmedCode = code.trim()
 
   switch (diagramType) {
     case 'Mermaid':
-      return validateMermaid(trimmedCode);
+      return validateMermaid(trimmedCode)
     case 'D2':
-      return validateD2(trimmedCode);
+      return validateD2(trimmedCode)
     case 'PlantUML':
-      return validatePlantUML(trimmedCode);
+      return validatePlantUML(trimmedCode)
     default:
       return {
         isValid: true,
         errors: [],
         warnings: [],
-      };
+      }
   }
 }
 
@@ -87,8 +87,8 @@ function performBasicValidation(code: string, diagramType: string): ValidationRe
  * Basic Mermaid validation
  */
 function validateMermaid(code: string): ValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
   const mermaidKeywords = [
     'flowchart',
@@ -100,77 +100,78 @@ function validateMermaid(code: string): ValidationResult {
     'erDiagram',
     'journey',
     'graph',
-  ];
+  ]
 
-  const hasKeyword = mermaidKeywords.some((keyword) => code.includes(keyword));
+  const hasKeyword = mermaidKeywords.some((keyword) => code.includes(keyword))
 
   if (!hasKeyword) {
     errors.push({
       line: 1,
       message: 'Missing Mermaid diagram type declaration (e.g., "flowchart TD", "sequenceDiagram")',
       severity: 'error',
-    });
+    })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
  * Basic D2 validation
  */
 function validateD2(code: string): ValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
-  const hasConnection = /->|<->/.test(code);
-  const hasShape = /shape:/.test(code);
+  const hasConnection = /->|<->/.test(code)
+  const hasShape = /shape:/.test(code)
 
   if (!hasConnection && !hasShape) {
     errors.push({
       line: 1,
-      message: 'D2 diagram should contain connections (e.g., "a -> b") or shapes (e.g., "shape: rectangle")',
+      message:
+        'D2 diagram should contain connections (e.g., "a -> b") or shapes (e.g., "shape: rectangle")',
       severity: 'error',
-    });
+    })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
  * Basic PlantUML validation
  */
 function validatePlantUML(code: string): ValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
   if (!code.includes('@startuml')) {
     errors.push({
       line: 1,
       message: 'PlantUML diagram must start with "@startuml"',
       severity: 'error',
-    });
+    })
   }
 
   if (!code.includes('@enduml')) {
     errors.push({
       message: 'PlantUML diagram must end with "@enduml"',
       severity: 'error',
-    });
+    })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
@@ -180,14 +181,14 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: NodeJS.Timeout | null = null
 
   return (...args: Parameters<T>) => {
     if (timeout) {
-      clearTimeout(timeout);
+      clearTimeout(timeout)
     }
     timeout = setTimeout(() => {
-      func(...args);
-    }, wait);
-  };
+      func(...args)
+    }, wait)
+  }
 }

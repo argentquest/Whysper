@@ -16,48 +16,45 @@
  * Example: Backend sends "TOASTINFO: Analyzing diagram..." → Shows info toast
  */
 
-import { parseAndShowToast } from '../utils/toastHelper';
-import { App } from 'antd';
-
 /**
  * ProgressEvent type definition
  *
  * Describes the structure and properties of ProgressEvent
  */
 export interface ProgressEvent {
-  stage: string;
-  message: string;
+  stage: string
+  message: string
 }
 
 /**
  * ErrorEvent type definition
- * 
+ *
  * Describes the structure and properties of ErrorEvent
  */
 export interface ErrorEvent {
-  error: string;
+  error: string
 }
 
 /**
  * CompleteEvent type definition
- * 
+ *
  * Describes the structure and properties of CompleteEvent
  */
 export interface CompleteEvent {
-  message: any;
-  conversationId: string;
+  message: unknown
+  conversationId: string
 }
 
 /**
  * SSECallbacks type definition
- * 
+ *
  * Describes the structure and properties of SSECallbacks
  */
 export interface SSECallbacks {
-  onProgress?: (event: ProgressEvent) => void;
-  onError?: (event: ErrorEvent) => void;
-  onComplete?: (event: CompleteEvent) => void;
-  onConnectionError?: (error: Error) => void;
+  onProgress?: (event: ProgressEvent) => void
+  onError?: (event: ErrorEvent) => void
+  onComplete?: (event: CompleteEvent) => void
+  onConnectionError?: (error: Error) => void
 }
 
 /**
@@ -73,29 +70,27 @@ export interface SSECallbacks {
 export function streamChatMessage(
   message: string,
   conversationId: string,
-  settings: any,
+  settings: Record<string, unknown>,
   contextFiles: string[] = [],
   callbacks: SSECallbacks = {}
 ): () => void {
-  const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000';
-  const API_BASE_URL = import.meta.env.DEV
-    ? `http://localhost:${BACKEND_PORT}/api/v1`
-    : '/api/v1';
+  const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000'
+  const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
 
-  const url = `${API_BASE_URL}/stream`;
+  const url = `${API_BASE_URL}/stream`
 
-  console.log('🌊 [SSE] Initiating streaming connection:', url);
+  console.log('🌊 [SSE] Initiating streaming connection:', url)
 
   // Create AbortController for cancellation
-  const controller = new AbortController();
-  const signal = controller.signal;
+  const controller = new AbortController()
+  const signal = controller.signal
 
   // Send POST request to SSE endpoint
   fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
+      Accept: 'text/event-stream',
     },
     body: JSON.stringify({
       message,
@@ -107,100 +102,100 @@ export function streamChatMessage(
   })
     .then(async (response) => {
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
       if (!response.body) {
-        throw new Error('Response body is null');
+        throw new Error('Response body is null')
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      console.log('✅ [SSE] Connected to stream');
+      console.log('✅ [SSE] Connected to stream')
 
       // Read stream chunks
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await reader.read()
 
         if (done) {
-          console.log('✅ [SSE] Stream complete');
-          break;
+          console.log('✅ [SSE] Stream complete')
+          break
         }
 
         // Decode chunk and add to buffer
-        buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true })
 
         // Process complete events (separated by \n\n)
-        const events = buffer.split('\n\n');
-        buffer = events.pop() || ''; // Keep incomplete event in buffer
+        const events = buffer.split('\n\n')
+        buffer = events.pop() || '' // Keep incomplete event in buffer
 
         for (const eventText of events) {
-          if (!eventText.trim()) continue;
+          if (!eventText.trim()) continue
 
           try {
             // Parse SSE event format
-            const lines = eventText.split('\n');
-            let eventType = 'message';
-            let eventData = '';
+            const lines = eventText.split('\n')
+            let eventType = 'message'
+            let eventData = ''
 
             for (const line of lines) {
               if (line.startsWith('event:')) {
-                eventType = line.substring(6).trim();
+                eventType = line.substring(6).trim()
               } else if (line.startsWith('data:')) {
-                eventData = line.substring(5).trim();
+                eventData = line.substring(5).trim()
               }
             }
 
             // Parse JSON data
-            const data = JSON.parse(eventData);
+            const data = JSON.parse(eventData)
 
-            console.log(`📨 [SSE] Event: ${eventType}`, data);
+            console.log(`📨 [SSE] Event: ${eventType}`, data)
 
             // Dispatch to appropriate callback
             switch (eventType) {
               case 'progress':
                 if (callbacks.onProgress) {
-                  callbacks.onProgress(data as ProgressEvent);
+                  callbacks.onProgress(data as ProgressEvent)
                 }
-                break;
+                break
 
               case 'error':
                 if (callbacks.onError) {
-                  callbacks.onError(data as ErrorEvent);
+                  callbacks.onError(data as ErrorEvent)
                 }
-                break;
+                break
 
               case 'complete':
                 if (callbacks.onComplete) {
-                  callbacks.onComplete(data as CompleteEvent);
+                  callbacks.onComplete(data as CompleteEvent)
                 }
-                break;
+                break
 
               default:
-                console.warn(`⚠️ [SSE] Unknown event type: ${eventType}`);
+                console.warn(`⚠️ [SSE] Unknown event type: ${eventType}`)
             }
           } catch (error) {
-            console.error('❌ [SSE] Failed to parse event:', eventText, error);
+            console.error('❌ [SSE] Failed to parse event:', eventText, error)
           }
         }
       }
     })
     .catch((error) => {
       if (error.name === 'AbortError') {
-        console.log('🛑 [SSE] Connection aborted by user');
+        console.log('🛑 [SSE] Connection aborted by user')
       } else {
-        console.error('❌ [SSE] Connection error:', error);
+        console.error('❌ [SSE] Connection error:', error)
         if (callbacks.onConnectionError) {
-          callbacks.onConnectionError(error);
+          callbacks.onConnectionError(error)
         }
       }
-    });
+    })
 
   // Return abort function
   return () => {
-    console.log('🛑 [SSE] Aborting connection');
-    controller.abort();
-  };
+    console.log('🛑 [SSE] Aborting connection')
+    controller.abort()
+  }
 }

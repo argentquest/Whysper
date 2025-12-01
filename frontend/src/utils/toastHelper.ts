@@ -12,8 +12,8 @@
  * static message API, so no message instance needs to be passed.
  */
 
-import { message as antdMessage } from 'antd';
-import type { MessageInstance } from 'antd/es/message/interface';
+import { message as antdMessage } from 'antd'
+import type { MessageInstance } from 'antd/es/message/interface'
 
 const TOAST_KEYWORDS = {
   TOASTINFO: 'info',
@@ -21,7 +21,7 @@ const TOAST_KEYWORDS = {
   TOASTERROR: 'error',
   TOASTWARNING: 'warning',
   TOASTLOADING: 'loading',
-} as const;
+} as const
 
 /**
  * Parse message for toast commands and display if found (using static API)
@@ -39,7 +39,7 @@ const TOAST_KEYWORDS = {
  * parseAndShowToast("Regular message without toast")
  * // Returns false, no toast shown
  */
-export function parseAndShowToast(messageText: string): boolean;
+export function parseAndShowToast(messageText: string): boolean
 /**
  * Parse message for toast commands and display if found (with message instance)
  *
@@ -47,41 +47,35 @@ export function parseAndShowToast(messageText: string): boolean;
  * @param messageApi - Ant Design message API instance (optional)
  * @returns true if a toast command was found and displayed, false otherwise
  */
-export function parseAndShowToast(
-  messageText: string,
-  messageApi?: MessageInstance
-): boolean;
-export function parseAndShowToast(
-  messageText: string,
-  messageApi?: MessageInstance
-): boolean {
+export function parseAndShowToast(messageText: string, messageApi?: MessageInstance): boolean
+export function parseAndShowToast(messageText: string, messageApi?: MessageInstance): boolean {
   if (!messageText || typeof messageText !== 'string') {
-    return false;
+    return false
   }
 
   // Use provided message API or fall back to static API
-  const messageInstance = messageApi || antdMessage;
+  const messageInstance = messageApi || antdMessage
 
   // Check for each toast keyword
   for (const [keyword, type] of Object.entries(TOAST_KEYWORDS)) {
     if (messageText.includes(keyword)) {
       // Extract the message after the keyword
-      const parts = messageText.split(keyword);
+      const parts = messageText.split(keyword)
       if (parts.length > 1) {
         // Get text after keyword, removing leading colon/whitespace
-        const toastMessage = parts[1].replace(/^[:\s]+/, '').trim();
+        const toastMessage = parts[1].replace(/^[:\s]+/, '').trim()
 
         if (toastMessage) {
           // Show the appropriate toast type
-          messageInstance[type](toastMessage);
-          console.log(`🍞 [Toast] ${type.toUpperCase()}: ${toastMessage}`);
-          return true;
+          messageInstance[type](toastMessage)
+          console.log(`🍞 [Toast] ${type.toUpperCase()}: ${toastMessage}`)
+          return true
         }
       }
     }
   }
 
-  return false;
+  return false
 }
 
 /**
@@ -91,26 +85,24 @@ export function parseAndShowToast(
  * @param message - The message text to parse
  * @returns Object with toast type and message, or null if no toast command found
  */
-export function extractToastCommand(
-  message: string
-): { type: string; message: string } | null {
+export function extractToastCommand(message: string): { type: string; message: string } | null {
   if (!message || typeof message !== 'string') {
-    return null;
+    return null
   }
 
   for (const [keyword, type] of Object.entries(TOAST_KEYWORDS)) {
     if (message.includes(keyword)) {
-      const parts = message.split(keyword);
+      const parts = message.split(keyword)
       if (parts.length > 1) {
-        const toastMessage = parts[1].replace(/^[:\s]+/, '').trim();
+        const toastMessage = parts[1].replace(/^[:\s]+/, '').trim()
         if (toastMessage) {
-          return { type, message: toastMessage };
+          return { type, message: toastMessage }
         }
       }
     }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -121,8 +113,8 @@ export function extractToastCommand(
  */
 export function hasToastCommand(message: string): boolean {
   if (!message || typeof message !== 'string') {
-    return false;
+    return false
   }
 
-  return Object.keys(TOAST_KEYWORDS).some(keyword => message.includes(keyword));
+  return Object.keys(TOAST_KEYWORDS).some((keyword) => message.includes(keyword))
 }

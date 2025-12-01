@@ -1,34 +1,23 @@
 /**
  * Header Component
- * 
+ *
  * This module exports the Header component for the application.
  */
-// @ts-nocheck
-import React from 'react';
-import type { AgentPrompt } from '../../types';
-import { Layout, Button, Select, Typography, Tooltip, theme as antdTheme } from 'antd';
-import {
-  MoonOutlined,
-  SunOutlined,
-  SettingOutlined,
-  InfoCircleOutlined,
-  BookOutlined,
-  PlayCircleOutlined,
-  CodeOutlined,
-  BgColorsOutlined,
-  QuestionCircleOutlined,
-  MenuOutlined,
-} from '@ant-design/icons';
-import { useTheme } from '../../themes';
-import { BrandColors, Brand } from 'branding';
+import { MenuOutlined, PlayCircleOutlined } from '@ant-design/icons'
+import { Button, Layout, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
+import { Brand, BrandColors } from 'branding'
+import React from 'react'
 
-const { Header: AntHeader } = Layout;
-const { Title, Text } = Typography;
-const { Option } = Select;
+import { useTheme } from '../../themes'
+import type { AgentPrompt } from '../../types'
+
+const { Header: AntHeader } = Layout
+const { Title, Text } = Typography
+const { Option } = Select
 
 /**
  * HeaderProps type definition
- * 
+ *
  * Describes the structure and properties of HeaderProps
  * @interface HeaderProps
  * @property {Function} onSetContext - Callback to open context modal
@@ -54,27 +43,27 @@ const { Option } = Select;
  * @property {AgentPrompt[]} [agentPrompts] - List of available agent prompts
  */
 interface HeaderProps {
-  onSetContext: () => void;
-  onNewConversation: () => void;
-  onNewSession: () => void;
-  onEditFile: () => void;
-  onOpenSettings: () => void;
-  onToggleTheme: () => void;
-  onOpenThemePicker: () => void;
-  onSystemMessage: () => void;
-  onAbout: () => void;
-  onCodeFragments: () => void;
-  onGenerateDocumentation: () => void;
-  onHelp: () => void;
-  onMermaidTester: () => void;
-  onD2Tester: () => void;
-  onDiagramWizard: () => void;
-  onArchStudio: () => void;
-  onHome: () => void;
-  currentSystem?: string;
-  onSystemChange: (system: string) => void;
-  onRunSystemPrompt: (systemName: string) => void;
-  agentPrompts?: AgentPrompt[];
+  onSetContext: () => void
+  onNewConversation: () => void
+  onNewSession: () => void
+  onEditFile: () => void
+  onOpenSettings: () => void
+  onToggleTheme: () => void
+  onOpenThemePicker: () => void
+  onSystemMessage: () => void
+  onAbout: () => void
+  onCodeFragments: () => void
+  onGenerateDocumentation: () => void
+  onHelp: () => void
+  onMermaidTester: () => void
+  onD2Tester: () => void
+  onDiagramWizard: () => void
+  onArchStudio: () => void
+  onHome: () => void
+  currentSystem?: string
+  onSystemChange: (system: string) => void
+  onRunSystemPrompt: (systemName: string) => void
+  agentPrompts?: AgentPrompt[]
 }
 
 /**
@@ -90,49 +79,37 @@ interface HeaderProps {
  * @returns {JSX.Element} Rendered header
  */
 export const Header: React.FC<HeaderProps> = ({
-  onSetContext,
-  onNewConversation,
-  onNewSession,
-  onEditFile,
   onOpenSettings,
-  onToggleTheme,
-  onOpenThemePicker,
-  onSystemMessage,
-  onAbout,
-  onCodeFragments,
-  onGenerateDocumentation,
-  onHelp,
-  onMermaidTester,
-  onD2Tester,
-  onDiagramWizard,
-  onArchStudio,
   onHome,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
   agentPrompts = [],
 }) => {
-  const { theme } = useTheme();
-  const { token } = antdTheme.useToken();
-  const brandTokens = token as Record<string, string>;
+  useTheme()
+  const { token } = antdTheme.useToken()
+  const brandTokens = token as unknown as Record<string, string>
 
   // Use agent prompts instead of hardcoded system options
-  const systemOptions = agentPrompts.length > 0
-    ? agentPrompts.map(prompt => prompt.name)
-    : ['default', 'coding', 'documentation', 'refactoring', 'debugging'];
+  const systemOptions =
+    agentPrompts.length > 0
+      ? agentPrompts.map((prompt) => prompt.name)
+      : ['default', 'coding', 'documentation', 'refactoring', 'debugging']
 
-  const headerBg = brandTokens.colorBrandHeaderBg ?? BrandColors.primary;
-  const headerBorder = brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? BrandColors.primary;
-  const headerText = brandTokens.colorBrandHeaderText ?? '#ffffff';
+  const headerBg = brandTokens.colorBrandHeaderBg ?? BrandColors.primary
+  const headerBorder =
+    brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? BrandColors.primary
+  const headerText = brandTokens.colorBrandHeaderText ?? '#ffffff'
   const mastheadActions = [
     { label: 'Home', handler: onHome, tooltip: 'Return to landing page' },
     { label: 'Settings', handler: onOpenSettings, tooltip: 'Configure application settings' },
-  ];
-  const actionSurface = brandTokens.colorBgContainer ?? BrandColors.brand?.white ?? '#ffffff';
-  const actionText = brandTokens.colorText ?? BrandColors.text?.primary ?? '#231f20';
-  const actionSubtleText = brandTokens.colorTextSecondary ?? BrandColors.text?.secondary ?? '#5d5550';
-  const neutralBorder = brandTokens.colorBorder ?? BrandColors.neutral?.stroke ?? '#d9d9d9';
-  const containerPadding = 'clamp(16px, 4vw, 48px)';
+  ]
+  const actionSurface = brandTokens.colorBgContainer ?? BrandColors.brand?.white ?? '#ffffff'
+  const actionText = brandTokens.colorText ?? (BrandColors as any).text?.primary ?? '#231f20'
+  const actionSubtleText =
+    brandTokens.colorTextSecondary ?? (BrandColors as any).text?.secondary ?? '#5d5550'
+  const neutralBorder = brandTokens.colorBorder ?? (BrandColors as any).neutral?.stroke ?? '#d9d9d9'
+  const containerPadding = 'clamp(16px, 4vw, 48px)'
 
   const renderBrandLogo = () => {
     if (Brand.logo?.type === 'image' && Brand.logo.src) {
@@ -142,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
           alt={Brand.logo.alt || Brand.name}
           style={{ height: 24, width: 'auto', display: 'block' }}
         />
-      );
+      )
     }
     return (
       <div
@@ -161,14 +138,19 @@ export const Header: React.FC<HeaderProps> = ({
       >
         {Brand.logo?.emoji ?? 'WF'}
       </div>
-    );
-  };
+    )
+  }
 
   const renderAgentSelector = (labelColor: string, labelOpacity = 0.9) => (
-    <div className="flex flex-col w-full">
+    <div className="flex w-full flex-col">
       <span
-        className="text-xs mb-2 tracking-wide"
-        style={{ color: labelColor, fontWeight: 600, letterSpacing: '0.5px', opacity: labelOpacity }}
+        className="mb-2 text-xs tracking-wide"
+        style={{
+          color: labelColor,
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          opacity: labelOpacity,
+        }}
       >
         ACTIVE AGENT
       </span>
@@ -192,10 +174,14 @@ export const Header: React.FC<HeaderProps> = ({
         popupRender={(menu) => (
           <div>
             {/* Table Header */}
-            <div className="py-3 px-4 bg-gray-50 dark:bg-gray-700 border-b-2 border-gray-300 dark:border-gray-500">
+            <div className="border-b-2 border-gray-300 bg-gray-50 px-4 py-3 dark:border-gray-500 dark:bg-gray-700">
               <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <div className="col-span-3 border-r border-gray-300 dark:border-gray-500 pr-4">Agent Name</div>
-                <div className="col-span-6 border-r border-gray-300 dark:border-gray-500 pr-4">Description</div>
+                <div className="col-span-3 border-r border-gray-300 pr-4 dark:border-gray-500">
+                  Agent Name
+                </div>
+                <div className="col-span-6 border-r border-gray-300 pr-4 dark:border-gray-500">
+                  Description
+                </div>
                 <div className="col-span-3">Categories & File</div>
               </div>
             </div>
@@ -203,34 +189,33 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
       >
-        {systemOptions.map(system => {
-          const prompt = agentPrompts.find(p => p.name === system);
-          const displayName = prompt ? prompt.title : system.charAt(0).toUpperCase() + system.slice(1);
-          const shortName = displayName.length > 80 ? `${displayName.substring(0, 80)}...` : displayName;
-          const description = prompt?.description || '';
-          const categories = prompt?.category || [];
+        {systemOptions.map((system) => {
+          const prompt = agentPrompts.find((p) => p.name === system)
+          const displayName = prompt
+            ? prompt.title
+            : system.charAt(0).toUpperCase() + system.slice(1)
+          const shortName =
+            displayName.length > 80 ? `${displayName.substring(0, 80)}...` : displayName
+          const description = prompt?.description || ''
+          const categories = prompt?.category || []
 
           return (
-            <Option
-              key={system}
-              value={system}
-              label={shortName}
-            >
-              <div className="py-5 px-4 border-b border-gray-200 dark:border-gray-600 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 min-h-[80px]">
-                <div className="grid grid-cols-12 gap-4 items-start">
+            <Option key={system} value={system} label={shortName}>
+              <div className="min-h-[80px] border-b border-gray-200 px-4 py-5 last:border-b-0 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+                <div className="grid grid-cols-12 items-start gap-4">
                   {/* Agent Name & Title */}
-                  <div className="col-span-3 border-r border-gray-200 dark:border-gray-600 pr-4">
-                    <div className="font-semibold text-sm text-gray-900 dark:text-white leading-tight break-words">
+                  <div className="col-span-3 border-r border-gray-200 pr-4 dark:border-gray-600">
+                    <div className="break-words text-sm font-semibold leading-tight text-gray-900 dark:text-white">
                       {displayName}
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1 break-words">
+                    <div className="mt-1 break-words text-xs font-medium text-blue-600 dark:text-blue-400">
                       {system}
                     </div>
                   </div>
 
                   {/* Description */}
-                  <div className="col-span-6 border-r border-gray-200 dark:border-gray-600 pr-4">
-                    <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">
+                  <div className="col-span-6 border-r border-gray-200 pr-4 dark:border-gray-600">
+                    <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                       {description || 'No description available'}
                     </div>
                   </div>
@@ -238,19 +223,24 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Categories & File */}
                   <div className="col-span-3">
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
+                      <div className="mb-2 flex flex-wrap gap-1">
                         {categories.slice(0, 4).map((cat, idx) => (
-                          <span key={idx} className="inline-block px-2 py-1 bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 text-xs rounded-md font-medium break-words">
+                          <span
+                            key={idx}
+                            className="inline-block break-words rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-800 dark:text-green-200"
+                          >
                             {cat}
                           </span>
                         ))}
                         {categories.length > 4 && (
-                          <span className="text-xs text-gray-500 px-1">+{categories.length - 4} more</span>
+                          <span className="px-1 text-xs text-gray-500">
+                            +{categories.length - 4} more
+                          </span>
                         )}
                       </div>
                     )}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded break-words flex-1">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="flex-1 break-words rounded bg-gray-100 px-2 py-1 text-xs text-gray-500 dark:bg-gray-600 dark:text-gray-400">
                         📄 {prompt?.filename || `${system}.md`}
                       </div>
                       <Tooltip title={`Run ${displayName} system prompt`}>
@@ -258,10 +248,10 @@ export const Header: React.FC<HeaderProps> = ({
                           type="primary"
                           size="small"
                           icon={<PlayCircleOutlined />}
-                          className="!bg-green-600 !border-green-600 hover:!bg-green-700"
+                          className="!border-green-600 !bg-green-600 hover:!bg-green-700"
                           onClick={(e) => {
-                            e.stopPropagation();
-                            onRunSystemPrompt(system);
+                            e.stopPropagation()
+                            onRunSystemPrompt(system)
                           }}
                         >
                           Run
@@ -272,16 +262,15 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </div>
             </Option>
-          );
+          )
         })}
       </Select>
     </div>
-  );
-
+  )
 
   return (
     <AntHeader
-      className="!p-0 border-b"
+      className="border-b !p-0"
       style={{
         background: 'transparent',
         borderColor: headerBorder,
@@ -311,7 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          <div className="hidden lg:flex flex-1 max-w-3xl px-6">
+          <div className="hidden max-w-3xl flex-1 px-6 lg:flex">
             {renderAgentSelector(headerText)}
           </div>
 
@@ -329,7 +318,17 @@ export const Header: React.FC<HeaderProps> = ({
                 display: 'flex',
               }}
             >
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  margin: 0,
+                  padding: 0,
+                  display: 'flex',
+                  gap: 16,
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
+              >
                 {mastheadActions.map((item) => (
                   <li key={item.label}>
                     <Tooltip title={item.tooltip}>
@@ -387,7 +386,7 @@ export const Header: React.FC<HeaderProps> = ({
           }}
         >
           {/* Left Section - Branding */}
-          <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+          <div className="flex min-w-[220px] flex-1 flex-col gap-1">
             <Title level={4} className="!mb-0" style={{ color: actionText, fontWeight: 600 }}>
               {Brand.name}
             </Title>
@@ -397,16 +396,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Center Section - System Selection (mobile / tablet) */}
-          <div className="flex flex-col flex-1 min-w-[280px] max-w-2xl lg:hidden">
+          <div className="flex min-w-[280px] max-w-2xl flex-1 flex-col lg:hidden">
             {renderAgentSelector(actionSubtleText, 0.8)}
           </div>
 
           {/* Right Section placeholder to maintain spacing */}
-          <div className="flex flex-1 justify-end items-center min-w-[160px]" />
+          <div className="flex min-w-[160px] flex-1 items-center justify-end" />
         </div>
       </div>
     </AntHeader>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

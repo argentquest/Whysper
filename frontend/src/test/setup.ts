@@ -1,21 +1,22 @@
 /**
  * setup Tests
- * 
+ *
  * Test suite for setup functionality.
  */
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import '@testing-library/jest-dom'
+
+import { cleanup } from '@testing-library/react'
+import { afterEach, vi } from 'vitest'
 
 // Cleanup React testing library after each test to prevent state leakage between tests
 afterEach(() => {
-  cleanup();
-});
+  cleanup()
+})
 
 // Mock window.matchMedia to simulate media query behavior in tests without a real browser environment
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -25,7 +26,7 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-});
+})
 
 // Create a mock IntersectionObserver to simulate browser intersection detection without actual DOM rendering
 global.IntersectionObserver = class IntersectionObserver {
@@ -33,10 +34,10 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   observe() {}
   takeRecords() {
-    return [];
+    return []
   }
   unobserve() {}
-} as any;
+} as unknown as typeof IntersectionObserver
 
 // Create a mock ResizeObserver to simulate browser resize detection without actual DOM rendering
 global.ResizeObserver = class ResizeObserver {
@@ -44,59 +45,62 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-} as any;
+} as unknown as typeof ResizeObserver
 
 // Create a mock localStorage implementation to simulate browser storage interactions during testing
 const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+  let store: Record<string, string> = {}
 
   return {
     // Retrieve an item from the mock storage
     getItem: (key: string) => store[key] || null,
     // Set an item in the mock storage
     setItem: (key: string, value: string) => {
-      store[key] = value.toString();
+      store[key] = value.toString()
     },
     // Remove an item from the mock storage
     removeItem: (key: string) => {
-      delete store[key];
+      delete store[key]
     },
     // Clear entire mock storage
     clear: () => {
-      store = {};
+      store = {}
     },
-  };
-})();
+  }
+})()
 
 // Replace browser's localStorage with mock implementation for consistent testing
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
-});
+})
 
 // Add scrollIntoView mock if not natively supported to prevent test errors when scrolling is called
 if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn()
 }
 
 // Mock EventSource to simulate Server-Sent Events (SSE) interactions during testing
 global.EventSource = class EventSource {
-  url: string;
-  onopen: ((this: EventSource, ev: Event) => any) | null = null;
-  onmessage: ((this: EventSource, ev: MessageEvent) => any) | null = null;
-  onerror: ((this: EventSource, ev: Event) => any) | null = null;
-  readyState: number = 0;
+  url: string
+  onopen: ((this: EventSource, ev: Event) => void) | null = null
+  onmessage: ((this: EventSource, ev: MessageEvent) => void) | null = null
+  onerror: ((this: EventSource, ev: Event) => void) | null = null
+  readyState: number = 0
+  OPEN = 1
+  CONNECTING = 0
+  CLOSED = 2
 
   constructor(url: string) {
-    this.url = url;
+    this.url = url
   }
 
   close() {}
   addEventListener() {}
   removeEventListener() {}
   dispatchEvent() {
-    return true;
+    return true
   }
-} as any;
+} as unknown as typeof EventSource
 
 // Optional: Suppress console errors during testing to reduce noise in test output
 // vi.spyOn(console, 'error').mockImplementation(() => {});

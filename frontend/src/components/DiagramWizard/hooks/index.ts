@@ -5,7 +5,7 @@
  */
 
 // Export the primary diagram session hook for use in components
-export { useDiagramSession } from './useDiagramSession';
+export { useDiagramSession } from './useDiagramSession'
 
 // Export the type definition for configuration options of the diagram session hook
-export type { UseDiagramSessionOptions } from './useDiagramSession';
+export type { UseDiagramSessionOptions } from './useDiagramSession'
