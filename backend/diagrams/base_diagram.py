@@ -653,14 +653,14 @@ class BaseDiagramProvider(ABC):
         if render_result.success:
             await self._send_progress(progress_callback, {
                 "status": "render_complete",
-                "message": f"✅ {self.diagram_type} rendered successfully",
+                "message": f"? {self.diagram_type} rendered successfully",
                 "step": "4/4"
+            })
             if render_result.output_format.lower() == "svg" and render_result.content:
                 self.logger.info(
                     "SVG output",
                     extra={"svg": render_result.content}
                 )
-            })
 
         # Update metadata
         duration = (datetime.now() - start_time).total_seconds()
@@ -668,9 +668,9 @@ class BaseDiagramProvider(ABC):
         render_result.validation = validation_result
 
         if render_result.success:
-            self.logger.info(f"[{self.provider_id}] ✅ Render successful ({duration:.2f}s)")
+            self.logger.info(f"[{self.provider_id}] ? Render successful ({duration:.2f}s)")
         else:
-            self.logger.info(f"[{self.provider_id}] ❌ Render failed ({duration:.2f}s)")
+            self.logger.info(f"[{self.provider_id}] ? Render failed ({duration:.2f}s)")
 
         self.logger.info(
             "Completed render_with_validation",
