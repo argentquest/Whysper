@@ -107,11 +107,11 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
                         'diagram_code'.
     """
     diagram_code = state.get("diagram_code", "")
-    state.get("validation_error", "")
+    validation_error = state.get("validation_error", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     diagram_type_str = get_diagram_type_str(diagram_type)
     refinement_attempt = state.get("refinement_attempt", 0) + 1
-    state.get("final_design_summary", "")
+    final_design_summary = state.get("final_design_summary", "")
     model_id = state.get("model_id")  # Get selected model from state
 
     if refinement_attempt >= 3:
@@ -131,8 +131,8 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     if not prompt_template:
         # Fallback prompt if specific prompt not found
         prompt_template = (
-            """You are a {diagram_type_str} diagram code expert. """
-            """Fix the syntax error in this diagram code.
+            f"""You are a {diagram_type_str} diagram code expert. """
+            f"""Fix the syntax error in this diagram code.
 
 Original Design Summary: {final_design_summary}
 
@@ -142,11 +142,11 @@ Current Code (with error):
 Validation Error: {validation_error}
 
 Fix ONLY the syntax error while preserving the diagram's meaning. """
-            """Return only the corrected code without explanations."""
+            f"""Return only the corrected code without explanations."""
         )
 
     # Prepare context for AI
-    error_context = """Code: {diagram_code}
+    error_context = f"""Code: {diagram_code}
 Error: {validation_error}
 Attempt: {refinement_attempt}"""
 

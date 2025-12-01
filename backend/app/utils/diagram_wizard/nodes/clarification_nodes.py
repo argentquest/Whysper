@@ -145,7 +145,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     # Combine prompts: ANALYZE provides schema context, CLARIFY guides the clarification loop
     # This ensures the LLM has full schema reference throughout all turns
     if analyze_prompt and clarify_prompt_template:
-        prompt_template = """{analyze_prompt}
+        prompt_template = f"""{analyze_prompt}
 
 ---
 
@@ -159,7 +159,7 @@ Continue refining the JSON representation based on the user's responses."""
         prompt_template = clarify_prompt_template
     else:
         # Fallback prompt if specific prompt not found
-        prompt_template = """You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
+        prompt_template = f"""You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
 
 INSTRUCTIONS:
 1. Ask ONE clarifying question per turn to understand system components and connections

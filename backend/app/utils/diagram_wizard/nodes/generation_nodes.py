@@ -323,7 +323,7 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
 
     if not prompt_template:
         # Fallback prompt if specific prompt not found
-        prompt_template = """You are a {diagram_type_str} diagram code generator.
+        prompt_template = f"""You are a {diagram_type_str} diagram code generator.
 
 Create ONLY the diagram code based on the following JSON representation. Do not include explanations or markdown formatting.
 

@@ -432,11 +432,37 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     return messageObj
   })
 
-  // Extract generated diagram code (Mermaid/D2/PlantUML syntax)
-  const diagramCode = status?.diagramCode ?? ''
+  // ============ Hybrid State: SSE + Local Edits ============
+  // Extract SSE-provided values (server state)
+  const sseProvidedDiagramCode = status?.diagramCode ?? ''
+  const sseProvidedSvgOutput = status?.svgOutput ?? ''
+  const sseProvidedStructurizrWorkspace = (status as any)?.structurizr_workspace || ''
+  const sseProvidedCleanStructurizr = (status as any)?.clean_structurizr || ''
+  const sseProvidedJsonRepresentation = status?.jsonRepresentation ?? null
 
-  // Extract rendered SVG output (ready for display/export)
-  const svgOutput = status?.svgOutput ?? ''
+  // Local editable state (overrides SSE when user makes changes)
+  const [localDiagramCode, setLocalDiagramCode] = useState<string | null>(null)
+  const [localSvgOutput, setLocalSvgOutput] = useState<string | null>(null)
+
+  // Sync local state with SSE updates (when server provides new values)
+  React.useEffect(() => {
+    if (sseProvidedDiagramCode && !localDiagramCode) {
+      setLocalDiagramCode(sseProvidedDiagramCode)
+    }
+  }, [sseProvidedDiagramCode, localDiagramCode])
+
+  React.useEffect(() => {
+    if (sseProvidedSvgOutput && !localSvgOutput) {
+      setLocalSvgOutput(sseProvidedSvgOutput)
+    }
+  }, [sseProvidedSvgOutput, localSvgOutput])
+
+  // Use local state if available, otherwise fall back to SSE state
+  const diagramCode = localDiagramCode ?? sseProvidedDiagramCode
+  const svgOutput = localSvgOutput ?? sseProvidedSvgOutput
+  const structurizrWorkspace = sseProvidedStructurizrWorkspace
+  const cleanStructurizr = sseProvidedCleanStructurizr
+  const jsonRepresentation = sseProvidedJsonRepresentation
 
   // Debug: Log SVG output length when it changes
   React.useEffect(() => {
@@ -447,10 +473,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       )
     }
   }, [svgOutput])
-
-  const structurizrWorkspace = (status as any)?.structurizr_workspace || ''
-  const cleanStructurizr = (status as any)?.clean_structurizr || ''
-  const jsonRepresentation = status?.jsonRepresentation ?? null
 
   // Extract clarification questions from AI, normalizing to object format
   const clarifications = (status?.clarifications ?? []).map((q) =>
@@ -651,6 +673,34 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setExportModalVisible(false)
   }
 
+  // Handle user editing diagram code in the Code Editor tab
+  const handleCodeChange = useCallback(
+    async (newCode: string) => {
+      try {
+        // Update local state immediately for responsive UI
+        setLocalDiagramCode(newCode)
+
+        // Re-render diagram with updated code
+        if (sessionId) {
+          console.log('[DiagramWizard] Re-rendering diagram with edited code')
+
+          // Call backend to render the edited code
+          const response = await DiagramApi.renderDiagram(sessionId, newCode)
+
+          // Update local SVG output with new rendering
+          if (response.svgOutput) {
+            setLocalSvgOutput(response.svgOutput)
+            message.success('Diagram updated successfully')
+          }
+        }
+      } catch (error) {
+        console.error('[DiagramWizard] Failed to re-render diagram:', error)
+        message.error('Failed to update diagram. Please try again.')
+      }
+    },
+    [sessionId]
+  )
+
   // Handle user clicking "New Diagram" to start completely fresh
   const handleNewDiagram = () => {
     // Navigate back to model selection
@@ -809,6 +859,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onNewDiagram={handleNewDiagram}
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}
+        onCodeChange={handleCodeChange}
         onExportSubmit={async (filename, format) => {
           // TODO: Implement export logic (download diagram as file)
           console.log('Export:', { filename, format, diagramCode, svgOutput })

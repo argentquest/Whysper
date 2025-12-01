@@ -31,7 +31,7 @@ export async function validateDiagramCode(
   diagramType: string
 ): Promise<ValidationResult> {
   try {
-    const response = await axios.post(`${API_BASE}/diagram/validate`, {
+    const response = await axios.post(`${API_BASE}/diagrams/v2/validate`, {
       code,
       diagram_type: diagramType,
     })
