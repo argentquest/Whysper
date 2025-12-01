@@ -37,10 +37,10 @@ def strip_d2_icons(code: str) -> str:
     from D2 code while preserving the rest of the diagram structure.
 
     Args:
-        code: The D2 code potentially containing icon URLs
+        code (str): The D2 code potentially containing icon URLs.
 
     Returns:
-        str: D2 code with icon attributes removed
+        str: D2 code with icon attributes removed.
 
     Example:
         >>> code = '''
@@ -85,7 +85,15 @@ def strip_d2_icons(code: str) -> str:
 # =====================================================================
 
 class D2SyntaxFixResult:
-    """Result of D2 syntax fixing operation"""
+    """
+    Result of D2 syntax fixing operation.
+
+    Attributes:
+        is_valid (bool): Whether the fix resulted in potentially valid code.
+        corrected_code (str): The modified code after applying fixes.
+        errors (List[str]): List of errors remaining or encountered.
+        corrections (List[str]): List of descriptions of applied fixes.
+    """
     def __init__(self, is_valid: bool, corrected_code: str, errors: List[str], corrections: List[str]):
         self.is_valid = is_valid
         self.corrected_code = corrected_code
@@ -101,22 +109,22 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     It applies a series of common fixes that resolve 80%+ of D2 syntax errors.
 
     Pattern Correction Strategy:
-    - Brace matching: Auto-closes unclosed containers
-    - Arrow normalization: Fixes spacing in connection arrows (e.g., "A - > B" → "A -> B")
-    - Label quoting: Adds quotes to connection labels with spaces
-    - Direction declaration: Adds default "direction: right" if missing
+    - Brace matching: Auto-closes unclosed containers.
+    - Arrow normalization: Fixes spacing in connection arrows (e.g., "A - > B" -> "A -> B").
+    - Label quoting: Adds quotes to connection labels with spaces.
+    - Direction declaration: Adds default "direction: right" if missing.
 
     Why pattern-based first?
-    - Fast: No network calls, instant results
-    - Deterministic: Same input always produces same output
-    - No cost: Doesn't consume AI tokens
-    - Reliable: Works even when LLM service is unavailable
+    - Fast: No network calls, instant results.
+    - Deterministic: Same input always produces same output.
+    - No cost: Doesn't consume AI tokens.
+    - Reliable: Works even when LLM service is unavailable.
 
     Args:
-        code: The D2 diagram code to validate and fix
+        code (str): The D2 diagram code to validate and fix.
 
     Returns:
-        D2SyntaxFixResult: Result containing validation status, corrected code, and messages
+        D2SyntaxFixResult: Result containing validation status, corrected code, and messages.
 
     Example:
         >>> result = fix_d2_syntax("x: Start\\ny: End\\nx -> y")
@@ -157,6 +165,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     if re.search(r'\s*-\s*>\s*', corrected_code):
         corrected_code = re.sub(r'\s*-\s*>\s*', ' -> ', corrected_code)
         corrections.append('Fixed arrow syntax (normalized spacing)')
+        logger.info("fix_d2_syntax: normalized arrow syntax")
 
     # ===== Fix 3: Ensure proper label syntax for connections =====
     # D2 connection labels with spaces MUST be quoted: A -> B: "my label"
@@ -202,13 +211,13 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
 
 def _validate_d2_structure(code: str) -> List[str]:
     """
-    Basic structural validation for D2 code
+    Basic structural validation for D2 code.
 
     Args:
-        code: The D2 code to validate
+        code (str): The D2 code to validate.
 
     Returns:
-        List of validation errors
+        List[str]: List of validation errors found.
     """
     logger.info("Starting _validate_d2_structure")
     errors: List[str] = []
@@ -245,31 +254,31 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
     to verify syntax. The D2 CLI is the authoritative source for what is valid.
 
     How it works:
-    1. Write code to temporary .d2 file
-    2. Run: d2 tempfile.d2 -t 1 (text layout engine for fast validation)
-    3. Capture stdout/stderr to get error messages
-    4. Clean up temp file
-    5. Return validation result
+    1. Write code to temporary .d2 file.
+    2. Run: d2 tempfile.d2 -t 1 (text layout engine for fast validation).
+    3. Capture stdout/stderr to get error messages.
+    4. Clean up temp file.
+    5. Return validation result.
 
     Why use CLI instead of parsing?
-    - D2 syntax is complex and evolving
-    - CLI provides authoritative validation
-    - Error messages from CLI are detailed and actionable
-    - Avoids maintaining our own D2 parser
+    - D2 syntax is complex and evolving.
+    - CLI provides authoritative validation.
+    - Error messages from CLI are detailed and actionable.
+    - Avoids maintaining our own D2 parser.
 
     Performance:
-    - Uses text layout engine (-t 1) for fastest validation
-    - Typical validation time: 100-300ms
-    - Timeout set to 10s to handle large diagrams
+    - Uses text layout engine (-t 1) for fastest validation.
+    - Typical validation time: 100-300ms.
+    - Timeout set to 10s to handle large diagrams.
 
     Args:
-        d2_code: The D2 code to validate
-        d2_executable: Path to the d2 executable (default: "d2")
+        d2_code (str): The D2 code to validate.
+        d2_executable (str): Path to the d2 executable (default: "d2").
 
     Returns:
         Tuple[bool, str]: (is_valid, message)
-            - is_valid: True if syntax is valid
-            - message: Error description or success message
+            - is_valid: True if syntax is valid.
+            - message: Error description or success message.
 
     Example:
         >>> is_valid, msg = validate_d2_with_cli("x -> y")
@@ -342,10 +351,10 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
     Check if the D2 CLI executable is available.
 
     Args:
-        d2_executable: Path to the d2 executable
+        d2_executable (str): Path to the d2 executable.
 
     Returns:
-        bool: True if available, False otherwise
+        bool: True if available, False otherwise.
     """
     logger.info("Checking D2 CLI availability")
     try:
@@ -372,12 +381,13 @@ def validate_d2_and_render(
     Validates D2 code and renders it if valid.
 
     Args:
-        d2_code: The D2 code to validate and render
-        output_format: Output format ('svg' or 'png')
-        d2_executable: Path to the d2 executable
+        d2_code (str): The D2 code to validate and render.
+        output_format (str): Output format ('svg' or 'png').
+        d2_executable (str): Path to the d2 executable.
 
     Returns:
-        Tuple[bool, str, Optional[str]]: (is_valid, message, rendered_output)
+        Tuple[bool, str, Optional[str]]: (is_valid, message, rendered_output).
+            rendered_output is the file content (string for SVG, base64 string for PNG).
     """
     logger.info("Starting validate_d2_and_render", extra={"format": output_format})
 
@@ -445,51 +455,67 @@ class D2V1Provider(BaseDiagramProvider):
     to turn text into diagrams.
 
     Architecture:
-    - Self-contained: All D2-specific code is in this file (no external dependencies)
-    - CLI-based: Uses subprocess calls to d2 executable for validation and rendering
-    - Three-tier correction: Pattern-based → LLM → User manual
-    - Caches CLI availability check for performance
+    - Self-contained: All D2-specific code is in this file (no external dependencies).
+    - CLI-based: Uses subprocess calls to d2 executable for validation and rendering.
+    - Three-tier correction: Pattern-based -> LLM -> User manual.
+    - Caches CLI availability check for performance.
 
     Supported Diagrams:
-    - Architecture diagrams (boxes and arrows)
-    - Network topology diagrams
-    - Database schemas (ER diagrams)
-    - Cloud infrastructure diagrams
-    - Sequence diagrams
-    - Any diagram that can be described as nodes and connections
+    - Architecture diagrams (boxes and arrows).
+    - Network topology diagrams.
+    - Database schemas (ER diagrams).
+    - Cloud infrastructure diagrams.
+    - Sequence diagrams.
+    - Any diagram that can be described as nodes and connections.
 
     Capabilities:
-    - VALIDATE: Check D2 syntax using CLI
-    - RENDER_SVG: Generate SVG output
-    - RENDER_PNG: Generate PNG output (slower, uses headless browser)
-    - AUTO_FIX: Pattern-based syntax correction
-    - LLM_CORRECTION: AI-powered diagram correction
+    - VALIDATE: Check D2 syntax using CLI.
+    - RENDER_SVG: Generate SVG output.
+    - RENDER_PNG: Generate PNG output (slower, uses headless browser).
+    - AUTO_FIX: Pattern-based syntax correction.
+    - LLM_CORRECTION: AI-powered diagram correction.
 
     Configuration:
-    - executable_path: Path to d2 binary (default: "d2" from PATH)
-    - layout_engine: Layout algorithm (default: "dagre")
-    - theme: Visual theme (default: "default")
-    - LLM retries: Max correction attempts (default: 8)
+    - executable_path: Path to d2 binary (default: "d2" from PATH).
+    - layout_engine: Layout algorithm (default: "dagre").
+    - theme: Visual theme (default: "default").
+    - LLM retries: Max correction attempts (default: 8).
 
-    Installation:
-    - Windows: scoop install d2
-    - macOS: brew install d2
-    - Linux: curl -fsSL https://d2lang.com/install.sh | sh -s --
+    Attributes:
+        provider_id (str): Unique identifier for this provider.
+        provider_name (str): Human-readable name for this provider.
+        diagram_type (str): Primary diagram type this provider handles.
+        d2_executable (str): Path to the d2 executable.
     """
 
     @property
     def provider_id(self) -> str:
-        """Unique identifier matching folder name: 'd2v1'"""
+        """
+        Unique identifier matching folder name.
+
+        Returns:
+            str: "d2v1"
+        """
         return "d2v1"
 
     @property
     def provider_name(self) -> str:
-        """Human-readable name shown in UI"""
+        """
+        Human-readable name shown in UI.
+
+        Returns:
+            str: "D2 CLI Renderer v1"
+        """
         return "D2 CLI Renderer v1"
 
     @property
     def diagram_type(self) -> str:
-        """Primary diagram type: 'd2'"""
+        """
+        Primary diagram type.
+
+        Returns:
+            str: "d2"
+        """
         return "d2"
 
     @property
@@ -497,9 +523,8 @@ class D2V1Provider(BaseDiagramProvider):
         """
         Output formats this provider can generate.
 
-        'd2': Returns raw D2 code (no rendering)
-        'svg': Scalable Vector Graphics (recommended, fast)
-        'png': Portable Network Graphics (slow, uses puppeteer)
+        Returns:
+            List[str]: ["d2", "svg", "png"]
         """
         return ["d2", "svg", "png"]
 
@@ -508,10 +533,8 @@ class D2V1Provider(BaseDiagramProvider):
         """
         List of provider capabilities.
 
-        This tells the system what this provider can do, which affects:
-        - API endpoint behavior (auto-fix enabled/disabled)
-        - Correction strategy selection
-        - UI feature availability
+        Returns:
+            List[ProviderCapability]: VALIDATE, RENDER_SVG, RENDER_PNG, AUTO_FIX, LLM_CORRECTION
         """
         return [
             ProviderCapability.VALIDATE,       # Can check syntax
@@ -527,20 +550,15 @@ class D2V1Provider(BaseDiagramProvider):
 
         This loads configuration, sets up logging, and determines the D2 executable path.
 
-        CRITICAL BUG FIX (line 309):
-        Previously: self.d2_executable = custom_settings.get("executable_path", "d2")
-        Problem: When config had "executable_path": null, get() returned None instead of "d2"
-        Fix: Use `or` operator to fall back to "d2" when value is null/empty
-        Now: self.d2_executable = custom_settings.get("executable_path") or "d2"
-
         Args:
-            provider_folder: Path to d2v1 folder containing config.json
+            provider_folder (Path): Path to d2v1 folder containing config.json.
         """
-        self.logger.info("Initializing D2V1Provider")
+        # CRITICAL FIX: Initialize superclass FIRST so self.logger is available
         super().__init__(provider_folder)
+        self.logger.info("Initializing D2V1Provider")
 
         # Get executable path from config or use default
-        # THIS IS THE CRITICAL FIX: or "d2" handles null values correctly
+        # Use `or` operator to fall back to "d2" when value is null/empty
         custom_settings = self.config.custom or {}
         self.d2_executable = custom_settings.get("executable_path") or "d2"
 
@@ -551,7 +569,12 @@ class D2V1Provider(BaseDiagramProvider):
         self.logger.info("Completed D2V1Provider initialization")
 
     def is_available(self) -> bool:
-        """Check if D2 CLI is available"""
+        """
+        Check if D2 CLI is available.
+
+        Returns:
+            bool: True if available, False otherwise.
+        """
         self.logger.info("Checking if D2V1Provider is available")
         if self._cli_available is None:
             self._cli_available = is_d2_cli_available(self.d2_executable)
@@ -565,7 +588,12 @@ class D2V1Provider(BaseDiagramProvider):
         return self._cli_available
 
     def get_version(self) -> Optional[str]:
-        """Get D2 CLI version"""
+        """
+        Get D2 CLI version.
+
+        Returns:
+            Optional[str]: Version string or "Unknown" / None.
+        """
         self.logger.info("Checking D2 CLI version")
         if not self.is_available():
             self.logger.info("Skipping version check - D2 CLI unavailable")
@@ -586,7 +614,16 @@ class D2V1Provider(BaseDiagramProvider):
             return "Unknown"
 
     def validate_code(self, code: str, **options) -> ValidationResult:
-        """Validate D2 code using CLI"""
+        """
+        Validate D2 code using CLI.
+
+        Args:
+            code (str): The diagram code to validate.
+            **options: Provider-specific options.
+
+        Returns:
+            ValidationResult: Result of validation.
+        """
         self.logger.info("Starting validate_code", extra={"length": len(code)})
         if not self.is_available():
             return ValidationResult(
@@ -621,7 +658,17 @@ class D2V1Provider(BaseDiagramProvider):
             self.logger.info("Completed validate_code")
 
     def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
-        """Attempt pattern-based auto-fix"""
+        """
+        Attempt pattern-based auto-fix.
+
+        Args:
+            code (str): The invalid diagram code.
+            error_message (str): The error message from validation.
+            **options: Provider-specific options.
+
+        Returns:
+            ValidationResult: Result of the auto-fix attempt.
+        """
         self.logger.info("Starting pattern-based auto-fix")
 
         # Strip icon attributes first to avoid 403 errors
@@ -660,7 +707,17 @@ class D2V1Provider(BaseDiagramProvider):
             self.logger.info("Completed pattern-based auto-fix")
 
     def render(self, code: str, output_format: str = "svg", **options) -> RenderResult:
-        """Render D2 diagram to specified format"""
+        """
+        Render D2 diagram to specified format.
+
+        Args:
+            code (str): The diagram code.
+            output_format (str): The desired output format (svg, png, d2).
+            **options: Provider-specific options.
+
+        Returns:
+            RenderResult: Result of the rendering process.
+        """
         self.logger.info("Starting render", extra={"length": len(code), "format": output_format})
         if not self.is_available():
             return RenderResult(
@@ -765,7 +822,12 @@ class D2V1Provider(BaseDiagramProvider):
             self.logger.info("Completed render")
 
     def get_llm_correction_rules(self) -> Optional[str]:
-        """Provide D2-specific rules for LLM correction"""
+        """
+        Provide D2-specific rules for LLM correction.
+
+        Returns:
+            str: D2 correction rules for LLM prompts.
+        """
         return """
 D2-SPECIFIC RULES:
 - Use proper connection syntax: A -> B or A -- B
@@ -775,5 +837,5 @@ D2-SPECIFIC RULES:
 - Use quotes for labels with spaces or special characters
 - Ensure all opening braces have corresponding closing braces
 - Use direction: right|down|left|up at the start if needed
-- Keep syntax simple and standard
+- Keep syntax simple and standard D2 format
 """.strip()

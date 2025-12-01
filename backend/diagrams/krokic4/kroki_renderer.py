@@ -27,51 +27,61 @@ class KrokiC4Provider(KrokiBaseProvider):
     - Fast response: Direct API calls without CLI overhead
     - Error handling: Parses Kroki error responses
 
-    Supported Diagrams:
-    - C4 System Context (C1) diagrams
-    - C4 Container (C2) diagrams
-    - C4 Component (C3) diagrams
-    - C4 Code (C4) diagrams
-
-    Capabilities:
-    - VALIDATE: Check C4 syntax via Kroki
-    - RENDER_SVG: Generate SVG output
-    - RENDER_PNG: Generate PNG output
-    - AUTO_FIX: Pattern-based syntax correction
-    - LLM_CORRECTION: AI-powered diagram correction
-
-    Configuration:
-    - server_url: Kroki server URL (default: http://localhost:8000)
-    - timeout_seconds: Request timeout (default: 30)
-    - diagram_endpoint: API endpoint for C4 (c4)
-
-    Installation:
-    - Requires local Kroki server running at configured URL
-    - No additional dependencies beyond requests library
+    Attributes:
+        provider_id (str): Unique identifier for this provider.
+        provider_name (str): Human-readable name for this provider.
+        diagram_type (str): Primary diagram type this provider handles.
+        diagram_endpoint (str): Specific Kroki API endpoint for C4 (uses PlantUML).
     """
 
     @property
     def provider_id(self) -> str:
-        """Unique identifier matching folder name: 'krokic4'"""
+        """
+        Unique identifier for this provider (same as folder name).
+
+        Returns:
+            str: "krokic4"
+        """
         return "krokic4"
 
     @property
     def provider_name(self) -> str:
-        """Human-readable name shown in UI"""
+        """
+        Human-readable name for this provider.
+
+        Returns:
+            str: "Kroki C4 Renderer"
+        """
         return "Kroki C4 Renderer"
 
     @property
     def diagram_type(self) -> str:
-        """Primary diagram type: 'c4'"""
+        """
+        Primary diagram type this provider handles.
+
+        Returns:
+            str: "c4"
+        """
         return "c4"
 
     @property
     def diagram_endpoint(self) -> str:
-        """Kroki API endpoint for C4 diagrams (uses PlantUML)"""
+        """
+        Kroki API endpoint for C4 diagrams (uses PlantUML).
+
+        Returns:
+            str: "plantuml"
+        """
         return "plantuml"
 
     def get_llm_correction_rules(self) -> Optional[str]:
-        """Provide C4-specific rules for LLM correction"""
+        """
+        Provide C4-specific rules for LLM correction.
+
+        Returns:
+            str: A string containing specific rules and hints for the LLM to generate valid C4/PlantUML syntax.
+        """
+        self.logger.info("Retrieving C4-specific LLM correction rules.")
         return """
 C4-SPECIFIC RULES:
 - Use C4 DSL syntax for system architecture diagrams
