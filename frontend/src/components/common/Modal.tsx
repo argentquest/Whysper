@@ -1,23 +1,23 @@
-import React from 'react';
-import { Modal as AntModal, Button } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined } from '@ant-design/icons'
+import { Button,Modal as AntModal } from 'antd'
+import React from 'react'
 
 // Define props structure for flexible modal component configuration
 interface ModalProps {
-  title: string | React.ReactNode;
-  open: boolean;
-  onCancel: () => void;
-  onOk?: () => void;
-  children: React.ReactNode;
-  width?: number | string;
-  footer?: React.ReactNode | null;
-  okText?: string;
-  cancelText?: string;
-  confirmLoading?: boolean;
-  destroyOnClose?: boolean;
-  maskClosable?: boolean;
-  centered?: boolean;
-  className?: string;
+  title: string | React.ReactNode
+  open: boolean
+  onCancel: () => void
+  onOk?: () => void
+  children: React.ReactNode
+  width?: number | string
+  footer?: React.ReactNode | null
+  okText?: string
+  cancelText?: string
+  confirmLoading?: boolean
+  destroyOnClose?: boolean
+  maskClosable?: boolean
+  centered?: boolean
+  className?: string
 }
 
 // Create a reusable modal component with default and customizable behaviors
@@ -39,22 +39,21 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   // Generate footer based on custom or default configuration
   // Allows for complete footer customization or automatic button generation
-  const defaultFooter = footer === null ? null : footer || (
-    <div className="flex justify-end gap-2">
-      // Render cancel button with configurable text
-      <Button onClick={onCancel}>{cancelText}</Button>
-      // Conditionally render OK button with optional loading state
-      {onOk && (
-        <Button 
-          type="primary" 
-          onClick={onOk}
-          loading={confirmLoading}
-        >
-          {okText}
-        </Button>
-      )}
-    </div>
-  );
+  const defaultFooter =
+    footer === null
+      ? null
+      : footer || (
+          <div className="flex justify-end gap-2">
+            // Render cancel button with configurable text
+            <Button onClick={onCancel}>{cancelText}</Button>
+            // Conditionally render OK button with optional loading state
+            {onOk && (
+              <Button type="primary" onClick={onOk} loading={confirmLoading}>
+                {okText}
+              </Button>
+            )}
+          </div>
+        )
 
   return (
     // Use Ant Design Modal with enhanced customization
@@ -64,12 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold">{title}</div>
           // Inline close button using CloseOutlined icon
-          <Button
-            type="text"
-            icon={<CloseOutlined />}
-            onClick={onCancel}
-            className="!p-1"
-          />
+          <Button type="text" icon={<CloseOutlined />} onClick={onCancel} className="!p-1" />
         </div>
       }
       open={open}
@@ -84,11 +78,9 @@ export const Modal: React.FC<ModalProps> = ({
       closable={false} // Manual close button management in custom title
     >
       // Wrap modal content with consistent padding
-      <div className="py-4">
-        {children}
-      </div>
+      <div className="py-4">{children}</div>
     </AntModal>
-  );
-};
+  )
+}
 
-export default Modal;
+export default Modal

@@ -1,23 +1,35 @@
 /**
  * SettingsModal Component
- * 
+ *
  * This module exports the SettingsModal component for the application.
  */
-import React, { useState, useEffect } from 'react';
-import { Form, Input, Select, Slider, Switch, Tabs, Typography, message, InputNumber, Button } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
-import { Modal } from '../common/Modal';
-import type { AppSettings } from '../../types';
-import { useTheme } from '../../themes';
-import ApiService from '../../services/api';
+import { ReloadOutlined } from '@ant-design/icons'
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Select,
+  Slider,
+  Switch,
+  Tabs,
+  Typography,
+} from 'antd'
+import React, { useEffect,useState } from 'react'
 
-const { Option } = Select;
-const { TextArea } = Input;
-const { Title, Text } = Typography;
+import ApiService from '../../services/api'
+import { useTheme } from '../../themes'
+import type { AppSettings } from '../../types'
+import { Modal } from '../common/Modal'
+
+const { Option } = Select
+const { TextArea } = Input
+const { Title, Text } = Typography
 
 /**
  * Props interface for the SettingsModal component
- * 
+ *
  * @interface SettingsModalProps
  * @property {boolean} open - Controls modal visibility state
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
@@ -25,27 +37,27 @@ const { Title, Text } = Typography;
  */
 /**
  * SettingsModalProps type definition
- * 
+ *
  * Describes the structure and properties of SettingsModalProps
  */
 interface SettingsModalProps {
-  open: boolean;
-  onCancel: () => void;
-  onSave: (settings: AppSettings) => void;
+  open: boolean
+  onCancel: () => void
+  onSave: (settings: AppSettings) => void
 }
 
 /**
  * SettingsModal Component
- * 
+ *
  * A comprehensive settings modal that provides configuration options for:
  * - AI Provider and API settings (OpenRouter, custom providers)
  * - Model parameters and selection
- * - UI theme and interface preferences  
+ * - UI theme and interface preferences
  * - File system and codebase scanning options
  * - System prompts and conversation settings
  * - Server configuration and networking
  * - Advanced performance and logging options
- * 
+ *
  * Features:
  * - Multi-tab interface organizing settings by category
  * - Form validation and error handling
@@ -53,87 +65,93 @@ interface SettingsModalProps {
  * - Real-time settings preview and application
  * - Server restart functionality
  * - Sensitive data handling (API keys, passwords)
- * 
+ *
  * @param {SettingsModalProps} props - Component props
  * @returns {JSX.Element} Rendered settings modal
  */
 /**
  * SettingsModal component
  */
-export const SettingsModal: React.FC<SettingsModalProps> = ({
-  open,
-  onCancel,
-  onSave,
-}) => {
-  const [form] = Form.useForm();
-  const [saving, setSaving] = useState(false);
-  const [restarting, setRestarting] = useState(false);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [availableProviders, setAvailableProviders] = useState<string[]>([]);
-  const { theme, setTheme } = useTheme();
-  const providersListValue = Form.useWatch('providersList', form);
-  const modelsListValue = Form.useWatch('modelsList', form);
+export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onCancel, onSave }) => {
+  const [form] = Form.useForm()
+  const [saving, setSaving] = useState(false)
+  const [restarting, setRestarting] = useState(false)
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [availableProviders, setAvailableProviders] = useState<string[]>([])
+  const { theme, setTheme } = useTheme()
+  const providersListValue = Form.useWatch('providersList', form)
+  const modelsListValue = Form.useWatch('modelsList', form)
 
   /**
    * Updates available providers list when providersList field changes
    * Parses comma-separated provider string and filters out empty values
-   * 
+   *
    * @param {string | undefined} providersListValue - Comma-separated provider list from form
    */
   useEffect(() => {
     if (providersListValue !== undefined) {
       const providers = providersListValue
-        ? providersListValue.split(',').map((provider: string) => provider.trim()).filter(Boolean)
-        : [];
-      setAvailableProviders(providers);
+        ? providersListValue
+            .split(',')
+            .map((provider: string) => provider.trim())
+            .filter(Boolean)
+        : []
+      setAvailableProviders(providers)
     }
-  }, [providersListValue]);
+  }, [providersListValue])
 
   /**
    * Updates available models list when modelsList field changes
    * Parses comma-separated model string and filters out empty values
-   * 
+   *
    * @param {string | undefined} modelsListValue - Comma-separated model list from form
    */
   useEffect(() => {
     if (modelsListValue !== undefined) {
       const models = modelsListValue
-        ? modelsListValue.split(',').map((model: string) => model.trim()).filter(Boolean)
-        : [];
-      setAvailableModels(models);
+        ? modelsListValue
+            .split(',')
+            .map((model: string) => model.trim())
+            .filter(Boolean)
+        : []
+      setAvailableModels(models)
     }
-  }, [modelsListValue]);
+  }, [modelsListValue])
 
   // Dynamic provider options combining available providers with current selection
-  const providerValue = form.getFieldValue('provider') || 'openrouter';
-  const providerOptions = availableProviders.length > 0
-    ? Array.from(new Set([...availableProviders, providerValue]))
-    : ['openrouter', 'custom'];
+  const providerValue = form.getFieldValue('provider') || 'openrouter'
+  const providerOptions =
+    availableProviders.length > 0
+      ? Array.from(new Set([...availableProviders, providerValue]))
+      : ['openrouter', 'custom']
 
   // Dynamic model options combining available models with current selection
-  const defaultModelValue = form.getFieldValue('defaultModel') || '';
-  const modelOptions = availableModels.length > 0
-    ? Array.from(new Set([...availableModels, defaultModelValue].filter(Boolean)))
-    : (defaultModelValue ? [defaultModelValue] : []);
+  const defaultModelValue = form.getFieldValue('defaultModel') || ''
+  const modelOptions =
+    availableModels.length > 0
+      ? Array.from(new Set([...availableModels, defaultModelValue].filter(Boolean)))
+      : defaultModelValue
+        ? [defaultModelValue]
+        : []
 
   /**
    * Loads current settings from backend API
    * Fetches environment settings and maps them to form structure
    * Handles sensitive data separation (API keys, passwords)
    * Updates available models and providers lists
-   * 
+   *
    * @async
    * @returns {Promise<void>}
    */
   const loadSettings = React.useCallback(async () => {
     try {
-      const response = await ApiService.getSettings();
+      const response = await ApiService.getSettings()
       if (response.success && response.data) {
-        const settings = response.data;
+        const settings = response.data
 
         // Get sensitive values for form (handled separately for security)
-        const apiKeyValue = settings.values?.API_KEY || '';
-        const tokenPasswordValue = settings.values?.TOKEN_PASSWORD || '';
+        const apiKeyValue = settings.values?.API_KEY || ''
+        const tokenPasswordValue = settings.values?.TOKEN_PASSWORD || ''
 
         // Map backend settings to form structure
         const formValues = {
@@ -194,7 +212,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           openrouterTitle: settings.values?.OPENROUTER_TITLE || '',
           openrouterTemperature: parseFloat(settings.values?.OPENROUTER_TEMPERATURE || '0.1'),
           customProviderApiUrl: settings.values?.CUSTOM_PROVIDER_API_URL || '',
-          customProviderRequestTimeout: parseInt(settings.values?.CUSTOM_PROVIDER_REQUEST_TIMEOUT || '30'),
+          customProviderRequestTimeout: parseInt(
+            settings.values?.CUSTOM_PROVIDER_REQUEST_TIMEOUT || '30'
+          ),
 
           // Server Configuration
           apiPort: parseInt(settings.values?.API_PORT || '8000'),
@@ -207,74 +227,78 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           lastExcludePatterns: settings.values?.LAST_EXCLUDE_PATTERNS || '',
           lastOutputFormat: settings.values?.LAST_OUTPUT_FORMAT || 'markdown',
           dirSave: settings.values?.DIR_SAVE || 'results',
-        };
+        }
 
-        form.setFieldsValue(formValues);
+        form.setFieldsValue(formValues)
 
         // Extract models and providers from backend settings
         if (settings.values?.MODELS) {
-          const models = settings.values.MODELS.split(',').map((m: string) => m.trim()).filter(Boolean);
-          setAvailableModels(models);
+          const models = settings.values.MODELS.split(',')
+            .map((m: string) => m.trim())
+            .filter(Boolean)
+          setAvailableModels(models)
         } else {
-          setAvailableModels([]);
+          setAvailableModels([])
         }
 
         if (settings.values?.PROVIDERS) {
-          const providers = settings.values.PROVIDERS.split(',').map((p: string) => p.trim()).filter(Boolean);
-          setAvailableProviders(providers);
+          const providers = settings.values.PROVIDERS.split(',')
+            .map((p: string) => p.trim())
+            .filter(Boolean)
+          setAvailableProviders(providers)
         } else {
-          setAvailableProviders([]);
+          setAvailableProviders([])
         }
       } else {
-        message.error(response.error || 'Failed to load settings');
+        message.error(response.error || 'Failed to load settings')
       }
     } catch (error) {
-      message.error('Error loading settings');
-      console.error('Error loading settings:', error);
+      message.error('Error loading settings')
+      console.error('Error loading settings:', error)
     }
-  }, [form, theme]);
+  }, [form, theme])
 
   /**
    * Effect to load settings when modal opens
    */
   useEffect(() => {
     if (open) {
-      loadSettings();
+      loadSettings()
     }
-  }, [open, loadSettings]);
+  }, [open, loadSettings])
 
   /**
    * Handles form submission and settings persistence
    * Validates form, normalizes provider/model lists, maps form values to backend format
    * Updates API client timeout settings and triggers save callback
-   * 
+   *
    * @async
    * @returns {Promise<void>}
    */
   const handleSave = async () => {
     try {
-      setSaving(true);
-      const values = await form.validateFields();
+      setSaving(true)
+      const values = await form.validateFields()
 
       // Normalize providers list - remove duplicates and empty values
       const normalizedProviders = (values.providersList || '')
         .split(',')
         .map((provider: string) => provider.trim())
         .filter(Boolean)
-        .join(',');
+        .join(',')
 
       // Normalize models list and ensure default model is included
       const models = (values.modelsList || '')
         .split(',')
         .map((model: string) => model.trim())
-        .filter(Boolean);
+        .filter(Boolean)
 
       if (values.defaultModel && !models.includes(values.defaultModel)) {
-        models.push(values.defaultModel);
+        models.push(values.defaultModel)
       }
 
-      const normalizedModels = models.join(',');
-      values.modelsList = normalizedModels;
+      const normalizedModels = models.join(',')
+      values.modelsList = normalizedModels
 
       // Map form values back to backend environment variable format
       const backendSettings = {
@@ -341,74 +365,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         LAST_EXCLUDE_PATTERNS: values.lastExcludePatterns || '',
         LAST_OUTPUT_FORMAT: values.lastOutputFormat || 'markdown',
         DIR_SAVE: values.dirSave || 'results',
-      };
+      }
 
-      const response = await ApiService.updateEnvSettings(backendSettings);
+      const response = await ApiService.updateEnvSettings(backendSettings)
 
       if (response.success) {
         // Apply the new timeout immediately to the API client
         if (values.frontendTimeout) {
-          ApiService.setRequestTimeout(values.frontendTimeout);
+          ApiService.setRequestTimeout(values.frontendTimeout)
         }
 
-        onSave(values);
-        message.success('Settings saved successfully');
-        onCancel();
+        onSave(values)
+        message.success('Settings saved successfully')
+        onCancel()
       } else {
-        message.error(response.error || 'Failed to save settings');
+        message.error(response.error || 'Failed to save settings')
       }
     } catch (error: unknown) {
-      console.error('Error saving settings:', error);
+      console.error('Error saving settings:', error)
       if (error && typeof error === 'object' && 'errorFields' in error) {
-        message.error('Please correct the validation errors');
+        message.error('Please correct the validation errors')
       } else {
-        message.error('Error saving settings');
+        message.error('Error saving settings')
       }
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   /**
    * Handles theme change and updates both form values and global theme
-   * 
+   *
    * @param {'light' | 'dark'} newTheme - New theme selection
    */
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
-    form.setFieldValue('theme', newTheme);
-    form.setFieldValue('uiTheme', newTheme);
-  };
+    setTheme(newTheme)
+    form.setFieldValue('theme', newTheme)
+    form.setFieldValue('uiTheme', newTheme)
+  }
 
   /**
    * Handles server restart functionality
    * Calls backend API to restart server and reloads page after delay
-   * 
+   *
    * @async
    * @returns {Promise<void>}
    */
   const handleRestartServer = async () => {
     try {
-      setRestarting(true);
-      const response = await ApiService.restartServer();
+      setRestarting(true)
+      const response = await ApiService.restartServer()
 
       if (response.success) {
-        message.success('Server is restarting... The page will reload in 3 seconds.');
+        message.success('Server is restarting... The page will reload in 3 seconds.')
 
         // Wait for server to restart, then reload the page
         setTimeout(() => {
-          window.location.reload();
-        }, 3000);
+          window.location.reload()
+        }, 3000)
       } else {
-        message.error(response.error || 'Failed to restart server');
-        setRestarting(false);
+        message.error(response.error || 'Failed to restart server')
+        setRestarting(false)
       }
     } catch (error) {
-      console.error('Error restarting server:', error);
-      message.error('Error restarting server');
-      setRestarting(false);
+      console.error('Error restarting server:', error)
+      message.error('Error restarting server')
+      setRestarting(false)
     }
-  };
+  }
 
   return (
     <Modal
@@ -433,12 +457,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <Button key="cancel" onClick={onCancel}>
           Cancel
         </Button>,
-        <Button
-          key="save"
-          type="primary"
-          onClick={handleSave}
-          loading={saving}
-        >
+        <Button key="save" type="primary" onClick={handleSave} loading={saving}>
           Save Settings
         </Button>,
       ]}
@@ -493,8 +512,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     tooltip="AI service provider (openrouter, custom, etc.)"
                   >
                     <Select>
-                      {providerOptions.map(provider => (
-                        <Option key={provider} value={provider}>{provider}</Option>
+                      {providerOptions.map((provider) => (
+                        <Option key={provider} value={provider}>
+                          {provider}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>
@@ -532,78 +553,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Input placeholder="https://api.openrouter.ai/v1/token" />
                   </Form.Item>
 
+                  <Title level={5}>OpenRouter Settings</Title>
 
+                  <Form.Item
+                    label="OpenRouter API URL"
+                    name="openrouterApiUrl"
+                    tooltip="API endpoint for OpenRouter requests"
+                  >
+                    <Input placeholder="https://openrouter.ai/api/v1/chat/completions" />
+                  </Form.Item>
 
-                <Title level={5}>OpenRouter Settings</Title>
+                  <Form.Item
+                    label="HTTP Referer"
+                    name="openrouterHttpReferer"
+                    tooltip="Referer header required by OpenRouter"
+                  >
+                    <Input placeholder="https://github.com/yourusername/code-chat-ai" />
+                  </Form.Item>
 
-                <Form.Item
-                  label="OpenRouter API URL"
-                  name="openrouterApiUrl"
-                  tooltip="API endpoint for OpenRouter requests"
-                >
-                  <Input placeholder="https://openrouter.ai/api/v1/chat/completions" />
-                </Form.Item>
+                  <Form.Item
+                    label="Request Title"
+                    name="openrouterTitle"
+                    tooltip="X-Title header describing your integration"
+                  >
+                    <Input placeholder="Code Chat with AI" />
+                  </Form.Item>
 
-                <Form.Item
-                  label="HTTP Referer"
-                  name="openrouterHttpReferer"
-                  tooltip="Referer header required by OpenRouter"
-                >
-                  <Input placeholder="https://github.com/yourusername/code-chat-ai" />
-                </Form.Item>
+                  <Form.Item
+                    label={`OpenRouter Temperature: ${form.getFieldValue('openrouterTemperature')?.toFixed(1) ?? '0.1'}`}
+                    name="openrouterTemperature"
+                    tooltip="Default temperature for OpenRouter requests"
+                  >
+                    <Slider
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      marks={{
+                        0: '0',
+                        0.5: '0.5',
+                        1: '1',
+                        2: '2',
+                      }}
+                    />
+                  </Form.Item>
 
-                <Form.Item
-                  label="Request Title"
-                  name="openrouterTitle"
-                  tooltip="X-Title header describing your integration"
-                >
-                  <Input placeholder="Code Chat with AI" />
-                </Form.Item>
+                  <Title level={5}>Custom Provider Settings</Title>
 
-                <Form.Item
-                  label={`OpenRouter Temperature: ${form.getFieldValue('openrouterTemperature')?.toFixed(1) ?? '0.1'}`}
-                  name="openrouterTemperature"
-                  tooltip="Default temperature for OpenRouter requests"
-                >
-                  <Slider
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    marks={{
-                      0: '0',
-                      0.5: '0.5',
-                      1: '1',
-                      2: '2',
-                    }}
-                  />
-                </Form.Item>
+                  <Form.Item
+                    label="Custom Provider API URL"
+                    name="customProviderApiUrl"
+                    tooltip="API endpoint for the custom provider"
+                  >
+                    <Input placeholder="https://your-api.com/v1/chat" />
+                  </Form.Item>
 
-                <Title level={5}>Custom Provider Settings</Title>
+                  <Form.Item
+                    label="Custom Provider Timeout (seconds)"
+                    name="customProviderRequestTimeout"
+                    tooltip="Request timeout for custom provider calls"
+                  >
+                    <InputNumber min={1} max={600} className="w-full" />
+                  </Form.Item>
 
-                <Form.Item
-                  label="Custom Provider API URL"
-                  name="customProviderApiUrl"
-                  tooltip="API endpoint for the custom provider"
-                >
-                  <Input placeholder="https://your-api.com/v1/chat" />
-                </Form.Item>
-
-                <Form.Item
-                  label="Custom Provider Timeout (seconds)"
-                  name="customProviderRequestTimeout"
-                  tooltip="Request timeout for custom provider calls"
-                >
-                  <InputNumber min={1} max={600} className="w-full" />
-                </Form.Item>
-
-                <Form.Item
-                  label="Validate SSL"
-                  name="validateSsl"
-                  tooltip="Enable SSL certificate validation"
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
+                  <Form.Item
+                    label="Validate SSL"
+                    name="validateSsl"
+                    tooltip="Enable SSL certificate validation"
+                    valuePropName="checked"
+                  >
+                    <Switch />
+                  </Form.Item>
                 </div>
               ),
             },
@@ -630,10 +649,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   >
                     <Select showSearch placeholder="Select a model">
                       {modelOptions.length === 0 && (
-                        <Option value="" disabled>No models configured</Option>
+                        <Option value="" disabled>
+                          No models configured
+                        </Option>
                       )}
-                      {modelOptions.map(model => (
-                        <Option key={model} value={model}>{model}</Option>
+                      {modelOptions.map((model) => (
+                        <Option key={model} value={model}>
+                          {model}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>
@@ -675,8 +698,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       }}
                     />
                   </Form.Item>
-
-
                 </div>
               ),
             },
@@ -698,11 +719,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </Select>
                   </Form.Item>
 
-                  <Form.Item
-                    label="Language"
-                    name="language"
-                    tooltip="Interface language"
-                  >
+                  <Form.Item label="Language" name="language" tooltip="Interface language">
                     <Select>
                       <Option value="en">English</Option>
                       <Option value="es">Spanish</Option>
@@ -779,10 +796,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     name="supportedExtensions"
                     tooltip="Comma-separated list of file extensions to process"
                   >
-                    <TextArea
-                      rows={3}
-                      placeholder=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs"
-                    />
+                    <TextArea rows={3} placeholder=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.cs" />
                   </Form.Item>
 
                   <Form.Item
@@ -796,8 +810,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       step={1048576}
                       className="w-full"
                       formatter={(value) => {
-                        const mb = (value || 0) / 1048576;
-                        return `${mb.toFixed(1)} MB`;
+                        const mb = (value || 0) / 1048576
+                        return `${mb.toFixed(1)} MB`
                       }}
                     />
                   </Form.Item>
@@ -832,10 +846,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     name="systemPrompt"
                     tooltip="Override system prompt with custom text"
                   >
-                    <TextArea
-                      rows={6}
-                      placeholder="Enter custom system prompt here..."
-                    />
+                    <TextArea rows={6} placeholder="Enter custom system prompt here..." />
                   </Form.Item>
 
                   <Text type="secondary" className="text-xs">
@@ -973,11 +984,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                   <Title level={5}>Logging</Title>
 
-                  <Form.Item
-                    label="Log Level"
-                    name="logLevel"
-                    tooltip="Logging verbosity level"
-                  >
+                  <Form.Item label="Log Level" name="logLevel" tooltip="Logging verbosity level">
                     <Select>
                       <Option value="DEBUG">Debug</Option>
                       <Option value="INFO">Info</Option>
@@ -987,11 +994,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </Select>
                   </Form.Item>
 
-                  <Form.Item
-                    label="Log Directory"
-                    name="logDir"
-                    tooltip="Directory for log files"
-                  >
+                  <Form.Item label="Log Directory" name="logDir" tooltip="Directory for log files">
                     <Input placeholder="logs" />
                   </Form.Item>
 
@@ -1010,7 +1013,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         />
       </Form>
     </Modal>
-  );
-};
+  )
+}
 
-export default SettingsModal;
+export default SettingsModal

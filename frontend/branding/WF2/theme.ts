@@ -5,17 +5,18 @@
  */
 
 import type { ThemeConfig } from 'antd';
-import { WFColors } from './colors';
-import wfSansRegularWoff2 from './assets/fonts/wellsfargosans-rg.woff2';
-import wfSansRegularWoff from './assets/fonts/wellsfargosans-rg.woff';
-import wfSansLightWoff2 from './assets/fonts/wellsfargosans-lt.woff2';
-import wfSansLightWoff from './assets/fonts/wellsfargosans-lt.woff';
-import wfSansSemiBoldWoff2 from './assets/fonts/wellsfargosans-sbd.woff2';
-import wfSansSemiBoldWoff from './assets/fonts/wellsfargosans-sbd.woff';
-import wfSansBoldWoff2 from './assets/fonts/wellsfargosans-bd.woff2';
+
 import wfSansBoldWoff from './assets/fonts/wellsfargosans-bd.woff';
-import wfSourceSansItalicWoff2 from './assets/fonts/wellsfargosourcesans-it.woff2';
+import wfSansBoldWoff2 from './assets/fonts/wellsfargosans-bd.woff2';
+import wfSansLightWoff from './assets/fonts/wellsfargosans-lt.woff';
+import wfSansLightWoff2 from './assets/fonts/wellsfargosans-lt.woff2';
+import wfSansRegularWoff from './assets/fonts/wellsfargosans-rg.woff';
+import wfSansRegularWoff2 from './assets/fonts/wellsfargosans-rg.woff2';
+import wfSansSemiBoldWoff from './assets/fonts/wellsfargosans-sbd.woff';
+import wfSansSemiBoldWoff2 from './assets/fonts/wellsfargosans-sbd.woff2';
 import wfSourceSansItalicWoff from './assets/fonts/wellsfargosourcesans-it.woff';
+import wfSourceSansItalicWoff2 from './assets/fonts/wellsfargosourcesans-it.woff2';
+import { WFColors } from './colors';
 
 type BrandTokenOverrides = NonNullable<ThemeConfig['token']> & Record<string, string | number>;
 

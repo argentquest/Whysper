@@ -1,32 +1,30 @@
 /**
  * NewFileModal Component
- * 
+ *
  * This module exports the NewFileModal component for the application.
  */
-import React, { useState } from 'react';
-import { Input, Button, Select, message, Form } from 'antd';
-import {
-  FileOutlined,
-  FolderOutlined,
-} from '@ant-design/icons';
-import { Modal } from '../common/Modal';
+import { FileOutlined, FolderOutlined } from '@ant-design/icons'
+import { Button, Form,Input, message, Select } from 'antd'
+import React, { useState } from 'react'
 
-const { Option } = Select;
+import { Modal } from '../common/Modal'
+
+const { Option } = Select
 
 /**
  * NewFileModalProps type definition
- * 
+ *
  * Describes the structure and properties of NewFileModalProps
  */
 interface NewFileModalProps {
-  open: boolean;
-  onCancel: () => void;
-  onCreateFile: (filePath: string, initialContent?: string) => void;
+  open: boolean
+  onCancel: () => void
+  onCreateFile: (filePath: string, initialContent?: string) => void
 }
 
 // Common file templates
 const FILE_TEMPLATES = {
-  'javascript': {
+  javascript: {
     extension: '.js',
     content: `// New JavaScript file
 console.log('Hello, World!');
@@ -36,7 +34,7 @@ function exampleFunction() {
 }
 `,
   },
-  'typescript': {
+  typescript: {
     extension: '.ts',
     content: `// New TypeScript file
 /**
@@ -55,7 +53,7 @@ function exampleFunction(): ExampleInterface {
 console.log('Hello, World!');
 `,
   },
-  'python': {
+  python: {
     extension: '.py',
     content: `#!/usr/bin/env python3
 """
@@ -71,7 +69,7 @@ if __name__ == "__main__":
     print(example_function())
 `,
   },
-  'react': {
+  react: {
     extension: '.tsx',
     content: `import React from 'react';
 
@@ -99,7 +97,7 @@ export const NewComponent: React.FC<Props> = () => {
 export default NewComponent;
 `,
   },
-  'html': {
+  html: {
     extension: '.html',
     content: `<!DOCTYPE html>
 <html lang="en">
@@ -115,7 +113,7 @@ export default NewComponent;
 </html>
 `,
   },
-  'css': {
+  css: {
     extension: '.css',
     content: `/* New CSS file */
 
@@ -136,7 +134,7 @@ body {
 }
 `,
   },
-  'json': {
+  json: {
     extension: '.json',
     content: `{
     "name": "new-file",
@@ -152,7 +150,7 @@ body {
 }
 `,
   },
-  'markdown': {
+  markdown: {
     extension: '.md',
     content: `# New Markdown File
 
@@ -177,105 +175,100 @@ function hello() {
 [Example Link](https://example.com)
 `,
   },
-  'plain': {
+  plain: {
     extension: '.txt',
     content: `This is a new text file.
 
 You can add any content here.
 `,
   },
-};
+}
 
 /**
  * NewFileModal component
  */
-export const NewFileModal: React.FC<NewFileModalProps> = ({
-  open,
-  onCancel,
-  onCreateFile,
-}) => {
-  const [form] = Form.useForm();
-  const [fileName, setFileName] = useState('');
-  const [fileTemplate, setFileTemplate] = useState<string>('plain');
-  const [customPath, setCustomPath] = useState('');
-  const [loading, setLoading] = useState(false);
+export const NewFileModal: React.FC<NewFileModalProps> = ({ open, onCancel, onCreateFile }) => {
+  const [form] = Form.useForm()
+  const [fileName, setFileName] = useState('')
+  const [fileTemplate, setFileTemplate] = useState<string>('plain')
+  const [customPath, setCustomPath] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleCreate = async () => {
     try {
-      await form.validateFields();
-      
+      await form.validateFields()
+
       if (!fileName.trim()) {
-        message.error('Please enter a file name');
-        return;
+        message.error('Please enter a file name')
+        return
       }
 
-      setLoading(true);
+      setLoading(true)
 
       // Build the file path
-      let filePath = '';
+      let filePath = ''
       if (customPath.trim()) {
         // Normalize path separators
-        const normalizedPath = customPath.trim().replace(/\\/g, '/');
-        filePath = normalizedPath.endsWith('/') ? normalizedPath : normalizedPath + '/';
+        const normalizedPath = customPath.trim().replace(/\\/g, '/')
+        filePath = normalizedPath.endsWith('/') ? normalizedPath : normalizedPath + '/'
       }
 
       // Add filename with appropriate extension
-      const template = FILE_TEMPLATES[fileTemplate as keyof typeof FILE_TEMPLATES];
-      const baseFileName = fileName.trim();
-      
+      const template = FILE_TEMPLATES[fileTemplate as keyof typeof FILE_TEMPLATES]
+      const baseFileName = fileName.trim()
+
       // Add extension if not already present
       if (!baseFileName.includes('.') && template) {
-        filePath += baseFileName + template.extension;
+        filePath += baseFileName + template.extension
       } else {
-        filePath += baseFileName;
+        filePath += baseFileName
       }
 
       // Get initial content
-      const initialContent = template?.content || '';
+      const initialContent = template?.content || ''
 
       // Create the file
-      onCreateFile(filePath, initialContent);
-      
+      onCreateFile(filePath, initialContent)
+
       // Reset form
-      form.resetFields();
-      setFileName('');
-      setCustomPath('');
-      setFileTemplate('plain');
-      
-      onCancel();
-      
+      form.resetFields()
+      setFileName('')
+      setCustomPath('')
+      setFileTemplate('plain')
+
+      onCancel()
     } catch (error) {
-      console.error('Error creating file:', error);
+      console.error('Error creating file:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const getPreviewPath = () => {
-    if (!fileName.trim()) return '';
-    
-    let path = customPath.trim() ? customPath.trim().replace(/\\/g, '/') : '';
-    if (path && !path.endsWith('/')) path += '/';
-    
-    const template = FILE_TEMPLATES[fileTemplate as keyof typeof FILE_TEMPLATES];
-    const baseFileName = fileName.trim();
-    
+    if (!fileName.trim()) return ''
+
+    let path = customPath.trim() ? customPath.trim().replace(/\\/g, '/') : ''
+    if (path && !path.endsWith('/')) path += '/'
+
+    const template = FILE_TEMPLATES[fileTemplate as keyof typeof FILE_TEMPLATES]
+    const baseFileName = fileName.trim()
+
     if (!baseFileName.includes('.') && template) {
-      return path + baseFileName + template.extension;
+      return path + baseFileName + template.extension
     }
-    return path + baseFileName;
-  };
+    return path + baseFileName
+  }
 
   return (
     <Modal
       title="Create New File"
       open={open}
       onCancel={() => {
-        form.resetFields();
-        setFileName('');
-        setCustomPath('');
-        setFileTemplate('plain');
-        onCancel();
+        form.resetFields()
+        setFileName('')
+        setCustomPath('')
+        setFileTemplate('plain')
+        onCancel()
       }}
       footer={[
         <Button key="cancel" onClick={onCancel}>
@@ -300,15 +293,8 @@ export const NewFileModal: React.FC<NewFileModalProps> = ({
           template: 'plain',
         }}
       >
-        <Form.Item
-          label="File Template"
-          name="template"
-        >
-          <Select
-            value={fileTemplate}
-            onChange={setFileTemplate}
-            size="large"
-          >
+        <Form.Item label="File Template" name="template">
+          <Select value={fileTemplate} onChange={setFileTemplate} size="large">
             <Option value="plain">Plain Text (.txt)</Option>
             <Option value="javascript">JavaScript (.js)</Option>
             <Option value="typescript">TypeScript (.ts)</Option>
@@ -321,10 +307,7 @@ export const NewFileModal: React.FC<NewFileModalProps> = ({
           </Select>
         </Form.Item>
 
-        <Form.Item
-          label="Directory Path (optional)"
-          name="directory"
-        >
+        <Form.Item label="Directory Path (optional)" name="directory">
           <Input
             prefix={<FolderOutlined />}
             placeholder="e.g., src/components or leave empty for root"
@@ -339,9 +322,9 @@ export const NewFileModal: React.FC<NewFileModalProps> = ({
           name="filename"
           rules={[
             { required: true, message: 'Please enter a file name' },
-            { 
-              pattern: /^[^<>:"/\\|?*]+$/, 
-              message: 'File name contains invalid characters' 
+            {
+              pattern: /^[^<>:"/\\|?*]+$/,
+              message: 'File name contains invalid characters',
             },
           ]}
         >
@@ -357,8 +340,8 @@ export const NewFileModal: React.FC<NewFileModalProps> = ({
 
         {/* Preview */}
         {getPreviewPath() && (
-          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div className="mb-4 rounded-lg border bg-gray-50 p-3 dark:bg-gray-700">
+            <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">
               File will be created at:
             </div>
             <div className="font-mono text-sm text-blue-600 dark:text-blue-400">
@@ -369,13 +352,14 @@ export const NewFileModal: React.FC<NewFileModalProps> = ({
 
         {/* Template Preview */}
         {fileTemplate !== 'plain' && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-            <strong>Template includes:</strong> Basic file structure with example code for {fileTemplate}
+          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            <strong>Template includes:</strong> Basic file structure with example code for{' '}
+            {fileTemplate}
           </div>
         )}
       </Form>
     </Modal>
-  );
-};
+  )
+}
 
-export default NewFileModal;
+export default NewFileModal

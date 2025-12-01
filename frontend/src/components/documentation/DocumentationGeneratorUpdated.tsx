@@ -1,56 +1,69 @@
 /**
  * Updated Documentation Generator component for the active brand.
- * 
+ *
  * This component provides a user interface for generating documentation
  * from selected code files with various options and formats, including export.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Button, Select, Switch, Card, Space, Typography, Divider, Alert, Spin, Tabs, Radio } from 'antd';
-import { FileTextOutlined, SettingOutlined, ExportOutlined } from '@ant-design/icons';
-import ApiService from '../../services/api';
-import { Brand } from 'branding';
+import { ExportOutlined,FileTextOutlined, SettingOutlined } from '@ant-design/icons'
+import {
+  Alert,
+  Button,
+  Card,
+  Divider,
+  Radio,
+  Select,
+  Space,
+  Spin,
+  Switch,
+  Tabs,
+  Typography,
+} from 'antd'
+import { Brand } from 'branding'
+import React, { useEffect,useState } from 'react'
 
-const { Title, Text } = Typography;
-const { Option } = Select;
-const { TabPane } = Tabs;
+import ApiService from '../../services/api'
+
+const { Title, Text } = Typography
+const { Option } = Select
+const { TabPane } = Tabs
 
 /**
  * DocumentationGeneratorProps type definition
- * 
+ *
  * Describes the structure and properties of DocumentationGeneratorProps
  */
 interface DocumentationGeneratorProps {
-  selectedFiles: string[];
-  onDocumentationGenerated?: (content: string) => void;
+  selectedFiles: string[]
+  onDocumentationGenerated?: (content: string) => void
 }
 
 /**
  * DocumentationRequest type definition
- * 
+ *
  * Describes the structure and properties of DocumentationRequest
  */
 interface DocumentationRequest {
-  file_paths: string[];
-  documentation_type: string;
-  output_format: string;
-  template?: string;
-  include_examples: boolean;
-  include_diagrams: boolean;
-  target_audience: string;
-  language?: string;
+  file_paths: string[]
+  documentation_type: string
+  output_format: string
+  template?: string
+  include_examples: boolean
+  include_diagrams: boolean
+  target_audience: string
+  language?: string
 }
 
 /**
  * ExportFormatOption type definition
- * 
+ *
  * Describes the structure and properties of ExportFormatOption
  */
 interface ExportFormatOption {
-  value: string;
-  label: string;
-  description: string;
-  options?: Record<string, any>;
+  value: string
+  label: string
+  description: string
+  options?: Record<string, any>
 }
 
 /**
@@ -58,171 +71,165 @@ interface ExportFormatOption {
  */
 const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
   selectedFiles,
-  onDocumentationGenerated
+  onDocumentationGenerated,
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [documentation, setDocumentation] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [templates, setTemplates] = useState<Array<Record<string, any>>>([]);
-  const [exportFormats, setExportFormats] = useState<ExportFormatOption[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('generate');
-  const brandTagline = Brand.tagline || Brand.name || 'AI Assistant';
+  const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [documentation, setDocumentation] = useState<string>('')
+  const [error, setError] = useState<string>('')
+  const [templates, setTemplates] = useState<Array<Record<string, any>>>([])
+  const [exportFormats, setExportFormats] = useState<ExportFormatOption[]>([])
+  const [activeTab, setActiveTab] = useState<string>('generate')
+  const brandTagline = Brand.tagline || Brand.name || 'AI Assistant'
   const [request, setRequest] = useState<DocumentationRequest>({
     file_paths: selectedFiles,
     documentation_type: 'api',
     output_format: 'markdown',
     include_examples: true,
     include_diagrams: true,
-    target_audience: 'developers'
-  });
+    target_audience: 'developers',
+  })
   const [exportOptions, setExportOptions] = useState<Record<string, any>>({
     format: 'html',
     template: 'default',
     title: 'Documentation',
-    author: brandTagline
-  });
+    author: brandTagline,
+  })
 
   // Load available templates
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const response = await ApiService.get('/api/v1/documentation/templates');
-        setTemplates(response.data.templates || []);
+        const response = await ApiService.get('/api/v1/documentation/templates')
+        setTemplates(response.data.templates || [])
       } catch (err) {
-        console.error('Failed to load templates:', err);
+        console.error('Failed to load templates:', err)
       }
-    };
+    }
 
-    loadTemplates();
-  }, []);
+    loadTemplates()
+  }, [])
 
   // Load export formats
   useEffect(() => {
     const loadExportFormats = async () => {
       try {
-        const response = await ApiService.get('/api/v1/documentation/export/formats');
-        const formats = response.data.formats || [];
-        
+        const response = await ApiService.get('/api/v1/documentation/export/formats')
+        const formats = response.data.formats || []
+
         const formatOptions: ExportFormatOption[] = formats.map((format: string) => ({
           value: format,
           label: format.toUpperCase(),
           description: `Export to ${format} format`,
-          options: response.data.options[format] || {}
-        }));
-        
-        setExportFormats(formatOptions);
-      } catch (err) {
-        console.error('Failed to load export formats:', err);
-      }
-    };
+          options: response.data.options[format] || {},
+        }))
 
-    loadExportFormats();
-  }, []);
+        setExportFormats(formatOptions)
+      } catch (err) {
+        console.error('Failed to load export formats:', err)
+      }
+    }
+
+    loadExportFormats()
+  }, [])
 
   // Update request when selected files change
   useEffect(() => {
-    setRequest(prev => ({
+    setRequest((prev) => ({
       ...prev,
-      file_paths: selectedFiles
-    }));
-  }, [selectedFiles]);
+      file_paths: selectedFiles,
+    }))
+  }, [selectedFiles])
 
   const handleGenerateDocumentation = async () => {
     if (selectedFiles.length === 0) {
-      setError('Please select at least one file to generate documentation');
-      return;
+      setError('Please select at least one file to generate documentation')
+      return
     }
 
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError('')
 
     try {
-      const response = await ApiService.post(
-        '/api/v1/documentation/generate',
-        request
-      );
+      const response = await ApiService.post('/api/v1/documentation/generate', request)
 
-      const { content } = response.data;
-      setDocumentation(content);
-      setActiveTab('preview');
-      
+      const { content } = response.data
+      setDocumentation(content)
+      setActiveTab('preview')
+
       if (onDocumentationGenerated) {
-        onDocumentationGenerated(content);
+        onDocumentationGenerated(content)
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Failed to generate documentation';
-      setError(errorMessage);
-      console.error('Documentation generation error:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to generate documentation'
+      setError(errorMessage)
+      console.error('Documentation generation error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleExportDocumentation = async (format: string) => {
     if (!documentation) {
-      setError('No documentation to export');
-      return;
+      setError('No documentation to export')
+      return
     }
 
-    setExporting(true);
-    setError('');
+    setExporting(true)
+    setError('')
 
     try {
-      const response = await ApiService.post(
-        '/api/v1/documentation/export',
-        {
-          documentation_id: 'temp',
-          content: documentation,
-          export_format: format,
-          filename: `documentation.${format}`,
-          options: exportOptions
-        }
-      );
+      const response = await ApiService.post('/api/v1/documentation/export', {
+        documentation_id: 'temp',
+        content: documentation,
+        export_format: format,
+        filename: `documentation.${format}`,
+        options: exportOptions,
+      })
 
       // Create download link
-      const blob = new Blob([response.data.content], { 
-        type: response.data.content_type 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = response.data.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const blob = new Blob([response.data.content], {
+        type: response.data.content_type,
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = response.data.filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Failed to export documentation';
-      setError(errorMessage);
-      console.error('Documentation export error:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to export documentation'
+      setError(errorMessage)
+      console.error('Documentation export error:', err)
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
-  };
+  }
 
   const documentationTypes = [
     { value: 'api', label: 'API Documentation' },
     { value: 'readme', label: 'README File' },
     { value: 'architecture', label: 'Architecture Documentation' },
     { value: 'examples', label: 'Usage Examples' },
-    { value: 'all', label: 'Comprehensive Documentation' }
-  ];
+    { value: 'all', label: 'Comprehensive Documentation' },
+  ]
 
   const outputFormats = [
     { value: 'markdown', label: 'Markdown' },
     { value: 'html', label: 'HTML' },
-    { value: 'pdf', label: 'PDF' }
-  ];
+    { value: 'pdf', label: 'PDF' },
+  ]
 
   const targetAudiences = [
     { value: 'developers', label: 'Developers' },
     { value: 'users', label: 'End Users' },
-    { value: 'mixed', label: 'Mixed Audience' }
-  ];
+    { value: 'mixed', label: 'Mixed Audience' },
+  ]
 
   return (
-    <Card 
+    <Card
       title={
         <Space>
           <FileTextOutlined />
@@ -233,12 +240,12 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {error && (
-          <Alert 
-            message="Error" 
-            description={error} 
-            type="error" 
-            showIcon 
-            closable 
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
+            showIcon
+            closable
             onClose={() => setError('')}
           />
         )}
@@ -247,16 +254,18 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
           <TabPane tab="Generate" key="generate">
             <div>
               <Title level={4}>Configuration</Title>
-              
+
               <Space direction="vertical" style={{ width: '100%' }}>
                 <div>
                   <Text strong>Documentation Type:</Text>
                   <Select
                     value={request.documentation_type}
-                    onChange={(value) => setRequest(prev => ({ ...prev, documentation_type: value }))}
+                    onChange={(value) =>
+                      setRequest((prev) => ({ ...prev, documentation_type: value }))
+                    }
                     style={{ width: '100%', marginTop: 8 }}
                   >
-                    {documentationTypes.map(type => (
+                    {documentationTypes.map((type) => (
                       <Option key={type.value} value={type.value}>
                         {type.label}
                       </Option>
@@ -268,10 +277,10 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                   <Text strong>Output Format:</Text>
                   <Select
                     value={request.output_format}
-                    onChange={(value) => setRequest(prev => ({ ...prev, output_format: value }))}
+                    onChange={(value) => setRequest((prev) => ({ ...prev, output_format: value }))}
                     style={{ width: '100%', marginTop: 8 }}
                   >
-                    {outputFormats.map(format => (
+                    {outputFormats.map((format) => (
                       <Option key={format.value} value={format.value}>
                         {format.label}
                       </Option>
@@ -284,12 +293,12 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                     <Text strong>Template:</Text>
                     <Select
                       value={request.template}
-                      onChange={(value) => setRequest(prev => ({ ...prev, template: value }))}
+                      onChange={(value) => setRequest((prev) => ({ ...prev, template: value }))}
                       allowClear
                       placeholder="Select template (optional)"
                       style={{ width: '100%', marginTop: 8 }}
                     >
-                      {templates.map(template => (
+                      {templates.map((template) => (
                         <Option key={template.name} value={template.name}>
                           {template.title || template.name}
                         </Option>
@@ -302,10 +311,12 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                   <Text strong>Target Audience:</Text>
                   <Select
                     value={request.target_audience}
-                    onChange={(value) => setRequest(prev => ({ ...prev, target_audience: value }))}
+                    onChange={(value) =>
+                      setRequest((prev) => ({ ...prev, target_audience: value }))
+                    }
                     style={{ width: '100%', marginTop: 8 }}
                   >
-                    {targetAudiences.map(audience => (
+                    {targetAudiences.map((audience) => (
                       <Option key={audience.value} value={audience.value}>
                         {audience.label}
                       </Option>
@@ -317,7 +328,9 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                   <Space>
                     <Switch
                       checked={request.include_examples}
-                      onChange={(checked) => setRequest(prev => ({ ...prev, include_examples: checked }))}
+                      onChange={(checked) =>
+                        setRequest((prev) => ({ ...prev, include_examples: checked }))
+                      }
                     />
                     <Text>Include Usage Examples</Text>
                   </Space>
@@ -327,7 +340,9 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                   <Space>
                     <Switch
                       checked={request.include_diagrams}
-                      onChange={(checked) => setRequest(prev => ({ ...prev, include_diagrams: checked }))}
+                      onChange={(checked) =>
+                        setRequest((prev) => ({ ...prev, include_diagrams: checked }))
+                      }
                     />
                     <Text>Include Diagrams</Text>
                   </Space>
@@ -364,16 +379,18 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
           <TabPane tab="Preview" key="preview" disabled={!documentation}>
             <div>
               <Title level={4}>Generated Documentation</Title>
-              
+
               {documentation && (
                 <Card>
-                  <pre style={{ 
-                    whiteSpace: 'pre-wrap', 
-                    maxHeight: 400, 
-                    overflow: 'auto',
-                    fontSize: 14,
-                    lineHeight: 1.5
-                  }}>
+                  <pre
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      maxHeight: 400,
+                      overflow: 'auto',
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                    }}
+                  >
                     {documentation}
                   </pre>
                 </Card>
@@ -384,16 +401,18 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
           <TabPane tab="Export" key="export" disabled={!documentation}>
             <div>
               <Title level={4}>Export Options</Title>
-              
+
               <Space direction="vertical" style={{ width: '100%' }}>
                 <div>
                   <Text strong>Export Format:</Text>
                   <Radio.Group
                     value={exportOptions.format}
-                    onChange={(e) => setExportOptions(prev => ({ ...prev, format: e.target.value }))}
+                    onChange={(e) =>
+                      setExportOptions((prev) => ({ ...prev, format: e.target.value }))
+                    }
                     style={{ marginTop: 8, display: 'block' }}
                   >
-                    {exportFormats.map(format => (
+                    {exportFormats.map((format) => (
                       <Radio key={format.value} value={format.value}>
                         {format.label}
                       </Radio>
@@ -410,17 +429,21 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
                         <input
                           type="text"
                           value={exportOptions.title}
-                          onChange={(e) => setExportOptions(prev => ({ ...prev, title: e.target.value }))}
+                          onChange={(e) =>
+                            setExportOptions((prev) => ({ ...prev, title: e.target.value }))
+                          }
                           style={{ width: '100%', marginTop: 4 }}
                         />
                       </div>
-                      
+
                       <div>
                         <Text>Author:</Text>
                         <input
                           type="text"
                           value={exportOptions.author}
-                          onChange={(e) => setExportOptions(prev => ({ ...prev, author: e.target.value }))}
+                          onChange={(e) =>
+                            setExportOptions((prev) => ({ ...prev, author: e.target.value }))
+                          }
                           style={{ width: '100%', marginTop: 4 }}
                         />
                       </div>
@@ -445,7 +468,7 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
         </Tabs>
       </Space>
     </Card>
-  );
-};
+  )
+}
 
-export default DocumentationGenerator;
+export default DocumentationGenerator

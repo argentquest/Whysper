@@ -14,33 +14,33 @@
  */
 const C4_TO_D2_SHAPES: Record<string, { shape: string; style?: string }> = {
   // People
-  'Person': { shape: 'person' },
-  'Person_Ext': { shape: 'person', style: 'stroke: #999; fill: #f5f5f5' },
+  Person: { shape: 'person' },
+  Person_Ext: { shape: 'person', style: 'stroke: #999; fill: #f5f5f5' },
 
   // Systems
-  'System': { shape: 'rectangle', style: 'fill: #1168bd; stroke: #0b4884' },
-  'System_Ext': { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
-  'SystemDb': { shape: 'cylinder', style: 'fill: #1168bd; stroke: #0b4884' },
-  'SystemDb_Ext': { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
-  'SystemQueue': { shape: 'queue', style: 'fill: #1168bd; stroke: #0b4884' },
-  'SystemQueue_Ext': { shape: 'queue', style: 'fill: #999; stroke: #666' },
+  System: { shape: 'rectangle', style: 'fill: #1168bd; stroke: #0b4884' },
+  System_Ext: { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
+  SystemDb: { shape: 'cylinder', style: 'fill: #1168bd; stroke: #0b4884' },
+  SystemDb_Ext: { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
+  SystemQueue: { shape: 'queue', style: 'fill: #1168bd; stroke: #0b4884' },
+  SystemQueue_Ext: { shape: 'queue', style: 'fill: #999; stroke: #666' },
 
   // Containers
-  'Container': { shape: 'rectangle', style: 'fill: #438dd5; stroke: #3682c3' },
-  'Container_Ext': { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
-  'ContainerDb': { shape: 'cylinder', style: 'fill: #438dd5; stroke: #3682c3' },
-  'ContainerDb_Ext': { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
-  'ContainerQueue': { shape: 'queue', style: 'fill: #438dd5; stroke: #3682c3' },
-  'ContainerQueue_Ext': { shape: 'queue', style: 'fill: #999; stroke: #666' },
+  Container: { shape: 'rectangle', style: 'fill: #438dd5; stroke: #3682c3' },
+  Container_Ext: { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
+  ContainerDb: { shape: 'cylinder', style: 'fill: #438dd5; stroke: #3682c3' },
+  ContainerDb_Ext: { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
+  ContainerQueue: { shape: 'queue', style: 'fill: #438dd5; stroke: #3682c3' },
+  ContainerQueue_Ext: { shape: 'queue', style: 'fill: #999; stroke: #666' },
 
   // Components
-  'Component': { shape: 'rectangle', style: 'fill: #85bbf0; stroke: #78a8d8' },
-  'Component_Ext': { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
-  'ComponentDb': { shape: 'cylinder', style: 'fill: #85bbf0; stroke: #78a8d8' },
-  'ComponentDb_Ext': { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
-  'ComponentQueue': { shape: 'queue', style: 'fill: #85bbf0; stroke: #78a8d8' },
-  'ComponentQueue_Ext': { shape: 'queue', style: 'fill: #999; stroke: #666' },
-};
+  Component: { shape: 'rectangle', style: 'fill: #85bbf0; stroke: #78a8d8' },
+  Component_Ext: { shape: 'rectangle', style: 'fill: #999; stroke: #666' },
+  ComponentDb: { shape: 'cylinder', style: 'fill: #85bbf0; stroke: #78a8d8' },
+  ComponentDb_Ext: { shape: 'cylinder', style: 'fill: #999; stroke: #666' },
+  ComponentQueue: { shape: 'queue', style: 'fill: #85bbf0; stroke: #78a8d8' },
+  ComponentQueue_Ext: { shape: 'queue', style: 'fill: #999; stroke: #666' },
+}
 
 /**
  * Strip PlantUML fence markers (@startuml/@enduml) and includes
@@ -50,11 +50,11 @@ const C4_TO_D2_SHAPES: Record<string, { shape: string; style?: string }> = {
 const stripPlantUMLMarkers = (code: string): string => {
   return code
     .replace(/@startuml\b.*$/gm, '') // Remove @startuml lines
-    .replace(/@enduml\b.*$/gm, '')   // Remove @enduml lines
+    .replace(/@enduml\b.*$/gm, '') // Remove @enduml lines
     .replace(/!include\s+.*$/gm, '') // Remove !include lines
-    .replace(/!define\s+.*$/gm, '')  // Remove !define lines
-    .trim();
-};
+    .replace(/!define\s+.*$/gm, '') // Remove !define lines
+    .trim()
+}
 
 /**
  * Parse C4 Mermaid syntax and convert to D2
@@ -67,177 +67,185 @@ const stripPlantUMLMarkers = (code: string): string => {
 export const convertC4ToD2 = (c4Code: string): string => {
   // Input validation - handle null/undefined/empty gracefully
   if (!c4Code || typeof c4Code !== 'string') {
-    console.warn('Invalid C4 code provided, returning empty string');
-    return '';
+    console.warn('Invalid C4 code provided, returning empty string')
+    return ''
   }
 
   // Strip PlantUML fence markers if present
-  const cleanedCode = stripPlantUMLMarkers(c4Code);
+  const cleanedCode = stripPlantUMLMarkers(c4Code)
 
-  const lines = cleanedCode.trim().split('\n');
-  const d2Lines: string[] = [];
-  let currentContainer: string | null = null;
-  let entityCount = 0;
-  let relationshipCount = 0;
-  
+  const lines = cleanedCode.trim().split('\n')
+  const d2Lines: string[] = []
+  let currentContainer: string | null = null
+  let entityCount = 0
+  let relationshipCount = 0
+
   // Track entities and their containers for relationship qualification
-  const entityContainers: Record<string, string> = {};
+  const entityContainers: Record<string, string> = {}
 
   // Add title if present
-  const titleMatch = c4Code.match(/title\s+(.+)/);
+  const titleMatch = c4Code.match(/title\s+(.+)/)
   if (titleMatch) {
-    d2Lines.push(`# ${titleMatch[1]}`);
-    d2Lines.push('');
+    d2Lines.push(`# ${titleMatch[1]}`)
+    d2Lines.push('')
   }
 
   // Add direction for better layout
-  d2Lines.push('direction: down');
-  d2Lines.push('');
+  d2Lines.push('direction: down')
+  d2Lines.push('')
 
   // Process line by line
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmedLine = line.trim();
+    const line = lines[i]
+    const trimmedLine = line.trim()
 
     // Skip empty lines and comments
     if (!trimmedLine || trimmedLine.startsWith('#')) {
-      continue;
+      continue
     }
 
     // Detect C4 level
     if (/^C4(Context|Container|Component|Dynamic|Deployment)/i.test(trimmedLine)) {
-      continue;
+      continue
     }
 
     // Skip title (already handled)
     if (trimmedLine.startsWith('title ')) {
-      continue;
+      continue
     }
 
     // Handle closing braces
     if (trimmedLine === '}') {
       if (currentContainer) {
-        d2Lines.push('}');
-        d2Lines.push('');
-        currentContainer = null;
+        d2Lines.push('}')
+        d2Lines.push('')
+        currentContainer = null
       }
-      continue;
+      continue
     }
 
     // Parse boundaries/containers: System_Boundary(id, "label") {
-    const boundaryMatch = trimmedLine.match(/^(Boundary|Enterprise_Boundary|System_Boundary|Container_Boundary)\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)\s*\{/);
+    const boundaryMatch = trimmedLine.match(
+      /^(Boundary|Enterprise_Boundary|System_Boundary|Container_Boundary)\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)\s*\{/
+    )
     if (boundaryMatch) {
-      const [, , id, label] = boundaryMatch;
-      currentContainer = id;
+      const [, , id, label] = boundaryMatch
+      currentContainer = id
 
-      d2Lines.push(`${id}: {`);
-      d2Lines.push(`  label: "${label}"`);
-      d2Lines.push(`  style: {`);
-      d2Lines.push(`    stroke: #666`);
-      d2Lines.push(`    stroke-width: 2`);
-      d2Lines.push(`    stroke-dash: 5`);
-      d2Lines.push(`    fill: transparent`);
-      d2Lines.push(`  }`);
-      d2Lines.push('');
-      continue;
+      d2Lines.push(`${id}: {`)
+      d2Lines.push(`  label: "${label}"`)
+      d2Lines.push(`  style: {`)
+      d2Lines.push(`    stroke: #666`)
+      d2Lines.push(`    stroke-width: 2`)
+      d2Lines.push(`    stroke-dash: 5`)
+      d2Lines.push(`    fill: transparent`)
+      d2Lines.push(`  }`)
+      d2Lines.push('')
+      continue
     }
 
     // Parse entity definitions: Type(id, "label", "description", "technology")
-    const entityMatch = trimmedLine.match(/^(\w+)\s*\(\s*(\w+)\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?(?:\s*,\s*"([^"]*)")?\s*\)/);
+    const entityMatch = trimmedLine.match(
+      /^(\w+)\s*\(\s*(\w+)\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?(?:\s*,\s*"([^"]*)")?\s*\)/
+    )
     if (entityMatch) {
-      const [, type, id, label, description, technology] = entityMatch;
-      const shapeInfo = C4_TO_D2_SHAPES[type] || { shape: 'rectangle' };
+      const [, type, id, label, description, technology] = entityMatch
+      const shapeInfo = C4_TO_D2_SHAPES[type] || { shape: 'rectangle' }
 
       // Track entity container for relationship qualification
       if (currentContainer) {
-        entityContainers[id] = currentContainer;
+        entityContainers[id] = currentContainer
       }
 
       // Build entity definition
-      const entityLines: string[] = [];
-      const prefix = currentContainer ? '  ' : '';
+      const entityLines: string[] = []
+      const prefix = currentContainer ? '  ' : ''
 
-      entityLines.push(`${prefix}${id}: {`);
-      entityLines.push(`${prefix}  label: "${label}"`);
-      entityLines.push(`${prefix}  shape: ${shapeInfo.shape}`);
+      entityLines.push(`${prefix}${id}: {`)
+      entityLines.push(`${prefix}  label: "${label}"`)
+      entityLines.push(`${prefix}  shape: ${shapeInfo.shape}`)
 
       if (description || technology) {
-        const desc = technology ? `${description || ''}\n[${technology}]` : description;
-        entityLines.push(`${prefix}  tooltip: "${desc}"`);
+        const desc = technology ? `${description || ''}\n[${technology}]` : description
+        entityLines.push(`${prefix}  tooltip: "${desc}"`)
       }
 
       if (shapeInfo.style) {
-        entityLines.push(`${prefix}  style: {${shapeInfo.style}}`);
+        entityLines.push(`${prefix}  style: {${shapeInfo.style}}`)
       }
 
-      entityLines.push(`${prefix}}`);
-      entityLines.push('');
+      entityLines.push(`${prefix}}`)
+      entityLines.push('')
 
-      d2Lines.push(...entityLines);
-      entityCount++;
-      continue;
+      d2Lines.push(...entityLines)
+      entityCount++
+      continue
     }
 
     // Parse relationships: Rel(from, to, "label", "technology")
-    const relMatch = trimmedLine.match(/^Rel(?:_[A-Z]+)?\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?\s*\)/);
+    const relMatch = trimmedLine.match(
+      /^Rel(?:_[A-Z]+)?\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]*)")?\s*\)/
+    )
     if (relMatch) {
-      const [, from, to, label, technology] = relMatch;
+      const [, from, to, label, technology] = relMatch
 
       // Handle relationships with containers
       // First, check if we're currently inside a container
-      let fromId: string;
+      let fromId: string
       if (currentContainer && !from.includes('.')) {
-        fromId = `${currentContainer}.${from}`;
+        fromId = `${currentContainer}.${from}`
       } else if (!from.includes('.') && entityContainers[from]) {
         // If not inside container but entity is tracked, use its container
-        fromId = `${entityContainers[from]}.${from}`;
+        fromId = `${entityContainers[from]}.${from}`
       } else {
-        fromId = from;
-      }
-      
-      let toId: string;
-      if (currentContainer && !to.includes('.')) {
-        toId = `${currentContainer}.${to}`;
-      } else if (!to.includes('.') && entityContainers[to]) {
-        // If not inside container but entity is tracked, use its container
-        toId = `${entityContainers[to]}.${to}`;
-      } else {
-        toId = to;
+        fromId = from
       }
 
-      const fullLabel = technology ? `${label}\\n[${technology}]` : label;
-      d2Lines.push(`${fromId} -> ${toId}: "${fullLabel}"`);
-      relationshipCount++;
-      continue;
+      let toId: string
+      if (currentContainer && !to.includes('.')) {
+        toId = `${currentContainer}.${to}`
+      } else if (!to.includes('.') && entityContainers[to]) {
+        // If not inside container but entity is tracked, use its container
+        toId = `${entityContainers[to]}.${to}`
+      } else {
+        toId = to
+      }
+
+      const fullLabel = technology ? `${label}\\n[${technology}]` : label
+      d2Lines.push(`${fromId} -> ${toId}: "${fullLabel}"`)
+      relationshipCount++
+      continue
     }
   }
 
   // Close any open containers
   if (currentContainer) {
-    d2Lines.push('}');
-    d2Lines.push('');
+    d2Lines.push('}')
+    d2Lines.push('')
   }
 
   // Validate that we converted something
   if (entityCount === 0 && relationshipCount === 0) {
     throw new Error(
       'C4 to D2 conversion produced no entities or relationships. ' +
-      'The C4 code may not be in the expected format. ' +
-      'Expected format: Person(id, "label"), System(id, "label"), Rel(from, to, "label")'
-    );
+        'The C4 code may not be in the expected format. ' +
+        'Expected format: Person(id, "label"), System(id, "label"), Rel(from, to, "label")'
+    )
   }
 
-  const result = d2Lines.join('\n');
+  const result = d2Lines.join('\n')
 
   // Validate result is not empty
   if (!result.trim()) {
-    throw new Error('C4 to D2 conversion produced empty output');
+    throw new Error('C4 to D2 conversion produced empty output')
   }
 
-  console.log(`✅ C4 to D2 conversion successful: ${entityCount} entities, ${relationshipCount} relationships`);
+  console.log(
+    `✅ C4 to D2 conversion successful: ${entityCount} entities, ${relationshipCount} relationships`
+  )
 
-  return result;
-};
+  return result
+}
 
 /**
  * Simplified C4-to-D2 conversion for basic structures
@@ -247,25 +255,34 @@ export const convertC4ToD2 = (c4Code: string): string => {
  */
 export const simpleC4ToD2 = (c4Code: string): string => {
   if (!c4Code || typeof c4Code !== 'string') {
-    return '';
+    return ''
   }
 
-  let d2Code = c4Code;
+  let d2Code = c4Code
 
   // Replace C4 keywords with D2 equivalents
-  d2Code = d2Code.replace(/^C4(Context|Container|Component|Dynamic|Deployment)/gm, '# C4 $1 Diagram');
+  d2Code = d2Code.replace(
+    /^C4(Context|Container|Component|Dynamic|Deployment)/gm,
+    '# C4 $1 Diagram'
+  )
 
   // Convert Person() to D2 shape
-  d2Code = d2Code.replace(/Person\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g, '$1: {label: "$2"; shape: person}');
+  d2Code = d2Code.replace(
+    /Person\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g,
+    '$1: {label: "$2"; shape: person}'
+  )
 
   // Convert System() to D2 shape
-  d2Code = d2Code.replace(/System\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g, '$1: {label: "$2"; shape: rectangle}');
+  d2Code = d2Code.replace(
+    /System\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g,
+    '$1: {label: "$2"; shape: rectangle}'
+  )
 
   // Convert Rel() to D2 connection
-  d2Code = d2Code.replace(/Rel\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g, '$1 -> $2: "$3"');
+  d2Code = d2Code.replace(/Rel\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*\)/g, '$1 -> $2: "$3"')
 
-  return d2Code;
-};
+  return d2Code
+}
 
 /**
  * Detect if code is C4 syntax (even without language marker)
@@ -275,7 +292,7 @@ export const simpleC4ToD2 = (c4Code: string): string => {
  */
 export const looksLikeC4 = (code: string): boolean => {
   if (!code || typeof code !== 'string') {
-    return false;
+    return false
   }
 
   const c4Patterns = [
@@ -288,11 +305,11 @@ export const looksLikeC4 = (code: string): boolean => {
     // PlantUML-style C4
     /@startuml/i,
     /@enduml/i,
-    /!include.*C4/i,  // Common C4-PlantUML include pattern
-  ];
+    /!include.*C4/i, // Common C4-PlantUML include pattern
+  ]
 
-  return c4Patterns.some(pattern => pattern.test(code));
-};
+  return c4Patterns.some((pattern) => pattern.test(code))
+}
 
 /**
  * Get C4 level from code
@@ -300,6 +317,6 @@ export const looksLikeC4 = (code: string): boolean => {
  * @returns {string} The detected C4 level (Context, Container, etc.) or 'Unknown'
  */
 export const extractC4Level = (code: string): string => {
-  const match = code.match(/C4(Context|Container|Component|Dynamic|Deployment)/i);
-  return match ? match[1] : 'Unknown';
-};
+  const match = code.match(/C4(Context|Container|Component|Dynamic|Deployment)/i)
+  return match ? match[1] : 'Unknown'
+}

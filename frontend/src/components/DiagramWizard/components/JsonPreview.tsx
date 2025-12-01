@@ -5,45 +5,49 @@
  * similar to a rendered report - but using React components.
  */
 
-import React from 'react';
-import { Card, Tag, Descriptions, List, Typography, Divider } from 'antd';
-import { DatabaseOutlined, LinkOutlined, InfoCircleOutlined, AppstoreOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  DatabaseOutlined,
+  InfoCircleOutlined,
+  LinkOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
+import { Card, Descriptions, Divider,List, Tag, Typography } from 'antd'
+import React from 'react'
 
-const { Title, Text } = Typography;
+const { Title, Text } = Typography
 
 interface JsonPreviewProps {
-  data: Record<string, any> | string;
+  data: Record<string, any> | string
 }
 
 const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
   // Parse data if it's a string
-  let parsedData: Record<string, any> = {};
+  let parsedData: Record<string, any> = {}
 
   if (typeof data === 'string') {
     try {
-      parsedData = JSON.parse(data);
+      parsedData = JSON.parse(data)
     } catch (e) {
       return (
         <div style={{ padding: '20px', textAlign: 'center', color: '#ff4d4f' }}>
           Invalid JSON format: {String(e)}
         </div>
-      );
+      )
     }
   } else if (data && typeof data === 'object') {
-    parsedData = data;
+    parsedData = data
   }
 
   if (!parsedData || Object.keys(parsedData).length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-        No data to preview
-      </div>
-    );
+      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No data to preview</div>
+    )
   }
 
   // Render components section
   const renderComponents = (components: any[]) => {
-    if (!components || components.length === 0) return null;
+    if (!components || components.length === 0) return null
 
     return (
       <div style={{ marginBottom: '24px' }}>
@@ -62,7 +66,9 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   borderLeft: '4px solid #1890ff',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <Text strong style={{ fontSize: '14px' }}>
                     {component.name || component.id || `Component ${index + 1}`}
                   </Text>
@@ -73,7 +79,10 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   )}
                 </div>
                 {component.description && (
-                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}
+                  >
                     {component.description}
                   </Text>
                 )}
@@ -95,12 +104,12 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
           )}
         />
       </div>
-    );
-  };
+    )
+  }
 
   // Render users section (people/end-users)
   const renderUsers = (users: any[]) => {
-    if (!users || users.length === 0) return null;
+    if (!users || users.length === 0) return null
 
     return (
       <div style={{ marginBottom: '24px' }}>
@@ -119,7 +128,9 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   borderLeft: '4px solid #722ed1',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <Text strong style={{ fontSize: '14px' }}>
                     {user.name || user.id || `User ${index + 1}`}
                   </Text>
@@ -130,12 +141,18 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   )}
                 </div>
                 {(user.id || user.identifier) && (
-                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '6px' }}>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: '12px', display: 'block', marginTop: '6px' }}
+                  >
                     ID: {user.id || user.identifier}
                   </Text>
                 )}
                 {user.description && (
-                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}
+                  >
                     {user.description}
                   </Text>
                 )}
@@ -157,12 +174,12 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
           )}
         />
       </div>
-    );
-  };
+    )
+  }
 
   // Render connections section
   const renderConnections = (connections: any[]) => {
-    if (!connections || connections.length === 0) return null;
+    if (!connections || connections.length === 0) return null
 
     return (
       <div style={{ marginBottom: '24px' }}>
@@ -181,7 +198,9 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   borderLeft: '4px solid #52c41a',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}
+                >
                   <Text code>{connection.from || connection.source || 'Source'}</Text>
                   <Text type="secondary">-&gt;</Text>
                   <Text code>{connection.to || connection.target || 'Target'}</Text>
@@ -192,7 +211,10 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                   )}
                 </div>
                 {connection.description && (
-                  <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}
+                  >
                     {connection.description}
                   </Text>
                 )}
@@ -201,12 +223,12 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
           )}
         />
       </div>
-    );
-  };
+    )
+  }
 
   // Render metadata section
   const renderMetadata = (metadata: Record<string, any>) => {
-    if (!metadata || Object.keys(metadata).length === 0) return null;
+    if (!metadata || Object.keys(metadata).length === 0) return null
 
     return (
       <div style={{ marginBottom: '24px' }}>
@@ -223,8 +245,8 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
           </Descriptions>
         </Card>
       </div>
-    );
-  };
+    )
+  }
 
   // Main render logic
   return (
@@ -254,7 +276,14 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
 
       {/* Render description if available */}
       {parsedData.description && (
-        <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fff', borderRadius: '4px' }}>
+        <div
+          style={{
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: '#fff',
+            borderRadius: '4px',
+          }}
+        >
           <Text type="secondary" style={{ fontSize: '13px', fontStyle: 'italic' }}>
             {parsedData.description}
           </Text>
@@ -268,7 +297,9 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
       {renderComponents(parsedData.components || parsedData.nodes || parsedData.elements)}
 
       {/* Render connections */}
-      {renderConnections(parsedData.connections || parsedData.edges || parsedData.relationships || parsedData.links)}
+      {renderConnections(
+        parsedData.connections || parsedData.edges || parsedData.relationships || parsedData.links
+      )}
 
       {/* Render metadata */}
       {renderMetadata(parsedData.metadata || parsedData.properties || parsedData.config)}
@@ -276,17 +307,38 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
       {/* Render any other top-level properties */}
       {Object.entries(parsedData).map(([key, value]) => {
         // Skip already rendered properties
-        if (['name', 'title', 'system_name', 'description', 'components', 'nodes', 'elements',
-             'connections', 'edges', 'relationships', 'links', 'metadata', 'properties', 'config',
-             'users', 'people', 'actors'].includes(key)) {
-          return null;
+        if (
+          [
+            'name',
+            'title',
+            'system_name',
+            'description',
+            'components',
+            'nodes',
+            'elements',
+            'connections',
+            'edges',
+            'relationships',
+            'links',
+            'metadata',
+            'properties',
+            'config',
+            'users',
+            'people',
+            'actors',
+          ].includes(key)
+        ) {
+          return null
         }
 
         // Render arrays as lists
         if (Array.isArray(value) && value.length > 0) {
           return (
             <div key={key} style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{ color: '#722ed1', marginBottom: '12px', textTransform: 'capitalize' }}>
+              <Title
+                level={5}
+                style={{ color: '#722ed1', marginBottom: '12px', textTransform: 'capitalize' }}
+              >
                 {key.replace(/_/g, ' ')} ({value.length})
               </Title>
               <List
@@ -300,17 +352,23 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                 )}
               />
             </div>
-          );
+          )
         }
 
         // Render objects as descriptions
         if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) {
           return (
             <div key={key} style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{ color: '#722ed1', marginBottom: '12px', textTransform: 'capitalize' }}>
+              <Title
+                level={5}
+                style={{ color: '#722ed1', marginBottom: '12px', textTransform: 'capitalize' }}
+              >
                 {key.replace(/_/g, ' ')}
               </Title>
-              <Card size="small" style={{ backgroundColor: '#f9f0ff', borderLeft: '4px solid #722ed1' }}>
+              <Card
+                size="small"
+                style={{ backgroundColor: '#f9f0ff', borderLeft: '4px solid #722ed1' }}
+              >
                 <Descriptions size="small" column={1}>
                   {Object.entries(value).map(([subKey, subValue]) => (
                     <Descriptions.Item key={subKey} label={<Text strong>{subKey}</Text>}>
@@ -320,7 +378,7 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                 </Descriptions>
               </Card>
             </div>
-          );
+          )
         }
 
         // Render primitives
@@ -329,10 +387,10 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
             <Text strong>{key.replace(/_/g, ' ')}: </Text>
             <Text>{String(value)}</Text>
           </div>
-        );
+        )
       })}
     </div>
-  );
-};
+  )
+}
 
-export default JsonPreview;
+export default JsonPreview

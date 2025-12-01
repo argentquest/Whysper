@@ -6,63 +6,65 @@
  */
 
 export interface ScoreInfo {
-  entities: boolean;
-  actions: boolean;
-  structure: boolean;
-  info_score: number;
-  word_count: number;
-  is_detailed_enough: boolean;
-  has_enough_info: boolean;
-  has_minimum_info: boolean;
-  has_good_info: boolean;
-  needed_score: string;
+  entities: boolean
+  actions: boolean
+  structure: boolean
+  info_score: number
+  word_count: number
+  is_detailed_enough: boolean
+  has_enough_info: boolean
+  has_minimum_info: boolean
+  has_good_info: boolean
+  needed_score: string
 }
 
 export interface DiagramSession {
-  session_id: string;
-  status: DiagramStatus;
-  message?: string;
+  session_id: string
+  status: DiagramStatus
+  message?: string
 }
 
 export interface DiagramStatus {
-  session_id: string;
-  history: Array<[string, string]>;
-  currentState: Record<string, unknown>;
-  clarifications: string[];
-  diagramCode: string;
-  svgOutput: string;
-  errors: string[];
-  diagramType: string;
-  isRunning: boolean;
-  jsonRepresentation?: Record<string, unknown>;
-  structurizr_workspace?: string;
-  clean_structurizr?: string;
-  json_generation_output?: string;
-  score?: number;
-  score_info?: ScoreInfo;
-  clarity_score?: number;
-  assessment_score?: number;
-  score_target?: number;
-  full_ai_response?: string;
+  session_id: string
+  history: Array<[string, string]>
+  currentState: Record<string, unknown>
+  clarifications: string[]
+  diagramCode: string
+  svgOutput: string
+  errors: string[]
+  diagramType: string
+  isRunning: boolean
+  jsonRepresentation?: Record<string, unknown>
+  json_representation?: Record<string, unknown>
+  structurizr_workspace?: string
+  clean_structurizr?: string
+  json_generation_output?: string
+  score?: number
+  score_info?: ScoreInfo
+  clarity_score?: number
+  assessment_score?: number
+  score_target?: number
+  full_ai_response?: string
 }
 
 export interface DiagramUpdate extends DiagramStatus {
-  status?: string;
-  message?: string;
-  type?: string;
-  question?: string;
-  analysis_summary?: string;
-  analysis_text?: string;
-  message_role?: 'assistant' | 'user';
-  error?: string;
-  error_message?: string;
-  validation_error?: string;
-  recommended_diagram_type?: string;
-  keyword_scores?: { [key: string]: number };
-  awaiting_user_confirmation?: boolean;
+  status?: string
+  message?: string
+  type?: string
+  diagram_type?: string
+  question?: string
+  analysis_summary?: string
+  analysis_text?: string
+  message_role?: 'assistant' | 'user'
+  error?: string
+  error_message?: string
+  validation_error?: string
+  recommended_diagram_type?: string
+  keyword_scores?: { [key: string]: number }
+  awaiting_user_confirmation?: boolean
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
 export class DiagramApi {
   /**
@@ -77,16 +79,16 @@ export class DiagramApi {
     const body: Record<string, unknown> = {
       initial_prompt: initialPrompt,
       diagram_type: diagramType,
-    };
+    }
 
     // Include session_id if provided (links to tab ID for session persistence)
     if (sessionId) {
-      body.session_id = sessionId;
+      body.session_id = sessionId
     }
 
     // Include model_id if provided (for model selection feature)
     if (modelId) {
-      body.model_id = modelId;
+      body.model_id = modelId
     }
 
     const response = await fetch(`${API_BASE}/diagram/start`, {
@@ -95,13 +97,13 @@ export class DiagramApi {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`Failed to start diagram generation: ${response.statusText}`);
+      throw new Error(`Failed to start diagram generation: ${response.statusText}`)
     }
 
-    return response.json();
+    return response.json()
   }
 
   /**
@@ -113,43 +115,40 @@ export class DiagramApi {
     onError: (error: Error) => void,
     onComplete: () => void
   ): () => void {
-    const eventSource = new EventSource(`${API_BASE}/diagram/stream/${sessionId}`);
+    const eventSource = new EventSource(`${API_BASE}/diagram/stream/${sessionId}`)
 
     eventSource.onmessage = (event) => {
       try {
-        const update = JSON.parse(event.data);
-        onUpdate(update);
+        const update = JSON.parse(event.data)
+        onUpdate(update)
 
         // Check if this was the final update
         if (update.status === 'completed' || update.status === 'error') {
-          eventSource.close();
-          onComplete();
+          eventSource.close()
+          onComplete()
         }
       } catch (error) {
-        console.error('Failed to parse diagram update:', error);
-        onError(error instanceof Error ? error : new Error('Failed to parse update'));
+        console.error('Failed to parse diagram update:', error)
+        onError(error instanceof Error ? error : new Error('Failed to parse update'))
       }
-    };
+    }
 
     eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      eventSource.close();
-      onError(new Error('SSE connection failed'));
-    };
+      console.error('SSE connection error:', error)
+      eventSource.close()
+      onError(new Error('SSE connection failed'))
+    }
 
     // Return cleanup function
     return () => {
-      eventSource.close();
-    };
+      eventSource.close()
+    }
   }
 
   /**
    * Submit a clarification response
    */
-  static async submitClarification(
-    sessionId: string,
-    response: string
-  ): Promise<DiagramStatus> {
+  static async submitClarification(sessionId: string, response: string): Promise<DiagramStatus> {
     const resp = await fetch(`${API_BASE}/diagram/clarify`, {
       method: 'POST',
       headers: {
@@ -159,13 +158,13 @@ export class DiagramApi {
         session_id: sessionId,
         response: response,
       }),
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to submit clarification: ${resp.statusText}`);
+      throw new Error(`Failed to submit clarification: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
   /**
    * Confirm that the user is ready to proceed with diagram generation
@@ -179,22 +178,19 @@ export class DiagramApi {
       body: JSON.stringify({
         session_id: sessionId,
       }),
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to confirm ready: ${resp.statusText}`);
+      throw new Error(`Failed to confirm ready: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
 
   /**
    * Select diagram type from available options (Mermaid, D2, PlantUML, Structurizr)
    */
-  static async selectDiagramType(
-    sessionId: string,
-    diagramType: string
-  ): Promise<DiagramStatus> {
+  static async selectDiagramType(sessionId: string, diagramType: string): Promise<DiagramStatus> {
     const resp = await fetch(`${API_BASE}/diagram/select_diagram_type`, {
       method: 'POST',
       headers: {
@@ -204,13 +200,13 @@ export class DiagramApi {
         session_id: sessionId,
         diagram_type: diagramType,
       }),
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to select diagram type: ${resp.statusText}`);
+      throw new Error(`Failed to select diagram type: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
 
   static async approveRender(sessionId: string): Promise<DiagramStatus> {
@@ -222,22 +218,19 @@ export class DiagramApi {
       body: JSON.stringify({
         session_id: sessionId,
       }),
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to approve render: ${resp.statusText}`);
+      throw new Error(`Failed to approve render: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
 
   /**
    * Render diagram with custom code
    */
-  static async renderDiagram(
-    sessionId: string,
-    code?: string
-  ): Promise<DiagramStatus> {
+  static async renderDiagram(sessionId: string, code?: string): Promise<DiagramStatus> {
     const resp = await fetch(`${API_BASE}/diagram/render`, {
       method: 'POST',
       headers: {
@@ -247,26 +240,26 @@ export class DiagramApi {
         session_id: sessionId,
         code: code || null,
       }),
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to render diagram: ${resp.statusText}`);
+      throw new Error(`Failed to render diagram: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
 
   /**
    * Get current session status
    */
   static async getDiagramStatus(sessionId: string): Promise<DiagramStatus> {
-    const resp = await fetch(`${API_BASE}/diagram/${sessionId}`);
+    const resp = await fetch(`${API_BASE}/diagram/${sessionId}`)
 
     if (!resp.ok) {
-      throw new Error(`Failed to get diagram status: ${resp.statusText}`);
+      throw new Error(`Failed to get diagram status: ${resp.statusText}`)
     }
 
-    return resp.json();
+    return resp.json()
   }
 
   /**
@@ -275,12 +268,12 @@ export class DiagramApi {
   static async deleteDiagramSession(sessionId: string): Promise<void> {
     const resp = await fetch(`${API_BASE}/diagram/${sessionId}`, {
       method: 'DELETE',
-    });
+    })
 
     if (!resp.ok) {
-      throw new Error(`Failed to delete session: ${resp.statusText}`);
+      throw new Error(`Failed to delete session: ${resp.statusText}`)
     }
   }
 }
 
-export default DiagramApi;
+export default DiagramApi

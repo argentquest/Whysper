@@ -1,39 +1,39 @@
 /**
  * InputPanel Component
- * 
+ *
  * This module exports the InputPanel component for the application.
  */
-import React, { useState, useRef, useEffect, type ReactNode } from 'react';
-import { Button, Select, Tooltip, message as antMessage } from 'antd';
 import {
-  SendOutlined,
   ClearOutlined,
-  PlusOutlined,
-  CopyOutlined,
   CompressOutlined,
+  CopyOutlined,
   ExpandOutlined,
-} from '@ant-design/icons';
-import Editor from '@monaco-editor/react';
-import type * as Monaco from 'monaco-editor';
-import { BrandColors } from 'branding';
+  PlusOutlined,
+  SendOutlined,
+} from '@ant-design/icons'
+import Editor from '@monaco-editor/react'
+import { Button, message as antMessage,Select, Tooltip } from 'antd'
+import { BrandColors } from 'branding'
+import type * as Monaco from 'monaco-editor'
+import React, { type ReactNode,useEffect, useRef, useState } from 'react'
 
-const { Option } = Select;
-// @ts-ignore - Brand color theme type mismatch
-const linkColor = BrandColors.text?.link ?? '#5a469b';
+const { Option } = Select
+// @ts-expect-error - Brand color theme type mismatch
+const linkColor = BrandColors.text?.link ?? '#5a469b'
 
 const ActionLink: React.FC<{
-  icon?: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-  children: ReactNode;
+  icon?: ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  loading?: boolean
+  children: ReactNode
 }> = ({ icon, onClick, disabled = false, loading = false, children }) => (
   <Tooltip title={typeof children === 'string' ? children : undefined}>
     <button
       type="button"
       onClick={() => {
-        if (disabled || loading || !onClick) return;
-        onClick();
+        if (disabled || loading || !onClick) return
+        onClick()
       }}
       aria-disabled={disabled || loading}
       style={{
@@ -54,30 +54,30 @@ const ActionLink: React.FC<{
       {loading ? 'Sending…' : children}
     </button>
   </Tooltip>
-);
+)
 
 /**
  * SubagentCommand type definition
- * 
+ *
  * Describes the structure and properties of SubagentCommand
  */
 interface SubagentCommand {
-  category: string;
-  title: string;
-  subcommand: string;
+  category: string
+  title: string
+  subcommand: string
 }
 
 /**
  * InputPanelProps type definition
- * 
+ *
  * Describes the structure and properties of InputPanelProps
  */
 interface InputPanelProps {
-  onSendMessage: (message: string, command?: string) => void;
-  onClear: () => void;
-  loading?: boolean;
-  disabled?: boolean;
-  subagentCommands?: SubagentCommand[];
+  onSendMessage: (message: string, command?: string) => void
+  onClear: () => void
+  loading?: boolean
+  disabled?: boolean
+  subagentCommands?: SubagentCommand[]
 }
 
 /**
@@ -90,36 +90,39 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   disabled = false,
   subagentCommands = [],
 }) => {
-  const [message, setMessage] = useState('');
-  const [lastSentMessage, setLastSentMessage] = useState<string>('');
+  const [message, setMessage] = useState('')
+  const [lastSentMessage, setLastSentMessage] = useState<string>('')
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedCommand, setSelectedCommand] = useState<string>('');
-  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [currentHeight, setCurrentHeight] = useState<number>(120); // Track current height in pixels
-  const [previousHeight, setPreviousHeight] = useState<number>(120); // Store previous height for restoration
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedCommand, setSelectedCommand] = useState<string>('')
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
+  const [currentHeight, setCurrentHeight] = useState<number>(120) // Track current height in pixels
+  const [previousHeight, setPreviousHeight] = useState<number>(120) // Store previous height for restoration
 
   // Refs to store current values for key binding
-  const messageRef = useRef(message);
-  const loadingRef = useRef(loading);
-  const selectedCommandRef = useRef(selectedCommand);
+  const messageRef = useRef(message)
+  const loadingRef = useRef(loading)
+  const selectedCommandRef = useRef(selectedCommand)
 
   // Update refs when values change
   useEffect(() => {
-    messageRef.current = message;
-  }, [message]);
+    messageRef.current = message
+  }, [message])
 
   useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
+    loadingRef.current = loading
+  }, [loading])
 
   useEffect(() => {
-    selectedCommandRef.current = selectedCommand;
-  }, [selectedCommand]);
+    selectedCommandRef.current = selectedCommand
+  }, [selectedCommand])
 
   // Handle editor mount
-  const handleEditorDidMount = (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
-    editorRef.current = editor;
+  const handleEditorDidMount = (
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof Monaco
+  ) => {
+    editorRef.current = editor
 
     // Add custom key binding: Ctrl+Enter to submit
     editor.addAction({
@@ -128,103 +131,110 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => {
         // Use refs to get current values (avoid stale closure)
-        const currentMessage = messageRef.current.trim();
-        const currentSelectedCommand = selectedCommandRef.current;
-        const currentLoading = loadingRef.current;
+        const currentMessage = messageRef.current.trim()
+        const currentSelectedCommand = selectedCommandRef.current
+        const currentLoading = loadingRef.current
 
         if (currentMessage && !currentLoading) {
-          const messageToSend = currentMessage;
-          const commandToSend = currentSelectedCommand || '';
+          const messageToSend = currentMessage
+          const commandToSend = currentSelectedCommand || ''
 
-          setLastSentMessage(messageToSend);
-          onSendMessage(messageToSend, commandToSend);
-          setMessage('');
-          setSelectedCategory('');
-          setSelectedCommand('');
+          setLastSentMessage(messageToSend)
+          onSendMessage(messageToSend, commandToSend)
+          setMessage('')
+          setSelectedCategory('')
+          setSelectedCommand('')
         }
-      }
-    });
-  };
+      },
+    })
+  }
 
   // Get unique categories from subagent commands
   const categories = React.useMemo(() => {
-    const uniqueCategories = [...new Set(subagentCommands.map(cmd => cmd.category))];
-    return uniqueCategories.sort();
-  }, [subagentCommands]);
+    const uniqueCategories = [...new Set(subagentCommands.map((cmd) => cmd.category))]
+    return uniqueCategories.sort()
+  }, [subagentCommands])
 
   // Get subagents for selected category
   const subagentsForCategory = React.useMemo(() => {
-    if (!selectedCategory) return [];
-    const filtered = subagentCommands.filter(cmd => cmd.category === selectedCategory);
-    console.log('🔍 Subagents for category:', selectedCategory, '→', filtered.length, 'items:', filtered);
-    return filtered;
-  }, [subagentCommands, selectedCategory]);
+    if (!selectedCategory) return []
+    const filtered = subagentCommands.filter((cmd) => cmd.category === selectedCategory)
+    console.log(
+      '🔍 Subagents for category:',
+      selectedCategory,
+      '→',
+      filtered.length,
+      'items:',
+      filtered
+    )
+    return filtered
+  }, [subagentCommands, selectedCategory])
 
   const handleSend = () => {
     if (message.trim() && !loading) {
-      const messageToSend = message.trim();
-      const commandToSend = selectedCommand || '';
+      const messageToSend = message.trim()
+      const commandToSend = selectedCommand || ''
 
-      setLastSentMessage(messageToSend);
-      onSendMessage(messageToSend, commandToSend);
-      setMessage('');
-      setSelectedCategory('');
-      setSelectedCommand('');
+      setLastSentMessage(messageToSend)
+      onSendMessage(messageToSend, commandToSend)
+      setMessage('')
+      setSelectedCategory('')
+      setSelectedCommand('')
     }
-  };
+  }
 
   const handleCopyLastMessage = async () => {
     if (lastSentMessage) {
       try {
-        await navigator.clipboard.writeText(lastSentMessage);
-        antMessage.success('Last prompt copied to clipboard');
+        await navigator.clipboard.writeText(lastSentMessage)
+        antMessage.success('Last prompt copied to clipboard')
       } catch (error) {
-        console.error('Failed to copy to clipboard:', error);
-        antMessage.error('Failed to copy to clipboard');
+        console.error('Failed to copy to clipboard:', error)
+        antMessage.error('Failed to copy to clipboard')
       }
     }
-  };
+  }
 
   const handleClear = () => {
-    setMessage('');
-    setSelectedCategory('');
-    setSelectedCommand('');
-    onClear();
-  };
+    setMessage('')
+    setSelectedCategory('')
+    setSelectedCommand('')
+    onClear()
+  }
 
   const injectSubagentCommand = (subcommand: string) => {
-    setMessage(prev => (prev ? `${prev}\n\n${subcommand}` : subcommand));
+    setMessage((prev) => (prev ? `${prev}\n\n${subcommand}` : subcommand))
 
     // Focus editor after inserting command
     setTimeout(() => {
-      editorRef.current?.focus();
-    }, 0);
-  };
+      editorRef.current?.focus()
+    }, 0)
+  }
 
   // Handle editor changes
   const handleEditorChange = (value: string | undefined) => {
-    setMessage(value || '');
-  };
+    setMessage(value || '')
+  }
 
   const handleReduceHeight = () => {
     if (currentHeight > 60) {
       // Store current height before reducing
-      setPreviousHeight(currentHeight);
-      const newHeight = Math.max(60, Math.ceil(currentHeight * 0.25)); // Reduce by 75%, min 60px
-      setCurrentHeight(newHeight);
+      setPreviousHeight(currentHeight)
+      const newHeight = Math.max(60, Math.ceil(currentHeight * 0.25)) // Reduce by 75%, min 60px
+      setCurrentHeight(newHeight)
     }
-  };
+  }
 
   const handleRestoreHeight = () => {
     if (currentHeight < previousHeight) {
-      setCurrentHeight(previousHeight);
+      setCurrentHeight(previousHeight)
     }
-  };
+  }
 
-  // @ts-ignore - Brand color theme type mismatch
-  const panelBackground = BrandColors.quaternary ?? '#fbd3a4';
-  // @ts-ignore - Brand color theme type mismatch
-  const panelBorder = BrandColors.neutral?.stroke ?? '#e3ded8';
+  // @ts-expect-error - Brand color theme type mismatch
+  const panelBackground = BrandColors.quaternary ?? '#fbd3a4'
+  // @ts-expect-error - Brand color theme type mismatch
+  const panelBorder = BrandColors.neutral?.stroke ?? '#e3ded8'
 
   return (
     <div
@@ -237,7 +247,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     >
       <div
         className="shadow-sm"
-        style={{          
+        style={{
           background: panelBackground,
           borderTop: `1px solid ${panelBorder}`,
           borderBottom: `1px solid ${panelBorder}`,
@@ -246,24 +256,24 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         }}
       >
         {/* First Row: Subagent Commands + Submit/Clear Buttons */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
             Inject Command:
           </span>
-          
+
           {/* Category Selection */}
           <Select
             placeholder="Select category"
             value={selectedCategory}
             onChange={(value) => {
-              setSelectedCategory(value);
-              setSelectedCommand(''); // Reset command when category changes
+              setSelectedCategory(value)
+              setSelectedCommand('') // Reset command when category changes
             }}
             className="min-w-[280px]"
             size="small"
             allowClear
           >
-            {categories.map(category => (
+            {categories.map((category) => (
               <Option key={category} value={category}>
                 {category}
               </Option>
@@ -281,7 +291,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             disabled={!selectedCategory}
           >
             {subagentsForCategory.map((subagent, index) => (
-              <Option key={`${subagent.category}-${subagent.title}-${index}`} value={subagent.title}>
+              <Option
+                key={`${subagent.category}-${subagent.title}-${index}`}
+                value={subagent.title}
+              >
                 {subagent.title}
               </Option>
             ))}
@@ -292,9 +305,9 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             icon={<PlusOutlined />}
             disabled={!selectedCommand}
             onClick={() => {
-              const command = subagentsForCategory.find(cmd => cmd.title === selectedCommand);
+              const command = subagentsForCategory.find((cmd) => cmd.title === selectedCommand)
               if (command) {
-                injectSubagentCommand(command.subcommand);
+                injectSubagentCommand(command.subcommand)
               }
             }}
           >
@@ -327,11 +340,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             </Tooltip>
 
             <Tooltip title="Clear">
-              <ActionLink
-                icon={<ClearOutlined />}
-                onClick={handleClear}
-                disabled={loading}
-              >
+              <ActionLink icon={<ClearOutlined />} onClick={handleClear} disabled={loading}>
                 Clear
               </ActionLink>
             </Tooltip>
@@ -395,7 +404,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
             {/* Resize buttons in top-right corner */}
             <div
-              className="absolute top-2 right-2 flex gap-1"
+              className="absolute right-2 top-2 flex gap-1"
               style={{
                 background: 'rgba(255, 255, 255, 0.9)',
                 borderRadius: '6px',
@@ -423,7 +432,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                   }}
                 />
               </Tooltip>
-              
+
               <Tooltip title="Restore to previous height">
                 <Button
                   type="text"
@@ -445,10 +454,10 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               </Tooltip>
             </div>
           </div>
-          
+
           {/* Floating action area */}
           {message.trim() && (
-            <div 
+            <div
               className="absolute bottom-3 right-3 flex items-center gap-2"
               style={{
                 background: 'rgba(255, 255, 255, 0.9)',
@@ -462,7 +471,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                 style={{
                   fontSize: '12px',
                   color: '#64748b',
-                  fontWeight: 500
+                  fontWeight: 500,
                 }}
               >
                 Press Ctrl+Enter to send
@@ -472,7 +481,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default InputPanel;
+export default InputPanel

@@ -8,49 +8,51 @@
  * - Right: Code editor for manual edits
  */
 
-import React from 'react';
-import { Layout, Button, Alert, Space, message, Tabs } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
-import styles from '../diagram-wizard.module.css';
-import ChatPanel from '../panels/Panel1_Chat';
-import PreviewPanel from '../panels/Panel2_Preview';
-import CodeEditorPanel from '../panels/Panel3_CodeEditor';
-import ExportModal from '../components/ExportModal';
-import Footer from '../components/Footer';
-import DiagramWizardHeader from '../components/DiagramWizardHeader';
-import type { ModelId } from './ModelSelectionScreen';
-import type { DiagramUpdate } from '../../../services/diagram/diagramApi';
+import { CopyOutlined } from '@ant-design/icons'
+import { Alert, Button, Layout, message, Tabs } from 'antd'
+import React from 'react'
+
+import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
+import type { Message } from '../../../types'
+import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import ExportModal from '../components/ExportModal'
+import Footer from '../components/Footer'
+import styles from '../diagram-wizard.module.css'
+import ChatPanel from '../panels/Panel1_Chat'
+import PreviewPanel from '../panels/Panel2_Preview'
+import CodeEditorPanel from '../panels/Panel3_CodeEditor'
+import type { ModelId } from './ModelSelectionScreen'
 
 /**
  * GenerationScreenProps type definition
- * 
+ *
  * Describes the structure and properties of GenerationScreenProps
  */
 interface GenerationScreenProps {
-  selectedModel: ModelId;
-  currentPhase: number;
-  phases: Array<{ title: string; description: string; icon: React.ReactNode }>;
-  loading: boolean;
-  sessionId: string | null;
-  status: DiagramUpdate | null;
-  score: number;
-  scoreTarget: number;
-  diagramCode: string;
-  svgOutput: string;
-  chatHistory: any[];
-  clarifications: Array<{ question: string; answer?: string }>;
-  sseConnected: boolean;
-  exportModalOpen: boolean;
-  structurizrWorkspace?: string;
-  cleanStructurizr?: string;
-  jsonRepresentation?: Record<string, unknown> | null;
-  onChangeModel: () => void;
-  onNewDiagram: () => void;
-  onExportClick: () => void;
-  onExportModalClose: () => void;
-  onExportSubmit: (filename: string, format: string) => void;
-  onCodeChange?: (code: string) => void;
-  error?: { message: string };
+  selectedModel: ModelId
+  currentPhase: number
+  phases: Array<{ title: string; description: string; icon: React.ReactNode }>
+  loading: boolean
+  sessionId: string | null
+  status: DiagramUpdate | null
+  score: number
+  scoreTarget: number
+  diagramCode: string
+  svgOutput: string
+  chatHistory: Message[]
+  clarifications: Array<{ question: string; answer?: string }>
+  sseConnected: boolean
+  exportModalOpen: boolean
+  structurizrWorkspace?: string
+  cleanStructurizr?: string
+  jsonRepresentation?: Record<string, unknown> | null
+  onChangeModel: () => void
+  onNewDiagram: () => void
+  onExportClick: () => void
+  onExportModalClose: () => void
+  onExportSubmit: (filename: string, format: string) => void
+  onCodeChange?: (code: string) => void
+  error?: { message: string }
 }
 
 /**
@@ -78,14 +80,14 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   onCodeChange,
   error,
 }) => {
-  const isComplete = status?.status === 'completed';
-  const isError = status?.status === 'error' || status?.status === 'failed';
-  const isValidationIssue = status?.status === 'refining' || status?.status === 'fallback_fix';
+  const isComplete = status?.status === 'completed'
+  const isError = status?.status === 'error' || status?.status === 'failed'
+  const isValidationIssue = status?.status === 'refining' || status?.status === 'fallback_fix'
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(diagramCode);
-    message.success('Diagram code copied to clipboard!');
-  };
+    navigator.clipboard.writeText(diagramCode)
+    message.success('Diagram code copied to clipboard!')
+  }
 
   return (
     <Layout className={styles.diagramWizard}>
@@ -124,7 +126,15 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         )}
 
         {/* Tabbed layout for Conversation / Preview / Diagram Code */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 24px', minHeight: 0 }}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '0 24px',
+            minHeight: 0,
+          }}
+        >
           <Tabs
             defaultActiveKey="preview"
             style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -134,8 +144,23 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'conversation',
                 label: 'Conversation',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <ChatPanel
                         messages={chatHistory}
                         clarifications={clarifications}
@@ -150,12 +175,27 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'preview',
                 label: 'Preview',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <PreviewPanel
                         svgOutput={svgOutput}
                         isLoading={loading && !svgOutput}
-                        diagramType={status?.diagramType || status?.diagram_type || "Mermaid"}
+                        diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
                         error={status?.error_message || status?.error || error?.message || null}
                         validationError={status?.validation_error || null}
                       />
@@ -167,9 +207,31 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'code',
                 label: 'Diagram Code',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
                         <Button
                           type="text"
                           size="small"
@@ -182,7 +244,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                         <CodeEditorPanel
                           code={diagramCode}
                           onChange={async (code: string) => onCodeChange?.(code)}
-                          diagramType={status?.diagramType || status?.diagram_type || "Mermaid"}
+                          diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
                           isLoading={loading}
                         />
                       </div>
@@ -194,14 +256,39 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'workspace',
                 label: 'Workspace',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
                         <Button
                           type="text"
                           size="small"
                           icon={<CopyOutlined />}
-                          onClick={() => structurizrWorkspace && navigator.clipboard.writeText(structurizrWorkspace)}
+                          onClick={() =>
+                            structurizrWorkspace &&
+                            navigator.clipboard.writeText(structurizrWorkspace)
+                          }
                           title="Copy workspace"
                           disabled={!structurizrWorkspace}
                         />
@@ -209,7 +296,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <CodeEditorPanel
                           code={structurizrWorkspace || ''}
-                          onChange={(code: string) => {}}
+                          onChange={async (_code: string) => {}}
                           diagramType="Structurizr"
                           isLoading={loading}
                         />
@@ -222,14 +309,38 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'cleanWorkspace',
                 label: 'Clean Workspace',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
                         <Button
                           type="text"
                           size="small"
                           icon={<CopyOutlined />}
-                          onClick={() => cleanStructurizr && navigator.clipboard.writeText(cleanStructurizr)}
+                          onClick={() =>
+                            cleanStructurizr && navigator.clipboard.writeText(cleanStructurizr)
+                          }
                           title="Copy clean workspace"
                           disabled={!cleanStructurizr}
                         />
@@ -237,7 +348,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <CodeEditorPanel
                           code={cleanStructurizr || ''}
-                          onChange={(code: string) => {}}
+                          onChange={async (_code: string) => {}}
                           diagramType="Structurizr"
                           isLoading={loading}
                         />
@@ -250,22 +361,51 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 key: 'fullJson',
                 label: 'Full JSON',
                 children: (
-                  <div style={{ height: 'calc(100vh - 280px)', minHeight: 360, display: 'flex', flexDirection: 'column' }}>
-                    <div className={styles.panel} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 8 }}>
+                  <div
+                    style={{
+                      height: 'calc(100vh - 280px)',
+                      minHeight: 360,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
                         <Button
                           type="text"
                           size="small"
                           icon={<CopyOutlined />}
-                          onClick={() => jsonRepresentation && navigator.clipboard.writeText(JSON.stringify(jsonRepresentation, null, 2))}
+                          onClick={() =>
+                            jsonRepresentation &&
+                            navigator.clipboard.writeText(
+                              JSON.stringify(jsonRepresentation, null, 2)
+                            )
+                          }
                           title="Copy JSON"
                           disabled={!jsonRepresentation}
                         />
                       </div>
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <CodeEditorPanel
-                          code={jsonRepresentation ? JSON.stringify(jsonRepresentation, null, 2) : ''}
-                          onChange={(code: string) => {}}
+                          code={
+                            jsonRepresentation ? JSON.stringify(jsonRepresentation, null, 2) : ''
+                          }
+                          onChange={async (_code: string) => {}}
                           diagramType="JSON"
                           isLoading={loading}
                         />
@@ -279,11 +419,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         </div>
 
         {/* Footer with Actions */}
-        <Footer
-          sessionId={sessionId}
-          sseConnected={sseConnected}
-          currentStatus={status?.status}
-        />
+        <Footer sessionId={sessionId} sseConnected={sseConnected} currentStatus={status?.status} />
       </Layout.Content>
 
       {/* Export Modal */}
@@ -293,7 +429,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         svgContainerRef={{ current: null }}
       />
     </Layout>
-  );
-};
+  )
+}
 
-export default GenerationScreen;
+export default GenerationScreen

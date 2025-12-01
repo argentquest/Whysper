@@ -65,7 +65,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
         setLoading(true);
         const response = await ApiService.getAgents();
         if (response.success && response.data) {
-          setAgents(response.data);
+          setAgents(response.data as Agent[]);
         }
       } catch (error) {
         console.error('Failed to load agents:', error);

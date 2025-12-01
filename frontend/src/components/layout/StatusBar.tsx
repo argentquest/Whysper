@@ -1,27 +1,24 @@
 /**
  * StatusBar Component
- * 
+ *
  * This module exports the StatusBar component for the application.
  */
-import React, { useState, useEffect, useRef } from 'react';
-import { Space, Tag, Typography, Tooltip, Button, Badge, Popover } from 'antd';
 import {
-  CheckCircleOutlined,
-  LoadingOutlined,
-  ExclamationCircleOutlined,
-  FolderOpenOutlined,
-  FileTextOutlined,
-  CloudOutlined,
   ApiOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
   HistoryOutlined,
-} from '@ant-design/icons';
-import { BrandColors } from 'branding';
+  LoadingOutlined,
+} from '@ant-design/icons'
+import { Badge, Popover, Typography } from 'antd'
+import { BrandColors } from 'branding'
+import React, { useEffect, useRef,useState } from 'react'
 
-const { Text } = Typography;
+const { Text } = Typography
 
 /**
  * LogEvent type definition
- * 
+ *
  * Describes the structure and properties of LogEvent
  * @interface LogEvent
  * @property {string} timestamp - The timestamp of the log event
@@ -30,10 +27,10 @@ const { Text } = Typography;
  * @property {string} logger - The logger name
  */
 interface LogEvent {
-  timestamp: string;
-  level: string;
-  message: string;
-  logger: string;
+  timestamp: string
+  level: string
+  message: string
+  logger: string
 }
 
 /**
@@ -48,11 +45,11 @@ interface LogEvent {
  * @property {string} [model] - The current AI model name
  */
 interface StatusBarProps {
-  status: 'ready' | 'loading' | 'error';
-  isProcessing?: boolean;
-  errorMessage?: string;
-  conversationId?: string;  // For session-specific log filtering
-  model?: string;
+  status: 'ready' | 'loading' | 'error'
+  isProcessing?: boolean
+  errorMessage?: string
+  conversationId?: string // For session-specific log filtering
+  model?: string
 }
 
 /**
@@ -77,179 +74,183 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   model = 'Not configured',
 }) => {
   // Real-time log streaming state
-  const [currentLog, setCurrentLog] = useState<LogEvent | null>(null);
-  const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
-  const [isLogConnected, setIsLogConnected] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const [currentLog, setCurrentLog] = useState<LogEvent | null>(null)
+  const [logHistory, setLogHistory] = useState<LogEvent[]>([])
+  const [isLogConnected, setIsLogConnected] = useState(false)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const eventSourceRef = useRef<EventSource | null>(null)
 
   // Track detected states from logs
-  const [detectedActivity, setDetectedActivity] = useState<string>('');
+  const [detectedActivity, setDetectedActivity] = useState<string>('')
 
   // Debug: Log status changes
   useEffect(() => {
-    console.log('🔵 [STATUS BAR] Status changed:', status);
-  }, [status]);
+    console.log('🔵 [STATUS BAR] Status changed:', status)
+  }, [status])
 
   // Detect activity patterns from log messages
   useEffect(() => {
-    if (!currentLog) return;
+    if (!currentLog) return
 
-    const message = currentLog.message.toLowerCase();
+    const message = currentLog.message.toLowerCase()
 
     // Detect AI API calls
-    if (message.includes('calling ai provider') ||
-        message.includes('sending request to') ||
-        message.includes('openrouter') ||
-        message.includes('making api call')) {
-      setDetectedActivity('ai_call');
+    if (
+      message.includes('calling ai provider') ||
+      message.includes('sending request to') ||
+      message.includes('openrouter') ||
+      message.includes('making api call')
+    ) {
+      setDetectedActivity('ai_call')
     }
     // Detect response processing
-    else if (message.includes('received response') ||
-             message.includes('processing response') ||
-             message.includes('parsing ai response')) {
-      setDetectedActivity('processing');
+    else if (
+      message.includes('received response') ||
+      message.includes('processing response') ||
+      message.includes('parsing ai response')
+    ) {
+      setDetectedActivity('processing')
     }
     // Detect errors
-    else if (currentLog.level === 'ERROR' ||
-             message.includes('error') ||
-             message.includes('failed')) {
-      setDetectedActivity('error');
+    else if (
+      currentLog.level === 'ERROR' ||
+      message.includes('error') ||
+      message.includes('failed')
+    ) {
+      setDetectedActivity('error')
     }
     // Detect completion
-    else if (message.includes('completed') ||
-             message.includes('finished') ||
-             message.includes('success')) {
-      setDetectedActivity('ready');
+    else if (
+      message.includes('completed') ||
+      message.includes('finished') ||
+      message.includes('success')
+    ) {
+      setDetectedActivity('ready')
     }
-  }, [currentLog]);
+  }, [currentLog])
 
   // Connect to SSE log stream on mount (reconnect when conversationId changes)
   useEffect(() => {
-    const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000';
-    const API_BASE_URL = import.meta.env.DEV
-      ? `http://localhost:${BACKEND_PORT}/api/v1`
-      : '/api/v1';
+    const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000'
+    const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
 
     // Add session_id parameter for session-specific log filtering
     const url = conversationId
       ? `${API_BASE_URL}/chat/logs/stream?session_id=${conversationId}`
-      : `${API_BASE_URL}/chat/logs/stream`;
+      : `${API_BASE_URL}/chat/logs/stream`
 
-    const eventSource = new EventSource(url);
-    eventSourceRef.current = eventSource;
+    const eventSource = new EventSource(url)
+    eventSourceRef.current = eventSource
 
     eventSource.addEventListener('connected', () => {
-      setIsLogConnected(true);
-    });
+      setIsLogConnected(true)
+    })
 
     eventSource.addEventListener('log', (event) => {
       try {
-        const logEvent: LogEvent = JSON.parse(event.data);
-        setCurrentLog(logEvent);
+        const logEvent: LogEvent = JSON.parse(event.data)
+        setCurrentLog(logEvent)
 
         // Add to history buffer (keep last 30)
         setLogHistory((prev) => {
-          const newHistory = [...prev, logEvent];
+          const newHistory = [...prev, logEvent]
           // Keep only last 30 logs
-          return newHistory.slice(-30);
-        });
+          return newHistory.slice(-30)
+        })
       } catch (error) {
-        console.error('❌ [STATUS BAR] Failed to parse log event:', error);
+        console.error('❌ [STATUS BAR] Failed to parse log event:', error)
       }
-    });
+    })
 
     eventSource.onerror = (error) => {
-      console.error('❌ [STATUS BAR] Connection error:', error);
-      setIsLogConnected(false);
-    };
+      console.error('❌ [STATUS BAR] Connection error:', error)
+      setIsLogConnected(false)
+    }
 
     return () => {
-      eventSource.close();
+      eventSource.close()
       // Clear history when disconnecting
-      setLogHistory([]);
-    };
-  }, [conversationId]); // Reconnect when conversationId changes
+      setLogHistory([])
+    }
+  }, [conversationId]) // Reconnect when conversationId changes
 
   const getStatusIcon = () => {
     switch (status) {
       case 'ready':
-        return <CheckCircleOutlined className="text-green-500" />;
+        return <CheckCircleOutlined className="text-green-500" />
       case 'loading':
-        return <LoadingOutlined className="text-blue-500" />;
+        return <LoadingOutlined className="text-blue-500" />
       case 'error':
-        return <ExclamationCircleOutlined className="text-red-500" />;
+        return <ExclamationCircleOutlined className="text-red-500" />
       default:
-        return <CheckCircleOutlined className="text-gray-500" />;
+        return <CheckCircleOutlined className="text-gray-500" />
     }
-  };
+  }
 
   const getStatusText = () => {
     switch (status) {
       case 'ready':
-        return 'Ready';
+        return 'Ready'
       case 'loading':
-        return 'Processing...';
+        return 'Processing...'
       case 'error':
-        return errorMessage || 'Error';
+        return errorMessage || 'Error'
       default:
-        return 'Unknown';
+        return 'Unknown'
     }
-  };
+  }
 
   const getWaitingStatus = () => {
     // Use detected activity from logs if available
     if (detectedActivity === 'ai_call') {
-      return 'Calling AI Provider';
+      return 'Calling AI Provider'
     } else if (detectedActivity === 'processing') {
-      return 'Processing AI Response';
+      return 'Processing AI Response'
     } else if (detectedActivity === 'error') {
-      return 'Error Detected';
+      return 'Error Detected'
     }
 
     // Fall back to prop-based status
     if (status === 'loading') {
       if (isProcessing) {
-        return 'Processing AI Response';
+        return 'Processing AI Response'
       }
-      return 'Waiting for AI Response';
+      return 'Waiting for AI Response'
     } else if (status === 'error') {
-      return 'Error - Ready for Input';
+      return 'Error - Ready for Input'
     }
-    return 'Ready for Input';
-  };
+    return 'Ready for Input'
+  }
 
   const getWaitingStatusColor = () => {
     // Use detected activity from logs if available
     if (detectedActivity === 'ai_call') {
-      return '#1890ff'; // Blue - waiting for AI
+      return '#1890ff' // Blue - waiting for AI
     } else if (detectedActivity === 'processing') {
-      return '#faad14'; // Orange - processing
+      return '#faad14' // Orange - processing
     } else if (detectedActivity === 'error') {
-      return '#ff4d4f'; // Red - error
+      return '#ff4d4f' // Red - error
     } else if (detectedActivity === 'ready') {
-      return '#52c41a'; // Green - ready
+      return '#52c41a' // Green - ready
     }
 
     // Fall back to prop-based status
     if (status === 'loading') {
       if (isProcessing) {
-        return '#faad14'; // Orange - processing
+        return '#faad14' // Orange - processing
       }
-      return '#1890ff'; // Blue - waiting
+      return '#1890ff' // Blue - waiting
     } else if (status === 'error') {
-      return '#ff4d4f'; // Red - error
+      return '#ff4d4f' // Red - error
     }
-    return '#52c41a'; // Green - ready
-  };
+    return '#52c41a' // Green - ready
+  }
 
   // Log history popover content (reversed to show newest first)
   const logHistoryContent = (
     <div style={{ width: '1000px', maxHeight: '600px', overflowY: 'auto' }}>
       {logHistory.length === 0 ? (
-        <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
-          No logs yet
-        </Text>
+        <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>No logs yet</Text>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {[...logHistory].reverse().map((log, index) => (
@@ -302,16 +303,16 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </div>
       )}
     </div>
-  );
+  )
 
   return (
     <div
-      className="h-12 border-t border-gray-200 dark:border-gray-700 px-6 flex items-center justify-between"
+      className="flex h-12 items-center justify-between border-t border-gray-200 px-6 dark:border-gray-700"
       style={{
         backgroundColor: BrandColors.tertiary,
         boxShadow: '0 -1px 4px rgba(0, 0, 0, 0.04)',
         borderTop: `1px solid ${BrandColors.tertiary}`,
-        fontSize: '14px'
+        fontSize: '14px',
       }}
     >
       {/* Left Section - Status */}
@@ -346,18 +347,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         >
           {currentLog && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Badge
-                status={isLogConnected ? 'processing' : 'default'}
-                text=""
-              />
+              <Badge status={isLogConnected ? 'processing' : 'default'} text="" />
               <Text style={{ fontSize: '13px', color: '#64748b', fontFamily: 'monospace' }}>
                 {new Date(currentLog.timestamp).toLocaleTimeString()}
               </Text>
               <Text
                 style={{
                   fontSize: '13px',
-                  color: currentLog.level === 'ERROR' ? '#ef4444' :
-                         currentLog.level === 'WARNING' ? '#faad14' : '#10b981',
+                  color:
+                    currentLog.level === 'ERROR'
+                      ? '#ef4444'
+                      : currentLog.level === 'WARNING'
+                        ? '#faad14'
+                        : '#10b981',
                   fontWeight: 500,
                 }}
               >
@@ -409,7 +411,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default StatusBar;
+export default StatusBar

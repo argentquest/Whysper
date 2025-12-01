@@ -11,24 +11,25 @@
  * - Error display for validation and rendering failures
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, Empty, Button, Space, Spin, Alert } from 'antd';
 import {
-  ZoomInOutlined,
-  ZoomOutOutlined,
-  ReloadOutlined,
   DragOutlined,
   ExclamationCircleOutlined,
-} from '@ant-design/icons';
-import styles from '../diagram-wizard.module.css';
+  ReloadOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
+} from '@ant-design/icons'
+import { Alert,Button, Card, Empty, Space, Spin } from 'antd'
+import React, { useCallback,useEffect, useRef, useState } from 'react'
+
+import styles from '../diagram-wizard.module.css'
 
 // Define the props structure for the preview component
 interface Panel2PreviewProps {
-  svgOutput: string;
-  diagramType: string;
-  isLoading: boolean;
-  error?: string | null;
-  validationError?: string | null;
+  svgOutput: string
+  diagramType: string
+  isLoading: boolean
+  error?: string | null
+  validationError?: string | null
 }
 
 const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
@@ -39,38 +40,38 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   validationError,
 }) => {
   // State management for zoom, position, and dragging interactions
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Zoom in function with controlled maximum scale limit
   const handleZoomIn = useCallback(() => {
-    setScale((prev) => Math.min(prev + 0.1, 3));
-  }, []);
+    setScale((prev) => Math.min(prev + 0.1, 3))
+  }, [])
 
   // Zoom out function with controlled minimum scale limit
   const handleZoomOut = useCallback(() => {
-    setScale((prev) => Math.max(prev - 0.1, 0.5));
-  }, []);
+    setScale((prev) => Math.max(prev - 0.1, 0.5))
+  }, [])
 
   // Reset zoom and position to default state
   const handleReset = useCallback(() => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-  }, []);
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }, [])
 
   // Handle mouse wheel zooming with Ctrl key modifier
   const handleWheel = useCallback((e: React.WheelEvent) => {
     // Prevent default scrolling and allow zoom with Ctrl key
     if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -0.1 : 0.1
       // Constrain zoom between predefined min and max values
-      setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 3));
+      setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 3))
     }
-  }, []);
+  }, [])
 
   // Add keyboard shortcuts for zooming and resetting
   useEffect(() => {
@@ -79,63 +80,69 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       if ((e.ctrlKey || e.metaKey) && svgOutput) {
         // Zoom in on Ctrl + = or +
         if (e.key === '=' || e.key === '+') {
-          e.preventDefault();
-          handleZoomIn();
-        } 
+          e.preventDefault()
+          handleZoomIn()
+        }
         // Zoom out on Ctrl + - or _
         else if (e.key === '-' || e.key === '_') {
-          e.preventDefault();
-          handleZoomOut();
-        } 
+          e.preventDefault()
+          handleZoomOut()
+        }
         // Reset zoom on Ctrl + 0
         else if (e.key === '0') {
-          e.preventDefault();
-          handleReset();
+          e.preventDefault()
+          handleReset()
         }
       }
-    };
+    }
 
     // Add and remove event listener for keyboard interactions
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [svgOutput, handleZoomIn, handleZoomOut, handleReset]);
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [svgOutput, handleZoomIn, handleZoomOut, handleReset])
 
   // Start dragging when mouse is pressed
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only allow dragging when SVG is loaded and not at default zoom
-    if (svgOutput && scale !== 1) {
-      setIsDragging(true);
-      // Calculate drag start position relative to current position
-      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-      e.preventDefault();
-    }
-  }, [svgOutput, scale, position]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // Only allow dragging when SVG is loaded and not at default zoom
+      if (svgOutput && scale !== 1) {
+        setIsDragging(true)
+        // Calculate drag start position relative to current position
+        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
+        e.preventDefault()
+      }
+    },
+    [svgOutput, scale, position]
+  )
 
   // Update position while mouse is moving during drag
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging) {
-      // Update position based on mouse movement
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  }, [isDragging, dragStart]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDragging) {
+        // Update position based on mouse movement
+        setPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        })
+      }
+    },
+    [isDragging, dragStart]
+  )
 
   // Stop dragging when mouse is released
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    setIsDragging(false)
+  }, [])
 
   // Stop dragging if mouse leaves the component
   const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    setIsDragging(false)
+  }, [])
 
   // Render the preview content with various states
   const renderPreview = () => {
     // Determine if there are any errors to display
-    const hasError = error || validationError;
+    const hasError = error || validationError
 
     // Show validation error if present (code is invalid)
     if (validationError) {
@@ -148,21 +155,24 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
                 <p style={{ marginBottom: 8 }}>
                   The generated {diagramType} code contains syntax errors:
                 </p>
-                <pre style={{
-                  background: '#fff1f0',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  maxHeight: '200px',
-                  overflow: 'auto',
-                  border: '1px solid #ffccc7',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}>
+                <pre
+                  style={{
+                    background: '#fff1f0',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    maxHeight: '200px',
+                    overflow: 'auto',
+                    border: '1px solid #ffccc7',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {validationError}
                 </pre>
                 <p style={{ marginTop: 12, fontSize: '12px', color: '#8c8c8c' }}>
-                  The AI will attempt to fix these errors automatically, or you can edit the code manually in the right panel.
+                  The AI will attempt to fix these errors automatically, or you can edit the code
+                  manually in the right panel.
                 </p>
               </div>
             }
@@ -171,7 +181,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
             icon={<ExclamationCircleOutlined />}
           />
         </div>
-      );
+      )
     }
 
     // Show rendering error if present (code is valid but rendering failed)
@@ -182,20 +192,20 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
             message="Rendering Error"
             description={
               <div>
-                <p style={{ marginBottom: 8 }}>
-                  Failed to render the {diagramType} diagram:
-                </p>
-                <pre style={{
-                  background: '#fff1f0',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  maxHeight: '200px',
-                  overflow: 'auto',
-                  border: '1px solid #ffccc7',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}>
+                <p style={{ marginBottom: 8 }}>Failed to render the {diagramType} diagram:</p>
+                <pre
+                  style={{
+                    background: '#fff1f0',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    maxHeight: '200px',
+                    overflow: 'auto',
+                    border: '1px solid #ffccc7',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {error}
                 </pre>
               </div>
@@ -205,12 +215,12 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
             icon={<ExclamationCircleOutlined />}
           />
         </div>
-      );
+      )
     }
 
     // Show empty state if no SVG is generated and no errors
     if (!svgOutput) {
-      return <Empty description="No diagram generated yet" />;
+      return <Empty description="No diagram generated yet" />
     }
 
     // Render SVG with interactive zoom and pan capabilities
@@ -229,7 +239,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          cursor: isDragging ? 'grabbing' : (scale !== 1 ? 'grab' : 'default'),
+          cursor: isDragging ? 'grabbing' : scale !== 1 ? 'grab' : 'default',
           position: 'relative',
         }}
       >
@@ -244,8 +254,8 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
           dangerouslySetInnerHTML={{ __html: svgOutput }}
         />
       </div>
-    );
-  };
+    )
+  }
 
   // Render the full preview component with zoom controls
   return (
@@ -314,7 +324,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
         )}
       </div>
     </Card>
-  );
-};
+  )
+}
 
-export default Panel2_Preview;
+export default Panel2_Preview

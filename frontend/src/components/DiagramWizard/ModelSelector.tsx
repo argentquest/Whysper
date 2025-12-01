@@ -5,31 +5,27 @@
  * Shows 4 model options with descriptions and strengths.
  */
 
-import React from 'react';
-import { Card, Button, Row, Col, Space, Typography } from 'antd';
-import {
-  BulbOutlined,
-  ThunderboltOutlined,
-  FileTextOutlined,
-  ApiOutlined,
-} from '@ant-design/icons';
-import styles from './diagram-wizard.module.css';
+import { ApiOutlined,BulbOutlined, FileTextOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { Button, Card, Col, Row, Space, Typography } from 'antd'
+import React from 'react'
 
-export type ModelId = 'gpt5' | 'grok' | 'claude' | 'gemini';
+import styles from './diagram-wizard.module.css'
+
+export type ModelId = 'gpt5' | 'grok' | 'claude' | 'gemini'
 
 /**
  * ModelOption type definition
- * 
+ *
  * Describes the structure and properties of ModelOption
  */
 export interface ModelOption {
-  id: ModelId;
-  name: string;
-  displayName: string;
-  description: string;
-  strengths: string[];
-  icon: React.ReactNode;
-  color: string;
+  id: ModelId
+  name: string
+  displayName: string
+  description: string
+  strengths: string[]
+  icon: React.ReactNode
+  color: string
 }
 
 const MODELS: ModelOption[] = [
@@ -52,12 +48,7 @@ const MODELS: ModelOption[] = [
     name: 'Fast',
     displayName: 'Fast',
     description: 'Fast, deterministic analysis with lean efficiency',
-    strengths: [
-      'Quick analysis',
-      'Deterministic results',
-      'Simple systems',
-      'Minimal overhead',
-    ],
+    strengths: ['Quick analysis', 'Deterministic results', 'Simple systems', 'Minimal overhead'],
     icon: <ThunderboltOutlined />,
     color: '#faad14',
   },
@@ -89,16 +80,16 @@ const MODELS: ModelOption[] = [
     icon: <ApiOutlined />,
     color: '#ff7a45',
   },
-];
+]
 
 /**
  * ModelSelectorProps type definition
- * 
+ *
  * Describes the structure and properties of ModelSelectorProps
  */
 interface ModelSelectorProps {
-  onSelect: (modelId: ModelId) => void;
-  loading?: boolean;
+  onSelect: (modelId: ModelId) => void
+  loading?: boolean
 }
 
 /**
@@ -215,7 +206,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading 
         </div>
       </Space>
     </div>
-  );
-};
+  )
+}
 
-export default ModelSelector;
+export default ModelSelector

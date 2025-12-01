@@ -1,93 +1,92 @@
 /**
  * ChatView Component
- * 
+ *
  * This module exports the ChatView component for the application.
  */
-// @ts-nocheck
-import React, { useRef, useEffect, useState } from 'react';
-import { Card, Button, Typography, Tooltip, Avatar, Dropdown, Modal, App } from 'antd';
 import {
-  ExpandOutlined,
+  CodeOutlined,
   CompressOutlined,
   CopyOutlined,
-  CodeOutlined,
+  ExpandOutlined,
   FileTextOutlined,
-  Html5Outlined,
-  UserOutlined,
-  RobotOutlined,
-  FullscreenOutlined,
   FullscreenExitOutlined,
+  FullscreenOutlined,
+  Html5Outlined,
   PrinterOutlined,
   ReloadOutlined,
-} from '@ant-design/icons';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import type { Message } from '../../types';
-import { MermaidDiagram } from './MermaidDiagram';
-import { D2DiagramBackend } from './D2DiagramBackend';
-import { C4Diagram } from './C4Diagram';
+  RobotOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
+import { App,Avatar, Button, Card, Dropdown, Modal, Tooltip, Typography } from 'antd'
+import { Brand,BrandColors } from 'branding'
+import React, { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
+
+import { useTheme } from '../../themes'
+import type { Message } from '../../types'
 import {
-  isMermaidSyntax,
-  prepareMermaidCode,
-  isMermaidCode,
-  isD2Syntax,
-  prepareD2Code,
-  isD2Code,
-  isC4Syntax,
-  prepareC4Code,
   isC4Code,
-  processMixedHtmlContent
-} from '../../utils/mermaidUtils';
-import { useTheme } from '../../themes';
-import { BrandColors, Brand } from 'branding';
+  isC4Syntax,
+  isD2Code,
+  isD2Syntax,
+  isMermaidCode,
+  isMermaidSyntax,
+  prepareC4Code,
+  prepareD2Code,
+  prepareMermaidCode,
+  processMixedHtmlContent,
+} from '../../utils/mermaidUtils'
+import { C4Diagram } from './C4Diagram'
+import { D2DiagramBackend } from './D2DiagramBackend'
+import { MermaidDiagram } from './MermaidDiagram'
 
-const assistantName = Brand.tagline || Brand.name || 'AI Assistant';
-
+const assistantName = Brand.tagline || Brand.name || 'AI Assistant'
 
 // Function to print the visual output of a message element
 const printMessageElement = (messageId: string) => {
   // Find the message element by ID
-  const messageElement = document.getElementById(`message-${messageId}`);
-  
+  const messageElement = document.getElementById(`message-${messageId}`)
+
   if (!messageElement) {
-    console.error(`Message element with ID message-${messageId} not found`);
-    return;
+    console.error(`Message element with ID message-${messageId} not found`)
+    return
   }
-  
+
   // Create a unique ID for this print session
-  const printId = `print-${messageId}-${Date.now()}`;
-  
+  const printId = `print-${messageId}-${Date.now()}`
+
   // Create a new iframe for printing
-  const printFrame = document.createElement('iframe');
-  printFrame.id = printId;
-  printFrame.style.position = 'absolute';
-  printFrame.style.left = '-9999px';
-  printFrame.style.top = '-9999px';
-  document.body.appendChild(printFrame);
-  
+  const printFrame = document.createElement('iframe')
+  printFrame.id = printId
+  printFrame.style.position = 'absolute'
+  printFrame.style.left = '-9999px'
+  printFrame.style.top = '-9999px'
+  document.body.appendChild(printFrame)
+
   // Get the iframe document
-  const frameDoc = printFrame.contentWindow?.document || printFrame.contentDocument;
-  if (!frameDoc) return;
-  
+  const frameDoc = printFrame.contentWindow?.document || printFrame.contentDocument
+  if (!frameDoc) return
+
   // Clone the message content
-  const messageContent = messageElement.querySelector('.message-content');
+  const messageContent = messageElement.querySelector('.message-content')
   if (!messageContent) {
-    console.error('Message content element not found');
-    document.body.removeChild(printFrame);
-    return;
+    console.error('Message content element not found')
+    document.body.removeChild(printFrame)
+    return
   }
-  
-  const clonedContent = messageContent.cloneNode(true);
-  
+
+  const clonedContent = messageContent.cloneNode(true)
+
   // Expand all collapsible elements in the cloned content
-  const detailsElements = (clonedContent as Element).querySelectorAll('details');
+  const detailsElements = (clonedContent as Element).querySelectorAll('details')
   detailsElements.forEach((details: HTMLDetailsElement) => {
-    details.setAttribute('open', '');
-  });
-  
+    details.setAttribute('open', '')
+  })
+
   // Write the content to the iframe with the full content
-  frameDoc.open();
+  frameDoc.open()
   frameDoc.write(`
     <!DOCTYPE html>
     <html lang="en">
@@ -144,40 +143,40 @@ const printMessageElement = (messageId: string) => {
       <div id="printed-content"></div>
     </body>
     </html>
-  `);
-  frameDoc.close();
-  
+  `)
+  frameDoc.close()
+
   // Append the cloned content to the iframe
-  const printedContent = frameDoc.getElementById('printed-content');
+  const printedContent = frameDoc.getElementById('printed-content')
   if (printedContent) {
-    printedContent.appendChild(clonedContent);
+    printedContent.appendChild(clonedContent)
   }
-  
+
   // Wait for the content to load, then trigger print
   setTimeout(() => {
     if (printFrame.contentWindow) {
-      printFrame.contentWindow.focus();
-      printFrame.contentWindow.print();
+      printFrame.contentWindow.focus()
+      printFrame.contentWindow.print()
     }
-    
+
     // Remove the iframe after printing
     setTimeout(() => {
-      document.body.removeChild(printFrame);
-    }, 1000);
-  }, 500);
-};
+      document.body.removeChild(printFrame)
+    }, 1000)
+  }, 500)
+}
 
 /**
  * MessageItemProps type definition
- * 
+ *
  * Describes the structure and properties of MessageItemProps
  * @interface MessageItemProps
  * @property {Message} message - The message object to display
  * @property {Function} [onShowCode] - Callback when code block is clicked
  */
 interface MessageItemProps {
-  message: Message;
-  onShowCode?: (code: string, language: string, title?: string) => void;
+  message: Message
+  onShowCode?: (code: string, language: string, title?: string) => void
 }
 
 /**
@@ -185,59 +184,59 @@ interface MessageItemProps {
  * Handles Mermaid diagrams, D2 diagrams, and regular code blocks
  */
 const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: boolean }) => {
-  const { inline, className, children, ...rest } = props;
-  const match = /language-(\w+)/.exec(className || '');
-  const language = match ? match[1] : '';
+  const { inline, className, children, ...rest } = props
+  const match = /language-(\w+)/.exec(className || '')
+  const language = match ? match[1] : ''
 
   // Handle C4 diagrams (must check BEFORE Mermaid, as C4 keywords might be in Mermaid)
   // Supports: c4, c4diagram, plantuml (with C4 content), mermaid (with C4 content)
-  const codeString = String(children);
-  const isPlantUML = language === 'plantuml' || language === 'puml';
-  const isC4Mermaid = language === 'mermaid' && isC4Syntax(codeString);
-  const isC4PlantUML = isPlantUML && isC4Syntax(codeString);
+  const codeString = String(children)
+  const isPlantUML = language === 'plantuml' || language === 'puml'
+  const isC4Mermaid = language === 'mermaid' && isC4Syntax(codeString)
+  const isC4PlantUML = isPlantUML && isC4Syntax(codeString)
 
   if (isC4Code(language, inline || false) || isC4Mermaid || isC4PlantUML) {
-    const code = prepareC4Code(codeString);
-    const diagramSource = isC4PlantUML ? 'PlantUML' : isC4Mermaid ? 'Mermaid' : 'C4';
+    const code = prepareC4Code(codeString)
+    const diagramSource = isC4PlantUML ? 'PlantUML' : isC4Mermaid ? 'Mermaid' : 'C4'
     console.log(`🏗️ [DIAGRAM RENDER] Rendering C4 diagram from ${diagramSource} (using D2)`, {
       language,
       codeLength: code.length,
-      codePreview: code.substring(0, 60) + '...'
-    });
-    return <C4Diagram code={code} title={`C4 Architecture Diagram (${diagramSource})`} />;
+      codePreview: code.substring(0, 60) + '...',
+    })
+    return <C4Diagram code={code} title={`C4 Architecture Diagram (${diagramSource})`} />
   }
 
   // Handle Mermaid diagrams
   if (isMermaidCode(language, inline || false)) {
-    const code = prepareMermaidCode(String(children));
+    const code = prepareMermaidCode(String(children))
     console.log('🎨 [DIAGRAM RENDER] Rendering Mermaid diagram', {
       language,
       codeLength: code.length,
-      codePreview: code.substring(0, 60) + '...'
-    });
-    return <MermaidDiagram code={code} title="Mermaid Diagram" />;
+      codePreview: code.substring(0, 60) + '...',
+    })
+    return <MermaidDiagram code={code} title="Mermaid Diagram" />
   }
 
   // Handle D2 diagrams
   if (isD2Code(language, inline || false)) {
-    const code = prepareD2Code(String(children));
+    const code = prepareD2Code(String(children))
     console.log('🎯 [DIAGRAM RENDER] Rendering D2 diagram via backend', {
       language,
       codeLength: code.length,
-      codePreview: code.substring(0, 60) + '...'
-    });
-    return <D2DiagramBackend code={code} title="D2 Diagram" />;
+      codePreview: code.substring(0, 60) + '...',
+    })
+    return <D2DiagramBackend code={code} title="D2 Diagram" />
   }
 
   // Regular code blocks
   return !inline && match ? (
     <pre
-      className={`${className || ''} bg-gray-50 border border-gray-200 p-4 rounded-lg overflow-x-auto`}
+      className={`${className || ''} overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4`}
       style={{
         fontSize: '14px',
         lineHeight: '1.2',
         color: '#1e293b',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#f8fafc',
       }}
     >
       <code className={className} style={{ color: '#1e293b' }} {...rest}>
@@ -246,19 +245,19 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
     </pre>
   ) : (
     <code
-      className={`${className || ''} bg-gray-100 px-2 py-1 rounded border`}
+      className={`${className || ''} rounded border bg-gray-100 px-2 py-1`}
       style={{
         fontSize: '14px',
         color: '#dc2626',
         backgroundColor: '#f1f5f9',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
       }}
       {...rest}
     >
       {children}
     </code>
-  );
-};
+  )
+}
 
 /**
  * Process HTML content to detect and replace diagram code blocks with rendered diagrams
@@ -274,62 +273,65 @@ const CodeComponentRenderer = (props: React.ComponentProps<'code'> & { inline?: 
  * - This matches LLM pattern: "Code" then "Rendered Diagram"
  */
 
-
 const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
   // Check if diagrams are already pre-rendered by backend
   // Backend wraps pre-rendered diagrams in specific container classes
-  const hasPreRenderedD2 = htmlContent.includes('class="d2-diagram-container"') ||
-                           htmlContent.includes('class="d2-rendered-diagram"');
-  const hasPreRenderedMermaid = htmlContent.includes('class="mermaid-diagram-container"') ||
-                                htmlContent.includes('class="mermaid-rendered-diagram"');
+  const hasPreRenderedD2 =
+    htmlContent.includes('class="d2-diagram-container"') ||
+    htmlContent.includes('class="d2-rendered-diagram"')
+  const hasPreRenderedMermaid =
+    htmlContent.includes('class="mermaid-diagram-container"') ||
+    htmlContent.includes('class="mermaid-rendered-diagram"')
 
   if (hasPreRenderedD2 || hasPreRenderedMermaid) {
-    console.info('🎯 [CHAT VIEW] Detected backend pre-rendered diagrams - displaying directly without re-rendering');
-    return [<div key="full" dangerouslySetInnerHTML={{ __html: htmlContent }} />];
+    console.info(
+      '🎯 [CHAT VIEW] Detected backend pre-rendered diagrams - displaying directly without re-rendering'
+    )
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: htmlContent }} />]
   }
 
   // Use enhanced detection for mixed HTML content
-  const { originalHtml, diagrams } = processMixedHtmlContent(htmlContent);
-  const normalizeCode = (code: string) =>
-    code.replace(/\s+/g, ' ').trim();
-  const processedDiagramCodes = new Set(diagrams.map(diagram => normalizeCode(diagram.code)));
+  const { originalHtml, diagrams } = processMixedHtmlContent(htmlContent)
+  const normalizeCode = (code: string) => code.replace(/\s+/g, ' ').trim()
+  const processedDiagramCodes = new Set(diagrams.map((diagram) => normalizeCode(diagram.code)))
 
   // If no diagrams detected, return original HTML
   if (diagrams.length === 0) {
-    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />];
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />]
   }
 
   // Process HTML with detected diagrams
-  const parts: React.ReactNode[] = [];
-  let diagramCount = 0;
+  const parts: React.ReactNode[] = []
+  let diagramCount = 0
 
   // Process each detected diagram
   for (const diagram of diagrams) {
-    const { code, type, confidence } = diagram;
+    const { code, type, confidence } = diagram
 
-    diagramCount++;
+    diagramCount++
 
     // Render diagram directly by default with optional code view below
-    const diagramLabel = type === 'mermaid' ? 'Mermaid' : 'D2';
-    const confidenceIcon = confidence === 'high' ? '✅' : confidence === 'medium' ? '⚠️' : '❓';
+    const diagramLabel = type === 'mermaid' ? 'Mermaid' : 'D2'
+    const confidenceIcon = confidence === 'high' ? '✅' : confidence === 'medium' ? '⚠️' : '❓'
 
     // Create the rendered diagram
-    const diagramComponent = type === 'mermaid' ? (
-      <MermaidDiagram
-        key={`diagram-render-${diagramCount}-${type}`}
-        code={code}
-        title={`${diagramLabel} Diagram ${confidenceIcon}`}
-      />
-    ) : (
-      <D2DiagramBackend
-        key={`diagram-render-${diagramCount}-${type}`}
-        code={code}
-        title={`${diagramLabel} Diagram ${confidenceIcon}`}
-      />
-    );
+    const diagramComponent =
+      type === 'mermaid' ? (
+        <MermaidDiagram
+          key={`diagram-render-${diagramCount}-${type}`}
+          code={code}
+          title={`${diagramLabel} Diagram ${confidenceIcon}`}
+        />
+      ) : (
+        <D2DiagramBackend
+          key={`diagram-render-${diagramCount}-${type}`}
+          code={code}
+          title={`${diagramLabel} Diagram ${confidenceIcon}`}
+        />
+      )
 
     // Add the rendered diagram
-    parts.push(diagramComponent);
+    parts.push(diagramComponent)
 
     // Add optional collapsible code view below the diagram
     const codeBlock = (
@@ -337,7 +339,7 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
         key={`diagram-code-${diagramCount}`}
         style={{
           marginTop: '8px',
-          marginBottom: '16px'
+          marginBottom: '16px',
         }}
       >
         <summary
@@ -350,7 +352,7 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
             fontSize: '13px',
             fontWeight: 500,
             color: '#475569',
-            userSelect: 'none'
+            userSelect: 'none',
           }}
         >
           📝 View {diagramLabel} Source Code (click to expand/copy)
@@ -366,58 +368,55 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
             overflowX: 'auto',
             fontSize: '13px',
             lineHeight: '1.2',
-            marginTop: '0'
+            marginTop: '0',
           }}
         >
           <code>{code}</code>
         </pre>
       </details>
-    );
+    )
 
-    parts.push(codeBlock);
+    parts.push(codeBlock)
   }
 
   // Also process remaining HTML for traditional <pre><code> blocks not caught by enhanced detection
-  const codeBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
-  let lastIndex = 0;
-  let match;
+  const codeBlockRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi
+  let lastIndex = 0
+  let match
 
   while ((match = codeBlockRegex.exec(originalHtml)) !== null) {
     // Add HTML before the code block
     if (match.index > lastIndex) {
-      const beforeHtml = originalHtml.substring(lastIndex, match.index);
+      const beforeHtml = originalHtml.substring(lastIndex, match.index)
       if (beforeHtml.trim()) {
         parts.push(
-          <div
-            key={`html-${lastIndex}`}
-            dangerouslySetInnerHTML={{ __html: beforeHtml }}
-          />
-        );
+          <div key={`html-${lastIndex}`} dangerouslySetInnerHTML={{ __html: beforeHtml }} />
+        )
       }
     }
 
     // Extract and decode the code content
-    const rawCode = match[1];
-    const decodedMermaid = prepareMermaidCode(rawCode);
-    const decodedD2 = prepareD2Code(rawCode);
+    const rawCode = match[1]
+    const decodedMermaid = prepareMermaidCode(rawCode)
+    const decodedD2 = prepareD2Code(rawCode)
 
     // Check if this is a diagram not already processed by enhanced detection
-    const isMermaid = isMermaidSyntax(decodedMermaid);
-    const isD2 = isD2Syntax(decodedD2);
-    
+    const isMermaid = isMermaidSyntax(decodedMermaid)
+    const isD2 = isD2Syntax(decodedD2)
+
     if (isMermaid || isD2) {
-      const diagramType = isMermaid ? 'mermaid' : 'd2';
-      const decodedCode = isMermaid ? decodedMermaid : decodedD2;
-      const normalizedDecodedCode = normalizeCode(decodedCode);
+      const diagramType = isMermaid ? 'mermaid' : 'd2'
+      const decodedCode = isMermaid ? decodedMermaid : decodedD2
+      const normalizedDecodedCode = normalizeCode(decodedCode)
 
       if (processedDiagramCodes.has(normalizedDecodedCode)) {
-        lastIndex = match.index + match[0].length;
-        continue;
+        lastIndex = match.index + match[0].length
+        continue
       }
-      
+
       // This is a new diagram not caught by enhanced detection
-      diagramCount++;
-      
+      diagramCount++
+
       parts.push(
         diagramType === 'mermaid' ? (
           <MermaidDiagram
@@ -432,7 +431,7 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
             title="D2 Diagram"
           />
         )
-      );
+      )
     } else {
       // Not a diagram, render as regular code block
       parts.push(
@@ -445,92 +444,73 @@ const processDiagramsInHTML = (htmlContent: string): React.ReactNode[] => {
             border: '1px solid #e2e8f0',
             overflowX: 'auto',
             fontSize: '14px',
-            lineHeight: '1.2'
+            lineHeight: '1.2',
           }}
         >
           <code dangerouslySetInnerHTML={{ __html: rawCode }} />
         </pre>
-      );
+      )
     }
 
-    lastIndex = match.index + match[0].length;
+    lastIndex = match.index + match[0].length
   }
 
   // Add remaining HTML after processing
   if (lastIndex < originalHtml.length) {
-    const afterHtml = originalHtml.substring(lastIndex);
+    const afterHtml = originalHtml.substring(lastIndex)
     if (afterHtml.trim()) {
-      parts.push(
-        <div
-          key={`html-${lastIndex}`}
-          dangerouslySetInnerHTML={{ __html: afterHtml }}
-        />
-      );
+      parts.push(<div key={`html-${lastIndex}`} dangerouslySetInnerHTML={{ __html: afterHtml }} />)
     }
   }
 
   // If no parts were created, return the original HTML with detected diagrams
   if (parts.length === 0) {
-    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />];
+    return [<div key="full" dangerouslySetInnerHTML={{ __html: originalHtml }} />]
   }
 
-  return parts;
-};
+  return parts
+}
 
 /**
  * MessageItem component
  */
-const MessageItem: React.FC<MessageItemProps> = ({
-  message,
-  onShowCode
-}) => {
-  const { theme } = useTheme();
-  const { message: appMessage } = App.useApp();
+const MessageItem: React.FC<MessageItemProps> = ({ message, onShowCode }) => {
+  const { theme } = useTheme()
+  const { message: appMessage } = App.useApp()
   const renderMetadataStats = (
     metadata: Message['metadata'],
     options: { theme?: 'light' | 'dark' } = {}
   ) => {
     if (!metadata) {
-      return null;
+      return null
     }
 
-    const {
-      model,
-      provider,
-      tokens,
-      inputTokens,
-      outputTokens,
-      cachedTokens,
-      elapsedTime,
-    } = metadata;
+    const { model, provider, tokens, inputTokens, outputTokens, cachedTokens, elapsedTime } =
+      metadata
 
-    const theme = options.theme ?? 'light';
-    const isDark = theme === 'dark';
+    const theme = options.theme ?? 'light'
+    const isDark = theme === 'dark'
 
     const containerClass = isDark
       ? 'flex items-center gap-3 text-xs font-medium'
-      : 'flex items-center gap-2 text-xs font-medium text-slate-500';
+      : 'flex items-center gap-2 text-xs font-medium text-slate-500'
 
     const modelStyle = isDark
       ? { color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600 }
-      : { color: '#0f172a', fontWeight: 600 };
+      : { color: '#0f172a', fontWeight: 600 }
 
-    const providerStyle = isDark
-      ? { color: 'rgba(255, 255, 255, 0.8)' }
-      : { color: '#334155' };
+    const providerStyle = isDark ? { color: 'rgba(255, 255, 255, 0.8)' } : { color: '#334155' }
 
-    const statTextStyle = isDark
-      ? { color: 'rgba(255, 255, 255, 0.85)' }
-      : { color: '#0f172a' };
+    const statTextStyle = isDark ? { color: 'rgba(255, 255, 255, 0.85)' } : { color: '#0f172a' }
 
-    const stats: React.ReactNode[] = [];
+    const stats: React.ReactNode[] = []
 
     if (model) {
       stats.push(
         <span key="model" style={modelStyle}>
           {model}
         </span>
-      );
+      )
     }
 
     if (provider) {
@@ -540,7 +520,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             🛰️ {provider}
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (tokens !== undefined) {
@@ -550,7 +530,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             🧮 {tokens}
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (inputTokens !== undefined) {
@@ -560,7 +540,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             📥 {inputTokens}
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (outputTokens !== undefined) {
@@ -570,7 +550,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             📤 {outputTokens}
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (cachedTokens !== undefined && cachedTokens > 0) {
@@ -580,7 +560,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             ♻️ {cachedTokens}
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (elapsedTime !== undefined) {
@@ -590,94 +570,102 @@ const MessageItem: React.FC<MessageItemProps> = ({
             ⏱️ {elapsedTime.toFixed(2)}s
           </span>
         </Tooltip>
-      );
+      )
     }
 
     if (stats.length === 0) {
-      return null;
+      return null
     }
 
     return (
       <div className={containerClass} style={{ flexWrap: 'wrap' }}>
         {stats.map((stat) => stat)}
       </div>
-    );
-  };
+    )
+  }
 
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [showFullContent, setShowFullContent] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
+  const [isExpanded, setIsExpanded] = useState(true)
+  const [showFullContent, setShowFullContent] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
   // Detect HTML content to determine initial view mode
   const detectHtmlContent = (content: string): boolean => {
     // Only show HTML view for substantial HTML content, not just scattered tags
 
     // Check for D2 diagram containers specifically (pre-rendered diagrams from backend)
-    if (content.includes('class="d2-diagram-container"') || content.includes('class="d2-rendered-diagram"')) {
-      console.log('🎯 [CHAT VIEW] Detected pre-rendered D2 diagram - using HTML view');
-      return true;
+    if (
+      content.includes('class="d2-diagram-container"') ||
+      content.includes('class="d2-rendered-diagram"')
+    ) {
+      console.log('🎯 [CHAT VIEW] Detected pre-rendered D2 diagram - using HTML view')
+      return true
     }
 
     // Check for HTML document structure or substantial HTML blocks
     const substantialHtmlPatterns = [
-      /<html[\s>]/i,           // Full HTML document
-      /<head[\s>]/i,           // HTML document head
-      /<body[\s>]/i,           // HTML document body
-      /<table[\s>][\s\S]*?<\/table>/i,  // Complete table
-      /<ul[\s>][\s\S]*?<\/ul>/i,        // Complete unordered list
-      /<ol[\s>][\s\S]*?<\/ol>/i,        // Complete ordered list
-      /<div[\s>][\s\S]*?<\/div>/i,      // Complete div blocks
-      /<pre[\s>][\s\S]*?<\/pre>/i,      // Complete pre blocks
-      /<p[\s>][\s\S]*?<\/p>/i,          // Complete paragraph blocks
-      /<span[\s>][\s\S]*?<\/span>/i,    // Complete span blocks
+      /<html[\s>]/i, // Full HTML document
+      /<head[\s>]/i, // HTML document head
+      /<body[\s>]/i, // HTML document body
+      /<table[\s>][\s\S]*?<\/table>/i, // Complete table
+      /<ul[\s>][\s\S]*?<\/ul>/i, // Complete unordered list
+      /<ol[\s>][\s\S]*?<\/ol>/i, // Complete ordered list
+      /<div[\s>][\s\S]*?<\/div>/i, // Complete div blocks
+      /<pre[\s>][\s\S]*?<\/pre>/i, // Complete pre blocks
+      /<p[\s>][\s\S]*?<\/p>/i, // Complete paragraph blocks
+      /<span[\s>][\s\S]*?<\/span>/i, // Complete span blocks
       /<h[1-6][\s>][\s\S]*?<\/h[1-6]>/i, // Complete heading blocks
-    ];
-    
+    ]
+
     // Check if content has substantial HTML structure
-    const hasSubstantialHtml = substantialHtmlPatterns.some(pattern => pattern.test(content));
-    
+    const hasSubstantialHtml = substantialHtmlPatterns.some((pattern) => pattern.test(content))
+
     // Additional check: count HTML tags - only show if there are multiple structural tags
-    const htmlTagCount = (content.match(/<\/?[a-zA-Z][^>]*>/g) || []).length;
-    const hasMultipleTags = htmlTagCount >= 3; // Reduced threshold to 3 HTML tags
-    
+    const htmlTagCount = (content.match(/<\/?[a-zA-Z][^>]*>/g) || []).length
+    const hasMultipleTags = htmlTagCount >= 3 // Reduced threshold to 3 HTML tags
+
     // Check for HTML attributes which are strong indicators of HTML content
-    const hasHtmlAttributes = /class\s*=|id\s*=|style\s*=|src\s*=|href\s*=|alt\s*=/i.test(content);
-    
+    const hasHtmlAttributes = /class\s*=|id\s*=|style\s*=|src\s*=|href\s*=|alt\s*=/i.test(content)
+
     // Check for HTML entities which indicate HTML content
-    const hasHtmlEntities = /&[a-zA-Z]+;|&#\d+;/.test(content);
-    
+    const hasHtmlEntities = /&[a-zA-Z]+;|&#\d+;/.test(content)
+
     // Check for self-closing HTML tags
-    const hasSelfClosingTags = /<(br|hr|img|input|meta|link)[^>]*?\/?>/i.test(content);
-    
+    const hasSelfClosingTags = /<(br|hr|img|input|meta|link)[^>]*?\/?>/i.test(content)
+
     // Only show HTML view if there's substantial HTML structure OR multiple HTML tags OR other HTML indicators
-    return hasSubstantialHtml || hasMultipleTags || hasHtmlAttributes || hasHtmlEntities || hasSelfClosingTags;
-  };
-  
-  const hasHtmlContent = detectHtmlContent(message.content);
+    return (
+      hasSubstantialHtml ||
+      hasMultipleTags ||
+      hasHtmlAttributes ||
+      hasHtmlEntities ||
+      hasSelfClosingTags
+    )
+  }
+
+  const hasHtmlContent = detectHtmlContent(message.content)
   const [viewMode, setViewMode] = useState<'markdown' | 'html'>(
     hasHtmlContent ? 'html' : 'markdown'
-  );
-  
+  )
+
   // Always show expand/collapse for longer messages (lowered threshold from 5000 to 500)
-  const isLongContent = message.content.length > 500;
-  const shouldTruncate = isLongContent && !showFullContent;
+  const isLongContent = message.content.length > 500
+  const shouldTruncate = isLongContent && !showFullContent
   const displayContent = shouldTruncate
     ? message.content.substring(0, 500) + '...'
-    : message.content;
+    : message.content
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
+    return new Date(timestamp).toLocaleTimeString()
+  }
 
   const handleCopyContent = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      await navigator.clipboard.writeText(message.content)
       // Could add a toast notification here
     } catch (err) {
-      console.error('Failed to copy content:', err);
+      console.error('Failed to copy content:', err)
     }
-  };
+  }
 
   const handlePrintContent = () => {
     Modal.confirm({
@@ -686,7 +674,8 @@ const MessageItem: React.FC<MessageItemProps> = ({
         <div>
           <p>This will open the browser's print dialog to print or save the response as PDF.</p>
           <p style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
-            ⚠️ Please note: For large responses with images, this operation may take up to 20 seconds.
+            ⚠️ Please note: For large responses with images, this operation may take up to 20
+            seconds.
           </p>
         </div>
       ),
@@ -694,113 +683,116 @@ const MessageItem: React.FC<MessageItemProps> = ({
       cancelText: 'Cancel',
       onOk: () => {
         // Show loading message
-        const loadingMessage = appMessage.loading('Preparing response for printing...', 0);
-        
+        const loadingMessage = appMessage.loading('Preparing response for printing...', 0)
+
         // Add a timeout to ensure the loading message is visible
         setTimeout(() => {
-          printMessageElement(message.id);
-          
+          printMessageElement(message.id)
+
           // Hide the loading message after a delay to give the print dialog time to appear
           setTimeout(() => {
-            loadingMessage();
-            appMessage.success('Print dialog opened. You can now print or save the response.');
-          }, 2000);
-        }, 500);
+            loadingMessage()
+            appMessage.success('Print dialog opened. You can now print or save the response.')
+          }, 2000)
+        }, 500)
       },
-    });
-  };
+    })
+  }
 
   const detectCodeBlocks = (content: string) => {
-    const matches = [];
-    
+    const matches = []
+
     // 1. Detect markdown-style code blocks: ```language
-    const markdownRegex = /```(\w+)?\n([\s\S]*?)\n```/g;
-    let match;
+    const markdownRegex = /```(\w+)?\n([\s\S]*?)\n```/g
+    let match
     while ((match = markdownRegex.exec(content)) !== null) {
       matches.push({
         language: match[1] || 'text',
         code: match[2],
         fullMatch: match[0],
-      });
+      })
     }
-    
+
     // 2. Detect substantial HTML code blocks if no markdown blocks found
     // Only look for <pre><code> blocks, ignore inline <code> tags
     if (matches.length === 0) {
-      const htmlCodeRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi;
+      const htmlCodeRegex = /<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi
       while ((match = htmlCodeRegex.exec(content)) !== null) {
-        let codeContent = match[1].trim();
-        
+        let codeContent = match[1].trim()
+
         // Decode HTML entities
         codeContent = codeContent
           .replace(/&lt;/g, '<')
           .replace(/&gt;/g, '>')
           .replace(/&amp;/g, '&')
           .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        
+          .replace(/&#39;/g, "'")
+
         // Only include substantial code blocks (multi-line or reasonable length)
         if (codeContent.includes('\n') || codeContent.length > 30) {
           // Try to detect language from the content (improved heuristics)
-          let language = 'text';
+          let language = 'text'
           if (isMermaidSyntax(codeContent)) {
-            language = 'mermaid';
+            language = 'mermaid'
           } else if (/class\s+\w+|def\s+\w+|import\s+\w+/.test(codeContent)) {
-            language = 'python';
+            language = 'python'
           } else if (/function\s+\w+|const\s+\w+|let\s+\w+/.test(codeContent)) {
-            language = 'javascript';
+            language = 'javascript'
           }
 
           matches.push({
             language: language,
             code: codeContent,
             fullMatch: match[0],
-          });
+          })
         }
       }
     }
-    
-    return matches;
-  };
+
+    return matches
+  }
 
   const createCodeMenuItems = () => {
-    const codeBlocks = detectCodeBlocks(message.content);
-    if (codeBlocks.length === 0) return [];
+    const codeBlocks = detectCodeBlocks(message.content)
+    if (codeBlocks.length === 0) return []
 
     return codeBlocks.map((block, index) => ({
       key: `code-${index}`,
       label: `${block.language.toUpperCase()} Code ${codeBlocks.length > 1 ? `#${index + 1}` : ''}`,
-      onClick: () => onShowCode?.(block.code, block.language, `${block.language.toUpperCase()} Code Block`),
-    }));
-  };
+      onClick: () =>
+        onShowCode?.(block.code, block.language, `${block.language.toUpperCase()} Code Block`),
+    }))
+  }
 
-  const codeBlocks = detectCodeBlocks(message.content);
-  const userHeaderColor = BrandColors.primary;
-  const assistantHeaderColor = BrandColors.secondary || BrandColors.accent || '#004c97';
-  const isUserMessage = message.role === 'user';
-  const headerBackground = isUserMessage ? userHeaderColor : assistantHeaderColor;
-  const cardShadowColor = `${headerBackground}40`;
+  const codeBlocks = detectCodeBlocks(message.content)
+  const userHeaderColor = BrandColors.primary
+  const assistantHeaderColor =
+    BrandColors.secondary || (BrandColors as any).accent || '#004c97'
+  const isUserMessage = message.role === 'user'
+  const headerBackground = isUserMessage ? userHeaderColor : assistantHeaderColor
+  const cardShadowColor = `${headerBackground}40`
 
   // Detect if message contains diagrams
   const hasDiagrams = () => {
-    const blocks = detectCodeBlocks(message.content);
-    return blocks.some(block =>
-      block.language === 'mermaid' ||
-      block.language === 'd2' ||
-      block.language === 'c4' ||
-      block.language === 'c4diagram' ||
-      block.language === 'plantuml' ||
-      isMermaidSyntax(block.code) ||
-      isD2Syntax(block.code) ||
-      isC4Syntax(block.code)
-    );
-  };
+    const blocks = detectCodeBlocks(message.content)
+    return blocks.some(
+      (block) =>
+        block.language === 'mermaid' ||
+        block.language === 'd2' ||
+        block.language === 'c4' ||
+        block.language === 'c4diagram' ||
+        block.language === 'plantuml' ||
+        isMermaidSyntax(block.code) ||
+        isD2Syntax(block.code) ||
+        isC4Syntax(block.code)
+    )
+  }
 
   // Force re-render of the message by updating a key
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0)
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+    setRefreshKey((prev) => prev + 1)
+  }
 
   // Fullscreen overlay component
   if (isFullscreen) {
@@ -828,9 +820,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
             marginBottom: '0',
           }}
         >
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar 
+              <Avatar
                 size={32}
                 icon={message.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
                 style={{
@@ -840,21 +832,21 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 }}
               />
               <div className="flex flex-col">
-                <span 
-                  style={{ 
+                <span
+                  style={{
                     color: 'rgba(255, 255, 255, 0.9)',
                     fontWeight: 600,
                     fontSize: '13px',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
                   }}
                 >
                   {message.role === 'user' ? 'You' : assistantName}
                 </span>
-                <span 
-                  style={{ 
+                <span
+                  style={{
                     color: 'rgba(255, 255, 255, 0.7)',
                     fontSize: '11px',
-                    marginTop: '2px'
+                    marginTop: '2px',
                   }}
                 >
                   {formatTimestamp(message.timestamp)}
@@ -864,7 +856,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
             {/* Center - Token and Model Information */}
             {renderMetadataStats(message.metadata, { theme: 'dark' })}
-            
+
             {/* Header Actions */}
             <div className="flex items-center gap-2">
               {/* View Mode Toggle Buttons - Only show for assistant messages with HTML content */}
@@ -876,22 +868,24 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       icon={<FileTextOutlined />}
                       onClick={() => setViewMode('markdown')}
                       size="small"
-                      style={{ 
+                      style={{
                         color: viewMode === 'markdown' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                        backgroundColor: viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                        backgroundColor:
+                          viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
                       }}
                     />
                   </Tooltip>
-                  
+
                   <Tooltip title="HTML View">
                     <Button
                       type="text"
                       icon={<Html5Outlined />}
                       onClick={() => setViewMode('html')}
                       size="small"
-                      style={{ 
+                      style={{
                         color: viewMode === 'html' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                        backgroundColor: viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                        backgroundColor:
+                          viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
                       }}
                     />
                   </Tooltip>
@@ -912,13 +906,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
               )}
 
               {/* Show Code Button/Dropdown */}
-              {codeBlocks.length > 0 && onShowCode && (
-                codeBlocks.length === 1 ? (
+              {codeBlocks.length > 0 &&
+                onShowCode &&
+                (codeBlocks.length === 1 ? (
                   <Tooltip title="Show Code Block">
                     <Button
                       type="text"
                       icon={<CodeOutlined />}
-                      onClick={() => onShowCode?.(codeBlocks[0].code, codeBlocks[0].language, `${codeBlocks[0].language.toUpperCase()} Code Block`)}
+                      onClick={() =>
+                        onShowCode?.(
+                          codeBlocks[0].code,
+                          codeBlocks[0].language,
+                          `${codeBlocks[0].language.toUpperCase()} Code Block`
+                        )
+                      }
                       size="small"
                       style={{ color: 'rgba(255, 255, 255, 0.8)' }}
                     />
@@ -926,7 +927,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 ) : (
                   <Dropdown
                     menu={{
-                      items: createCodeMenuItems()
+                      items: createCodeMenuItems(),
                     }}
                     trigger={['click']}
                     placement="bottomRight"
@@ -940,8 +941,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       />
                     </Tooltip>
                   </Dropdown>
-                )
-              )}
+                ))}
 
               {hasDiagrams() && (
                 <Tooltip title="Refresh Diagrams">
@@ -1001,7 +1001,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   backgroundColor: '#f8fafc',
                   lineHeight: '1.2',
                   fontSize: '15px',
-                  color: '#1e293b'
+                  color: '#1e293b',
                 }}
               >
                 {processDiagramsInHTML(displayContent)}
@@ -1014,7 +1014,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 style={{
                   lineHeight: '1.2',
                   fontSize: '15px',
-                  color: '#1e293b'
+                  color: '#1e293b',
                 }}
               >
                 <ReactMarkdown
@@ -1029,8 +1029,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
                     h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                    p: (props) => <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />,
-                    strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                    p: (props) => (
+                      <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />
+                    ),
+                    strong: (props) => (
+                      <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                    ),
                     em: (props) => <em style={{ color: '#374151' }} {...props} />,
                     blockquote: (props) => (
                       <blockquote
@@ -1038,21 +1042,23 @@ const MessageItem: React.FC<MessageItemProps> = ({
                           color: '#6b7280',
                           borderLeft: `4px solid ${BrandColors.primary}`,
                           paddingLeft: '16px',
-                          fontStyle: 'italic'
+                          fontStyle: 'italic',
                         }}
                         {...props}
                       />
                     ),
                     ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
                     ol: (props) => <ol style={{ color: '#374151' }} {...props} />,
-                    li: (props) => <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />,
+                    li: (props) => (
+                      <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />
+                    ),
                   }}
                 >
                   {displayContent}
                 </ReactMarkdown>
               </div>
             )}
-            
+
             {/* Show More/Less for long content */}
             {isLongContent && (
               <div className="mt-4 text-center">
@@ -1069,7 +1075,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -1085,9 +1091,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
         className="message-card"
         style={{
           border: 'none',
-          borderRadius: message.role === 'user'
-            ? '20px 20px 4px 20px'
-            : '20px 20px 20px 4px',
+          borderRadius: message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
           boxShadow: `0 8px 24px ${cardShadowColor}`,
           overflow: 'hidden',
           width: '100%',
@@ -1099,10 +1103,8 @@ const MessageItem: React.FC<MessageItemProps> = ({
           body: {
             padding: '0',
             background: 'transparent',
-            borderRadius: message.role === 'user'
-              ? '20px 20px 4px 20px'
-              : '20px 20px 20px 4px',
-          }
+            borderRadius: message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+          },
         }}
       >
         {/* Message Header */}
@@ -1113,9 +1115,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
             borderRadius: '20px 20px 0 0',
           }}
         >
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar 
+              <Avatar
                 size={32}
                 icon={message.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
                 style={{
@@ -1125,21 +1127,21 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 }}
               />
               <div className="flex flex-col">
-                <span 
-                  style={{ 
+                <span
+                  style={{
                     color: 'rgba(255, 255, 255, 0.9)',
                     fontWeight: 600,
                     fontSize: '13px',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
                   }}
                 >
                   {message.role === 'user' ? 'You' : assistantName}
                 </span>
-                <span 
-                  style={{ 
+                <span
+                  style={{
                     color: 'rgba(255, 255, 255, 0.7)',
                     fontSize: '11px',
-                    marginTop: '2px'
+                    marginTop: '2px',
                   }}
                 >
                   {formatTimestamp(message.timestamp)}
@@ -1149,7 +1151,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
             {/* Center - Token and Model Information */}
             {renderMetadataStats(message.metadata, { theme: 'dark' })}
-            
+
             {/* Header Actions */}
             <div className="flex items-center gap-2">
               {/* View Mode Toggle Buttons - Only show for assistant messages with HTML content */}
@@ -1161,22 +1163,24 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       icon={<FileTextOutlined />}
                       onClick={() => setViewMode('markdown')}
                       size="small"
-                      style={{ 
+                      style={{
                         color: viewMode === 'markdown' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                        backgroundColor: viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                        backgroundColor:
+                          viewMode === 'markdown' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
                       }}
                     />
                   </Tooltip>
-                  
+
                   <Tooltip title="HTML View">
                     <Button
                       type="text"
                       icon={<Html5Outlined />}
                       onClick={() => setViewMode('html')}
                       size="small"
-                      style={{ 
+                      style={{
                         color: viewMode === 'html' ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                        backgroundColor: viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                        backgroundColor:
+                          viewMode === 'html' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
                       }}
                     />
                   </Tooltip>
@@ -1197,13 +1201,20 @@ const MessageItem: React.FC<MessageItemProps> = ({
               )}
 
               {/* Show Code Button/Dropdown */}
-              {codeBlocks.length > 0 && onShowCode && (
-                codeBlocks.length === 1 ? (
+              {codeBlocks.length > 0 &&
+                onShowCode &&
+                (codeBlocks.length === 1 ? (
                   <Tooltip title="Show Code Block">
                     <Button
                       type="text"
                       icon={<CodeOutlined />}
-                      onClick={() => onShowCode?.(codeBlocks[0].code, codeBlocks[0].language, `${codeBlocks[0].language.toUpperCase()} Code Block`)}
+                      onClick={() =>
+                        onShowCode?.(
+                          codeBlocks[0].code,
+                          codeBlocks[0].language,
+                          `${codeBlocks[0].language.toUpperCase()} Code Block`
+                        )
+                      }
                       size="small"
                       style={{ color: 'rgba(255, 255, 255, 0.8)' }}
                     />
@@ -1211,7 +1222,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 ) : (
                   <Dropdown
                     menu={{
-                      items: createCodeMenuItems()
+                      items: createCodeMenuItems(),
                     }}
                     trigger={['click']}
                     placement="bottomRight"
@@ -1225,8 +1236,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                       />
                     </Tooltip>
                   </Dropdown>
-                )
-              )}
+                ))}
 
               {hasDiagrams() && (
                 <Tooltip title="Refresh Diagrams">
@@ -1240,7 +1250,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 </Tooltip>
               )}
 
-              <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Maximize"}>
+              <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Maximize'}>
                 <Button
                   type="text"
                   icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
@@ -1259,8 +1269,8 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   style={{ color: 'rgba(255, 255, 255, 0.8)' }}
                 />
               </Tooltip>
-              
-              <Tooltip title={isExpanded ? "Collapse" : "Expand"}>
+
+              <Tooltip title={isExpanded ? 'Collapse' : 'Expand'}>
                 <Button
                   type="text"
                   icon={isExpanded ? <CompressOutlined /> : <ExpandOutlined />}
@@ -1276,17 +1286,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* White Content Area */}
         <div
           style={{
-            background: message.role === 'assistant' && (theme === 'modernGradient' || theme === 'modernGradientDark')
-              ? 'rgba(255, 255, 255, 0.95)'
-              : 'white',
+            background:
+              message.role === 'assistant' &&
+              (theme === 'modernGradient' || theme === 'modernGradientDark')
+                ? 'rgba(255, 255, 255, 0.95)'
+                : 'white',
             padding: '14px',
-            borderRadius: message.role === 'user'
-              ? '0 0 4px 20px'
-              : '0 0 20px 4px',
-            backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(10px)' : 'none',
+            borderRadius: message.role === 'user' ? '0 0 4px 20px' : '0 0 20px 4px',
+            backdropFilter:
+              theme === 'modernGradient' || theme === 'modernGradientDark' ? 'blur(10px)' : 'none',
           }}
         >
-          
           {/* Message Content */}
           {isExpanded && (
             <div className="message-content">
@@ -1295,20 +1305,25 @@ const MessageItem: React.FC<MessageItemProps> = ({
                 <div
                   className="prose max-w-none"
                   style={{
-                    border: theme === 'modernGradient' || theme === 'modernGradientDark'
-                      ? '1px solid rgba(226, 232, 240, 0.6)'
-                      : '1px solid #e2e8f0',
+                    border:
+                      theme === 'modernGradient' || theme === 'modernGradientDark'
+                        ? '1px solid rgba(226, 232, 240, 0.6)'
+                        : '1px solid #e2e8f0',
                     borderRadius: '12px',
                     padding: '12px',
-                    backgroundColor: theme === 'modernGradient' || theme === 'modernGradientDark'
-                      ? 'rgba(248, 250, 252, 0.8)'
-                      : '#f8fafc',
+                    backgroundColor:
+                      theme === 'modernGradient' || theme === 'modernGradientDark'
+                        ? 'rgba(248, 250, 252, 0.8)'
+                        : '#f8fafc',
                     maxHeight: '500px',
                     overflowY: 'auto',
                     lineHeight: '1.2',
                     fontSize: '14px',
                     color: '#1e293b',
-                    backdropFilter: (theme === 'modernGradient' || theme === 'modernGradientDark') ? 'blur(5px)' : 'none',
+                    backdropFilter:
+                      theme === 'modernGradient' || theme === 'modernGradientDark'
+                        ? 'blur(5px)'
+                        : 'none',
                   }}
                 >
                   {processDiagramsInHTML(displayContent)}
@@ -1320,7 +1335,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   style={{
                     lineHeight: '1.2',
                     fontSize: '14px',
-                    color: '#1e293b'
+                    color: '#1e293b',
                   }}
                 >
                   <ReactMarkdown
@@ -1329,14 +1344,30 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     components={{
                       code: CodeComponentRenderer,
                       // Style other markdown elements for dark text
-                      h1: (props) => <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />,
-                      h2: (props) => <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      h3: (props) => <h3 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      h4: (props) => <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      h5: (props) => <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      h6: (props) => <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
-                      p: (props) => <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />,
-                      strong: (props) => <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />,
+                      h1: (props) => (
+                        <h1 style={{ color: '#1e293b', fontWeight: 700 }} {...props} />
+                      ),
+                      h2: (props) => (
+                        <h2 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
+                      h3: (props) => (
+                        <h3 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
+                      h4: (props) => (
+                        <h4 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
+                      h5: (props) => (
+                        <h5 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
+                      h6: (props) => (
+                        <h6 style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
+                      p: (props) => (
+                        <p style={{ color: '#374151', lineHeight: '1.275' }} {...props} />
+                      ),
+                      strong: (props) => (
+                        <strong style={{ color: '#1e293b', fontWeight: 600 }} {...props} />
+                      ),
                       em: (props) => <em style={{ color: '#374151' }} {...props} />,
                       blockquote: (props) => (
                         <blockquote
@@ -1344,21 +1375,23 @@ const MessageItem: React.FC<MessageItemProps> = ({
                             color: '#6b7280',
                             borderLeft: `4px solid ${BrandColors.primary}`,
                             paddingLeft: '16px',
-                            fontStyle: 'italic'
+                            fontStyle: 'italic',
                           }}
                           {...props}
                         />
                       ),
                       ul: (props) => <ul style={{ color: '#374151' }} {...props} />,
                       ol: (props) => <ol style={{ color: '#374151' }} {...props} />,
-                      li: (props) => <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />,
+                      li: (props) => (
+                        <li style={{ color: '#374151', marginBottom: '4px' }} {...props} />
+                      ),
                     }}
                   >
                     {displayContent}
                   </ReactMarkdown>
                 </div>
               )}
-              
+
               {/* Show More/Less for long content */}
               {isLongContent && (
                 <div className="mt-4 text-center">
@@ -1377,12 +1410,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
         </div>
       </Card>
     </div>
-  );
-};
+  )
+}
 
 /**
  * ChatViewProps type definition
- * 
+ *
  * Describes the structure and properties of ChatViewProps
  * @interface ChatViewProps
  * @property {Message[]} messages - Array of messages to display
@@ -1391,10 +1424,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
  * @property {Function} onExtractCode - Callback to extract code from a message
  */
 interface ChatViewProps {
-  messages: Message[];
-  loading?: boolean;
-  onShowCode?: (code: string, language: string, title?: string) => void;
-  onExtractCode: (messageId: string) => void;
+  messages: Message[]
+  loading?: boolean
+  onShowCode?: (code: string, language: string, title?: string) => void
+  onExtractCode: (messageId: string) => void
 }
 
 /**
@@ -1410,69 +1443,60 @@ interface ChatViewProps {
  * @param {ChatViewProps} props - Component props
  * @returns {JSX.Element} Rendered chat view
  */
-export const ChatView: React.FC<ChatViewProps> = ({
-  messages,
-  loading = false,
-  onShowCode,
-}) => {
-  const { theme } = useTheme();
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const assistantHeaderColor = BrandColors.secondary || BrandColors.accent || '#004c97';
+export const ChatView: React.FC<ChatViewProps> = ({ messages, loading = false, onShowCode }) => {
+  const { theme } = useTheme()
+  const chatEndRef = useRef<HTMLDivElement>(null)
+  const assistantHeaderColor =
+    BrandColors.secondary || (BrandColors as any).accent || '#004c97'
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12">
-        <div className="text-center max-w-md">
-          <div className="text-8xl mb-6">💬</div>
-          <Typography.Title level={2} className="!text-gray-700 !font-semibold !mb-4">
+      <div className="flex flex-1 items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <div className="mb-6 text-8xl">💬</div>
+          <Typography.Title level={2} className="!mb-4 !font-semibold !text-gray-700">
             Start your conversation
           </Typography.Title>
           <Typography.Text type="secondary" className="text-lg leading-relaxed">
-            Begin by selecting files for context, then type your first question to start chatting with the AI assistant.
+            Begin by selecting files for context, then type your first question to start chatting
+            with the AI assistant.
           </Typography.Text>
         </div>
       </div>
-    );
+    )
   }
 
   // Get theme-specific chat view styles
   const getChatViewStyles = () => {
     // Check if we're in a modern gradient theme
-    const isModernGradient = theme === 'modernGradient' || theme === 'modernGradientDark';
-    
+    const isModernGradient = theme === 'modernGradient' || theme === 'modernGradientDark'
+
     if (isModernGradient) {
       return {
         padding: '24px',
-        background: 'transparent'
-      };
+        background: 'transparent',
+      }
     }
-    
+
     return {
       padding: '24px',
-      background: 'transparent'
-    };
-  };
+      background: 'transparent',
+    }
+  }
 
   return (
     <div className="flex-1 overflow-y-auto" style={getChatViewStyles()}>
       <div className="w-full px-0">
         {messages.map((message) => (
-          <MessageItem
-            key={message.id}
-            message={message}
-            onShowCode={onShowCode}
-          />
+          <MessageItem key={message.id} message={message} onShowCode={onShowCode} />
         ))}
-        
+
         {loading && (
-          <div
-            className="mb-6 w-full"
-            style={{ paddingRight: '0' }}
-          >
+          <div className="mb-6 w-full" style={{ paddingRight: '0' }}>
             <Card
               className="message-card"
               style={{
@@ -1489,54 +1513,60 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   background: assistantHeaderColor,
                   color: 'white',
                   borderRadius: '20px 20px 20px 4px',
-                }
+                },
               }}
             >
-            <div className="flex items-center gap-3">
-              <Avatar 
-                size={32}
-                icon={<RobotOutlined />}
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                }}
-              />
-              <div className="flex flex-col">
-                <span 
-                  style={{ 
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    letterSpacing: '0.5px'
+              <div className="flex items-center gap-3">
+                <Avatar
+                  size={32}
+                  icon={<RobotOutlined />}
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
                   }}
-                >
-                  {assistantName}
-                </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70"></div>
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70" style={{animationDelay: '0.15s'}}></div>
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce opacity-70" style={{animationDelay: '0.3s'}}></div>
-                  <span 
-                    style={{ 
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      fontSize: '11px',
-                      marginLeft: '8px'
+                />
+                <div className="flex flex-col">
+                  <span
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
                     }}
                   >
-                    Thinking...
+                    {assistantName}
                   </span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="size-2 animate-bounce rounded-full bg-white opacity-70"></div>
+                    <div
+                      className="size-2 animate-bounce rounded-full bg-white opacity-70"
+                      style={{ animationDelay: '0.15s' }}
+                    ></div>
+                    <div
+                      className="size-2 animate-bounce rounded-full bg-white opacity-70"
+                      style={{ animationDelay: '0.3s' }}
+                    ></div>
+                    <span
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: '11px',
+                        marginLeft: '8px',
+                      }}
+                    >
+                      Thinking...
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
           </div>
         )}
-        
+
         <div ref={chatEndRef} />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ChatView;
+export default ChatView

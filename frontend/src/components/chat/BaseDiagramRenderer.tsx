@@ -11,15 +11,16 @@
  * - Provider integration
  */
 
-import React from 'react';
-import { message as antMessage } from 'antd';
+import { message as antMessage } from 'antd'
+import React from 'react'
+
 import diagramProviderService, {
-  type DiagramType,
-  type OutputFormat,
   type DiagramRenderResponse,
+  type DiagramType,
   type DiagramValidationResponse,
-  type ProviderInfo
-} from '../../services/diagramProviderService';
+  type OutputFormat,
+  type ProviderInfo,
+} from '../../services/diagramProviderService'
 
 // ===================================================================
 // Type Definitions
@@ -38,14 +39,14 @@ import diagramProviderService, {
  * @property {DiagramRenderResponse | null} renderResult - Full render response details
  */
 export interface DiagramState {
-  isRendering: boolean;
-  isValidating: boolean;
-  error: string | null;
-  svg: string | null;
-  png: string | null;
-  validation: DiagramValidationResponse | null;
-  providerInfo: ProviderInfo | null;
-  renderResult: DiagramRenderResponse | null;
+  isRendering: boolean
+  isValidating: boolean
+  error: string | null
+  svg: string | null
+  png: string | null
+  validation: DiagramValidationResponse | null
+  providerInfo: ProviderInfo | null
+  renderResult: DiagramRenderResponse | null
 }
 
 /**
@@ -60,13 +61,13 @@ export interface DiagramState {
  * @property {React.CSSProperties} [style] - CSS styles
  */
 export interface BaseDiagramRendererProps {
-  code: string;
-  title?: string;
-  showCode?: boolean;
-  onRenderComplete?: (success: boolean, svg?: string) => void;
-  onValidationComplete?: (result: DiagramValidationResponse) => void;
-  className?: string;
-  style?: React.CSSProperties;
+  code: string
+  title?: string
+  showCode?: boolean
+  onRenderComplete?: (success: boolean, svg?: string) => void
+  onValidationComplete?: (result: DiagramValidationResponse) => void
+  className?: string
+  style?: React.CSSProperties
 }
 
 // ===================================================================
@@ -77,13 +78,13 @@ export interface BaseDiagramRendererProps {
  * Abstract base class for diagram renderers
  * All specific diagram components (Mermaid, D2, etc.) should extend this class
  */
-export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProps = BaseDiagramRendererProps> {
+export abstract class BaseDiagramRenderer {
   /**
    * Get the diagram type this renderer handles
    * Must be implemented by subclasses
    * @returns {DiagramType} The type of diagram (mermaid, d2, etc.)
    */
-  abstract getDiagramType(): DiagramType;
+  abstract getDiagramType(): DiagramType
 
   /**
    * Render the diagram content to the DOM
@@ -91,7 +92,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @param {HTMLDivElement} container - The DOM element to render into
    * @param {string} svg - The SVG content to render
    */
-  abstract renderToDOM(container: HTMLDivElement, svg: string): void;
+  abstract renderToDOM(container: HTMLDivElement, svg: string): void
 
   /**
    * Validate diagram code
@@ -100,12 +101,15 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @param {boolean} [autoFix=true] - Whether to attempt automatic fixes
    * @returns {Promise<DiagramValidationResponse>} The validation result
    */
-  protected async validateDiagram(code: string, autoFix: boolean = true): Promise<DiagramValidationResponse> {
+  protected async validateDiagram(
+    code: string,
+    autoFix: boolean = true
+  ): Promise<DiagramValidationResponse> {
     return diagramProviderService.validate({
       code,
       diagram_type: this.getDiagramType(),
-      auto_fix: autoFix
-    });
+      auto_fix: autoFix,
+    })
   }
 
   /**
@@ -115,12 +119,15 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @param {OutputFormat} [format='svg'] - The desired output format
    * @returns {Promise<DiagramRenderResponse>} The render result
    */
-  protected async renderDiagram(code: string, format: OutputFormat = 'svg'): Promise<DiagramRenderResponse> {
+  protected async renderDiagram(
+    code: string,
+    format: OutputFormat = 'svg'
+  ): Promise<DiagramRenderResponse> {
     return diagramProviderService.render({
       code,
       diagram_type: this.getDiagramType(),
-      output_format: format
-    });
+      output_format: format,
+    })
   }
 
   /**
@@ -128,7 +135,7 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @returns {Promise<ProviderInfo>} Information about the diagram provider
    */
   protected async getProviderInfo(): Promise<ProviderInfo> {
-    return diagramProviderService.getProviderInfo(this.getDiagramType());
+    return diagramProviderService.getProviderInfo(this.getDiagramType())
   }
 
   /**
@@ -137,17 +144,17 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @param {string} [filename] - The filename to save as
    */
   protected exportAsSvg(svgContent: string, filename?: string): void {
-    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename || `${this.getDiagramType()}_diagram.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename || `${this.getDiagramType()}_diagram.svg`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
 
-    antMessage.success(`${this.getDiagramType()} diagram exported as SVG`);
+    antMessage.success(`${this.getDiagramType()} diagram exported as SVG`)
   }
 
   /**
@@ -158,25 +165,25 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
   protected async exportAsPng(svgContent: string, filename?: string): Promise<void> {
     try {
       // Render to PNG using provider if available
-      const result = await this.renderDiagram(svgContent, 'png');
+      const result = await this.renderDiagram(svgContent, 'png')
 
       if (result.content) {
         // Handle PNG data (usually base64 encoded)
-        const blob = new Blob([Buffer.from(result.content, 'base64')], { type: 'image/png' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${this.getDiagramType()}_diagram.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const blob = new Blob([Buffer.from(result.content, 'base64')], { type: 'image/png' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename || `${this.getDiagramType()}_diagram.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
 
-        antMessage.success(`${this.getDiagramType()} diagram exported as PNG`);
+        antMessage.success(`${this.getDiagramType()} diagram exported as PNG`)
       }
     } catch (error) {
-      console.error('Failed to export PNG:', error);
-      antMessage.error('Failed to export diagram as PNG');
+      console.error('Failed to export PNG:', error)
+      antMessage.error('Failed to export diagram as PNG')
     }
   }
 
@@ -188,12 +195,12 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
     navigator.clipboard
       .writeText(code)
       .then(() => {
-        antMessage.success('Code copied to clipboard');
+        antMessage.success('Code copied to clipboard')
       })
       .catch((error) => {
-        console.error('Failed to copy code:', error);
-        antMessage.error('Failed to copy code to clipboard');
-      });
+        console.error('Failed to copy code:', error)
+        antMessage.error('Failed to copy code to clipboard')
+      })
   }
 
   /**
@@ -201,14 +208,14 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @param {Object} event - The event details
    */
   protected logDiagramEvent(event: {
-    event_type: 'detection' | 'render_start' | 'render_success' | 'render_error' | 'validation';
-    diagram_type: string;
-    code_length?: number;
-    code_preview?: string;
-    error?: string;
-    provider_id?: string;
+    event_type: 'detection' | 'render_start' | 'render_success' | 'render_error' | 'validation'
+    diagram_type: string
+    code_length?: number
+    code_preview?: string
+    error?: string
+    provider_id?: string
   }): void {
-    console.log(`[${this.getDiagramType().toUpperCase()}] Event: ${event.event_type}`, event);
+    console.log(`[${this.getDiagramType().toUpperCase()}] Event: ${event.event_type}`, event)
 
     // Could log to backend API if needed
     // ApiService.logDiagramEvent(event);
@@ -220,42 +227,45 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    * @returns {Object} Extracted metadata
    */
   protected extractProviderMetadata(result: DiagramRenderResponse): {
-    providerId: string;
-    providerName: string;
-    renderTime: number;
-    version?: string;
+    providerId: string
+    providerName: string
+    renderTime: number
+    version?: string
   } {
     return {
       providerId: result.metadata.provider_id,
       providerName: result.metadata.provider_name,
       renderTime: result.metadata.render_time,
-      version: undefined // Could be added to metadata
-    };
+      version: undefined, // Could be added to metadata
+    }
   }
 
   /**
    * Format error message for display
-   * @param {any} error - The error object
+   * @param {unknown} error - The error object
    * @returns {string} Formatted error message
    */
-  protected formatErrorMessage(error: any): string {
+  protected formatErrorMessage(error: unknown): string {
     if (typeof error === 'string') {
-      return error;
+      return error
     }
 
-    if (error?.response?.data?.error) {
-      return error.response.data.error;
+    if (error && typeof error === 'object') {
+      const err = error as any
+      if (err.response?.data?.error) {
+        return err.response.data.error
+      }
+
+      if (err.response?.data?.detail) {
+        return err.response.data.detail
+      }
+
+      if (err.message) {
+        return err.message
+      }
     }
 
-    if (error?.response?.data?.detail) {
-      return error.response.data.detail;
-    }
-
-    if (error?.message) {
-      return error.message;
-    }
-
-    return 'An unknown error occurred while rendering the diagram';
+    return 'An unknown error occurred while rendering the diagram'
   }
 
   /**
@@ -265,10 +275,10 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    */
   protected async supportsFormat(format: OutputFormat): Promise<boolean> {
     try {
-      const provider = await this.getProviderInfo();
-      return provider.supported_output_formats.includes(format);
+      const provider = await this.getProviderInfo()
+      return provider.supported_output_formats.includes(format)
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -278,10 +288,10 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    */
   protected async supportsAutoFix(): Promise<boolean> {
     try {
-      const provider = await this.getProviderInfo();
-      return provider.capabilities.includes('auto_fix');
+      const provider = await this.getProviderInfo()
+      return provider.capabilities.includes('auto_fix')
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -291,10 +301,10 @@ export abstract class BaseDiagramRenderer<_Props extends BaseDiagramRendererProp
    */
   protected async supportsLLMCorrection(): Promise<boolean> {
     try {
-      const provider = await this.getProviderInfo();
-      return provider.capabilities.includes('llm_correction');
+      const provider = await this.getProviderInfo()
+      return provider.capabilities.includes('llm_correction')
     } catch {
-      return false;
+      return false
     }
   }
 }
@@ -318,16 +328,16 @@ export function useDiagramRenderer(diagramType: DiagramType) {
     png: null,
     validation: null,
     providerInfo: null,
-    renderResult: null
-  });
+    renderResult: null,
+  })
 
   /**
    * Update state
    * @param {Partial<DiagramState>} updates - State updates to merge
    */
   const updateState = (updates: Partial<DiagramState>): void => {
-    setState(prev => ({ ...prev, ...updates }));
-  };
+    setState((prev) => ({ ...prev, ...updates }))
+  }
 
   /**
    * Render diagram
@@ -336,14 +346,14 @@ export function useDiagramRenderer(diagramType: DiagramType) {
    * @returns {Promise<boolean>} Success status
    */
   const render = async (code: string, format: OutputFormat = 'svg'): Promise<boolean> => {
-    updateState({ isRendering: true, error: null });
+    updateState({ isRendering: true, error: null })
 
     try {
       const result = await diagramProviderService.render({
         code,
         diagram_type: diagramType,
-        output_format: format
-      });
+        output_format: format,
+      })
 
       if (result.success && result.content) {
         updateState({
@@ -351,27 +361,26 @@ export function useDiagramRenderer(diagramType: DiagramType) {
           svg: format === 'svg' ? result.content : state.svg,
           png: format === 'png' ? result.content : state.png,
           renderResult: result,
-          error: null
-        });
-        return true;
+          error: null,
+        })
+        return true
       } else {
-        const errorMsg = result.error || 'Unknown rendering error';
+        const errorMsg = result.error || 'Unknown rendering error'
         updateState({
           isRendering: false,
-          error: errorMsg
-        });
-        return false;
+          error: errorMsg,
+        })
+        return false
       }
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : 'Failed to render diagram';
+      const errorMsg = error instanceof Error ? error.message : 'Failed to render diagram'
       updateState({
         isRendering: false,
-        error: errorMsg
-      });
-      return false;
+        error: errorMsg,
+      })
+      return false
     }
-  };
+  }
 
   /**
    * Validate diagram
@@ -380,32 +389,31 @@ export function useDiagramRenderer(diagramType: DiagramType) {
    * @returns {Promise<boolean>} Validity status
    */
   const validate = async (code: string, autoFix: boolean = true): Promise<boolean> => {
-    updateState({ isValidating: true });
+    updateState({ isValidating: true })
 
     try {
       const result = await diagramProviderService.validate({
         code,
         diagram_type: diagramType,
-        auto_fix: autoFix
-      });
+        auto_fix: autoFix,
+      })
 
       updateState({
         isValidating: false,
         validation: result,
-        error: result.is_valid ? null : (result.error || 'Validation failed')
-      });
+        error: result.is_valid ? null : result.error || 'Validation failed',
+      })
 
-      return result.is_valid;
+      return result.is_valid
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : 'Validation failed';
+      const errorMsg = error instanceof Error ? error.message : 'Validation failed'
       updateState({
         isValidating: false,
-        error: errorMsg
-      });
-      return false;
+        error: errorMsg,
+      })
+      return false
     }
-  };
+  }
 
   /**
    * Get provider info
@@ -413,22 +421,22 @@ export function useDiagramRenderer(diagramType: DiagramType) {
    */
   const getProviderInfo = async (): Promise<ProviderInfo | null> => {
     try {
-      const info = await diagramProviderService.getProviderInfo(diagramType);
-      updateState({ providerInfo: info });
-      return info;
+      const info = await diagramProviderService.getProviderInfo(diagramType)
+      updateState({ providerInfo: info })
+      return info
     } catch (error) {
-      console.error('Failed to get provider info:', error);
-      return null;
+      console.error('Failed to get provider info:', error)
+      return null
     }
-  };
+  }
 
   return {
     state,
     updateState,
     render,
     validate,
-    getProviderInfo
-  };
+    getProviderInfo,
+  }
 }
 
 // ===================================================================
@@ -441,9 +449,9 @@ export function useDiagramRenderer(diagramType: DiagramType) {
  * @returns {DiagramType} The normalized diagram type
  */
 export function normalizeDiagramType(type: string): DiagramType {
-  const normalized = type.toLowerCase();
-  if (normalized.includes('mermaid')) return 'mermaid';
-  if (normalized.includes('d2')) return 'd2';
-  if (normalized.includes('c4')) return 'c4';
-  return normalized as DiagramType;
+  const normalized = type.toLowerCase()
+  if (normalized.includes('mermaid')) return 'mermaid'
+  if (normalized.includes('d2')) return 'd2'
+  if (normalized.includes('c4')) return 'c4'
+  return normalized as DiagramType
 }
