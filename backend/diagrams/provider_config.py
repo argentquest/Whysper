@@ -227,7 +227,7 @@ class ProviderConfigLoader:
             return config
 
         except Exception as e:
-            logger.error(f"Error loading root config: {e}")
+            logger.info(f"Error loading root config: {e}")
             logger.info("Using default root configuration")
             return RootConfig()
 
@@ -247,7 +247,7 @@ class ProviderConfigLoader:
 
             logger.info("Saved root configuration")
         except Exception as e:
-            logger.error(f"Error saving root config: {e}")
+            logger.info(f"Error saving root config: {e}")
 
     @log_method_call
     def load_provider_config(self, provider_folder: Path) -> Optional[ProviderConfig]:
@@ -276,7 +276,7 @@ class ProviderConfigLoader:
             required_fields = ['provider_id', 'provider_name', 'diagram_type', 'supported_output_formats']
             for field in required_fields:
                 if field not in provider_data:
-                    logger.error(f"Provider config missing required field: {field}")
+                    logger.info(f"Provider config missing required field: {field}")
                     return None
 
             # Merge with root defaults
@@ -294,7 +294,7 @@ class ProviderConfigLoader:
             return config
 
         except Exception as e:
-            logger.error(f"Error loading provider config from {provider_config_file}: {e}")
+            logger.info(f"Error loading provider config from {provider_config_file}: {e}")
             return None
 
     @log_method_call
@@ -357,7 +357,7 @@ class ProviderConfigLoader:
 
             logger.info(f"Saved config for {config.provider_id}")
         except Exception as e:
-            logger.error(f"Error saving provider config: {e}")
+            logger.info(f"Error saving provider config: {e}")
 
     @log_method_call
     def _extract_overrides(self, config: ProviderConfig) -> Dict[str, Any]:

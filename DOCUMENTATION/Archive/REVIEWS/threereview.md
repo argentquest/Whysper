@@ -732,7 +732,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
 try:
     ai_response = json.loads(ai_response_str)
 except json.JSONDecodeError as e:
-    logger.error(f"Failed to parse: {e}")
+    logger.info(f"Failed to parse: {e}")
     # Fallback handling
 ```
 

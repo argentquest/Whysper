@@ -44,7 +44,7 @@ def log_method_call(func):
                 return result
             except Exception as e:
                 # Log any exceptions with full traceback
-                logger.error(f"Exception in {func_name}: {e}", exc_info=True)
+                logger.info(f"Exception in {func_name}: {e}", exc_info=True)
                 raise
         return async_wrapper
     else:
@@ -65,6 +65,6 @@ def log_method_call(func):
                 return result
             except Exception as e:
                 # Log any exceptions with full traceback
-                logger.error(f"Exception in {func_name}: {e}", exc_info=True)
+                logger.info(f"Exception in {func_name}: {e}", exc_info=True)
                 raise
         return sync_wrapper

@@ -215,7 +215,7 @@ class DiagramFactoryService:
             )
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -270,7 +270,7 @@ class DiagramFactoryService:
                 })
             
         except Exception as e:
-            logger.error(f"Error analyzing system: {e}")
+            logger.info(f"Error analyzing system: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -554,7 +554,7 @@ class DiagramFactoryService:
             })
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
         finally:
@@ -602,7 +602,7 @@ class DiagramFactoryService:
             })
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -675,7 +675,7 @@ class DiagramFactoryService:
                 })
             
         except Exception as e:
-            logger.error(f"Error handling clarification: {e}")
+            logger.info(f"Error handling clarification: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -748,7 +748,7 @@ class DiagramFactoryService:
             )
             
         except Exception as e:
-            logger.error(f"Error handling diagram type selection: {e}")
+            logger.info(f"Error handling diagram type selection: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -782,7 +782,7 @@ class DiagramFactoryService:
             })
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 

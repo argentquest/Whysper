@@ -158,7 +158,7 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
         else:
             raise ValueError(f"Unknown tool: {name}")
     except Exception as e:
-        logger.error(f"Error calling tool {name}: {str(e)}")
+        logger.info(f"Error calling tool {name}: {str(e)}")
         return [TextContent(
             type="text",
             text=json.dumps({
@@ -308,7 +308,7 @@ async def api_generate_diagram(request: GenerateDiagramRequest):
         })
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
-        logger.error(f"API error in generate_diagram: {str(e)}")
+        logger.info(f"API error in generate_diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -324,7 +324,7 @@ async def api_render_diagram(request: RenderDiagramRequest):
         })
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
-        logger.error(f"API error in render_diagram: {str(e)}")
+        logger.info(f"API error in render_diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -340,7 +340,7 @@ async def api_generate_and_render(request: GenerateAndRenderRequest):
         })
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
-        logger.error(f"API error in generate_and_render: {str(e)}")
+        logger.info(f"API error in generate_and_render: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -360,7 +360,7 @@ async def api_call_tool(request: ToolRequest):
         result = await call_tool(request.name, request.arguments)
         return ToolResponse(content=[{"type": "text", "text": r.text} for r in result])
     except Exception as e:
-        logger.error(f"Error calling tool {request.name}: {str(e)}")
+        logger.info(f"Error calling tool {request.name}: {str(e)}")
         return ToolResponse(
             content=[{
                 "type": "text",
@@ -415,7 +415,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.info("MCP WebSocket connection closed")
     except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}")
+        logger.info(f"WebSocket error: {str(e)}")
         await websocket.close()
 
 

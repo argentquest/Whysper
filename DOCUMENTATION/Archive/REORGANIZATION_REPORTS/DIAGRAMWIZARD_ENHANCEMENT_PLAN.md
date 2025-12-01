@@ -821,7 +821,7 @@ class DiagramFactoryService:
             return result
 
         except Exception as e:
-            logger.error(f"Rendering failed for session {session_id}: {e}")
+            logger.info(f"Rendering failed for session {session_id}: {e}")
             await self._push_update(session_id, {
                 "status": "error",
                 "message": f"Rendering failed: {str(e)}",
@@ -874,7 +874,7 @@ async def render_diagram(state: GraphState) -> GraphState:
         }
 
     except Exception as e:
-        logger.error(f"[{session_id}] Rendering failed: {e}")
+        logger.info(f"[{session_id}] Rendering failed: {e}")
         return {
             **state,
             "validation_error": str(e),

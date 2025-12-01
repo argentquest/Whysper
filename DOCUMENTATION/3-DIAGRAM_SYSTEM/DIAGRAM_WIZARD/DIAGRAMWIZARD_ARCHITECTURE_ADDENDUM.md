@@ -178,7 +178,7 @@ async def refine_code(state: GraphState) -> GraphState:
 
     # Check max attempts (LangGraph workflow decision)
     if refinement_attempt >= 3:
-        logger.error(f"[{session_id}] Max refinement attempts reached")
+        logger.info(f"[{session_id}] Max refinement attempts reached")
         return {
             **state,
             "current_state": SessionState.ERROR,
@@ -312,7 +312,7 @@ async def render_diagram(state: GraphState) -> GraphState:
         }
 
     except Exception as e:
-        logger.error(f"[{session_id}] Rendering failed: {e}")
+        logger.info(f"[{session_id}] Rendering failed: {e}")
         return {
             **state,
             "current_state": SessionState.ERROR,

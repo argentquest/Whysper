@@ -367,7 +367,7 @@ class BaseDiagramProvider(ABC):
                 return True
             return False
         except Exception as e:
-            self.logger.error(f"Failed to reload config: {e}")
+            self.logger.info(f"Failed to reload config: {e}")
             return False
         finally:
             self.logger.info("Completed config reload attempt", extra={"provider_id": self.provider_id})
@@ -414,6 +414,7 @@ class BaseDiagramProvider(ABC):
         auto_fix: Optional[bool] = None,
         llm_correction: Optional[bool] = None,
         max_retries: Optional[int] = None,
+        model: Optional[str] = None,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
         **options
     ) -> RenderResult:
@@ -489,6 +490,8 @@ class BaseDiagramProvider(ABC):
             auto_fix: Enable pattern-based auto-fix (None = use config default)
             llm_correction: Enable LLM-based correction (None = use config default)
             max_retries: Maximum LLM correction attempts (None = use config default)
+            model: LLM model to use (None = use config default)
+            progress_callback: Optional callback for progress updates
             **options: Provider-specific rendering options
 
         Returns:
@@ -585,7 +588,7 @@ class BaseDiagramProvider(ABC):
             })
 
             validation_result = await self._attempt_llm_correction(
-                current_code, validation_result.error, max_retries, progress_callback, **options
+                current_code, validation_result.error, max_retries, model, progress_callback, **options
             )
 
             if validation_result.llm_corrected and validation_result.fixed_code:
@@ -597,19 +600,45 @@ class BaseDiagramProvider(ABC):
                     "step": "3/4"
                 })
 
-        # If still invalid, return error
+        # If still invalid, try to render anyway as best attempt
         if not validation_result.is_valid:
             duration = (datetime.now() - start_time).total_seconds()
-            self.logger.error(f"[{self.provider_id}] ❌ Validation failed after all attempts ({duration:.2f}s)")
-
-            return RenderResult(
-                success=False,
-                content=None,
-                output_format=output_format,
-                validation=validation_result,
-                metadata=self._create_metadata(start_time),
-                error=validation_result.error
+            self.logger.info(
+                f"[{self.provider_id}] ⚠️  Validation failed after all "
+                f"attempts ({duration:.2f}s). Attempting render anyway..."
             )
+
+            # Try to render the best-attempt code even if validation failed
+            # This allows users to see what was attempted
+            try:
+                render_result = self.render(
+                    current_code, output_format, **options
+                )
+                render_result.validation = validation_result
+                render_result.metadata.update(
+                    self._create_metadata(start_time)
+                )
+                # Mark as failed even if render succeeded, since validation
+                # failed
+                render_result.success = False
+                render_result.error = (
+                    f"Validation failed: {validation_result.error}. "
+                    f"Rendered best attempt."
+                )
+                return render_result
+            except Exception as e:
+                self.logger.info(
+                    f"[{self.provider_id}] Render of invalid code "
+                    f"also failed: {e}"
+                )
+                return RenderResult(
+                    success=False,
+                    content=current_code,  # Return code for debugging
+                    output_format="text",
+                    validation=validation_result,
+                    metadata=self._create_metadata(start_time),
+                    error=validation_result.error
+                )
 
         # Step 4: Render
         self.logger.info(f"[{self.provider_id}] Step 4/4: Rendering to {output_format}...")
@@ -636,7 +665,7 @@ class BaseDiagramProvider(ABC):
         if render_result.success:
             self.logger.info(f"[{self.provider_id}] ✅ Render successful ({duration:.2f}s)")
         else:
-            self.logger.error(f"[{self.provider_id}] ❌ Render failed ({duration:.2f}s)")
+            self.logger.info(f"[{self.provider_id}] ❌ Render failed ({duration:.2f}s)")
 
         self.logger.info(
             "Completed render_with_validation",
@@ -650,6 +679,7 @@ class BaseDiagramProvider(ABC):
         code: str,
         error_message: str,
         max_retries: int,
+        model: Optional[str] = None,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
         **options
     ) -> ValidationResult:
@@ -684,13 +714,16 @@ class BaseDiagramProvider(ABC):
             })
 
             # Request correction from LLM
+            # Use session model if provided, otherwise fall back to config
+            llm_model = model or self.config.llm_correction.model_override
             success, corrected_code, message = self._llm_correction_service.correct_diagram_code(
                 diagram_type=self.diagram_type,
                 invalid_code=current_code,
                 error_message=current_error,
                 provider_specific_rules=self.get_llm_correction_rules(),
                 max_tokens=self.config.llm_correction.max_tokens,
-                temperature=self.config.llm_correction.temperature
+                temperature=self.config.llm_correction.temperature,
+                model=llm_model
             )
 
             if not success:
@@ -721,7 +754,7 @@ class BaseDiagramProvider(ABC):
                 )
 
         # All attempts failed
-        self.logger.error(f"[{self.provider_id}] ❌ LLM correction failed after {max_retries} attempts")
+        self.logger.info(f"[{self.provider_id}] ❌ LLM correction failed after {max_retries} attempts")
         result = ValidationResult(
             is_valid=False,
             error=current_error,

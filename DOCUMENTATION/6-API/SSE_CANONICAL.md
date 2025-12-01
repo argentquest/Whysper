@@ -285,7 +285,7 @@ logger = logging.getLogger(__name__)
 # Log SSE events
 logger.info(f"SSE: Client connected - session_id={session_id}")
 logger.info(f"SSE: Sending update - type={update['type']}")
-logger.error(f"SSE: Error occurred - {str(e)}")
+logger.info(f"SSE: Error occurred - {str(e)}")
 logger.info(f"SSE: Client disconnected - session_id={session_id}")
 ```
 

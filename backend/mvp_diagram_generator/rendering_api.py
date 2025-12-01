@@ -204,7 +204,7 @@ async def generate_diagram(
         if not code_blocks:
             # Handle case where no code blocks are found
             error_message = "No code blocks found in the AI response."
-            logger.error(error_message)
+            logger.info(error_message)
             return {
                 # Return error response with detailed information
                 "image_data": "",
@@ -246,7 +246,7 @@ async def generate_diagram(
         # Handle invalid diagram code
         if not is_valid:
             error_message = "Could not generate a valid diagram from the AI response."
-            logger.error(error_message)
+            logger.info(error_message)
             return {
                 # Return error response with generated (but invalid) code
                 "image_data": "",
@@ -310,7 +310,7 @@ async def generate_diagram(
 
     except Exception as e:
         # Handle and log any unexpected errors during diagram generation
-        logger.error(f"Error generating diagram: {e}")
+        logger.info(f"Error generating diagram: {e}")
         return {
             # Return generic error response
             "image_data": "",

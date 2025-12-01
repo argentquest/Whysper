@@ -307,7 +307,7 @@ class LazyCodebaseScanner:
             )
 
         except Exception as e:
-            logger.error(
+            logger.info(
                 "Error during directory scan", directory=directory, error=str(e)
             )
             raise Exception(f"Error scanning directory: {str(e)}")
@@ -395,7 +395,7 @@ class LazyCodebaseScanner:
             return content
 
         except Exception as e:
-            logger.error("Error reading file", file=file_path, error=str(e))
+            logger.info("Error reading file", file=file_path, error=str(e))
             raise IOError(f"Error reading file {os.path.basename(file_path)}: {str(e)}")
         finally:
             read_time = time.time() - start_time

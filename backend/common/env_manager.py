@@ -113,7 +113,7 @@ class EnvManager:
                     self.env_vars[key] = value
 
         except Exception as e:
-            logger.error(f"Error loading .env file: {e}")
+            logger.info(f"Error loading .env file: {e}")
 
         return self.env_vars
 
@@ -159,7 +159,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             with open(self.env_path, "w", encoding="utf-8") as f:
                 f.write(default_content)
         except Exception as e:
-            logger.error(f"Error creating default .env file: {e}")
+            logger.info(f"Error creating default .env file: {e}")
 
     @log_method_call
     def save_env_file(self, env_vars: Dict[str, str]) -> bool:
@@ -202,7 +202,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
                     f.write("\n")
             return True
         except Exception as e:
-            logger.error(f"Error saving .env file: {e}")
+            logger.info(f"Error saving .env file: {e}")
             return False
 
     @log_method_call
@@ -288,7 +288,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
             # Save back to file
             return self.save_env_file(current_vars)
         except Exception as e:
-            logger.error(f"Error updating environment variable {key}: {e}")
+            logger.info(f"Error updating environment variable {key}: {e}")
             return False
 
     @log_method_call

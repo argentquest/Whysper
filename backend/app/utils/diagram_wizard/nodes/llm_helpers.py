@@ -116,7 +116,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         model = _get_model_for_id(model_id)
 
         if not api_key:
-            logger.error("No API key configured for diagram wizard AI calls",
+            logger.info("No API key configured for diagram wizard AI calls",
                         extra={'session_id': session_id} if session_id else {})
             raise Exception("No API key configured. Please configure your AI provider API key in settings.")
 
@@ -173,7 +173,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
                 timeout=total_timeout,
             )
         except asyncio.TimeoutError as timeout_err:
-            logger.error(
+            logger.info(
                 f"AI call exceeded timeout ({total_timeout}s)",
                 extra={'session_id': session_id} if session_id else {},
             )
@@ -211,7 +211,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         return response
     except httpx.RequestError as e:
         error_msg = f"Network error during AI call: {str(e)}. Please check your internet connection and try again."
-        logger.error(f"❌ AI call failed due to a network error: {e}",
+        logger.info(f"❌ AI call failed due to a network error: {e}",
                     extra={'session_id': session_id} if session_id else {})
         raise Exception(error_msg)
     except Exception as e:
@@ -222,6 +222,6 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         else:
             error_msg = f"AI call failed: {str(e)}"
 
-        logger.error(f"❌ An error occurred during the AI call: {e}",
+        logger.info(f"❌ An error occurred during the AI call: {e}",
                     extra={'session_id': session_id} if session_id else {})
         raise Exception(error_msg) from e

@@ -165,7 +165,7 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
         except subprocess.TimeoutExpired:
             raise Exception(f"mmdc timed out after {MMDC_TIMEOUT} seconds")
         except Exception as e:
-            logger.error(f"Error rendering diagram: {str(e)}")
+            logger.info(f"Error rendering diagram: {str(e)}")
             raise
 
 

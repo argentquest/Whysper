@@ -88,7 +88,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
     prompt_template = get_prompt("analyze_request", model_id=model_id)
     if not prompt_template:
-        logger.error("analyze_request prompt not found!", extra={'session_id': session_id})
+        logger.info("analyze_request prompt not found!", extra={'session_id': session_id})
         return {
             "next_action": "clarify",
             "clarification_question": "I'm having trouble understanding your request. Could you please describe the diagram you want to create in more detail?",
@@ -102,7 +102,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in analyze_request: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in analyze_request: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -166,7 +166,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         }
 
     except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
+        logger.info(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
         # Fallback to clarification
         fallback_question = "I'm not sure I understand. Could you please provide more details about the components and how they interact?"
         if update_callback:
@@ -225,7 +225,7 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
         model = _get_model_for_id(model_id) if model_id else env_vars.get("DEFAULT_MODEL", "google/gemini-2.5-flash-preview-09-2025")
 
         if not api_key:
-            logger.error("No API key configured for diagram wizard AI calls",
+            logger.info("No API key configured for diagram wizard AI calls",
                         extra={'session_id': session_id} if session_id else {})
             raise Exception("No API key configured. Please configure your AI provider API key in settings.")
 
@@ -281,7 +281,7 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
         return response
     except httpx.RequestError as e:
         error_msg = f"Network error during AI call: {str(e)}. Please check your internet connection and try again."
-        logger.error(f"❌ AI call failed due to a network error: {e}",
+        logger.info(f"❌ AI call failed due to a network error: {e}",
                     extra={'session_id': session_id} if session_id else {})
         raise Exception(error_msg)
     except Exception as e:
@@ -292,7 +292,7 @@ async def _call_llm(prompt: str, user_content: str, session_id: str = None, mode
         else:
             error_msg = f"AI call failed: {str(e)}"
 
-        logger.error(f"❌ An error occurred during the AI call: {e}",
+        logger.info(f"❌ An error occurred during the AI call: {e}",
                     extra={'session_id': session_id} if session_id else {})
         raise Exception(error_msg)
 
@@ -329,7 +329,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     # Load model-specific JSON_GENERATION prompt
     prompt_template = get_prompt("json_generation", model_id=model_id)
     if not prompt_template:
-        logger.error(
+        logger.info(
             f"json_generation prompt not found for model: {model_id}",
             extra={'session_id': session_id}
         )
@@ -358,7 +358,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         )
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -422,7 +422,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except json.JSONDecodeError as e:
-        logger.error(
+        logger.info(
             f"AI response not valid JSON: {e}",
             extra={'session_id': session_id}
         )
@@ -439,7 +439,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(
+        logger.info(
             f"Unexpected error during JSON generation: {e}",
             extra={'session_id': session_id}
         )
@@ -615,7 +615,7 @@ Determine if you have enough information or need to ask more questions."""
         ai_response_str = await _call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
         update_callback = state.get("_update_callback")
         if update_callback:
             await update_callback({
@@ -708,7 +708,7 @@ Determine if you have enough information or need to ask more questions."""
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"❌ Failed to parse clarification response as JSON: {e}",
+        logger.info(f"❌ Failed to parse clarification response as JSON: {e}",
                     extra={'session_id': session_id} if session_id else {})
         # Fallback to simple string parsing
         if ai_response_str.startswith("READY:"):
@@ -839,7 +839,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         ai_response = await _call_llm(prompt_template, json.dumps(json_representation, indent=2), session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -942,7 +942,7 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     model_id = state.get("model_id")  # Get selected model from state
 
     if refinement_attempt >= 3:
-        logger.error("Max refinement attempts reached. Unable to fix code.", extra={'session_id': state.get("_session_id")})
+        logger.info("Max refinement attempts reached. Unable to fix code.", extra={'session_id': state.get("_session_id")})
         return {
             "is_valid": False,
             "error_message": "Max refinement attempts reached. Unable to fix code.",
@@ -990,7 +990,7 @@ Attempt: {refinement_attempt}"""
         ai_response = await _call_llm(prompt_template, error_context, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in refine_code: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in refine_code: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",

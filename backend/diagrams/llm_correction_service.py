@@ -50,7 +50,7 @@ class LLMCorrectionService:
                 self._initialized = True
                 logger.info(f"LLM correction service initialized with provider: {provider}")
             except Exception as e:
-                logger.error(f"Failed to initialize LLM correction service: {e}")
+                logger.info(f"Failed to initialize LLM correction service: {e}")
                 self._initialized = False
         else:
             self._initialized = True
@@ -128,7 +128,7 @@ class LLMCorrectionService:
                 return False, invalid_code, "Could not extract corrected code from LLM response"
 
         except Exception as e:
-            logger.error(f"[LLM CORRECTION] ❌ Error during correction: {e}", exc_info=True)
+            logger.info(f"[LLM CORRECTION] ❌ Error during correction: {e}", exc_info=True)
             return False, invalid_code, f"LLM correction failed: {str(e)}"
 
     @log_method_call

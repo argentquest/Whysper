@@ -127,7 +127,7 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
             logger.info(f"DEBUG: Prompt file check - exists: {prompt_file_exists}, path: {prompt_file_path}")
 
             if not prompt_file_exists:
-                logger.error(f"DEBUG: Prompt file not found at: {prompt_file_path}")
+                logger.info(f"DEBUG: Prompt file not found at: {prompt_file_path}")
                 raise FileNotFoundError(f"Prompt file not found: {prompt_file_path}")
             
             # Load the appropriate agent prompt
@@ -176,7 +176,7 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
             )
             
             if not code_blocks:
-                logger.error("No code blocks found in AI response")
+                logger.info("No code blocks found in AI response")
                 raise ValueError("No code blocks found in the AI response")
             
             diagram_code = code_blocks[0]["code"]
@@ -194,7 +194,7 @@ async def generate_diagram_impl(prompt: str, diagram_type: str) -> str:
             return json.dumps(result, indent=2)
             
         except Exception as ai_error:
-            logger.error(f"AI generation failed, falling back to placeholder: {str(ai_error)}")
+            logger.info(f"AI generation failed, falling back to placeholder: {str(ai_error)}")
             logger.debug(f"AI error details: {SecurityUtils.safe_debug_info({'error': str(ai_error), 'type': type(ai_error).__name__})}")
             
             # Fallback to placeholder implementation
@@ -223,7 +223,7 @@ System_1 -> System_2"""
             return json.dumps(result, indent=2)
         
     except Exception as e:
-        logger.error(f"Error generating diagram: {str(e)}")
+        logger.info(f"Error generating diagram: {str(e)}")
         error_result = {
             "error": str(e),
             "diagram_type": diagram_type,
@@ -263,7 +263,7 @@ async def render_diagram_impl(code: str, diagram_type: str, output_format: str =
         return json.dumps(result, indent=2)
         
     except Exception as e:
-        logger.error(f"Error rendering diagram: {str(e)}")
+        logger.info(f"Error rendering diagram: {str(e)}")
         error_result = {
             "error": str(e),
             "diagram_type": diagram_type,
@@ -309,7 +309,7 @@ async def generate_and_render_impl(prompt: str, diagram_type: str,
         return json.dumps(result, indent=2)
         
     except Exception as e:
-        logger.error(f"Error in generate_and_render: {str(e)}")
+        logger.info(f"Error in generate_and_render: {str(e)}")
         error_result = {
             "error": str(e),
             "diagram_type": diagram_type,
@@ -384,7 +384,7 @@ async def api_generate_diagram(request: GenerateDiagramRequest):
         result = await generate_diagram_impl(request.prompt, request.diagram_type)
         return ToolResponse(content=[{"type": "text", "text": result}])
     except Exception as e:
-        logger.error(f"API error in generate_diagram: {str(e)}")
+        logger.info(f"API error in generate_diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -397,7 +397,7 @@ async def api_render_diagram(request: RenderDiagramRequest):
         )
         return ToolResponse(content=[{"type": "text", "text": result}])
     except Exception as e:
-        logger.error(f"API error in render_diagram: {str(e)}")
+        logger.info(f"API error in render_diagram: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -410,7 +410,7 @@ async def api_generate_and_render(request: GenerateAndRenderRequest):
         )
         return ToolResponse(content=[{"type": "text", "text": result}])
     except Exception as e:
-        logger.error(f"API error in generate_and_render: {str(e)}")
+        logger.info(f"API error in generate_and_render: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -518,7 +518,7 @@ async def call_tool(request: ToolRequest):
         return ToolResponse(content=[{"type": "text", "text": result}])
         
     except Exception as e:
-        logger.error(f"Error calling tool {request.name}: {str(e)}")
+        logger.info(f"Error calling tool {request.name}: {str(e)}")
         return ToolResponse(
             content=[{
                 "type": "text", 
@@ -575,7 +575,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.info("MCP WebSocket connection closed")
     except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}")
+        logger.info(f"WebSocket error: {str(e)}")
         await websocket.close()
 
 

@@ -187,7 +187,7 @@ async def stream_logs(session_id: str = None):
         except asyncio.CancelledError:
             logger.info(f"📡 Log stream client disconnected (cancelled, session: {session_id or 'ALL'})")
         except Exception as e:
-            logger.error(f"📡 Log stream error (session: {session_id or 'ALL'}): {str(e)}")
+            logger.info(f"📡 Log stream error (session: {session_id or 'ALL'}): {str(e)}")
         finally:
             # Unregister client
             log_broadcaster.remove_client(client_queue)
@@ -364,14 +364,14 @@ async def send_chat_message_stream(request: ChatRequest):
                     messages=[user_message, response_message],
                 )
             except Exception as e:
-                logger.error(f"Failed to save conversation history: {str(e)}")
+                logger.info(f"Failed to save conversation history: {str(e)}")
 
             # Send final complete event
             yield f"event: complete\ndata: {json.dumps(response_data)}\n\n"
 
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"SSE streaming error: {error_msg}", exc_info=True)
+            logger.info(f"SSE streaming error: {error_msg}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': error_msg})}\n\n"
 
     return StreamingResponse(
@@ -465,7 +465,7 @@ def send_chat_message(request: ChatRequest):
                     session.add_file(file_path)
                     logger.info(f"✅ Successfully added file: {file_path}", extra={'session_id': conversation_id})
                 except Exception as e:
-                    logger.error(f"❌ Failed to add file {file_path}: {str(e)}")
+                    logger.info(f"❌ Failed to add file {file_path}: {str(e)}")
 
             # Initialize context tracking for the session
             session.last_context_files = context_files.copy()
@@ -606,7 +606,7 @@ def send_chat_message(request: ChatRequest):
                 )
 
         except Exception as hist_error:
-            logger.error(f"❌ Error saving conversation history: {hist_error}")
+            logger.info(f"❌ Error saving conversation history: {hist_error}")
 
         logger.info(
             f"AI response generated successfully for conversation {conversation_id}",
@@ -618,7 +618,7 @@ def send_chat_message(request: ChatRequest):
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as exc:
-        logger.error(f"Error processing chat message: {exc}")
+        logger.info(f"Error processing chat message: {exc}")
         raise HTTPException(
             status_code=500, detail=f"Internal server error: {str(exc)}"
         )
@@ -855,7 +855,7 @@ def list_conversation_histories():
         histories = history_service.list_conversation_histories()
         return {"success": True, "data": histories, "count": len(histories)}
     except Exception as e:
-        logger.error(f"Failed to list conversation histories: {e}")
+        logger.info(f"Failed to list conversation histories: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to list histories: {str(e)}"
         )
@@ -885,7 +885,7 @@ def get_conversation_history(conversation_id: str):
         else:
             return {"success": False, "error": "Conversation history not found"}
     except Exception as e:
-        logger.error(f"Failed to get conversation history for {conversation_id}: {e}")
+        logger.info(f"Failed to get conversation history for {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get history: {str(e)}")
 
 
@@ -916,7 +916,7 @@ def delete_conversation_history(conversation_id: str):
         else:
             return {"success": False, "error": "Conversation history not found"}
     except Exception as e:
-        logger.error(
+        logger.info(
             f"Failed to delete conversation history for {conversation_id}: {e}"
         )
         raise HTTPException(
@@ -959,7 +959,7 @@ def clear_conversation(conversation_id: str):
         logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found"}
     except Exception as e:
-        logger.error(
+        logger.info(
             f"Failed to clear conversation for {conversation_id}: {e}"
         )
         raise HTTPException(
@@ -1002,7 +1002,7 @@ def get_conversation_files(conversation_id: str):
         logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
     except Exception as e:
-        logger.error(
+        logger.info(
             f"Failed to get conversation files for {conversation_id}: {e}"
         )
         raise HTTPException(

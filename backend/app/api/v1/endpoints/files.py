@@ -173,7 +173,7 @@ def get_file_content(request: FileContentRequest):
     try:
         combined = file_service.read_files(request.files)
     except Exception as exc:
-        logger.error(f"Error reading files: {exc}", files=request.files)
+        logger.info(f"Error reading files: {exc}", files=request.files)
         raise HTTPException(status_code=400, detail=str(exc))
     
     logger.info(f"Successfully read and combined {len(request.files)} files.")
@@ -732,7 +732,7 @@ def upload_files(request: FileUploadRequest):
                 logger.info(f"Successfully uploaded file: {file_name} ({file_size} bytes)")
                 
             except Exception as e:
-                logger.error(f"Error processing file upload: {str(e)}")
+                logger.info(f"Error processing file upload: {str(e)}")
                 continue
         
         if not uploaded_files:
@@ -757,7 +757,7 @@ def upload_files(request: FileUploadRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in file upload: {str(e)}")
+        logger.info(f"Error in file upload: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -842,7 +842,7 @@ def get_uploaded_files():
                         continue
                         
         except (OSError, PermissionError) as e:
-            logger.error(f"Error accessing upload directory: {str(e)}")
+            logger.info(f"Error accessing upload directory: {str(e)}")
         
         return {
             "success": True,
@@ -850,5 +850,5 @@ def get_uploaded_files():
         }
         
     except Exception as e:
-        logger.error(f"Error getting uploaded files: {str(e)}")
+        logger.info(f"Error getting uploaded files: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

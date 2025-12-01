@@ -56,7 +56,7 @@ def _parse_ai_response(ai_response_str: str, session_id: str = None) -> Dict[str
         except json.JSONDecodeError as err:
             parse_errors.append(f"cleaned parse: {err}")
 
-    logger.warning(
+    logger.info(
         f"Failed to parse AI response after retries: {' | '.join(parse_errors)}",
         extra={'session_id': session_id} if session_id else {},
     )
@@ -110,7 +110,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
 
     prompt_template = get_prompt("analyze_request", model_id=model_id)
     if not prompt_template:
-        logger.error("analyze_request prompt not found!", extra={'session_id': session_id})
+        logger.info("analyze_request prompt not found!", extra={'session_id': session_id})
         return {
             "next_action": "clarify",
             "clarification_question": "I'm having trouble understanding your request. Could you please describe the diagram you want to create in more detail?",
@@ -124,7 +124,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in analyze_request: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in analyze_request: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -157,7 +157,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                 else:
                     state["json_representation"] = architecture_json
             except json.JSONDecodeError as json_err:
-                logger.warning(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
+                logger.info(f"Failed to parse architecture_json: {json_err}", extra={'session_id': session_id})
                 state["json_representation"] = {}
 
         # ANALYZE phase always shows results and moves to CLARIFY loop
@@ -192,7 +192,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         }
 
     except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
+        logger.info(f"Error processing analysis response from AI: {e}", extra={'session_id': session_id})
         # Fallback to clarification
         fallback_question = "I'm not sure I understand. Could you please provide more details about the components and how they interact?"
         if update_callback:

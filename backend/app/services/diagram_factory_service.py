@@ -144,7 +144,7 @@ class DiagramSessionStore:
 
         except Exception as e:
             # Don't let cleanup crash the request
-            logger.error(f"Error during session cleanup: {e}")
+            logger.info(f"Error during session cleanup: {e}")
 
     @classmethod
     @log_method_call
@@ -244,7 +244,7 @@ class DiagramFactoryService:
                 "interacts", "communicates"
             ]
         except json.JSONDecodeError as e:
-            logger.error(f"Error parsing keywords.json: {e}, using default keywords")
+            logger.info(f"Error parsing keywords.json: {e}, using default keywords")
             # Fallback to default keywords if JSON parsing fails
             self.entity_words = [
                 "user", "system", "database", "service", "component", "server",
@@ -336,7 +336,7 @@ class DiagramFactoryService:
             )
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({
                 "status": "error",
@@ -490,7 +490,7 @@ class DiagramFactoryService:
             })
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({
                 "status": "error",
@@ -537,7 +537,7 @@ class DiagramFactoryService:
             self._resume_graph_if_idle("clarification response")
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 
@@ -564,7 +564,7 @@ class DiagramFactoryService:
             self._resume_graph_if_idle("user confirmed ready")
 
         except Exception as e:
-            logger.error(f"Error confirming ready: {e}")
+            logger.info(f"Error confirming ready: {e}")
             self.session.errors.append(str(e))
             await self._push_update({
                 "status": "error",
@@ -616,7 +616,7 @@ class DiagramFactoryService:
             logger.info(f"[select_diagram_type] resumed graph workflow for session {self.session.session_id}")
 
         except Exception as e:
-            logger.error(f"Error selecting diagram type: {e}")
+            logger.info(f"Error selecting diagram type: {e}")
             self.session.errors.append(str(e))
             await self._push_update({
                 "status": "error",
@@ -641,7 +641,7 @@ class DiagramFactoryService:
             self._resume_graph_if_idle("render approval")
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({
                 "status": "error",
@@ -713,7 +713,7 @@ class DiagramFactoryService:
             })
 
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
             await self._push_update({"status": "error", "message": str(e)})
 

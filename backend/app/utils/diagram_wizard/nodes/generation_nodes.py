@@ -54,7 +54,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     # Load model-specific JSON_GENERATION prompt
     prompt_template = get_prompt("json_generation", model_id=model_id)
     if not prompt_template:
-        logger.error(
+        logger.info(
             f"json_generation prompt not found for model: {model_id}",
             extra={'session_id': session_id}
         )
@@ -90,7 +90,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         )
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -121,13 +121,13 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Validate Structurizr syntax (basic check)
         if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
-            logger.warning(
+            logger.info(
                 "Structurizr workspace missing or invalid format",
                 extra={'session_id': session_id}
             )
 
         if not clean_structurizr or not clean_structurizr.startswith("model"):
-            logger.warning(
+            logger.info(
                 "clean_structurizr missing or invalid format",
                 extra={'session_id': session_id}
             )
@@ -136,7 +136,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         if json_representation:
             is_valid, errors = ArchitectureSchema.validate(json_representation)
             if not is_valid:
-                logger.warning(
+                logger.info(
                     f"Legacy JSON schema validation issues: {errors}",
                     extra={'session_id': session_id}
                 )
@@ -161,7 +161,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except json.JSONDecodeError as e:
-        logger.error(
+        logger.info(
             f"AI response not valid JSON: {e}",
             extra={'session_id': session_id}
         )
@@ -179,7 +179,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(
+        logger.info(
             f"Unexpected error during JSON generation: {e}",
             extra={'session_id': session_id}
         )
@@ -374,7 +374,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         ai_response = await call_llm(prompt_template, llm_input_payload, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
         if update_callback:
             await update_callback({
                 "status": "failed",

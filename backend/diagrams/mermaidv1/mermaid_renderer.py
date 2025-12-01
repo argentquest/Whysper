@@ -566,7 +566,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             self.logger.info(f"Mermaid CLI version: {version}")
             return version
         except Exception as e:
-            self.logger.error(f"Failed to retrieve Mermaid CLI version: {e}")
+            self.logger.info(f"Failed to retrieve Mermaid CLI version: {e}")
             return "Unknown"
 
     def validate_code(self, code: str, **options) -> ValidationResult:
@@ -581,7 +581,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             ValidationResult: Result of validation.
         """
         if not self.is_available():
-            self.logger.warning("Validation skipped: Mermaid CLI not available.")
+            self.logger.info("Validation skipped: Mermaid CLI not available.")
             return ValidationResult(
                 is_valid=False,
                 error="Mermaid CLI (mmdc) not available",
@@ -606,7 +606,7 @@ class MermaidV1Provider(BaseDiagramProvider):
 
         except Exception as e:
             error_msg = f"Validation exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return ValidationResult(
                 is_valid=False,
                 error=error_msg,
@@ -649,7 +649,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             return validation_result
 
         except Exception as e:
-            self.logger.error(f"Pattern-based fix exception: {e}", exc_info=True)
+            self.logger.info(f"Pattern-based fix exception: {e}", exc_info=True)
             return ValidationResult(
                 is_valid=False,
                 error=error_message,
@@ -670,7 +670,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             RenderResult: The result of the rendering process.
         """
         if not self.is_available():
-            self.logger.warning("Rendering skipped: Mermaid CLI not available.")
+            self.logger.info("Rendering skipped: Mermaid CLI not available.")
             return RenderResult(
                 success=False,
                 content=None,
@@ -697,7 +697,7 @@ class MermaidV1Provider(BaseDiagramProvider):
 
         # Validate supported format
         if output_format.lower() not in ["svg", "png"]:
-            self.logger.error(f"Unsupported output format requested: {output_format}")
+            self.logger.info(f"Unsupported output format requested: {output_format}")
             return RenderResult(
                 success=False,
                 content=None,
@@ -739,7 +739,7 @@ class MermaidV1Provider(BaseDiagramProvider):
                     }
                 )
             else:
-                self.logger.error(f"Rendering failed: {message[:200]}")
+                self.logger.info(f"Rendering failed: {message[:200]}")
                 return RenderResult(
                     success=False,
                     content=None,
@@ -755,7 +755,7 @@ class MermaidV1Provider(BaseDiagramProvider):
 
         except Exception as e:
             error_msg = f"Rendering exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return RenderResult(
                 success=False,
                 content=None,

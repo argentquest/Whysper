@@ -265,7 +265,7 @@ try:
         data = json.load(f)
 except json.JSONDecodeError:
     # Handle corrupted file
-    logger.error(f"Corrupted session file: {filepath}")
+    logger.info(f"Corrupted session file: {filepath}")
 ```
 
 #### "GUID collision"

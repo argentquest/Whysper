@@ -77,7 +77,7 @@ class ExportService:
             return pdf_bytes
             
         except Exception as e:
-            self.logger.error(f"Error exporting to PDF: {e}")
+            self.logger.info(f"Error exporting to PDF: {e}")
             # Return simple markdown as fallback
             return content.encode('utf-8')
     
@@ -109,7 +109,7 @@ class ExportService:
             return html_content
             
         except Exception as e:
-            self.logger.error(f"Error exporting to HTML: {e}")
+            self.logger.info(f"Error exporting to HTML: {e}")
             # Return simple HTML as fallback
             return f"""
             <!DOCTYPE html>
@@ -150,7 +150,7 @@ class ExportService:
             return content
             
         except Exception as e:
-            self.logger.error(f"Error exporting to Markdown: {e}")
+            self.logger.info(f"Error exporting to Markdown: {e}")
             return content
     
     @log_method_call
@@ -215,7 +215,7 @@ class ExportService:
             return content.encode('utf-8')
             
         except Exception as e:
-            self.logger.error(f"Error exporting to Word document: {e}")
+            self.logger.info(f"Error exporting to Word document: {e}")
             return content.encode('utf-8')
     
     @log_method_call
@@ -275,7 +275,7 @@ class ExportService:
                 return content
                 
         except Exception as e:
-            self.logger.error(f"Error applying HTML template: {e}")
+            self.logger.info(f"Error applying HTML template: {e}")
             return content
     
     @log_method_call
@@ -343,7 +343,7 @@ class ExportService:
             self.logger.info("ReportLab not available")
             return content.encode('utf-8')
         except Exception as e:
-            self.logger.error(f"Error with ReportLab PDF export: {e}")
+            self.logger.info(f"Error with ReportLab PDF export: {e}")
             return content.encode('utf-8')
     
     @log_method_call

@@ -109,7 +109,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
     if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
-        logger.warning(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+        logger.info(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
                       extra={'session_id': state.get("_session_id")})
         # Send update to frontend asking for user confirmation even though timeout reached
         update_callback = state.get("_update_callback")
@@ -189,7 +189,7 @@ Determine if you have enough information or need to ask more questions."""
         ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
         update_callback = state.get("_update_callback")
         if update_callback:
             await update_callback({
@@ -323,7 +323,7 @@ Determine if you have enough information or need to ask more questions."""
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"❌ Failed to parse clarification response as JSON: {e}",
+        logger.info(f"❌ Failed to parse clarification response as JSON: {e}",
                     extra={'session_id': session_id} if session_id else {})
         # Fallback to simple string parsing
         if ai_response_str and ai_response_str.startswith("READY:"):

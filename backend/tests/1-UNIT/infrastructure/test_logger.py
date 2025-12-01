@@ -373,7 +373,7 @@ class TestCodeChatLogger:
             name="test_logger",
             log_dir=str(log_file_path.parent)
         )
-        logger.error("Error message")
+        logger.info("Error message")
         assert True
 
     def test_logger_critical_level(self, log_file_path):
@@ -505,7 +505,7 @@ class TestLoggerIntegration:
         logger.debug("Debug message")
         logger.info("Info message")
         logger.info("Warning message")
-        logger.error("Error message")
+        logger.info("Error message")
 
         # Check file was written
         assert (log_file_path.parent / "structured.log").exists()

@@ -49,7 +49,7 @@ class TerrastructIconScraper:
             response.raise_for_status()
             return response.text
         except Exception as e:
-            logger.error(f"Failed to fetch {url}: {e}")
+            logger.info(f"Failed to fetch {url}: {e}")
             return ""
 
     def extract_icon_urls(self, html: str) -> list:
@@ -118,7 +118,7 @@ class TerrastructIconScraper:
             return True
 
         except Exception as e:
-            logger.error(f"✗ Failed to download {url}: {e}")
+            logger.info(f"✗ Failed to download {url}: {e}")
             self.failed += 1
             return False
 
@@ -130,7 +130,7 @@ class TerrastructIconScraper:
         # Get main page
         html = self.get_page(self.base_url)
         if not html:
-            logger.error("Failed to fetch main page. Exiting.")
+            logger.info("Failed to fetch main page. Exiting.")
             return
 
         # Extract category links

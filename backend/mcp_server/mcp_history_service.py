@@ -198,7 +198,7 @@ class MCPHistoryService:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to log MCP request/response for session {session_id}: {e}")
+            logger.info(f"Failed to log MCP request/response for session {session_id}: {e}")
             return False
     
     def load_session_history(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -233,7 +233,7 @@ class MCPHistoryService:
             return session_data
             
         except Exception as e:
-            logger.error(f"Failed to load MCP session history for {session_id}: {e}")
+            logger.info(f"Failed to load MCP session history for {session_id}: {e}")
             return None
     
     def list_session_histories(self) -> List[Dict[str, Any]]:
@@ -267,7 +267,7 @@ class MCPHistoryService:
             histories.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
             
         except Exception as e:
-            logger.error(f"Failed to list MCP session histories: {e}")
+            logger.info(f"Failed to list MCP session histories: {e}")
         
         return histories
 

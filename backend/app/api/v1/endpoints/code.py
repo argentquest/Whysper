@@ -80,7 +80,7 @@ def extract_code_blocks(request: CodeExtractionRequest):
         
     except Exception as e:
         # Log and re-raise any unexpected errors to provide detailed error information
-        logger.error(f"Error extracting code blocks: {e}")
+        logger.info(f"Error extracting code blocks: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to extract code blocks: {str(e)}"

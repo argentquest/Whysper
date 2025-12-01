@@ -34,9 +34,9 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
         state (GraphState): The current graph state.
 
     Returns:
-        Dict[str, Any]: Updates to the graph state including validation results.
-                        Contains 'is_valid', 'validation_error', 'validation_details',
-                        and 'current_state'.
+        Dict[str, Any]: Updates to the graph state including validation
+                        results. Contains 'is_valid', 'validation_error',
+                        'validation_details', and 'current_state'.
 
     Raises:
         ValueError: If no provider is available for the diagram type.
@@ -45,8 +45,14 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     session_id = state.get("_session_id")
 
-    logger.info(f"🔍 Validating {diagram_type} diagram code using provider system",
-                extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"🔍 Validating {diagram_type} diagram code using provider system",
+        extra={'session_id': session_id} if session_id else {}
+    )
+    logger.info(
+        f"📝 Diagram code to validate:\n{diagram_code}",
+        extra={'session_id': session_id} if session_id else {}
+    )
 
     if not diagram_code.strip():
         return {
@@ -59,7 +65,10 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     # Check if provider system is available
     if not PROVIDER_AVAILABLE:
         error_msg = "Provider registry not available for validation"
-        logger.error(error_msg, extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            error_msg,
+            extra={'session_id': session_id} if session_id else {}
+        )
         return {
             "is_valid": False,
             "validation_error": error_msg,
@@ -77,12 +86,18 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     # Provider methods are synchronous, do not await
     result = provider.validate_code(diagram_code)
 
-    # Note: result is a ValidationResult object which has 'error' attribute (str), not 'errors' list.
+    # Note: result is a ValidationResult object which has 'error'
+    # attribute (str), not 'errors' list.
     return {
         "is_valid": result.is_valid,
-        "validation_error": result.error if not result.is_valid else None,
+        "validation_error": (
+            result.error if not result.is_valid else None
+        ),
         "validation_details": result,
-        "current_state": SessionState.RENDERING if result.is_valid else SessionState.VALIDATION_ERROR
+        "current_state": (
+            SessionState.RENDERING if result.is_valid
+            else SessionState.VALIDATION_ERROR
+        )
     }
 
 
@@ -98,7 +113,8 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
         state (GraphState): The current graph state.
 
     Returns:
-        Dict[str, Any]: Updates to the graph state including refined 'diagram_code'.
+        Dict[str, Any]: Updates to the graph state including refined
+                        'diagram_code'.
     """
     diagram_code = state.get("diagram_code", "")
     validation_error = state.get("validation_error", "")
@@ -109,10 +125,15 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     model_id = state.get("model_id")  # Get selected model from state
 
     if refinement_attempt >= 3:
-        logger.error("Max refinement attempts reached. Unable to fix code.", extra={'session_id': state.get("_session_id")})
+        logger.info(
+            "Max refinement attempts reached. Unable to fix code.",
+            extra={'session_id': state.get("_session_id")}
+        )
         return {
             "is_valid": False,
-            "error_message": "Max refinement attempts reached. Unable to fix code.",
+            "error_message": (
+                "Max refinement attempts reached. Unable to fix code."
+            ),
             "current_state": SessionState.ERROR,
         }
 
@@ -122,7 +143,9 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
 
     if not prompt_template:
         # Fallback prompt if specific prompt not found
-        prompt_template = f"""You are a {diagram_type_str} diagram code expert. Fix the syntax error in this diagram code.
+        prompt_template = (
+            f"""You are a {diagram_type_str} diagram code expert. """
+            f"""Fix the syntax error in this diagram code.
 
 Original Design Summary: {final_design_summary}
 
@@ -131,7 +154,9 @@ Current Code (with error):
 
 Validation Error: {validation_error}
 
-Fix ONLY the syntax error while preserving the diagram's meaning. Return only the corrected code without explanations."""
+Fix ONLY the syntax error while preserving the diagram's meaning. """
+            f"""Return only the corrected code without explanations."""
+        )
 
     # Prepare context for AI
     error_context = f"""Code: {diagram_code}
@@ -143,21 +168,40 @@ Attempt: {refinement_attempt}"""
     if update_callback and callable(update_callback):
         await update_callback({
             "status": "refining",
-            "message": f"AI is fixing diagram code (attempt {refinement_attempt})...",
+            "message": (
+                f"AI is fixing diagram code "
+                f"(attempt {refinement_attempt})..."
+            ),
             "message_type": "progress"
         })
 
     # Get session ID for SSE logging
     session_id = state.get("_session_id")
 
-    logger.info(f"Refining {diagram_type_str} code using AI - attempt {refinement_attempt} (model: {model_id})",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"Refining {diagram_type_str} code using AI - "
+        f"attempt {refinement_attempt} (model: {model_id})",
+        extra={'session_id': session_id} if session_id else {}
+    )
+    logger.info(
+        f"📤 LLM Prompt:\n{prompt_template}\n\nContext:\n{error_context}",
+        extra={'session_id': session_id} if session_id else {}
+    )
 
     try:
-        ai_response = await call_llm(prompt_template, error_context, session_id, model_id=model_id)
+        ai_response = await call_llm(
+            prompt_template, error_context, session_id, model_id=model_id
+        )
+        logger.info(
+            f"📥 LLM Response:\n{ai_response}",
+            extra={'session_id': session_id} if session_id else {}
+        )
     except Exception as e:
         error_message = str(e)
-        logger.error(f"AI call failed in refine_code: {error_message}", extra={'session_id': session_id})
+        logger.info(
+            f"AI call failed in refine_code: {error_message}",
+            extra={'session_id': session_id}
+        )
         if update_callback:
             await update_callback({
                 "status": "failed",
@@ -182,12 +226,18 @@ Attempt: {refinement_attempt}"""
     if update_callback:
         await update_callback({
             "status": "code_refined",
-            "message": f"✅ AI fixed diagram code (attempt {refinement_attempt})",
+            "message": (
+                f"✅ AI fixed diagram code "
+                f"(attempt {refinement_attempt})"
+            ),
             "message_type": "success"
         })
 
-    logger.info(f"🔧 Refined {diagram_type_str} code - attempt {refinement_attempt} complete",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"🔧 Refined {diagram_type_str} code - "
+        f"attempt {refinement_attempt} complete",
+        extra={'session_id': session_id} if session_id else {}
+    )
 
     return {
         "diagram_code": refined_code,

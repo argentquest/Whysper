@@ -65,7 +65,7 @@ async def start_diagram_generation(request: DiagramStartRequest):
         }
     except Exception as e:
         # Log and re-raise any errors during session initialization
-        logger.error(f"Error starting diagram generation: {e}")
+        logger.info(f"Error starting diagram generation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -92,7 +92,7 @@ async def stream_diagram_updates(session_id: str):
     logger.info(f"📡 Received stream request for session: {session_id}")
     session = DiagramSessionStore.get_session(session_id)
     if not session:
-        logger.error(f"❌ Session not found: {session_id}")
+        logger.info(f"❌ Session not found: {session_id}")
         raise HTTPException(status_code=404, detail="Session not found")
     logger.info(f"✅ Found session: {session_id}, starting stream...")
 
@@ -125,7 +125,7 @@ async def stream_diagram_updates(session_id: str):
                     break
         except Exception as e:
             # Handle and report any streaming errors
-            logger.error(f"Error in event generator: {e}")
+            logger.info(f"Error in event generator: {e}")
             error_data = {"type": "error", "message": str(e)}
             yield f"data: {json.dumps(error_data)}\n\n"
 
@@ -164,7 +164,7 @@ async def submit_clarification(request: DiagramClarifyRequest):
         return service.get_status()
     except Exception as e:
         # Log and handle any clarification processing errors
-        logger.error(f"Error handling clarification: {e}")
+        logger.info(f"Error handling clarification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -200,7 +200,7 @@ async def confirm_ready(request: DiagramConfirmReadyRequest):
         return service.get_status()
     except Exception as e:
         # Log and handle any readiness confirmation errors
-        logger.error(f"Error confirming ready: {e}")
+        logger.info(f"Error confirming ready: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -236,7 +236,7 @@ async def select_diagram_type(request: DiagramSelectTypeRequest):
         return service.get_status()
     except Exception as e:
         # Log and handle any diagram type selection errors
-        logger.error(f"Error selecting diagram type: {e}")
+        logger.info(f"Error selecting diagram type: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -272,7 +272,7 @@ async def approve_render(request: DiagramApproveRenderRequest):
         return service.get_status()
     except Exception as e:
         # Log and handle any rendering approval errors
-        logger.error(f"Error approving render: {e}")
+        logger.info(f"Error approving render: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -308,7 +308,7 @@ async def render_diagram(request: DiagramRenderWizardRequest):
         return service.get_status()
     except Exception as e:
         # Log and handle any rendering errors
-        logger.error(f"Error rendering diagram: {e}")
+        logger.info(f"Error rendering diagram: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -342,7 +342,7 @@ async def get_diagram_status(session_id: str):
         return service.get_status()
     except Exception as e:
         # Log and handle any status retrieval errors
-        logger.error(f"Error getting status: {e}")
+        logger.info(f"Error getting status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -376,5 +376,5 @@ async def delete_session(session_id: str):
         return {"message": f"Session {session_id} deleted"}
     except Exception as e:
         # Log and handle any session deletion errors
-        logger.error(f"Error deleting session: {e}")
+        logger.info(f"Error deleting session: {e}")
         raise HTTPException(status_code=500, detail=str(e))

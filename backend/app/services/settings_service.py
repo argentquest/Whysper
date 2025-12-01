@@ -154,7 +154,7 @@ class SettingsService:
             return agent_prompts
 
         except Exception as e:
-            logger.error(f"Error loading agent prompts: {e}")
+            logger.info(f"Error loading agent prompts: {e}")
             return []
 
     @log_method_call
@@ -177,7 +177,7 @@ class SettingsService:
                 return []
 
         except Exception as e:
-            logger.error(f"Error loading subagent commands: {e}")
+            logger.info(f"Error loading subagent commands: {e}")
             return []
 
     @log_method_call
@@ -203,7 +203,7 @@ class SettingsService:
                 return ""
 
         except Exception as e:
-            logger.error(f"Error loading agent prompt content: {e}")
+            logger.info(f"Error loading agent prompt content: {e}")
             return ""
 
     @log_method_call
@@ -303,7 +303,7 @@ class SettingsService:
             return architecture_agents
 
         except Exception as e:
-            logger.error(f"Error loading architecture agents: {e}")
+            logger.info(f"Error loading architecture agents: {e}")
             return []
 
     @log_method_call
@@ -334,10 +334,10 @@ class SettingsService:
                 return []
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse agent options JSON for '{agent_id}': {e}")
+            logger.info(f"Failed to parse agent options JSON for '{agent_id}': {e}")
             return []
         except Exception as e:
-            logger.error(f"Error loading agent options for '{agent_id}': {e}")
+            logger.info(f"Error loading agent options for '{agent_id}': {e}")
             return []
 
 

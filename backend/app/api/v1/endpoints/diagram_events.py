@@ -100,7 +100,7 @@ def log_diagram_event(event: DiagramEventPayload):
 
     except Exception as e:
         # Catch and log any unexpected errors during event logging
-        logger.error(f"Error logging diagram event: {str(e)}")
+        logger.info(f"Error logging diagram event: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to log event: {str(e)}"

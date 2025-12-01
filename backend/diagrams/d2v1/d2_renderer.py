@@ -390,6 +390,7 @@ def validate_d2_and_render(
             rendered_output is the file content (string for SVG, base64 string for PNG).
     """
     logger.info("Starting validate_d2_and_render", extra={"format": output_format})
+    logger.info("d2code: {d2_code}", extra={"format": output_format})
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_input:
         temp_input_name = temp_input.name
@@ -696,7 +697,7 @@ class D2V1Provider(BaseDiagramProvider):
             return validation_result
 
         except Exception as e:
-            self.logger.error(f"Pattern-based fix exception: {e}", exc_info=True)
+            self.logger.info(f"Pattern-based fix exception: {e}", exc_info=True)
             return ValidationResult(
                 is_valid=False,
                 error=error_message,

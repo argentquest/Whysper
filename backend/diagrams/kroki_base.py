@@ -182,7 +182,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
         except Exception as e:
             # Capture and log unexpected validation errors
             error_msg = f"Validation exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return ValidationResult(
                 is_valid=False,
                 error=error_msg,
@@ -305,7 +305,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
             else:
                 # Handle rendering errors
                 error_msg = response.text
-                self.logger.error(f"Rendering failed: {error_msg[:200]}")
+                self.logger.info(f"Rendering failed: {error_msg[:200]}")
                 return RenderResult(
                     success=False,
                     content=None,
@@ -323,7 +323,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
             error_msg = (
                 f"Rendering request timed out after {self.timeout} seconds"
             )
-            self.logger.error(error_msg)
+            self.logger.info(error_msg)
             return RenderResult(
                 success=False,
                 content=None,
@@ -339,7 +339,7 @@ class KrokiBaseProvider(BaseDiagramProvider):
         except Exception as e:
             # Capture and log unexpected rendering errors
             error_msg = f"Rendering exception: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
+            self.logger.info(error_msg, exc_info=True)
             return RenderResult(
                 success=False,
                 content=None,

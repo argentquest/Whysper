@@ -391,7 +391,7 @@ class ConversationSession:
         logger.info(f"🔐 Resolved safe_path: {safe_path}")
         
         if not safe_path:
-            logger.error(
+            logger.info(
                 f"❌ PATH RESOLUTION FAILED for {file_path} - file not found or path traversal attempted",
                 extra={"session_id": self.session_id, "code_path": code_path, "file_path": file_path}
             )
@@ -502,11 +502,11 @@ class ConversationSession:
 
         # Input validation
         if not question.strip():
-            logger.error(f"Empty question received for session {self.session_id}")
+            logger.info(f"Empty question received for session {self.session_id}")
             raise ValueError("Question cannot be empty")
 
         if not self.ai_processor.validate_api_key():
-            logger.error(f"API key validation failed for session {self.session_id}")
+            logger.info(f"API key validation failed for session {self.session_id}")
             raise ValueError("API key is not configured")
 
         # Check if this is the first message in conversation
@@ -677,7 +677,7 @@ class ConversationSession:
 
         # Validate API key
         if not self.ai_processor.validate_api_key():
-            logger.error(f"API key validation failed for system prompt in session {self.session_id}")
+            logger.info(f"API key validation failed for system prompt in session {self.session_id}")
             raise ValueError("API key is not configured")
 
         # System prompt validation - warn if no file context but allow to proceed
@@ -856,7 +856,7 @@ class ConversationSession:
             if content:
                 logger.info(f"✅ SUCCESS - Content loaded, preview: {content[:200]}...")
             else:
-                logger.error(f"❌ FAILED - No content loaded from files!")
+                logger.info(f"❌ FAILED - No content loaded from files!")
             
             return content
         else:
@@ -891,11 +891,11 @@ class ConversationSession:
             if content:
                 logger.info(f"📖 Content preview: {content[:200]}...")
             else:
-                logger.error("❌ NO CONTENT RETURNED from codebase scanner!")
+                logger.info("❌ NO CONTENT RETURNED from codebase scanner!")
             
             return content
         except Exception as e:
-            logger.error(f"❌ EXCEPTION in _load_files: {str(e)}")
+            logger.info(f"❌ EXCEPTION in _load_files: {str(e)}")
             raise
 
     @log_method_call
@@ -964,7 +964,7 @@ class ConversationSession:
             return response_text
 
         except Exception as e:
-            logger.error(f"Error in _validate_and_fix_d2_diagrams: {str(e)}")
+            logger.info(f"Error in _validate_and_fix_d2_diagrams: {str(e)}")
             # Return original response if anything fails
             return response_text
 
@@ -1001,7 +1001,7 @@ class ConversationSession:
             logger.info(f"✅ [MERMAID DIAGRAMS] Response ready for frontend processing")
             return response_text
         except Exception as e:
-            logger.error(f"Error in _validate_and_fix_mermaid_diagrams: {str(e)}")
+            logger.info(f"Error in _validate_and_fix_mermaid_diagrams: {str(e)}")
             return response_text
 
     @log_method_call
@@ -1035,7 +1035,7 @@ class ConversationSession:
             logger.info(f"✅ [D2 DIAGRAMS] Response ready for frontend processing")
             return response_text
         except Exception as e:
-            logger.error(f"Error in _pre_render_d2_diagrams: {str(e)}")
+            logger.info(f"Error in _pre_render_d2_diagrams: {str(e)}")
             return response_text
 
     @log_method_call
@@ -1224,7 +1224,7 @@ class ConversationSession:
                     logger.info("🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt")
                     return mermaid_prompt
             except Exception as e:
-                logger.error(f"Failed to load mermaid prompt: {e}")
+                logger.info(f"Failed to load mermaid prompt: {e}")
 
         # Check for D2 diagram requests
         if ("d2" in question_lower and
@@ -1236,7 +1236,7 @@ class ConversationSession:
                     logger.info("🎨 [DIAGRAM DEBUG] Detected D2 diagram request, loading d2-architecture.md prompt")
                     return d2_prompt
             except Exception as e:
-                logger.error(f"Failed to load D2 prompt: {e}")
+                logger.info(f"Failed to load D2 prompt: {e}")
 
         return None
 

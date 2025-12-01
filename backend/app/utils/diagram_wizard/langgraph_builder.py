@@ -14,8 +14,6 @@ from .nodes import (
     generate_json_representation,
     determine_diagram_type_node,
     generate_code,
-    validate_code,
-    refine_code,
     render_diagram,
 )
 
@@ -25,17 +23,18 @@ logger = get_logger(__name__)
 def route_after_clarify(state: GraphState) -> str:
     """
     Route after clarification phase to next stage.
-    
+
     Args:
         state (GraphState): The current graph state.
 
     Returns:
-        str: The next node to transition to ("generate_json_representation" or END).
+        str: The next node to transition to.
     """
     if state.get("llm_ready", False):
         logger.debug(
-            f"Routing from clarify_prompt to generate_json_representation "
-            f"(llm_ready=True, user_confirmed={state.get('user_confirmed_ready', False)})",
+            "Routing from clarify_prompt to generate_json_representation "
+            f"(llm_ready=True, user_confirmed="
+            f"{state.get('user_confirmed_ready', False)})",
             extra={'session_id': state.get("_session_id")}
         )
         return "generate_json_representation"
@@ -50,50 +49,27 @@ def route_after_clarify(state: GraphState) -> str:
 def route_after_diagram_type(state: GraphState) -> str:
     """
     Route after diagram type determination to next stage.
-    
+
     Args:
         state (GraphState): The current graph state.
 
     Returns:
-        str: The next node to transition to ("generate_code" or END).
+        str: The next node to transition to.
     """
     if state.get("user_selected_diagram_type", False):
         logger.debug(
-            f"Routing from determine_diagram_type to generate_code "
+            "Routing from determine_diagram_type to generate_code "
             f"(user_selected={state.get('diagram_type', 'unknown')})",
             extra={'session_id': state.get("_session_id")}
         )
         return "generate_code"
     else:
         logger.debug(
-            "Routing from determine_diagram_type to END (waiting for user selection)",
+            "Routing from determine_diagram_type to END "
+            "(waiting for user selection)",
             extra={'session_id': state.get("_session_id")}
         )
         return END
-
-
-def route_validation(state: GraphState) -> str:
-    """
-    Route after validation to next stage.
-    
-    Args:
-        state (GraphState): The current graph state.
-
-    Returns:
-        str: The next node to transition to ("render_diagram" or "refine_code").
-    """
-    if state.get("is_valid", False):
-        logger.debug(
-            "Routing from validate_code to render_diagram (code is valid)",
-            extra={'session_id': state.get("_session_id")}
-        )
-        return "render_diagram"
-    else:
-        logger.debug(
-            f"Routing from validate_code to refine_code (validation_error: {state.get('validation_error', 'unknown')})",
-            extra={'session_id': state.get("_session_id")}
-        )
-        return "refine_code"
 
 
 def build_diagram_factory_graph(service) -> StateGraph:
@@ -109,18 +85,26 @@ def build_diagram_factory_graph(service) -> StateGraph:
         StateGraph: The compiled LangGraph workflow.
     """
     # Initialize state graph for diagram generation workflow
-    # Creates a structured workflow with multiple nodes and conditional routing
+    # Creates a structured workflow with multiple nodes and
+    # conditional routing
     workflow = StateGraph(GraphState)
 
     # Add nodes representing different stages of diagram generation
     # Each node is a specific function with a clear responsibility
-    workflow.add_node("analyze_request", partial(analyze_request, service=service))
+    workflow.add_node(
+        "analyze_request", partial(analyze_request, service=service)
+    )
     workflow.add_node("clarify_prompt", clarify_prompt)
-    workflow.add_node("generate_json_representation", generate_json_representation)
-    workflow.add_node("determine_diagram_type", determine_diagram_type_node)
+    workflow.add_node(
+        "generate_json_representation", generate_json_representation
+    )
+    workflow.add_node(
+        "determine_diagram_type", determine_diagram_type_node
+    )
     workflow.add_node("generate_code", generate_code)
-    workflow.add_node("validate_code", validate_code)
-    workflow.add_node("refine_code", refine_code)
+    # Note: validate_code and refine_code nodes are no longer used.
+    # The provider's render_with_validation() handles all validation and
+    # correction internally, including pattern-based and LLM fixes.
     workflow.add_node("render_diagram", render_diagram)
 
     # Set the initial entry point for the workflow
@@ -128,8 +112,10 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
     # Define deterministic edges between nodes
     # These represent guaranteed transitions in the workflow
-    workflow.add_edge("generate_code", "validate_code")
-    workflow.add_edge("refine_code", "validate_code")
+    # Note: generate_code now goes directly to render_diagram.
+    # The provider's render_with_validation() handles validation and
+    # correction internally.
+    workflow.add_edge("generate_code", "render_diagram")
     workflow.add_edge("render_diagram", END)
 
     # Add conditional routing between nodes
@@ -140,13 +126,17 @@ def build_diagram_factory_graph(service) -> StateGraph:
         "clarify_prompt",
         route_after_clarify,
         {
-            "generate_json_representation": "generate_json_representation",
+            "generate_json_representation": (
+                "generate_json_representation"
+            ),
             "determine_diagram_type": "determine_diagram_type",
-            END: END  # End when waiting for user input (question or confirmation)
+            END: END  # End when waiting for user input
         },
     )
 
-    workflow.add_edge("generate_json_representation", "determine_diagram_type")
+    workflow.add_edge(
+        "generate_json_representation", "determine_diagram_type"
+    )
 
     workflow.add_conditional_edges(
         "determine_diagram_type",
@@ -157,18 +147,14 @@ def build_diagram_factory_graph(service) -> StateGraph:
         },
     )
 
-    workflow.add_conditional_edges(
-        "validate_code",
-        route_validation,
-        {"render_diagram": "render_diagram", "refine_code": "refine_code"},
-    )
-
     # Compile the workflow into an executable graph
     return workflow.compile()
 
 
-# Use lazy loading to cache compiled graph and avoid repeated compilation
-# Note: The graph is rebuilt for each service instance to ensure proper state isolation
+# Use lazy loading to cache compiled graph and avoid repeated
+# compilation
+# Note: The graph is rebuilt for each service instance to ensure
+# proper state isolation
 # This prevents issues with shared state between concurrent sessions
 
 def get_diagram_factory_graph(service):
@@ -185,6 +171,7 @@ def get_diagram_factory_graph(service):
         StateGraph: The compiled LangGraph workflow.
     """
     # Build a fresh graph for each service instance
-    # This ensures proper state isolation between concurrent diagram generation sessions
-    # and allows the graph to use the correct service instance for callbacks
+    # This ensures proper state isolation between concurrent diagram
+    # generation sessions and allows the graph to use the correct
+    # service instance for callbacks
     return build_diagram_factory_graph(service)

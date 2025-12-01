@@ -125,7 +125,7 @@ def generate_documentation(request: DocumentationGenerateRequest):
         return response
         
     except Exception as e:
-        logger.error(f"Error generating documentation: {e}")
+        logger.info(f"Error generating documentation: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to generate documentation: {str(e)}"
@@ -180,7 +180,7 @@ def export_documentation(request: DocumentationExportRequest):
         return response
         
     except Exception as e:
-        logger.error(f"Error exporting documentation: {e}")
+        logger.info(f"Error exporting documentation: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to export documentation: {str(e)}"
@@ -216,7 +216,7 @@ def get_export_formats():
         }
         
     except Exception as e:
-        logger.error(f"Error getting export formats: {e}")
+        logger.info(f"Error getting export formats: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to get export formats: {str(e)}"
@@ -273,7 +273,7 @@ def generate_api_docs(request: Dict[str, Any]):
         return response
         
     except Exception as e:
-        logger.error(f"Error generating API documentation: {e}")
+        logger.info(f"Error generating API documentation: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to generate API documentation: {str(e)}"
@@ -330,7 +330,7 @@ def generate_readme(request: Dict[str, Any]):
         return response
         
     except Exception as e:
-        logger.error(f"Error generating README: {e}")
+        logger.info(f"Error generating README: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to generate README: {str(e)}"
@@ -375,7 +375,7 @@ def get_documentation_templates():
         return response
         
     except Exception as e:
-        logger.error(f"Error retrieving documentation templates: {e}")
+        logger.info(f"Error retrieving documentation templates: {e}")
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to retrieve templates: {str(e)}"

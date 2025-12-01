@@ -96,7 +96,7 @@ graph TD
 
 - **Structured Logging**: Uses `common.logger` for consistent JSON-formatted logs.
 - **Session Context**: Logs include `session_id` for tracing requests across nodes.
-- **Error Handling**: Critical errors (e.g., provider failures, LLM timeouts) are logged with `logger.error` and stack traces.
+- **Error Handling**: Critical errors (e.g., provider failures, LLM timeouts) are logged with `logger.info` and stack traces.
 
 ## Testing Strategy
 

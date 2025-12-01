@@ -199,7 +199,7 @@ class HistoryService:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to save conversation history for {conversation_id}: {e}")
+            logger.info(f"Failed to save conversation history for {conversation_id}: {e}")
             return False
     
     @log_method_call
@@ -235,7 +235,7 @@ class HistoryService:
             return history_data
             
         except Exception as e:
-            logger.error(f"Failed to load conversation history for {conversation_id}: {e}")
+            logger.info(f"Failed to load conversation history for {conversation_id}: {e}")
             return None
     
     @log_method_call
@@ -270,7 +270,7 @@ class HistoryService:
             histories.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
             
         except Exception as e:
-            logger.error(f"Failed to list conversation histories: {e}")
+            logger.info(f"Failed to list conversation histories: {e}")
         
         return histories
     
@@ -304,7 +304,7 @@ class HistoryService:
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to delete conversation history for {conversation_id}: {e}")
+            logger.info(f"Failed to delete conversation history for {conversation_id}: {e}")
             return False
 
 

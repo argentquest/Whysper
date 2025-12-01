@@ -130,15 +130,15 @@ class DocumentationService:
                 
                 # Validate the API key
                 if not self.ai_processor.validate_api_key():
-                    self.logger.error("API key validation failed, documentation generation will be limited")
+                    self.logger.info("API key validation failed, documentation generation will be limited")
                     self.ai_processor = None
                 else:
                     self.logger.info("API key validation successful")
             else:
-                self.logger.error("API key not configured in environment or settings, documentation generation will be limited")
+                self.logger.info("API key not configured in environment or settings, documentation generation will be limited")
                 self.ai_processor = None
         except Exception as e:
-            self.logger.error(f"Failed to initialize AI processor: {e}")
+            self.logger.info(f"Failed to initialize AI processor: {e}")
             self.ai_processor = None
     
     @log_method_call
@@ -173,7 +173,7 @@ class DocumentationService:
                         safe_path = SecurityUtils.safe_path_resolve(os.getcwd(), file_path)
                     
                     if not safe_path:
-                        self.logger.error(f"Path resolution failed for {file_path}")
+                        self.logger.info(f"Path resolution failed for {file_path}")
                         continue
                         
                     content = file_service.read_file(safe_path)
@@ -188,7 +188,7 @@ class DocumentationService:
                     self.logger.info(f"Unsupported language for file: {file_path}")
                     
             except Exception as e:
-                self.logger.error(f"Error analyzing file {file_path}: {e}")
+                self.logger.info(f"Error analyzing file {file_path}: {e}")
                 continue
         
         self.logger.info(f"Successfully analyzed {len(structures)} files")
@@ -249,7 +249,7 @@ class DocumentationService:
             return structure
             
         except SyntaxError as e:
-            self.logger.error(f"Syntax error in Python file {file_path}: {e}")
+            self.logger.info(f"Syntax error in Python file {file_path}: {e}")
             return CodeStructure(file_path=file_path, language='python')
     
     @log_method_call
@@ -1646,7 +1646,7 @@ class DocumentationService:
             return response
             
         except Exception as e:
-            self.logger.error(f"Error generating documentation with AI: {e}")
+            self.logger.info(f"Error generating documentation with AI: {e}")
             # Fallback to template-based generation
             return self._generate_with_template([], request, template)
     
@@ -1675,7 +1675,7 @@ class DocumentationService:
             return self._get_default_agent_prompt()
                 
         except Exception as e:
-            self.logger.error(f"Error loading agent prompt: {e}")
+            self.logger.info(f"Error loading agent prompt: {e}")
             return self._get_default_agent_prompt()
     
     def _get_default_agent_prompt(self) -> str:
@@ -1776,7 +1776,7 @@ class DocumentationService:
                 }
             
         except Exception as e:
-            self.logger.error(f"Error generating dependency diagram: {e}")
+            self.logger.info(f"Error generating dependency diagram: {e}")
         
         return None
     
@@ -1819,7 +1819,7 @@ class DocumentationService:
                 }
             
         except Exception as e:
-            self.logger.error(f"Error generating class diagram: {e}")
+            self.logger.info(f"Error generating class diagram: {e}")
         
         return None
     
@@ -1967,7 +1967,7 @@ class DocumentationService:
                     }
             
         except Exception as e:
-            self.logger.error(f"Error loading templates: {e}")
+            self.logger.info(f"Error loading templates: {e}")
             return self._get_embedded_templates()
         
         return templates
@@ -2181,7 +2181,7 @@ Contributing guidelines will be included here.
                 file_listing['files'].append(file_info)
                 total_size += file_stat.st_size
             except Exception as e:
-                self.logger.error(f"Error getting file info for {file_path}: {e}")
+                self.logger.info(f"Error getting file info for {file_path}: {e}")
                 file_listing['files'].append({
                     'path': file_path,
                     'name': os.path.basename(file_path),
@@ -2249,7 +2249,7 @@ Contributing guidelines will be included here.
                                 guid_filename = f"{session_guid}-source-{original_name}"
                                 zipf.write(file_path, guid_filename)
                         except Exception as e:
-                            self.logger.error(f"Error adding file {file_path} to zip: {e}")
+                            self.logger.info(f"Error adding file {file_path} to zip: {e}")
                 
                 # Add README with session information
                 readme_content = f"""# Documentation Package
@@ -2288,7 +2288,7 @@ Total Files: {len(file_paths)}
             return zip_bytes
             
         except Exception as e:
-            self.logger.error(f"Error creating documentation zip: {e}")
+            self.logger.info(f"Error creating documentation zip: {e}")
             raise
         finally:
             # Clean up temporary file

@@ -291,7 +291,7 @@ async def render_diagram(
                     hash(request.code)
                 )
             except Exception as save_error:
-                logger.error(f"Failed to save file: {save_error}")
+                logger.info(f"Failed to save file: {save_error}")
 
         # Build response
         duration = (datetime.now() - start_time).total_seconds()
@@ -328,7 +328,7 @@ async def render_diagram(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[DIAGRAM RENDER] Unexpected error: {e}", exc_info=True)
+        logger.info(f"[DIAGRAM RENDER] Unexpected error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error during diagram rendering: {str(e)}"
@@ -395,7 +395,7 @@ async def validate_diagram(request: DiagramValidationRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[DIAGRAM VALIDATE] Unexpected error: {e}", exc_info=True)
+        logger.info(f"[DIAGRAM VALIDATE] Unexpected error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error during validation: {str(e)}"
@@ -439,7 +439,7 @@ async def list_providers():
         )
 
     except Exception as e:
-        logger.error(f"[PROVIDERS LIST] Error: {e}", exc_info=True)
+        logger.info(f"[PROVIDERS LIST] Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Error retrieving providers: {str(e)}"
@@ -479,7 +479,7 @@ async def get_provider_info(provider_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[PROVIDER INFO] Error: {e}", exc_info=True)
+        logger.info(f"[PROVIDER INFO] Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Error retrieving provider info: {str(e)}"
@@ -504,7 +504,7 @@ async def health_check():
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"[HEALTH] Health check failed: {e}")
+        logger.info(f"[HEALTH] Health check failed: {e}")
         return {
             "status": "unhealthy",
             "error": str(e),
@@ -637,7 +637,7 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
         providers_for_type = registry.find_by_diagram_type(request.diagramType)
 
         if not providers_for_type:
-            logger.error(f"[GENERATE] No providers found for diagram type: {request.diagramType}")
+            logger.info(f"[GENERATE] No providers found for diagram type: {request.diagramType}")
             raise HTTPException(
                 status_code=404,
                 detail=f"No diagram providers found for type '{request.diagramType}'"
@@ -673,7 +673,7 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[GENERATE] Error generating diagram: {str(e)}", exc_info=True)
+        logger.info(f"[GENERATE] Error generating diagram: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate diagram: {str(e)}"
@@ -790,11 +790,11 @@ async def _generate_diagram_async(
         if render_result.success:
             logger.info(f"[GENERATE_ASYNC] ✅ Diagram generation completed successfully for request {request_id}")
         else:
-            logger.error(f"[GENERATE_ASYNC] ⚠️  Diagram generation completed with errors for request {request_id}")
-            logger.error(f"[GENERATE_ASYNC] Render error: {render_result.error}")
+            logger.info(f"[GENERATE_ASYNC] ⚠️  Diagram generation completed with errors for request {request_id}")
+            logger.info(f"[GENERATE_ASYNC] Render error: {render_result.error}")
 
     except Exception as e:
-        logger.error(f"[GENERATE_ASYNC] ❌ Error during diagram generation: {str(e)}", exc_info=True)
+        logger.info(f"[GENERATE_ASYNC] ❌ Error during diagram generation: {str(e)}", exc_info=True)
         _pending_requests[request_id] = {
             "status": "error",
             "error": str(e),
@@ -942,7 +942,7 @@ def stream_diagram(requestId: str):
 
                     elif request_data["status"] == "error":
                         # Send error event
-                        logger.error(f"[STREAM] Diagram generation error for request {requestId}: {request_data['error']}")
+                        logger.info(f"[STREAM] Diagram generation error for request {requestId}: {request_data['error']}")
                         error_response = {
                             "requestId": requestId,
                             "error": request_data["error"]
@@ -962,7 +962,7 @@ def stream_diagram(requestId: str):
                     yield f": keepalive\n\n"
 
             # Timeout waiting for diagram
-            logger.error(f"[STREAM] Timeout waiting for diagram generation for request {requestId}")
+            logger.info(f"[STREAM] Timeout waiting for diagram generation for request {requestId}")
             timeout_data = {"requestId": requestId, "error": "Diagram generation timed out"}
             yield f"event: timeout\ndata: {json.dumps(timeout_data)}\n\n"
 
@@ -973,7 +973,7 @@ def stream_diagram(requestId: str):
         except asyncio.CancelledError:
             logger.debug(f"[STREAM] Client disconnected from stream for request: {requestId}")
         except Exception as e:
-            logger.error(f"[STREAM] Error in stream for request {requestId}: {str(e)}", exc_info=True)
+            logger.info(f"[STREAM] Error in stream for request {requestId}: {str(e)}", exc_info=True)
             error_data = {"requestId": requestId, "error": str(e)}
             yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
 

@@ -427,7 +427,7 @@ try:
     workspace = response.get("structurizr_workspace")
     # Parse/validate Structurizr syntax
 except SyntaxError as e:
-    logger.error(f"Invalid Structurizr syntax: {e}")
+    logger.info(f"Invalid Structurizr syntax: {e}")
     return {
         "error_message": "JSON generation produced invalid Structurizr syntax",
         # Fall back to existing Structurizr from clarify_prompt
@@ -441,7 +441,7 @@ except SyntaxError as e:
 try:
     response = json.loads(ai_response_str)
 except json.JSONDecodeError as e:
-    logger.error(f"AI response not valid JSON: {e}")
+    logger.info(f"AI response not valid JSON: {e}")
     # Return state unchanged, continue with existing data
     return state
 ```

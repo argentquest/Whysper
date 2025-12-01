@@ -103,7 +103,7 @@ All three advisors agree on the following key points:
 **Gemini's analysis:**
 ```python
 except Exception as e:  # Too broad - masks specific errors
-    logger.error(f"AI call failed: {e}")
+    logger.info(f"AI call failed: {e}")
     return f"ERROR: AI call failed - {str(e)}"
 ```
 
@@ -298,7 +298,7 @@ def determine_diagram_type(analysis_text: str) -> Tuple[DiagramType, Dict[str, f
 **Current Code:**
 ```python
 except Exception as e:  # TOO BROAD
-    logger.error(f"❌ AI call failed: {e}", ...)
+    logger.info(f"❌ AI call failed: {e}", ...)
     return f"ERROR: AI call failed - {str(e)}"
 ```
 
@@ -307,19 +307,19 @@ except Exception as e:  # TOO BROAD
 **Recommended Fix:**
 ```python
 except json.JSONDecodeError as e:
-    logger.error(f"❌ AI response not valid JSON: {e}",
+    logger.info(f"❌ AI response not valid JSON: {e}",
                 extra={'session_id': session_id} if session_id else {})
     return f"ERROR: Invalid JSON response - {str(e)}"
 except TimeoutError as e:
-    logger.error(f"❌ AI call timeout: {e}",
+    logger.info(f"❌ AI call timeout: {e}",
                 extra={'session_id': session_id} if session_id else {})
     return f"ERROR: AI call timed out"
 except ConnectionError as e:
-    logger.error(f"❌ Connection error to AI provider: {e}",
+    logger.info(f"❌ Connection error to AI provider: {e}",
                 extra={'session_id': session_id} if session_id else {})
     return f"ERROR: Connection failed - check API provider"
 except Exception as e:  # Still need broad catch as fallback
-    logger.error(f"❌ Unexpected error in AI call: {e}",
+    logger.info(f"❌ Unexpected error in AI call: {e}",
                 extra={'session_id': session_id} if session_id else {})
     return f"ERROR: Unexpected error - {str(e)}"
 ```

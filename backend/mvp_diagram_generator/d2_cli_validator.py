@@ -94,13 +94,13 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = None) -> Tuple[bool,
     except FileNotFoundError:
         # Provide clear feedback if D2 CLI is not installed
         error_message = "Error: D2 executable not found. Please install D2 CLI."
-        logger.error(error_message)
+        logger.info(error_message)
         return (False, error_message)
         
     except Exception as e:
         # Catch-all for unexpected errors during validation
         error_message = f"Unexpected error during D2 validation: {str(e)}"
-        logger.error(error_message)
+        logger.info(error_message)
         return (False, error_message)
         
     finally:

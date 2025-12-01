@@ -79,7 +79,7 @@ async def run_diagram_factory(
         
     except Exception as e:
         # Capture and log any unexpected errors during diagram generation
-        logger.error(f"Error running diagram factory: {e}")
+        logger.info(f"Error running diagram factory: {e}")
         return {
             "current_state": "error",
             "error_message": str(e)
@@ -129,7 +129,7 @@ async def interactive_mode():
             logger.info("\nExiting...")
             break
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.info(f"Error: {e}")
 
 
 async def demo_mode():

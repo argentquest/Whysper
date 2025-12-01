@@ -95,7 +95,7 @@ class ProviderRegistry:
                 logger.debug(f"⚠️  Could not import provider {provider_id}: {e}")
                 # This is expected for providers not yet implemented
             except Exception as e:
-                logger.error(f"❌ Error loading provider {provider_id}: {e}", exc_info=True)
+                logger.info(f"❌ Error loading provider {provider_id}: {e}", exc_info=True)
 
     @log_method_call
     def _get_renderer_module_name(self, provider_id: str) -> str:

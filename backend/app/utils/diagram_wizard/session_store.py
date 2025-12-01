@@ -97,14 +97,14 @@ class DiagramSessionStore:
 
             # Raise error if session doesn't exist
             if not session:
-                logger.warning(f"Attempted to access non-existent session: {session_id}")
+                logger.info(f"Attempted to access non-existent session: {session_id}")
                 raise ValueError(f"Session not found: {session_id}")
 
             # Check and remove expired sessions
             expires_at = datetime.fromisoformat(session["expires_at"])
             if datetime.utcnow() > expires_at:
                 del self._sessions[session_id]
-                logger.warning(f"Attempted to access expired session: {session_id}")
+                logger.info(f"Attempted to access expired session: {session_id}")
                 raise ValueError(f"Session expired: {session_id}")
 
             return session
@@ -129,14 +129,14 @@ class DiagramSessionStore:
 
             # Validate session existence
             if not session:
-                logger.warning(f"Attempted to update non-existent session: {session_id}")
+                logger.info(f"Attempted to update non-existent session: {session_id}")
                 raise ValueError(f"Session not found: {session_id}")
 
             # Prevent updates to expired sessions
             expires_at = datetime.fromisoformat(session["expires_at"])
             if datetime.utcnow() > expires_at:
                 del self._sessions[session_id]
-                logger.warning(f"Attempted to update expired session: {session_id}")
+                logger.info(f"Attempted to update expired session: {session_id}")
                 raise ValueError(f"Session expired: {session_id}")
 
             # Safely update session fields

@@ -68,13 +68,13 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
     except FileNotFoundError:
         # The 'mmdc' command wasn't found in PATH
         error_message = "Error: Mermaid CLI (mmdc) not found. Please install @mermaid-js/mermaid-cli."
-        logger.error(error_message)
+        logger.info(error_message)
         return (False, error_message)
 
     except Exception as e:
         # Any other unexpected error
         error_message = f"Unexpected error during Mermaid validation: {str(e)}"
-        logger.error(error_message)
+        logger.info(error_message)
         return (False, error_message)
 
     finally:
@@ -192,8 +192,8 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
 
         # If this is the last attempt, don't try to fix anymore
         if attempt == max_attempts - 1:
-            logger.error(f"[MERMAID AUTO-FIX] ❌ All {max_attempts} attempts exhausted")
-            logger.error(f"[MERMAID AUTO-FIX] Final error: {message[:200]}")
+            logger.info(f"[MERMAID AUTO-FIX] ❌ All {max_attempts} attempts exhausted")
+            logger.info(f"[MERMAID AUTO-FIX] Final error: {message[:200]}")
             return (False, current_code, message)
 
         # Apply syntax fixes and try again
@@ -220,7 +220,7 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
             logger.info(f"[MERMAID AUTO-FIX] No corrections possible, stopping attempts")
             return (False, current_code, message)
 
-    logger.error(f"[MERMAID AUTO-FIX] ❌ Failed to fix after all attempts")
+    logger.info(f"[MERMAID AUTO-FIX] ❌ Failed to fix after all attempts")
     return (False, current_code, "Failed to validate Mermaid syntax after multiple attempts")
 
 def validate_mermaid_and_render(
@@ -280,7 +280,7 @@ def validate_mermaid_and_render(
 
     except Exception as e:
         error_message = f"Unexpected error during Mermaid rendering: {str(e)}"
-        logger.error(error_message)
+        logger.info(error_message)
         return (False, error_message, None)
 
     finally:

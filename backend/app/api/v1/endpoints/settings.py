@@ -65,7 +65,7 @@ def get_settings() -> Dict[str, Any]:
         logger.debug(f"Retrieved settings with {len(settings_data) if isinstance(settings_data, dict) else 'unknown'} configuration items")
         return settings_data
     except Exception as e:
-        logger.error(f"Failed to retrieve settings: {str(e)}")
+        logger.info(f"Failed to retrieve settings: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve settings: {str(e)}")
 
 
@@ -112,7 +112,7 @@ def get_agent_prompt(filename: str) -> Dict[str, str]:
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        logger.error(f"Failed to retrieve agent prompt '{filename}': {str(e)}")
+        logger.info(f"Failed to retrieve agent prompt '{filename}': {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve agent prompt: {str(e)}")
 
 
@@ -163,7 +163,7 @@ def update_env(request: SettingsUpdateRequest) -> Dict[str, Any]:
         return result
 
     except Exception as e:
-        logger.error(f"Failed to update environment variables: {str(e)}")
+        logger.info(f"Failed to update environment variables: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to update environment: {str(e)}")
 
 
@@ -211,7 +211,7 @@ def set_theme(request: ThemeSetRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error setting theme to '{request.theme}': {str(e)}")
+        logger.info(f"Error setting theme to '{request.theme}': {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to set theme: {str(e)}")
 
 
@@ -246,7 +246,7 @@ def toggle_theme():
         return ThemeToggleResponse(theme=theme, message=message)
 
     except Exception as e:
-        logger.error(f"Error toggling theme: {str(e)}")
+        logger.info(f"Error toggling theme: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to toggle theme: {str(e)}")
 
 
@@ -336,7 +336,7 @@ def restart_server() -> Dict[str, Any]:
                 "message": "Could not locate main.py for restart"
             }
     except Exception as e:
-        logger.error(f"Failed to trigger server restart: {str(e)}")
+        logger.info(f"Failed to trigger server restart: {str(e)}")
         return {
             "success": False,
             "message": f"Failed to restart server: {str(e)}"
@@ -392,5 +392,5 @@ def get_agent_options(agent_id: str) -> List[Dict[str, Any]]:
         logger.debug(f"Returning {len(result)} options for agent '{agent_id}'")
         return result
     except Exception as e:
-        logger.error(f"Error fetching agent options for '{agent_id}': {str(e)}")
+        logger.info(f"Error fetching agent options for '{agent_id}': {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch agent options: {str(e)}")
