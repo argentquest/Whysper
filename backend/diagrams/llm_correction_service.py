@@ -99,6 +99,22 @@ class LLMCorrectionService:
             provider_specific_rules=provider_specific_rules
         )
 
+        # Provide a focused system message so we don't fall back to the default codebase prompt
+        type_rules = self._get_type_specific_rules(diagram_type)
+        rules_sections = []
+        rules_sections.append("\n".join(f"- {rule}" for rule in type_rules))
+        if provider_specific_rules:
+            # Include provider-specific rules verbatim (from correction_rules.md)
+            rules_sections.append(provider_specific_rules.strip())
+
+        system_prompt = (
+            f"You are an expert at fixing {diagram_type} diagram syntax. "
+            "Return only the corrected diagram code block with no commentary. "
+            "Follow these rules strictly:\n"
+            f"{'\n'.join(rules_sections)}"
+        )
+        system_message = {"role": "system", "content": system_prompt}
+
         logger.info(f"[LLM CORRECTION] Requesting correction for {diagram_type} diagram...")
         logger.debug(f"[LLM CORRECTION] Error: {error_message[:200]}")
 
@@ -106,7 +122,8 @@ class LLMCorrectionService:
             # Call LLM
             corrected_response = self.ai_processor.process_question(
                 question=correction_prompt,
-                conversation_history=[],  # No context needed for correction
+                # Pre-seed with our own system message to avoid default system prompt
+                conversation_history=[system_message],
                 codebase_content="",
                 model=model,
                 max_tokens=max_tokens,
@@ -178,31 +195,13 @@ The code must be complete and valid."""
     def _get_type_specific_rules(self, diagram_type: str) -> list:
         """Get diagram-type-specific correction rules"""
 
-        rules_map = {
-            "mermaid": [
-                "Always start with diagram type (flowchart TD, sequenceDiagram, etc.)",
-                "Use proper arrow syntax with spaces: A --> B (not A-->B)",
-                "Quote labels with special characters: A[\"My Node\"]",
-                "Do NOT use reserved keywords as node IDs (end, start, subgraph, etc.)",
-                "Close all subgraphs with 'end'",
-                "For sequence diagrams, use: participant, -->>, -->"
-            ],
-            "d2": [
-                "Use proper shape syntax: shape_name: text",
-                "Use proper connection syntax: A -> B or A -- B",
-                "Use proper style syntax: shape.style.fill: \"#color\"",
-                "Properly indent nested structures",
-                "Use quotes for labels with spaces or special characters"
-            ],
-            "plantuml": [
-                "Use @startuml and @enduml tags",
-                "Use proper component syntax",
-                "Use proper relationship syntax (-->, ..>, etc.)",
-                "Follow PlantUML keyword conventions"
-            ]
-        }
-
-        return rules_map.get(diagram_type.lower(), [])
+        # Provider-specific markdown rules should be the source of truth.
+        # Keep this empty to avoid mixing baked-in rules with the provider files.
+        logger.debug(
+            "Type-specific rules are sourced from provider markdown; returning empty list",
+            extra={"diagram_type": diagram_type}
+        )
+        return []
 
     @log_method_call
     def _extract_code_from_response(self, response: str, diagram_type: str) -> Optional[str]:

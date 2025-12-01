@@ -655,6 +655,11 @@ class BaseDiagramProvider(ABC):
                 "status": "render_complete",
                 "message": f"✅ {self.diagram_type} rendered successfully",
                 "step": "4/4"
+            if render_result.output_format.lower() == "svg" and render_result.content:
+                self.logger.info(
+                    "SVG output",
+                    extra={"svg": render_result.content}
+                )
             })
 
         # Update metadata

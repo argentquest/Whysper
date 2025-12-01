@@ -81,7 +81,15 @@ class SystemMessageManager:
         Returns:
             Custom system message content or None if file doesn't exist or error
         """
+        # Handle empty string as None
+        if not filename or filename.strip() == '':
+            filename = None
+
         target_file = filename if filename else self.current_message_file
+
+        # If still no valid filename, return None
+        if not target_file or target_file.strip() == '':
+            return None
 
         # Construct full path using prompts directory
         if not os.path.isabs(target_file):
@@ -89,16 +97,16 @@ class SystemMessageManager:
 
         if not os.path.exists(target_file):
             return None
-        
+
         try:
             with open(target_file, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
-                
+
             if not content:
                 return None
-                
+
             return content
-            
+
         except Exception as e:
             print(f"Error reading system message file: {e}")
             return None

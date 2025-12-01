@@ -773,9 +773,28 @@ class MermaidV1Provider(BaseDiagramProvider):
         """
         Provide Mermaid-specific rules for LLM correction.
 
+        Reads rules from correction_rules.md file if available,
+        otherwise falls back to hardcoded rules.
+
         Returns:
             str: Mermaid correction rules for LLM prompts.
         """
+        # Try to load rules from markdown file
+        try:
+            from pathlib import Path
+            rules_file = Path(__file__).parent / "correction_rules.md"
+
+            if rules_file.exists():
+                with open(rules_file, 'r', encoding='utf-8') as f:
+                    rules_content = f.read().strip()
+                    if rules_content:
+                        self.logger.debug(f"Loaded Mermaid correction rules from {rules_file}")
+                        return rules_content
+        except Exception as e:
+            self.logger.warning(f"Failed to load correction_rules.md: {e}")
+
+        # Fallback to hardcoded rules
+        self.logger.debug("Using hardcoded Mermaid correction rules")
         return """
 MERMAID-SPECIFIC RULES:
 - Always start with a diagram type (flowchart TD, sequenceDiagram, etc.)

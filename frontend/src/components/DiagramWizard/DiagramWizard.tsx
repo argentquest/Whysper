@@ -59,6 +59,7 @@ import { GenerationScreen } from './screens/GenerationScreen';
 import type { DiagramWizardPersistedState, SavedSession } from './types/persistence';
 import { getInitialPersistedState } from './types/persistence';
 import { DiagramApi } from '../../services/diagram/diagramApi';
+import { parseAndShowToast } from '../../utils/toastHelper';
 
 /**
  * Props for the DiagramWizard component
@@ -179,6 +180,13 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     onUpdate: (update) => {
       // Callback triggered whenever SSE sends status update from backend
       const statusValue = update.status;
+
+      // ============ Toast Command Processing ============
+      // Check if the message contains a toast command (TOASTINFO, TOASTERROR, etc.)
+      // This allows backend to explicitly trigger toasts by including keywords in messages
+      if (update.message && typeof update.message === 'string') {
+        parseAndShowToast(update.message);
+      }
 
       // Extract and update clarity score from multiple possible fields
       // Backend may send 'score' or 'assessment_score' depending on processing stage

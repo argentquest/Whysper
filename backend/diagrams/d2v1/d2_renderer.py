@@ -54,7 +54,7 @@ def strip_d2_icons(code: str) -> str:
           shape: cylinder
         }
     """
-    logger.info("Starting strip_d2_icons process")
+    logger.info("TOASTINFO: Starting strip_d2_icons process")
     
     # Pattern to find icon URLs (matches entire line with icon attribute)
     icon_pattern = re.compile(
@@ -202,7 +202,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
 
     is_valid = len(errors) == 0
     logger.info(
-        "Completed fix_d2_syntax",
+        "TOASTINFO: Completed fix_d2_syntax",
         extra={"is_valid": is_valid, "corrections": len(corrections), "errors": len(errors)}
     )
 
@@ -288,7 +288,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         D2 Syntax Error:
         direction is required for diagrams with connections
     """
-    logger.info("Starting validate_d2_with_cli", extra={"length": len(d2_code)})
+    logger.info("TOASTINFO: Starting validate_d2_with_cli", extra={"length": len(d2_code)})
 
     # Create temporary file with .d2 extension
     # delete=False because we need the file to persist for subprocess
@@ -311,7 +311,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         )
 
         # Exit code 0 means valid syntax
-        logger.info("Completed validate_d2_with_cli successfully")
+        logger.info("TOASTINFO: Completed validate_d2_with_cli successfully")
         return (True, "D2 Syntax is Valid.")
 
     except subprocess.CalledProcessError as e:
@@ -389,7 +389,7 @@ def validate_d2_and_render(
         Tuple[bool, str, Optional[str]]: (is_valid, message, rendered_output).
             rendered_output is the file content (string for SVG, base64 string for PNG).
     """
-    logger.info("Starting validate_d2_and_render", extra={"format": output_format})
+    logger.info("TOASTINFO: Starting validate_d2_and_render", extra={"format": output_format})
     logger.info("d2code: {d2_code}", extra={"format": output_format})
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_input:
@@ -419,7 +419,7 @@ def validate_d2_and_render(
                 rendered_output = f.read()
 
         logger.info(
-            "Completed validate_d2_and_render successfully",
+            "TOASTINFO: Completed validate_d2_and_render successfully",
             extra={"output_format": output_format, "size_bytes": len(rendered_output)}
         )
         return (True, "D2 diagram rendered successfully", rendered_output)
@@ -719,7 +719,7 @@ class D2V1Provider(BaseDiagramProvider):
         Returns:
             RenderResult: Result of the rendering process.
         """
-        self.logger.info("Starting render", extra={"length": len(code), "format": output_format})
+        self.logger.info("TOASTINFO: Starting render", extra={"length": len(code), "format": output_format})
         if not self.is_available():
             return RenderResult(
                 success=False,
@@ -777,6 +777,8 @@ class D2V1Provider(BaseDiagramProvider):
                     f"Rendered to {output_format.upper()} "
                     f"({output_size} bytes, {output_size/1024:.1f} KB)"
                 )
+                if output_format.lower() == "svg":
+                    self.logger.info("SVG output", extra={"svg": rendered_output})
 
                 return RenderResult(
                     success=True,
@@ -820,15 +822,34 @@ class D2V1Provider(BaseDiagramProvider):
                 error=error_msg
             )
         finally:
-            self.logger.info("Completed render")
+            self.logger.info("TOASTINFO: Completed render")
 
     def get_llm_correction_rules(self) -> Optional[str]:
         """
         Provide D2-specific rules for LLM correction.
 
+        Reads rules from correction_rules.md file if available,
+        otherwise falls back to hardcoded rules.
+
         Returns:
             str: D2 correction rules for LLM prompts.
         """
+        # Try to load rules from markdown file
+        try:
+            from pathlib import Path
+            rules_file = Path(__file__).parent / "correction_rules.md"
+
+            if rules_file.exists():
+                with open(rules_file, 'r', encoding='utf-8') as f:
+                    rules_content = f.read().strip()
+                    if rules_content:
+                        self.logger.debug(f"Loaded D2 correction rules from {rules_file}")
+                        return rules_content
+        except Exception as e:
+            self.logger.warning(f"Failed to load correction_rules.md: {e}")
+
+        # Fallback to hardcoded rules
+        self.logger.debug("Using hardcoded D2 correction rules")
         return """
 D2-SPECIFIC RULES:
 - Use proper connection syntax: A -> B or A -- B

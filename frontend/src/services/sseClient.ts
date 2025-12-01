@@ -4,11 +4,24 @@
  * This service handles streaming chat responses with progress updates
  * from the backend. It provides real-time feedback during D2 diagram
  * validation, rendering, and AI processing.
+ *
+ * TOAST COMMANDS:
+ * The SSE client automatically parses toast commands from messages:
+ * - TOASTINFO: Shows info toast
+ * - TOASTSUCCESS: Shows success toast
+ * - TOASTERROR: Shows error toast
+ * - TOASTWARNING: Shows warning toast
+ * - TOASTLOADING: Shows loading toast
+ *
+ * Example: Backend sends "TOASTINFO: Analyzing diagram..." → Shows info toast
  */
+
+import { parseAndShowToast } from '../utils/toastHelper';
+import { App } from 'antd';
 
 /**
  * ProgressEvent type definition
- * 
+ *
  * Describes the structure and properties of ProgressEvent
  */
 export interface ProgressEvent {
