@@ -6,7 +6,6 @@ Tests the Kroki D2 provider's ability to generate valid D2 diagrams from LLM pro
 
 # Import necessary libraries for HTTP requests, testing, and JSON handling
 import requests
-import json
 import pytest
 
 # Configuration for Kroki API endpoint and test scenarios
@@ -16,29 +15,28 @@ TEST_SCENARIOS = [
     {
         "name": "Simple Network Diagram",
         "prompt": "Create a diagram with two servers connected by a line",
-        "expected_elements": ["server1", "server2"]
+        "expected_elements": ["server1", "server2"],
     },
     # Test more complex relationship representation
     {
-        "name": "Service Dependency Diagram", 
+        "name": "Service Dependency Diagram",
         "prompt": "Show a web app depending on a database",
-        "expected_elements": ["webapp", "database"]
-    }
+        "expected_elements": ["webapp", "database"],
+    },
 ]
 
 # Function to call Kroki API and generate SVG diagram
+
+
 def generate_d2_diagram(d2_code):
     # Prepare request payload for Kroki API
-    payload = {
-        "diagram_type": "d2",
-        "code": d2_code
-    }
-    
+    payload = {"diagram_type": "d2", "code": d2_code}
+
     # Send POST request to Kroki API with diagram code
     try:
         response = requests.post(KROKI_API_URL, json=payload)
         response.raise_for_status()  # Raise exception for bad responses
-        
+
         # Return SVG content if request is successful
         return response.text
     except requests.exceptions.RequestException as e:
@@ -46,25 +44,29 @@ def generate_d2_diagram(d2_code):
         print(f"Error generating diagram: {e}")
         return None
 
+
 # Pytest function to validate D2 diagram generation
+
+
 def test_d2_diagram_generation():
     # Iterate through predefined test scenarios
     for scenario in TEST_SCENARIOS:
         # Generate D2 code based on scenario prompt (simulated)
-        d2_code = f"""
+        d2_code = """
         {scenario['expected_elements'][0]} -> {scenario['expected_elements'][1]}
         """
-        
+
         # Call Kroki API to generate diagram
         svg_diagram = generate_d2_diagram(d2_code)
-        
+
         # Validate diagram generation
         assert svg_diagram is not None, f"Failed to generate diagram for {scenario['name']}"
         assert len(svg_diagram) > 0, f"Empty diagram generated for {scenario['name']}"
-        
+
         # Optional: Check for specific elements in SVG
-        for element in scenario['expected_elements']:
+        for element in scenario["expected_elements"]:
             assert element in svg_diagram, f"Element {element} not found in diagram"
+
 
 # Optional: Main block for direct script execution
 if __name__ == "__main__":

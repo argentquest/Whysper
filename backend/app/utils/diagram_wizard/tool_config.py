@@ -178,5 +178,3 @@ class DiagramToolRunner:
 
 class ToolValidationError(Exception):
     """Raised when tool validation fails."""
-
-    pass

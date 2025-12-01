@@ -16,11 +16,7 @@ import logging
 from dataclasses import dataclass
 
 from diagrams.base_diagram import BaseDiagramProvider
-from diagrams.models import (
-    ProviderCapability,
-    ValidationResult,
-    RenderResult
-)
+from diagrams.models import ProviderCapability, ValidationResult, RenderResult
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +24,7 @@ logger = logging.getLogger(__name__)
 # =====================================================================
 # MERMAID SYNTAX FIXER (Self-contained)
 # =====================================================================
+
 
 @dataclass
 class MermaidFixResult:
@@ -41,6 +38,7 @@ class MermaidFixResult:
         warnings (List[str]): List of warnings generated during the fix process.
         errors (List[str]): List of errors encountered.
     """
+
     is_valid: bool
     corrected_code: str
     corrections: List[str]
@@ -108,12 +106,22 @@ def _has_diagram_type_declaration(code: str) -> bool:
         bool: True if a known diagram type is found at the start.
     """
     diagram_types = [
-        'graph', 'flowchart', 'sequenceDiagram', 'classDiagram',
-        'stateDiagram', 'stateDiagram-v2', 'erDiagram', 'gantt',
-        'pie', 'journey', 'gitGraph', 'mindmap', 'timeline'
+        "graph",
+        "flowchart",
+        "sequenceDiagram",
+        "classDiagram",
+        "stateDiagram",
+        "stateDiagram-v2",
+        "erDiagram",
+        "gantt",
+        "pie",
+        "journey",
+        "gitGraph",
+        "mindmap",
+        "timeline",
     ]
 
-    first_line = code.strip().split('\n')[0].strip()
+    first_line = code.strip().split("\n")[0].strip()
     return any(first_line.startswith(dtype) for dtype in diagram_types)
 
 
@@ -133,11 +141,11 @@ def _add_diagram_type_declaration(code: str) -> str:
     trimmed = code.strip()
 
     # Try to infer the diagram type based on unique keywords or syntax
-    if 'participant' in trimmed or '->>' in trimmed:
+    if "participant" in trimmed or "->>" in trimmed:
         return f"sequenceDiagram\n{trimmed}"
-    elif 'class ' in trimmed or '<|--' in trimmed:
+    elif "class " in trimmed or "<|--" in trimmed:
         return f"classDiagram\n{trimmed}"
-    elif 'state ' in trimmed or '[*]' in trimmed:
+    elif "state " in trimmed or "[*]" in trimmed:
         return f"stateDiagram-v2\n{trimmed}"
     else:
         # Default to flowchart if no specific features are found
@@ -163,12 +171,12 @@ def _fix_arrow_syntax(code: str) -> Tuple[str, List[str]]:
 
     # Fix flowchart arrows - ensure proper spacing around arrows
     # e.g., "A-->B" -> "A --> B" (optional but cleaner)
-    fixed = re.sub(r'(\w+)-->', r'\1 -->', fixed)
-    fixed = re.sub(r'-->(\w+)', r'--> \1', fixed)
+    fixed = re.sub(r"(\w+)-->", r"\1 -->", fixed)
+    fixed = re.sub(r"-->(\w+)", r"--> \1", fixed)
 
     # Fix sequence diagram arrows
-    fixed = re.sub(r'(\w+)-->>', r'\1 -->>', fixed)
-    fixed = re.sub(r'-->>(\w+)', r'-->> \1', fixed)
+    fixed = re.sub(r"(\w+)-->>", r"\1 -->>", fixed)
+    fixed = re.sub(r"-->>(\w+)", r"-->> \1", fixed)
 
     if fixed != original:
         corrections.append("Fixed arrow spacing")
@@ -198,7 +206,7 @@ def _fix_node_syntax(code: str) -> Tuple[str, List[str]]:
         label = match.group(2)
 
         # If label contains special characters, ensure it's quoted
-        if any(char in label for char in [' ', '-', '(', ')', ':', ';']):
+        if any(char in label for char in [" ", "-", "(", ")", ":", ";"]):
             if not (label.startswith('"') and label.endswith('"')):
                 corrections.append(f"Added quotes to node label: {label}")
                 return f'{node_id}["{label}"]'
@@ -206,7 +214,7 @@ def _fix_node_syntax(code: str) -> Tuple[str, List[str]]:
         return match.group(0)
 
     # Regex to find patterns like NodeID[LabelText]
-    fixed = re.sub(r'(\w+)\[([^\]]+)\]', fix_node_label, fixed)
+    fixed = re.sub(r"(\w+)\[([^\]]+)\]", fix_node_label, fixed)
 
     return fixed, corrections
 
@@ -227,13 +235,13 @@ def _fix_subgraph_syntax(code: str) -> Tuple[str, List[str]]:
     fixed = code
 
     # Count subgraph declarations and end statements
-    subgraph_count = len(re.findall(r'\bsubgraph\b', fixed, re.IGNORECASE))
-    end_count = len(re.findall(r'^\s*end\s*$', fixed, re.MULTILINE))
+    subgraph_count = len(re.findall(r"\bsubgraph\b", fixed, re.IGNORECASE))
+    end_count = len(re.findall(r"^\s*end\s*$", fixed, re.MULTILINE))
 
     # Add missing 'end' statements
     if subgraph_count > end_count:
         missing = subgraph_count - end_count
-        fixed += '\n' + '\n'.join(['end'] * missing)
+        fixed += "\n" + "\n".join(["end"] * missing)
         corrections.append(f"Added {missing} missing 'end' statement(s)")
 
     return fixed, corrections
@@ -242,6 +250,7 @@ def _fix_subgraph_syntax(code: str) -> Tuple[str, List[str]]:
 # =====================================================================
 # MERMAID CLI VALIDATOR (Self-contained)
 # =====================================================================
+
 
 def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc") -> Tuple[bool, str]:
     """
@@ -257,23 +266,23 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
     Returns:
         Tuple[bool, str]: A tuple containing (is_valid, message).
     """
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', delete=False) as temp_input:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(mermaid_code)
         temp_input.flush()
 
     # Create a temp filename for output (we don't need the content, just the success status)
-    temp_output_name = temp_input_name.replace('.mmd', '.svg')
+    temp_output_name = temp_input_name.replace(".mmd", ".svg")
 
     try:
         # Execute mmdc command
         result = subprocess.run(
-            [mermaid_executable, '-i', temp_input_name, '-o', temp_output_name],
+            [mermaid_executable, "-i", temp_input_name, "-o", temp_output_name],
             capture_output=True,
             text=True,
             check=True,
             timeout=120,
-            shell=True
+            shell=True,
         )
 
         return (True, "Mermaid Syntax is Valid.")
@@ -318,6 +327,7 @@ def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
         # On Windows, mmdc is a .cmd file, so we need shell=True
         # Or we can try both with and without .cmd extension
         import platform
+
         is_windows = platform.system() == "Windows"
 
         result = subprocess.run(
@@ -326,7 +336,7 @@ def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
             text=True,
             check=True,
             timeout=10,
-            shell=is_windows  # Use shell on Windows for .cmd files
+            shell=is_windows,  # Use shell on Windows for .cmd files
         )
         return True
     except Exception:
@@ -334,9 +344,7 @@ def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
 
 
 def validate_mermaid_and_render(
-    mermaid_code: str,
-    output_format: str = "svg",
-    mermaid_executable: str = "mmdc"
+    mermaid_code: str, output_format: str = "svg", mermaid_executable: str = "mmdc"
 ) -> Tuple[bool, str, Optional[str]]:
     """
     Validates Mermaid code and renders it if valid.
@@ -350,30 +358,31 @@ def validate_mermaid_and_render(
         Tuple[bool, str, Optional[str]]: (is_valid, message, rendered_output).
             rendered_output is the file content (string for SVG, base64 string for PNG).
     """
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', delete=False) as temp_input:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(mermaid_code)
         temp_input.flush()
 
-    output_ext = '.svg' if output_format == 'svg' else '.png'
-    temp_output_name = temp_input_name.replace('.mmd', output_ext)
+    output_ext = ".svg" if output_format == "svg" else ".png"
+    temp_output_name = temp_input_name.replace(".mmd", output_ext)
 
     try:
         # Run rendering command
         result = subprocess.run(
-            [mermaid_executable, '-i', temp_input_name, '-o', temp_output_name],
+            [mermaid_executable, "-i", temp_input_name, "-o", temp_output_name],
             capture_output=True,
             text=True,
             check=True,
             timeout=120,
-            shell=True
+            shell=True,
         )
 
         # Read the output file
-        with open(temp_output_name, 'rb' if output_format == 'png' else 'r') as f:
-            if output_format == 'png':
+        with open(temp_output_name, "rb" if output_format == "png" else "r") as f:
+            if output_format == "png":
                 import base64
-                rendered_output = base64.b64encode(f.read()).decode('utf-8')
+
+                rendered_output = base64.b64encode(f.read()).decode("utf-8")
             else:
                 rendered_output = f.read()
 
@@ -412,25 +421,25 @@ def _clean_mermaid_error(error_message: str) -> str:
         str: Cleaned error message.
     """
     # Remove ANSI color codes
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    cleaned = ansi_escape.sub('', error_message)
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    cleaned = ansi_escape.sub("", error_message)
 
     # Extract relevant lines
-    lines = cleaned.split('\n')
+    lines = cleaned.split("\n")
     relevant_lines = []
 
     for line in lines:
         if not line.strip():
             continue
         # Filter out internal node.js stack trace lines
-        if 'at Object.' in line or 'at Function.' in line:
+        if "at Object." in line or "at Function." in line:
             continue
-        if line.strip().startswith('at ') and '(' in line:
+        if line.strip().startswith("at ") and "(" in line:
             continue
         relevant_lines.append(line)
 
     if relevant_lines:
-        return '\n'.join(relevant_lines[:10])
+        return "\n".join(relevant_lines[:10])
 
     return error_message
 
@@ -438,6 +447,7 @@ def _clean_mermaid_error(error_message: str) -> str:
 # =====================================================================
 # MERMAID V1 PROVIDER
 # =====================================================================
+
 
 class MermaidV1Provider(BaseDiagramProvider):
     """
@@ -506,7 +516,7 @@ class MermaidV1Provider(BaseDiagramProvider):
             ProviderCapability.RENDER_SVG,
             ProviderCapability.RENDER_PNG,
             ProviderCapability.AUTO_FIX,
-            ProviderCapability.LLM_CORRECTION
+            ProviderCapability.LLM_CORRECTION,
         ]
 
     def __init__(self, provider_folder: Path):
@@ -556,11 +566,7 @@ class MermaidV1Provider(BaseDiagramProvider):
 
         try:
             result = subprocess.run(
-                [self.mermaid_executable, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                shell=True
+                [self.mermaid_executable, "--version"], capture_output=True, text=True, timeout=5, shell=True
             )
             version = result.stdout.strip()
             self.logger.info(f"Mermaid CLI version: {version}")
@@ -582,11 +588,7 @@ class MermaidV1Provider(BaseDiagramProvider):
         """
         if not self.is_available():
             self.logger.info("Validation skipped: Mermaid CLI not available.")
-            return ValidationResult(
-                is_valid=False,
-                error="Mermaid CLI (mmdc) not available",
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error="Mermaid CLI (mmdc) not available", code_length=len(code))
 
         self.logger.info(f"Validating Mermaid code ({len(code)} chars)...")
 
@@ -598,20 +600,12 @@ class MermaidV1Provider(BaseDiagramProvider):
             else:
                 self.logger.info(f"Mermaid code validation failed: {message[:100]}...")
 
-            return ValidationResult(
-                is_valid=is_valid,
-                error=None if is_valid else message,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=is_valid, error=None if is_valid else message, code_length=len(code))
 
         except Exception as e:
             error_msg = f"Validation exception: {str(e)}"
             self.logger.info(error_msg, exc_info=True)
-            return ValidationResult(
-                is_valid=False,
-                error=error_msg,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error=error_msg, code_length=len(code))
 
     def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
         """
@@ -650,12 +644,7 @@ class MermaidV1Provider(BaseDiagramProvider):
 
         except Exception as e:
             self.logger.info(f"Pattern-based fix exception: {e}", exc_info=True)
-            return ValidationResult(
-                is_valid=False,
-                error=error_message,
-                auto_fixed=False,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error=error_message, auto_fixed=False, code_length=len(code))
 
     def render(self, code: str, output_format: str = "svg", **options) -> RenderResult:
         """
@@ -675,13 +664,9 @@ class MermaidV1Provider(BaseDiagramProvider):
                 success=False,
                 content=None,
                 output_format=output_format,
-                validation=ValidationResult(
-                    is_valid=False,
-                    error="Mermaid CLI not available",
-                    code_length=len(code)
-                ),
+                validation=ValidationResult(is_valid=False, error="Mermaid CLI not available", code_length=len(code)),
                 metadata={},
-                error="Mermaid CLI (mmdc) not available"
+                error="Mermaid CLI (mmdc) not available",
             )
 
         # If output format is 'mermaid', just return the code
@@ -692,7 +677,7 @@ class MermaidV1Provider(BaseDiagramProvider):
                 content=code,
                 output_format="mermaid",
                 validation=ValidationResult(is_valid=True, code_length=len(code)),
-                metadata={"provider": self.provider_id}
+                metadata={"provider": self.provider_id},
             )
 
         # Validate supported format
@@ -703,28 +688,23 @@ class MermaidV1Provider(BaseDiagramProvider):
                 content=None,
                 output_format=output_format,
                 validation=ValidationResult(
-                    is_valid=False,
-                    error=f"Unsupported output format: {output_format}",
-                    code_length=len(code)
+                    is_valid=False, error=f"Unsupported output format: {output_format}", code_length=len(code)
                 ),
                 metadata={},
-                error=f"Unsupported output format: {output_format}"
+                error=f"Unsupported output format: {output_format}",
             )
 
         self.logger.info(f"Rendering Mermaid to {output_format.upper()}...")
 
         try:
             is_valid, message, rendered_output = validate_mermaid_and_render(
-                code,
-                output_format=output_format.lower(),
-                mermaid_executable=self.mermaid_executable
+                code, output_format=output_format.lower(), mermaid_executable=self.mermaid_executable
             )
 
             if is_valid and rendered_output:
                 output_size = len(rendered_output)
                 self.logger.info(
-                    f"Rendered to {output_format.upper()} "
-                    f"({output_size} bytes, {output_size/1024:.1f} KB)"
+                    f"Rendered to {output_format.upper()} " f"({output_size} bytes, {output_size / 1024:.1f} KB)"
                 )
 
                 return RenderResult(
@@ -735,8 +715,8 @@ class MermaidV1Provider(BaseDiagramProvider):
                     metadata={
                         "provider": self.provider_id,
                         "output_size_bytes": output_size,
-                        "executable": self.mermaid_executable
-                    }
+                        "executable": self.mermaid_executable,
+                    },
                 )
             else:
                 self.logger.info(f"Rendering failed: {message[:200]}")
@@ -744,13 +724,9 @@ class MermaidV1Provider(BaseDiagramProvider):
                     success=False,
                     content=None,
                     output_format=output_format,
-                    validation=ValidationResult(
-                        is_valid=False,
-                        error=message,
-                        code_length=len(code)
-                    ),
+                    validation=ValidationResult(is_valid=False, error=message, code_length=len(code)),
                     metadata={"provider": self.provider_id},
-                    error=message
+                    error=message,
                 )
 
         except Exception as e:
@@ -760,13 +736,9 @@ class MermaidV1Provider(BaseDiagramProvider):
                 success=False,
                 content=None,
                 output_format=output_format,
-                validation=ValidationResult(
-                    is_valid=False,
-                    error=error_msg,
-                    code_length=len(code)
-                ),
+                validation=ValidationResult(is_valid=False, error=error_msg, code_length=len(code)),
                 metadata={"provider": self.provider_id},
-                error=error_msg
+                error=error_msg,
             )
 
     def get_llm_correction_rules(self) -> Optional[str]:
@@ -782,10 +754,11 @@ class MermaidV1Provider(BaseDiagramProvider):
         # Try to load rules from markdown file
         try:
             from pathlib import Path
+
             rules_file = Path(__file__).parent / "correction_rules.md"
 
             if rules_file.exists():
-                with open(rules_file, 'r', encoding='utf-8') as f:
+                with open(rules_file, "r", encoding="utf-8") as f:
                     rules_content = f.read().strip()
                     if rules_content:
                         self.logger.debug(f"Loaded Mermaid correction rules from {rules_file}")

@@ -39,64 +39,50 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     """
     session_id = state.get("_session_id")
     model_id = state.get("model_id", "claude")  # Get selected model
-    logger.info(
-        f"Generating JSON representation (model: {model_id})...",
-        extra={'session_id': session_id}
-    )
+    logger.info(f"Generating JSON representation (model: {model_id})...", extra={"session_id": session_id})
 
     update_callback = state.get("_update_callback")
     if update_callback:
-        await update_callback({
-            "status": "generating_json",
-            "message": "AI is validating and finalizing architecture representation...",
-        })
+        await update_callback(
+            {
+                "status": "generating_json",
+                "message": "AI is validating and finalizing architecture representation...",
+            }
+        )
 
     # Load model-specific JSON_GENERATION prompt
     prompt_template = get_prompt("json_generation", model_id=model_id)
     if not prompt_template:
-        logger.info(
-            f"json_generation prompt not found for model: {model_id}",
-            extra={'session_id': session_id}
-        )
+        logger.info(f"json_generation prompt not found for model: {model_id}", extra={"session_id": session_id})
         # Fallback: use existing representations from clarify_prompt
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
             "clean_structurizr": state.get("clean_structurizr", ""),
             "json_representation": state.get("json_representation", {}),
         }
-    
 
     # Build prompt content from conversation history
     clarification_history = state.get("clarification_history", [])
-    user_content = "\n".join([
-        msg.get('content', '')
-        for msg in clarification_history
-        if msg.get('role') == 'user'
-    ])
+    user_content = "\n".join([msg.get("content", "") for msg in clarification_history if msg.get("role") == "user"])
 
-    logger.debug(
-        f"Preparing LLM (model: {model_id})...",
-        extra={'session_id': session_id}
-    )
-    
+    logger.debug(f"Preparing LLM (model: {model_id})...", extra={"session_id": session_id})
 
     # Call LLM with model-specific prompt
     try:
-        ai_response_str = await call_llm(
-            prompt_template,
-            user_content,
-            session_id,
-            model_id=model_id
-        )
+        ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.info(f"AI call failed in generate_json_representation: {error_message}", extra={'session_id': session_id})
+        logger.info(
+            f"AI call failed in generate_json_representation: {error_message}", extra={"session_id": session_id}
+        )
         if update_callback:
-            await update_callback({
-                "status": "failed",
-                "message": f"Failed to generate JSON representation: {error_message}",
-                "error": error_message,
-            })
+            await update_callback(
+                {
+                    "status": "failed",
+                    "message": f"Failed to generate JSON representation: {error_message}",
+                    "error": error_message,
+                }
+            )
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
@@ -105,10 +91,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             "error_message": error_message,
         }
 
-    logger.debug(
-        f"AI Response {ai_response_str}",
-        extra={'session_id': session_id}
-    )
+    logger.debug(f"AI Response {ai_response_str}", extra={"session_id": session_id})
 
     try:
         # Parse AI response as JSON (handles markdown code fences)
@@ -121,37 +104,30 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Validate Structurizr syntax (basic check)
         if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
-            logger.info(
-                "Structurizr workspace missing or invalid format",
-                extra={'session_id': session_id}
-            )
+            logger.info("Structurizr workspace missing or invalid format", extra={"session_id": session_id})
 
         if not clean_structurizr or not clean_structurizr.startswith("model"):
-            logger.info(
-                "clean_structurizr missing or invalid format",
-                extra={'session_id': session_id}
-            )
+            logger.info("clean_structurizr missing or invalid format", extra={"session_id": session_id})
 
         # Validate legacy JSON schema
         if json_representation:
             is_valid, errors = ArchitectureSchema.validate(json_representation)
             if not is_valid:
-                logger.info(
-                    f"Legacy JSON schema validation issues: {errors}",
-                    extra={'session_id': session_id}
-                )
+                logger.info(f"Legacy JSON schema validation issues: {errors}", extra={"session_id": session_id})
                 # Don't fail - JSON node is validation, not blocking
 
         logger.info(
             "Successfully generated JSON representation with Structurizr and legacy schema.",
-            extra={'session_id': session_id}
+            extra={"session_id": session_id},
         )
         if update_callback:
-            await update_callback({
-                "status": "json_generated",
-                "message": "Successfully validated and finalized architecture representation.",
-                "json_generation_output": ai_response_str,
-            })
+            await update_callback(
+                {
+                    "status": "json_generated",
+                    "message": "Successfully validated and finalized architecture representation.",
+                    "json_generation_output": ai_response_str,
+                }
+            )
 
         return {
             "structurizr_workspace": structurizr_workspace,
@@ -161,15 +137,14 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except json.JSONDecodeError as e:
-        logger.info(
-            f"AI response not valid JSON: {e}",
-            extra={'session_id': session_id}
-        )
+        logger.info(f"AI response not valid JSON: {e}", extra={"session_id": session_id})
         if update_callback:
-            await update_callback({
-                "status": "error",
-                "message": "AI response was not valid JSON format.",
-            })
+            await update_callback(
+                {
+                    "status": "error",
+                    "message": "AI response was not valid JSON format.",
+                }
+            )
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
@@ -179,15 +154,14 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.info(
-            f"Unexpected error during JSON generation: {e}",
-            extra={'session_id': session_id}
-        )
+        logger.info(f"Unexpected error during JSON generation: {e}", extra={"session_id": session_id})
         if update_callback:
-            await update_callback({
-                "status": "error",
-                "message": "Unexpected error during JSON generation.",
-            })
+            await update_callback(
+                {
+                    "status": "error",
+                    "message": "Unexpected error during JSON generation.",
+                }
+            )
         # Return existing state representations as fallback
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
@@ -215,15 +189,17 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
 
     # Check if user has already selected a diagram type (resuming after selection)
     if state.get("user_selected_diagram_type", False):
-        logger.info("✅ User has already selected diagram type, proceeding to code generation...",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            "✅ User has already selected diagram type, proceeding to code generation...",
+            extra={"session_id": session_id} if session_id else {},
+        )
         # Return existing state values without changing anything
         return {
             "keyword_scores": state.get("keyword_scores", {}),
             "user_selected_diagram_type": True,  # Keep the selection flag
             "analysis_text": state.get("analysis_text", ""),
             "json_generation_output": state.get("json_generation_output", ""),
-            "current_state": SessionState.GENERATING
+            "current_state": SessionState.GENERATING,
         }
 
     final_design_summary = state.get("final_design_summary", "")
@@ -232,8 +208,10 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     clarification_history = state.get("clarification_history", [])
     json_generation_output = state.get("json_generation_output", "")
 
-    logger.info("🎯 Analyzing diagram type options based on clarification results...",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        "🎯 Analyzing diagram type options based on clarification results...",
+        extra={"session_id": session_id} if session_id else {},
+    )
 
     # Combine design summary and JSON metadata for better keyword analysis
     analysis_parts = []
@@ -254,11 +232,7 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
 
     # Include clarification history text as additional context
     if clarification_history and isinstance(clarification_history, list):
-        history_text = "\n".join(
-            msg.get("content", "")
-            for msg in clarification_history
-            if isinstance(msg, dict)
-        )
+        history_text = "\n".join(msg.get("content", "") for msg in clarification_history if isinstance(msg, dict))
         if history_text:
             analysis_parts.append(history_text)
 
@@ -272,30 +246,45 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     recommended_type, keyword_scores = determine_diagram_type(analysis_text)
 
     logger.info(
-        f"📊 Diagram type scores calculated: Mermaid={keyword_scores.get('Mermaid', 0):.1f}%, D2={keyword_scores.get('D2', 0):.1f}%, PlantUML={keyword_scores.get('PlantUML', 0):.1f}%, Structurizr={keyword_scores.get('Structurizr', 0):.1f}% | Recommended: {recommended_type.value}",
-        extra={'session_id': session_id} if session_id else {}
+        f"📊 Diagram type scores calculated: Mermaid={
+            keyword_scores.get(
+                'Mermaid',
+                0):.1f}%, D2={
+            keyword_scores.get(
+                'D2',
+                0):.1f}%, PlantUML={
+                    keyword_scores.get(
+                        'PlantUML',
+                        0):.1f}%, Structurizr={
+                            keyword_scores.get(
+                                'Structurizr',
+                                0):.1f}% | Recommended: {
+                                    recommended_type.value}",
+        extra={"session_id": session_id} if session_id else {},
     )
 
     # Send update to frontend with all diagram type options and scores for user selection
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
-        await update_callback({
-            "status": "awaiting_diagram_type_selection",
-            "message": "Please select your preferred diagram type",
-            "recommended_diagram_type": recommended_type.value,
-            "keyword_scores": keyword_scores,
-            "analysis_text": analysis_text,
-            "json_generation_output": json_generation_output,
-            "awaiting_user_selection": True,
-            "message_type": "diagram_type_selection"
-        })
+        await update_callback(
+            {
+                "status": "awaiting_diagram_type_selection",
+                "message": "Please select your preferred diagram type",
+                "recommended_diagram_type": recommended_type.value,
+                "keyword_scores": keyword_scores,
+                "analysis_text": analysis_text,
+                "json_generation_output": json_generation_output,
+                "awaiting_user_selection": True,
+                "message_type": "diagram_type_selection",
+            }
+        )
 
     return {
         "keyword_scores": keyword_scores,
         "user_selected_diagram_type": False,  # Waiting for user selection
         "analysis_text": analysis_text,
         "json_generation_output": json_generation_output,
-        "current_state": SessionState.GENERATING
+        "current_state": SessionState.GENERATING,
     }
 
 
@@ -334,7 +323,7 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
 
     if not prompt_template:
         # Fallback prompt if specific prompt not found
-        prompt_template = f"""You are a {diagram_type_str} diagram code generator.
+        prompt_template = """You are a {diagram_type_str} diagram code generator.
 
 Create ONLY the diagram code based on the following JSON representation. Do not include explanations or markdown formatting.
 
@@ -344,8 +333,10 @@ JSON Representation:
 Generate clean, syntactically correct {diagram_type_str} code:"""
         prompt_source = "inline_fallback"
 
-    logger.info(f"Generating {diagram_type_str} code using AI (model: {model_id})",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"Generating {diagram_type_str} code using AI (model: {model_id})",
+        extra={"session_id": session_id} if session_id else {},
+    )
 
     # Prefer the raw JSON generation output if available; otherwise use structured JSON
     llm_input_payload = json_generation_output if json_generation_output else json.dumps(json_representation, indent=2)
@@ -353,34 +344,39 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
     # Send progress update to frontend
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
-        await update_callback({
-            "status": "generating",
-            "message": f"AI is generating {diagram_type_str} diagram code...",
-            "message_type": "progress",
-            "diagram_type": diagram_type_str,
-            "generation_payload_preview": llm_input_payload[:1000],  # truncate for safety
-        })
+        await update_callback(
+            {
+                "status": "generating",
+                "message": f"AI is generating {diagram_type_str} diagram code...",
+                "message_type": "progress",
+                "diagram_type": diagram_type_str,
+                "generation_payload_preview": llm_input_payload[:1000],  # truncate for safety
+            }
+        )
 
     logger.info(
-        f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={len(llm_input_payload)}",
-        extra={'session_id': session_id} if session_id else {}
+        f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={
+            len(llm_input_payload)}",
+        extra={"session_id": session_id} if session_id else {},
     )
     logger.debug(
         f"Payload preview (first 800 chars): {llm_input_payload[:800]}",
-        extra={'session_id': session_id} if session_id else {}
+        extra={"session_id": session_id} if session_id else {},
     )
 
     try:
         ai_response = await call_llm(prompt_template, llm_input_payload, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.info(f"AI call failed in generate_code: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in generate_code: {error_message}", extra={"session_id": session_id})
         if update_callback:
-            await update_callback({
-                "status": "failed",
-                "message": f"Code generation failed: {error_message}",
-                "error": error_message,
-            })
+            await update_callback(
+                {
+                    "status": "failed",
+                    "message": f"Code generation failed: {error_message}",
+                    "error": error_message,
+                }
+            )
         return {
             "diagram_code": "",
             "error_message": error_message,
@@ -390,23 +386,24 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
     # Clean up the response (remove any markdown formatting)
     diagram_code = ai_response.strip()
     if diagram_code.startswith("```"):
-        lines = diagram_code.split('\n')
+        lines = diagram_code.split("\n")
         # Remove first and last lines if they're markdown code blocks
         if lines[0].startswith("```") and lines[-1].strip() == "```":
-            diagram_code = '\n'.join(lines[1:-1])
+            diagram_code = "\n".join(lines[1:-1])
 
-    logger.info(f"📄 Generated {diagram_type_str} code - length: {len(diagram_code)} chars",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"📄 Generated {diagram_type_str} code - length: {len(diagram_code)} chars",
+        extra={"session_id": session_id} if session_id else {},
+    )
 
     # Send success update to frontend
     if update_callback:
-        await update_callback({
-            "status": "code_generated",
-            "message": f"✅ Generated {diagram_type_str} diagram code ({len(diagram_code)} chars)",
-            "message_type": "success"
-        })
+        await update_callback(
+            {
+                "status": "code_generated",
+                "message": f"✅ Generated {diagram_type_str} diagram code ({len(diagram_code)} chars)",
+                "message_type": "success",
+            }
+        )
 
-    return {
-        "diagram_code": diagram_code,
-        "current_state": SessionState.VALIDATING
-    }
+    return {"diagram_code": diagram_code, "current_state": SessionState.VALIDATING}

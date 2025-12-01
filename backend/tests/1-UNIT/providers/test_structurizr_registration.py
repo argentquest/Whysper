@@ -1,7 +1,8 @@
 """Test to verify Kroki Structurizr provider registration."""
-import pytest
+
 from unittest.mock import patch
 from diagrams.provider_registry import get_registry
+
 
 def test_structurizr_registration():
     """Test that Kroki Structurizr provider is properly registered"""
@@ -15,16 +16,14 @@ def test_structurizr_registration():
         all_providers = registry.list_all()
 
         # Check for Structurizr provider
-        structurizr_providers = [
-            p for p in all_providers if p.diagram_type == "structurizr"
-        ]
+        structurizr_providers = [p for p in all_providers if p.diagram_type == "structurizr"]
 
         assert structurizr_providers, "No Structurizr providers found!"
 
         for provider in structurizr_providers:
             # Verify it's the krokistructurizr provider
             if provider.provider_id == "krokistructurizr":
-                 assert provider.diagram_type == "structurizr"
+                assert provider.diagram_type == "structurizr"
 
         # Test getting the provider directly
         provider = registry.get("krokistructurizr")
@@ -40,4 +39,4 @@ def test_structurizr_registration():
 
         # Get registry statistics
         stats = registry.get_statistics()
-        assert stats['total_providers'] > 0
+        assert stats["total_providers"] > 0

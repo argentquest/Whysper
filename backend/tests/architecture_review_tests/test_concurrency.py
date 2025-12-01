@@ -1,11 +1,12 @@
 import asyncio
 import uuid
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from app.services.diagram_factory_service import DiagramSessionStore, DiagramFactoryService
-from app.utils.diagram_wizard.graph_state import DiagramType
 
 # Mock the call_llm function to avoid external API calls
+
+
 async def mock_call_llm(*args, **kwargs):
     prompt = args[0] if args else kwargs.get("prompt", "")
     # Return different JSON based on the prompt content to simulate workflow
@@ -27,9 +28,13 @@ async def mock_call_llm(*args, **kwargs):
     else:
         return "{}"
 
+
 # Mock get_prompt to return a dummy string
+
+
 def mock_get_prompt(*args, **kwargs):
     return "Dummy Prompt"
+
 
 @pytest.mark.asyncio
 async def test_concurrent_sessions():
@@ -44,10 +49,11 @@ async def test_concurrent_sessions():
     sessions = []
 
     # Patches
-    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=mock_call_llm), \
-         patch("app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt), \
-         patch("app.utils.diagram_wizard.nodes.llm_helpers.call_llm", side_effect=mock_call_llm), \
-         patch("app.utils.diagram_wizard.nodes.llm_helpers._get_model_for_id", return_value="gpt-mock"):
+    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=mock_call_llm), patch(
+        "app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt
+    ), patch("app.utils.diagram_wizard.nodes.llm_helpers.call_llm", side_effect=mock_call_llm), patch(
+        "app.utils.diagram_wizard.nodes.llm_helpers._get_model_for_id", return_value="gpt-mock"
+    ):
 
         # Create and start 5 sessions
         for i in range(num_sessions):
@@ -90,10 +96,10 @@ async def test_concurrent_sessions():
             for other_i, (_, _, other_prompt) in enumerate(sessions):
                 if i != other_i:
                     history_text = str(session.history)
-                    assert other_prompt not in history_text, \
-                        f"Session {i} polluted with Session {other_i}'s prompt"
+                    assert other_prompt not in history_text, f"Session {i} polluted with Session {other_i}'s prompt"
 
     print(f"Successfully ran {num_sessions} concurrent sessions with verified isolation.")
+
 
 if __name__ == "__main__":
     # Manually run the test function if executed directly

@@ -12,15 +12,15 @@ from datetime import datetime
 
 class ProviderCapability(str, Enum):
     # Enumerate possible capabilities that a diagram provider can support
-    VALIDATE = "validate"              # Can validate syntax
-    RENDER_SVG = "render_svg"          # Can render to SVG
-    RENDER_PNG = "render_png"          # Can render to PNG
-    RENDER_PDF = "render_pdf"          # Can render to PDF
-    AUTO_FIX = "auto_fix"              # Can auto-fix syntax (pattern-based)
+    VALIDATE = "validate"  # Can validate syntax
+    RENDER_SVG = "render_svg"  # Can render to SVG
+    RENDER_PNG = "render_png"  # Can render to PNG
+    RENDER_PDF = "render_pdf"  # Can render to PDF
+    AUTO_FIX = "auto_fix"  # Can auto-fix syntax (pattern-based)
     LLM_CORRECTION = "llm_correction"  # Supports LLM-based correction
-    BATCH = "batch"                    # Supports batch rendering
-    CONVERT = "convert"                # Converts between formats
-    STREAMING = "streaming"            # Supports streaming output
+    BATCH = "batch"  # Supports batch rendering
+    CONVERT = "convert"  # Converts between formats
+    STREAMING = "streaming"  # Supports streaming output
 
 
 class ValidationResult(BaseModel):
@@ -38,8 +38,8 @@ class ValidationResult(BaseModel):
 class RenderResult(BaseModel):
     # Model to represent the result of diagram rendering
     success: bool  # Whether rendering was successful
-    content: Optional[str] = None          # SVG/PNG content or converted code
-    output_format: str                     # Format of the rendered content
+    content: Optional[str] = None  # SVG/PNG content or converted code
+    output_format: str  # Format of the rendered content
     validation: ValidationResult  # Validation details for the render
     metadata: Dict[str, Any] = Field(default_factory=dict)  # Additional metadata
     error: Optional[str] = None  # Error message if rendering failed
@@ -48,22 +48,22 @@ class RenderResult(BaseModel):
 
 class ProviderMetadata(BaseModel):
     # Model to store metadata about a diagram provider
-    provider_id: str                       # Unique identifier for provider
-    provider_name: str                     # Human-readable name
-    diagram_type: str                      # Type of diagram (mermaid, d2, etc.)
-    supported_output_formats: List[str]    # Possible output formats
+    provider_id: str  # Unique identifier for provider
+    provider_name: str  # Human-readable name
+    diagram_type: str  # Type of diagram (mermaid, d2, etc.)
+    supported_output_formats: List[str]  # Possible output formats
     capabilities: List[ProviderCapability]  # List of provider capabilities
-    version: Optional[str]                 # Provider version
-    available: bool                        # Is provider installed/available
-    description: Optional[str]             # Description of the provider
-    requires_llm: bool = False             # Needs LLM access to function
+    version: Optional[str]  # Provider version
+    available: bool  # Is provider installed/available
+    description: Optional[str]  # Description of the provider
+    requires_llm: bool = False  # Needs LLM access to function
 
 
 class CorrectionAttemptType(str, Enum):
     # Enumerate possible types of correction attempts
     PATTERN = "pattern"  # Correction using pattern matching
-    LLM = "llm"          # Correction using language model
-    USER = "user"        # Manual user correction
+    LLM = "llm"  # Correction using language model
+    USER = "user"  # Manual user correction
     ORIGINAL = "original"  # No correction attempted
 
 

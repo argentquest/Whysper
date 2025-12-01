@@ -10,8 +10,6 @@ Tests for complete end-to-end workflows:
 """
 
 import pytest
-from unittest.mock import AsyncMock, patch
-import asyncio
 
 
 class TestDiagramGenerationWorkflow:
@@ -48,10 +46,7 @@ class TestDiagramGenerationWorkflow:
 
     def test_diagram_generation_error_handling(self, client):
         """Handle errors in diagram generation"""
-        invalid_request = {
-            "code": "",
-            "diagram_type": "invalid"
-        }
+        invalid_request = {"code": "", "diagram_type": "invalid"}
 
         # Should handle gracefully
         assert isinstance(invalid_request, dict)
@@ -247,8 +242,9 @@ class TestServiceIntegration:
         assert rendered is not None
 
     @pytest.mark.asyncio
-    async def test_full_service_chain(self, mock_conversation_service, mock_file_service,
-                                     mock_diagram_service, mock_ai_service):
+    async def test_full_service_chain(
+        self, mock_conversation_service, mock_file_service, mock_diagram_service, mock_ai_service
+    ):
         """Test full chain of services"""
         # 1. Create conversation
         conv = await mock_conversation_service.create_conversation()
@@ -320,7 +316,6 @@ class TestConcurrentOperations:
         assert scenario["concurrent_users"] == 5
 
         # Simulate concurrent operations
-        tasks = []
         for i in range(scenario["concurrent_users"]):
             # Would create async task
             assert i >= 0
@@ -400,7 +395,7 @@ class TestEndToEndWorkflows:
         """User registration workflow"""
         # User registers
         assert "user_id" in user_session
-        assert user_session["authenticated"] == True
+        assert user_session["authenticated"]
 
     def test_diagram_creation_workflow(self, complete_diagram_request):
         """Create and save diagram"""
@@ -429,7 +424,7 @@ class TestEndToEndWorkflows:
     def test_complete_user_session_workflow(self, user_session, complete_conversation_request):
         """Complete user session"""
         # User authenticated
-        assert user_session["authenticated"] == True
+        assert user_session["authenticated"]
 
         # User creates conversation
         assert "conversation_id" in complete_conversation_request

@@ -1,8 +1,9 @@
 """Test script for Simple Workflow."""
+
 import pytest
-import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from app.services.diagram_factory_service import DiagramFactoryService
+
 
 @pytest.mark.asyncio
 async def test_simple_workflow():
@@ -30,7 +31,7 @@ async def test_simple_workflow():
         "diagram_code": "graph TD; A-->B;",
         "svg_output": "<svg>...</svg>",
         "session_id": "test-session",
-        "message": "__end__"
+        "message": "__end__",
     }
 
     await service.start_generation("Create a simple diagram", diagram_type="Mermaid")

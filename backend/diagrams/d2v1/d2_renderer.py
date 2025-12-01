@@ -15,11 +15,7 @@ import re
 import logging
 
 from diagrams.base_diagram import BaseDiagramProvider
-from diagrams.models import (
-    ProviderCapability,
-    ValidationResult,
-    RenderResult
-)
+from diagrams.models import ProviderCapability, ValidationResult, RenderResult
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +23,7 @@ logger = logging.getLogger(__name__)
 # =====================================================================
 # D2 ICON STRIPPER
 # =====================================================================
+
 
 def strip_d2_icons(code: str) -> str:
     """
@@ -55,21 +52,18 @@ def strip_d2_icons(code: str) -> str:
         }
     """
     logger.info("TOASTINFO: Starting strip_d2_icons process")
-    
+
     # Pattern to find icon URLs (matches entire line with icon attribute)
-    icon_pattern = re.compile(
-        r'^\s*(?:[\w\-]+\.)*icon:\s*["\'].*?["\'].*?$',
-        re.MULTILINE | re.IGNORECASE
-    )
+    icon_pattern = re.compile(r'^\s*(?:[\w\-]+\.)*icon:\s*["\'].*?["\'].*?$', re.MULTILINE | re.IGNORECASE)
 
     # Count removals for logging
     icon_lines = icon_pattern.findall(code)
 
     # Remove icon attribute lines
-    cleaned_code = icon_pattern.sub('', code)
+    cleaned_code = icon_pattern.sub("", code)
 
     # Remove multiple consecutive blank lines (keep max 1)
-    cleaned_code = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned_code)
+    cleaned_code = re.sub(r"\n\s*\n\s*\n", "\n\n", cleaned_code)
 
     if icon_lines:
         logger.info(f"Removed {len(icon_lines)} icon attribute(s) from D2 code")
@@ -84,6 +78,7 @@ def strip_d2_icons(code: str) -> str:
 # D2 SYNTAX FIXER (Self-contained)
 # =====================================================================
 
+
 class D2SyntaxFixResult:
     """
     Result of D2 syntax fixing operation.
@@ -94,6 +89,7 @@ class D2SyntaxFixResult:
         errors (List[str]): List of errors remaining or encountered.
         corrections (List[str]): List of descriptions of applied fixes.
     """
+
     def __init__(self, is_valid: bool, corrected_code: str, errors: List[str], corrections: List[str]):
         self.is_valid = is_valid
         self.corrected_code = corrected_code
@@ -145,26 +141,26 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     # D2 uses braces {} to define containers (nested scopes).
     # Common error: Users forget to close containers, leading to syntax errors.
     # Solution: Count opening/closing braces and auto-add missing ones.
-    open_braces = corrected_code.count('{')
-    close_braces = corrected_code.count('}')
+    open_braces = corrected_code.count("{")
+    close_braces = corrected_code.count("}")
 
     if open_braces > close_braces:
         # Auto-fix: Add missing closing braces at end of code
         missing_braces = open_braces - close_braces
-        corrected_code += '\n}' * missing_braces
-        corrections.append(f'Added {missing_braces} missing closing brace(s)')
+        corrected_code += "\n}" * missing_braces
+        corrections.append(f"Added {missing_braces} missing closing brace(s)")
         logger.info(f"fix_d2_syntax: added {missing_braces} missing closing brace(s)")
     elif close_braces > open_braces:
         # Cannot auto-fix: Too many closing braces means user error
-        errors.append(f'Too many closing braces: {close_braces - open_braces} extra brace(s)')
+        errors.append(f"Too many closing braces: {close_braces - open_braces} extra brace(s)")
 
     # ===== Fix 2: Convert invalid arrow syntax (spaces in arrows) =====
     # D2 requires arrows without internal spaces: "->" or "<->" not "- >"
     # Common error: Users type "A - > B" which is invalid
     # Solution: Normalize all arrow spacing to " -> " (space before/after, not inside)
-    if re.search(r'\s*-\s*>\s*', corrected_code):
-        corrected_code = re.sub(r'\s*-\s*>\s*', ' -> ', corrected_code)
-        corrections.append('Fixed arrow syntax (normalized spacing)')
+    if re.search(r"\s*-\s*>\s*", corrected_code):
+        corrected_code = re.sub(r"\s*-\s*>\s*", " -> ", corrected_code)
+        corrections.append("Fixed arrow syntax (normalized spacing)")
         logger.info("fix_d2_syntax: normalized arrow syntax")
 
     # ===== Fix 3: Ensure proper label syntax for connections =====
@@ -178,7 +174,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         from_node, to_node, label = match.groups()
         label = label.strip()
         if not (label.startswith('"') and label.endswith('"')):
-            corrections.append(f'Added quotes to connection label: {label}')
+            corrections.append(f"Added quotes to connection label: {label}")
             logger.info(f'fix_d2_syntax: quoted connection label "{label}"')
             return f'{from_node} -> {to_node}: "{label}"'
         return match.group(0)
@@ -190,9 +186,9 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     # Common error: Users omit "direction: right" line
     # Solution: If arrows exist but no direction, add "direction: right" at top
     # This was the BUG that was fixed - executable_path: null wasn't falling back!
-    if 'direction:' not in corrected_code and '->' in corrected_code:
-        corrected_code = 'direction: right\n\n' + corrected_code
-        corrections.append('Added default direction: right')
+    if "direction:" not in corrected_code and "->" in corrected_code:
+        corrected_code = "direction: right\n\n" + corrected_code
+        corrections.append("Added default direction: right")
         logger.info("fix_d2_syntax: added default direction: right")
 
     # ===== Final validation =====
@@ -203,7 +199,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     is_valid = len(errors) == 0
     logger.info(
         "TOASTINFO: Completed fix_d2_syntax",
-        extra={"is_valid": is_valid, "corrections": len(corrections), "errors": len(errors)}
+        extra={"is_valid": is_valid, "corrections": len(corrections), "errors": len(errors)},
     )
 
     return D2SyntaxFixResult(is_valid, corrected_code, errors, corrections)
@@ -221,22 +217,22 @@ def _validate_d2_structure(code: str) -> List[str]:
     """
     logger.info("Starting _validate_d2_structure")
     errors: List[str] = []
-    lines = code.split('\n')
+    lines = code.split("\n")
 
     # Check for unmatched braces
     brace_stack = 0
     for i, line in enumerate(lines):
-        open_count = line.count('{')
-        close_count = line.count('}')
+        open_count = line.count("{")
+        close_count = line.count("}")
 
         brace_stack += open_count - close_count
 
         if brace_stack < 0:
-            errors.append(f'Line {i + 1}: Too many closing braces')
+            errors.append(f"Line {i + 1}: Too many closing braces")
             brace_stack = 0
 
     if brace_stack > 0:
-        errors.append(f'Unmatched opening braces: {brace_stack} braces not closed')
+        errors.append(f"Unmatched opening braces: {brace_stack} braces not closed")
 
     logger.info("Completed _validate_d2_structure", extra={"error_count": len(errors)})
     return errors
@@ -245,6 +241,7 @@ def _validate_d2_structure(code: str) -> List[str]:
 # =====================================================================
 # D2 CLI VALIDATOR (Self-contained)
 # =====================================================================
+
 
 def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool, str]:
     """
@@ -292,7 +289,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
 
     # Create temporary file with .d2 extension
     # delete=False because we need the file to persist for subprocess
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".d2", delete=False) as temp_file:
         temp_file_name = temp_file.name
         temp_file.write(d2_code)
         temp_file.flush()
@@ -303,11 +300,11 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         # check=True: Raise CalledProcessError if exit code != 0
         # timeout=10: Kill process if it takes longer than 10 seconds
         result = subprocess.run(
-            [d2_executable, temp_file_name, '-t', '1'],
+            [d2_executable, temp_file_name, "-t", "1"],
             capture_output=True,  # Capture stdout and stderr
             text=True,  # Return strings not bytes
             check=True,  # Raise exception on non-zero exit
-            timeout=10  # 10 second timeout
+            timeout=10,  # 10 second timeout
         )
 
         # Exit code 0 means valid syntax
@@ -358,13 +355,7 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
     """
     logger.info("Checking D2 CLI availability")
     try:
-        result = subprocess.run(
-            [d2_executable, "--version"],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=10
-        )
+        result = subprocess.run([d2_executable, "--version"], capture_output=True, text=True, check=True, timeout=10)
         logger.info("D2 CLI availability check succeeded")
         return True
     except Exception:
@@ -373,9 +364,7 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
 
 
 def validate_d2_and_render(
-    d2_code: str,
-    output_format: str = "svg",
-    d2_executable: str = "d2"
+    d2_code: str, output_format: str = "svg", d2_executable: str = "d2"
 ) -> Tuple[bool, str, Optional[str]]:
     """
     Validates D2 code and renders it if valid.
@@ -392,35 +381,32 @@ def validate_d2_and_render(
     logger.info("TOASTINFO: Starting validate_d2_and_render", extra={"format": output_format})
     logger.info("d2code: {d2_code}", extra={"format": output_format})
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.d2', delete=False) as temp_input:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".d2", delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(d2_code)
         temp_input.flush()
 
-    output_ext = '.svg' if output_format == 'svg' else '.png'
-    temp_output_name = temp_input_name.replace('.d2', output_ext)
+    output_ext = ".svg" if output_format == "svg" else ".png"
+    temp_output_name = temp_input_name.replace(".d2", output_ext)
 
     try:
         # Render to the specified format
         result = subprocess.run(
-            [d2_executable, temp_input_name, temp_output_name],
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=30
+            [d2_executable, temp_input_name, temp_output_name], capture_output=True, text=True, check=True, timeout=30
         )
 
         # Read the output file
-        with open(temp_output_name, 'rb' if output_format == 'png' else 'r') as f:
-            if output_format == 'png':
+        with open(temp_output_name, "rb" if output_format == "png" else "r") as f:
+            if output_format == "png":
                 import base64
-                rendered_output = base64.b64encode(f.read()).decode('utf-8')
+
+                rendered_output = base64.b64encode(f.read()).decode("utf-8")
             else:
                 rendered_output = f.read()
 
         logger.info(
             "TOASTINFO: Completed validate_d2_and_render successfully",
-            extra={"output_format": output_format, "size_bytes": len(rendered_output)}
+            extra={"output_format": output_format, "size_bytes": len(rendered_output)},
         )
         return (True, "D2 diagram rendered successfully", rendered_output)
 
@@ -446,6 +432,7 @@ def validate_d2_and_render(
 # =====================================================================
 # D2 V1 PROVIDER
 # =====================================================================
+
 
 class D2V1Provider(BaseDiagramProvider):
     """
@@ -538,11 +525,11 @@ class D2V1Provider(BaseDiagramProvider):
             List[ProviderCapability]: VALIDATE, RENDER_SVG, RENDER_PNG, AUTO_FIX, LLM_CORRECTION
         """
         return [
-            ProviderCapability.VALIDATE,       # Can check syntax
-            ProviderCapability.RENDER_SVG,     # Can generate SVG
-            ProviderCapability.RENDER_PNG,     # Can generate PNG
-            ProviderCapability.AUTO_FIX,       # Has pattern-based fixes
-            ProviderCapability.LLM_CORRECTION  # Supports AI correction
+            ProviderCapability.VALIDATE,  # Can check syntax
+            ProviderCapability.RENDER_SVG,  # Can generate SVG
+            ProviderCapability.RENDER_PNG,  # Can generate PNG
+            ProviderCapability.AUTO_FIX,  # Has pattern-based fixes
+            ProviderCapability.LLM_CORRECTION,  # Supports AI correction
         ]
 
     def __init__(self, provider_folder: Path):
@@ -601,12 +588,7 @@ class D2V1Provider(BaseDiagramProvider):
             return None
 
         try:
-            result = subprocess.run(
-                [self.d2_executable, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run([self.d2_executable, "--version"], capture_output=True, text=True, timeout=5)
             version = result.stdout.strip()
             self.logger.info("D2 CLI version retrieved", extra={"version": version})
             return version
@@ -627,11 +609,7 @@ class D2V1Provider(BaseDiagramProvider):
         """
         self.logger.info("Starting validate_code", extra={"length": len(code)})
         if not self.is_available():
-            return ValidationResult(
-                is_valid=False,
-                error="D2 CLI not available",
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error="D2 CLI not available", code_length=len(code))
 
         self.logger.info(f"Validating D2 code ({len(code)} chars)")
 
@@ -641,20 +619,12 @@ class D2V1Provider(BaseDiagramProvider):
         try:
             is_valid, message = validate_d2_with_cli(cleaned_code, self.d2_executable)
 
-            return ValidationResult(
-                is_valid=is_valid,
-                error=None if is_valid else message,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=is_valid, error=None if is_valid else message, code_length=len(code))
 
         except Exception as e:
             error_msg = f"Validation exception: {str(e)}"
             self.logger.info(error_msg, exc_info=True)
-            return ValidationResult(
-                is_valid=False,
-                error=error_msg,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error=error_msg, code_length=len(code))
         finally:
             self.logger.info("Completed validate_code")
 
@@ -698,12 +668,7 @@ class D2V1Provider(BaseDiagramProvider):
 
         except Exception as e:
             self.logger.info(f"Pattern-based fix exception: {e}", exc_info=True)
-            return ValidationResult(
-                is_valid=False,
-                error=error_message,
-                auto_fixed=False,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error=error_message, auto_fixed=False, code_length=len(code))
         finally:
             self.logger.info("Completed pattern-based auto-fix")
 
@@ -725,13 +690,9 @@ class D2V1Provider(BaseDiagramProvider):
                 success=False,
                 content=None,
                 output_format=output_format,
-                validation=ValidationResult(
-                    is_valid=False,
-                    error="D2 CLI not available",
-                    code_length=len(code)
-                ),
+                validation=ValidationResult(is_valid=False, error="D2 CLI not available", code_length=len(code)),
                 metadata={},
-                error="D2 CLI not available"
+                error="D2 CLI not available",
             )
 
         # If output format is 'd2', just return the code
@@ -741,7 +702,7 @@ class D2V1Provider(BaseDiagramProvider):
                 content=code,
                 output_format="d2",
                 validation=ValidationResult(is_valid=True, code_length=len(code)),
-                metadata={"provider": self.provider_id}
+                metadata={"provider": self.provider_id},
             )
 
         # Validate supported format
@@ -751,12 +712,10 @@ class D2V1Provider(BaseDiagramProvider):
                 content=None,
                 output_format=output_format,
                 validation=ValidationResult(
-                    is_valid=False,
-                    error=f"Unsupported output format: {output_format}",
-                    code_length=len(code)
+                    is_valid=False, error=f"Unsupported output format: {output_format}", code_length=len(code)
                 ),
                 metadata={},
-                error=f"Unsupported output format: {output_format}"
+                error=f"Unsupported output format: {output_format}",
             )
 
         self.logger.info(f"Rendering D2 to {output_format.upper()}...")
@@ -766,16 +725,13 @@ class D2V1Provider(BaseDiagramProvider):
 
         try:
             is_valid, message, rendered_output = validate_d2_and_render(
-                cleaned_code,
-                output_format=output_format.lower(),
-                d2_executable=self.d2_executable
+                cleaned_code, output_format=output_format.lower(), d2_executable=self.d2_executable
             )
 
             if is_valid and rendered_output:
                 output_size = len(rendered_output)
                 self.logger.info(
-                    f"Rendered to {output_format.upper()} "
-                    f"({output_size} bytes, {output_size/1024:.1f} KB)"
+                    f"Rendered to {output_format.upper()} " f"({output_size} bytes, {output_size / 1024:.1f} KB)"
                 )
                 if output_format.lower() == "svg":
                     self.logger.info("SVG output", extra={"svg": rendered_output})
@@ -788,8 +744,8 @@ class D2V1Provider(BaseDiagramProvider):
                     metadata={
                         "provider": self.provider_id,
                         "output_size_bytes": output_size,
-                        "executable": self.d2_executable
-                    }
+                        "executable": self.d2_executable,
+                    },
                 )
             else:
                 self.logger.info(f"Rendering failed: {message[:200]}")
@@ -797,13 +753,9 @@ class D2V1Provider(BaseDiagramProvider):
                     success=False,
                     content=None,
                     output_format=output_format,
-                    validation=ValidationResult(
-                        is_valid=False,
-                        error=message,
-                        code_length=len(code)
-                    ),
+                    validation=ValidationResult(is_valid=False, error=message, code_length=len(code)),
                     metadata={"provider": self.provider_id},
-                    error=message
+                    error=message,
                 )
 
         except Exception as e:
@@ -813,13 +765,9 @@ class D2V1Provider(BaseDiagramProvider):
                 success=False,
                 content=None,
                 output_format=output_format,
-                validation=ValidationResult(
-                    is_valid=False,
-                    error=error_msg,
-                    code_length=len(code)
-                ),
+                validation=ValidationResult(is_valid=False, error=error_msg, code_length=len(code)),
                 metadata={"provider": self.provider_id},
-                error=error_msg
+                error=error_msg,
             )
         finally:
             self.logger.info("TOASTINFO: Completed render")
@@ -837,10 +785,11 @@ class D2V1Provider(BaseDiagramProvider):
         # Try to load rules from markdown file
         try:
             from pathlib import Path
+
             rules_file = Path(__file__).parent / "correction_rules.md"
 
             if rules_file.exists():
-                with open(rules_file, 'r', encoding='utf-8') as f:
+                with open(rules_file, "r", encoding="utf-8") as f:
                     rules_content = f.read().strip()
                     if rules_content:
                         self.logger.debug(f"Loaded D2 correction rules from {rules_file}")

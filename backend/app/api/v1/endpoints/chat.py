@@ -42,17 +42,17 @@ from common.logger import get_logger
 from common.log_broadcaster import log_broadcaster  # Log broadcasting
 from common.logging_decorator import log_method_call
 from schemas import (
-    AskQuestionRequest,        # Chat message request schema
-    AskQuestionResponse,       # Chat message response schema
-    ChatRequest,               # Frontend chat request schema
-    ChatResponse,              # Frontend chat response schema
+    AskQuestionRequest,  # Chat message request schema
+    AskQuestionResponse,  # Chat message response schema
+    ChatRequest,  # Frontend chat request schema
+    ChatResponse,  # Frontend chat response schema
     ConversationCreateRequest,  # New conversation request schema
     ConversationCreateResponse,  # Conversation state response schema
     ConversationSummaryModel,  # Conversation summary schema
     ExportConversationResponse,  # Export data response schema
     ImportConversationRequest,  # Import data request schema
-    UpdateApiKeyRequest,       # API key update request schema
-    UpdateModelRequest,        # Model update request schema
+    UpdateApiKeyRequest,  # API key update request schema
+    UpdateModelRequest,  # Model update request schema
 )
 
 # Import validation with error handling
@@ -86,9 +86,7 @@ def _conversation_state_response(session) -> ConversationCreateResponse:
     Returns:
         ConversationCreateResponse: Structured response with session state
     """
-    logger.debug(
-        f"Creating conversation state response for session: {session.session_id}"
-    )
+    logger.debug(f"Creating conversation state response for session: {session.session_id}")
     summary_model = session_summary_model(session)
     response = ConversationCreateResponse(
         conversationId=session.session_id,
@@ -97,9 +95,7 @@ def _conversation_state_response(session) -> ConversationCreateResponse:
         availableModels=session.available_models,
         summary=summary_model,
     )
-    logger.debug(
-        f"Conversation state response created: provider={response.provider}, model={response.model}"
-    )
+    logger.debug(f"Conversation state response created: provider={response.provider}, model={response.model}")
     return response
 
 
@@ -139,7 +135,7 @@ def debug_env():
 @router.get(
     "/logs/stream",
     summary="Stream logs via SSE",
-    description="Stream real-time INFO-level logs via Server-Sent Events (SSE). Can be filtered by session_id."
+    description="Stream real-time INFO-level logs via Server-Sent Events (SSE). Can be filtered by session_id.",
 )
 @log_method_call
 async def stream_logs(session_id: str = None):
@@ -199,14 +195,14 @@ async def stream_logs(session_id: str = None):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
-        }
+        },
     )
 
 
 @router.post(
     "/stream",
     summary="Send chat message (streaming)",
-    description="Send chat message to AI and stream progress updates via Server-Sent Events (SSE)."
+    description="Send chat message to AI and stream progress updates via Server-Sent Events (SSE).",
 )
 @log_method_call
 async def send_chat_message_stream(request: ChatRequest):
@@ -266,7 +262,7 @@ async def send_chat_message_stream(request: ChatRequest):
                 models=models_list,
                 default_model=model,
             )
-            
+
             if was_created:
                 yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': f'Successfully created new session: {conversation_id}'})}\n\n"
             else:
@@ -277,10 +273,13 @@ async def send_chat_message_stream(request: ChatRequest):
                 yield f"event: progress\ndata: {json.dumps({'stage': 'files', 'message': f'Adding {len(context_files)} context files...'})}\n\n"
                 for file_path in context_files:
                     session.add_file(file_path)
-                
+
                 # Initialize context tracking for the session
                 session.last_context_files = context_files.copy()
-                logger.info(f"📝 STREAM: Initialized context tracking with {len(context_files)} files", extra={'session_id': conversation_id})
+                logger.info(
+                    f"📝 STREAM: Initialized context tracking with {len(context_files)} files",
+                    extra={"session_id": conversation_id},
+                )
 
             # Update session configuration
             if settings.get("api_key"):
@@ -300,13 +299,16 @@ async def send_chat_message_stream(request: ChatRequest):
 
             def progress_callback(stage: str, message: str):
                 """Callback to capture progress events from conversation service"""
-                progress_events.append({'stage': stage, 'message': message})
+                progress_events.append({"stage": stage, "message": message})
 
             # Attach callback to session (we'll need to modify ConversationSession to support this)
             # For now, process the question normally
             # Pass context_files to ask_question to ensure context can be updated at any turn
             result = session.ask_question(message, agent_prompt=agent_prompt, context_files=context_files)
-            logger.info(f"📤 STREAM: Sent context files to ask_question: {len(context_files) if context_files else 0} files", extra={'session_id': conversation_id})
+            logger.info(
+                f"📤 STREAM: Sent context files to ask_question: {len(context_files) if context_files else 0} files",
+                extra={"session_id": conversation_id},
+            )
 
             # Send any D2-related progress events
             if "d2" in message.lower() or "diagram" in message.lower():
@@ -319,7 +321,10 @@ async def send_chat_message_stream(request: ChatRequest):
             response_content = result.get("response", "")
             if "<system-reminder>" in response_content:
                 import re
-                response_content = re.sub(r"<system-reminder>.*?</system-reminder>", "", response_content, flags=re.DOTALL)
+
+                response_content = re.sub(
+                    r"<system-reminder>.*?</system-reminder>", "", response_content, flags=re.DOTALL
+                )
 
             # Extract token usage
             token_usage = result.get("token_usage", {}) or {}
@@ -329,6 +334,7 @@ async def send_chat_message_stream(request: ChatRequest):
             cached_tokens = token_usage.get("cached_tokens", 0)
 
             import time
+
             response_message = {
                 "id": f"msg_{int(time.time())}_{uuid.uuid4().hex[:8]}",
                 "role": "assistant",
@@ -381,7 +387,7 @@ async def send_chat_message_stream(request: ChatRequest):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
-        }
+        },
     )
 
 
@@ -389,7 +395,7 @@ async def send_chat_message_stream(request: ChatRequest):
     "/",
     response_model=ChatResponse,
     summary="Send chat message",
-    description="Send chat message to AI and return response."
+    description="Send chat message to AI and return response.",
 )
 @log_method_call
 def send_chat_message(request: ChatRequest):
@@ -412,10 +418,10 @@ def send_chat_message(request: ChatRequest):
         context_files = request.contextFiles or []
         settings = request.settings or {}
 
-        logger.info(f"💬 Message: {message}", extra={'session_id': conversation_id})
-        logger.info(f"🆔 Conversation ID: {conversation_id}", extra={'session_id': conversation_id})
-        logger.info(f"📁 Context Files: {context_files}", extra={'session_id': conversation_id})
-        logger.info(f"⚙️ Settings: {settings}", extra={'session_id': conversation_id})
+        logger.info(f"💬 Message: {message}", extra={"session_id": conversation_id})
+        logger.info(f"🆔 Conversation ID: {conversation_id}", extra={"session_id": conversation_id})
+        logger.info(f"📁 Context Files: {context_files}", extra={"session_id": conversation_id})
+        logger.info(f"⚙️ Settings: {settings}", extra={"session_id": conversation_id})
 
         if not message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -424,15 +430,11 @@ def send_chat_message(request: ChatRequest):
         env_config = load_env_defaults()
         api_key = env_config.get("api_key", "")
         provider = env_config.get("provider", "openrouter")
-        model = settings.get("model") or env_config.get(
-            "default_model", "google/gemini-2.5-flash-preview-09-2025"
-        )
+        model = settings.get("model") or env_config.get("default_model", "google/gemini-2.5-flash-preview-09-2025")
         models_list = env_config.get("models", [])
 
         if not api_key:
-            raise HTTPException(
-                status_code=400, detail="API key not configured in .env file"
-            )
+            raise HTTPException(status_code=400, detail="API key not configured in .env file")
 
         # Get or create conversation session
         # Note: access_key is only used during app startup, not for chat operations
@@ -445,9 +447,9 @@ def send_chat_message(request: ChatRequest):
             default_model=model,
             access_key=None,  # Not required for chat operations
         )
-        
+
         if was_created:
-            logger.info(f"Successfully created new session: {conversation_id}", extra={'session_id': conversation_id})
+            logger.info(f"Successfully created new session: {conversation_id}", extra={"session_id": conversation_id})
         else:
             logger.debug(f"Retrieved existing session: {conversation_id}")
 
@@ -455,15 +457,17 @@ def send_chat_message(request: ChatRequest):
         if context_files:
             logger.info(
                 f"📁 ADDING {len(context_files)} CONTEXT FILES TO SESSION {conversation_id}",
-                extra={'session_id': conversation_id}
+                extra={"session_id": conversation_id},
             )
-            logger.info(f"📋 Files to add: {context_files}", extra={'session_id': conversation_id})
+            logger.info(f"📋 Files to add: {context_files}", extra={"session_id": conversation_id})
 
             for i, file_path in enumerate(context_files, 1):
-                logger.info(f"📄 Adding file {i}/{len(context_files)}: {file_path}", extra={'session_id': conversation_id})
+                logger.info(
+                    f"📄 Adding file {i}/{len(context_files)}: {file_path}", extra={"session_id": conversation_id}
+                )
                 try:
                     session.add_file(file_path)
-                    logger.info(f"✅ Successfully added file: {file_path}", extra={'session_id': conversation_id})
+                    logger.info(f"✅ Successfully added file: {file_path}", extra={"session_id": conversation_id})
                 except Exception as e:
                     logger.info(f"❌ Failed to add file {file_path}: {str(e)}")
 
@@ -471,14 +475,17 @@ def send_chat_message(request: ChatRequest):
             session.last_context_files = context_files.copy()
             logger.info(
                 f"📊 SESSION SUMMARY - Total selected files: {len(session.selected_files)}",
-                extra={'session_id': conversation_id}
+                extra={"session_id": conversation_id},
             )
-            logger.info(f"📋 Final selected files list: {session.selected_files}", extra={'session_id': conversation_id})
-            logger.info(f"📝 Initialized context tracking with {len(context_files)} files", extra={'session_id': conversation_id})
-        else:
             logger.info(
-                "⚠️ NO CONTEXT FILES PROVIDED - proceeding without file context"
+                f"📋 Final selected files list: {session.selected_files}", extra={"session_id": conversation_id}
             )
+            logger.info(
+                f"📝 Initialized context tracking with {len(context_files)} files",
+                extra={"session_id": conversation_id},
+            )
+        else:
+            logger.info("⚠️ NO CONTEXT FILES PROVIDED - proceeding without file context")
             # Initialize empty context tracking
             session.last_context_files = []
 
@@ -495,7 +502,7 @@ def send_chat_message(request: ChatRequest):
             session.app_state.temperature = settings["temperature"]
 
         # Send message to AI and get response
-        logger.info(f"Processing AI request for conversation {conversation_id}", extra={'session_id': conversation_id})
+        logger.info(f"Processing AI request for conversation {conversation_id}", extra={"session_id": conversation_id})
 
         # Extract agent prompt from settings if provided
         agent_prompt = settings.get("systemPrompt") if settings else None
@@ -504,7 +511,10 @@ def send_chat_message(request: ChatRequest):
 
         # Pass context_files to ask_question to ensure context can be updated at any turn
         result = session.ask_question(message, agent_prompt=agent_prompt, context_files=context_files)
-        logger.info(f"📤 Sent context files to ask_question: {len(context_files) if context_files else 0} files", extra={'session_id': conversation_id})
+        logger.info(
+            f"📤 Sent context files to ask_question: {len(context_files) if context_files else 0} files",
+            extra={"session_id": conversation_id},
+        )
 
         # Convert result to frontend-compatible format
         import time
@@ -525,11 +535,7 @@ def send_chat_message(request: ChatRequest):
 
         # Extract detailed token usage information
         token_usage = result.get("token_usage", {}) or {}
-        total_tokens = (
-            result.get("tokens_used")
-            or result.get("tokensUsed")
-            or token_usage.get("total_tokens", 0)
-        )
+        total_tokens = result.get("tokens_used") or result.get("tokensUsed") or token_usage.get("total_tokens", 0)
         input_tokens = token_usage.get("input_tokens", 0)
         output_tokens = token_usage.get("output_tokens", 0)
         cached_tokens = token_usage.get("cached_tokens", 0)
@@ -568,9 +574,7 @@ def send_chat_message(request: ChatRequest):
             }
 
             # Load existing conversation history to accumulate messages
-            existing_history = history_service.load_conversation_history(
-                conversation_id
-            )
+            existing_history = history_service.load_conversation_history(conversation_id)
             if existing_history and "messages" in existing_history:
                 # Append new messages to existing ones
                 all_messages = existing_history["messages"] + [
@@ -601,16 +605,14 @@ def send_chat_message(request: ChatRequest):
                     f"✅ Conversation history saved for {conversation_id} ({len(all_messages)} total messages)"
                 )
             else:
-                logger.info(
-                    f"⚠️ Failed to save conversation history for {conversation_id}"
-                )
+                logger.info(f"⚠️ Failed to save conversation history for {conversation_id}")
 
         except Exception as hist_error:
             logger.info(f"❌ Error saving conversation history: {hist_error}")
 
         logger.info(
             f"AI response generated successfully for conversation {conversation_id}",
-            extra={'session_id': conversation_id}
+            extra={"session_id": conversation_id},
         )
         return response
 
@@ -619,16 +621,14 @@ def send_chat_message(request: ChatRequest):
         raise
     except Exception as exc:
         logger.info(f"Error processing chat message: {exc}")
-        raise HTTPException(
-            status_code=500, detail=f"Internal server error: {str(exc)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(exc)}")
 
 
 @router.post(
     "/conversations",
     response_model=ConversationCreateResponse,
     summary="Create conversation",
-    description="Create a new conversation session."
+    description="Create a new conversation session.",
 )
 @log_method_call
 def create_conversation(request: ConversationCreateRequest):
@@ -675,7 +675,7 @@ def create_conversation(request: ConversationCreateRequest):
     "/conversations/{conversation_id}/summary",
     response_model=ConversationSummaryModel,
     summary="Get conversation summary",
-    description="Retrieve summary of a conversation session."
+    description="Retrieve summary of a conversation session.",
 )
 @log_method_call
 def get_conversation_summary(conversation_id: str):
@@ -688,9 +688,7 @@ def get_conversation_summary(conversation_id: str):
     Returns:
         ConversationSummaryModel: The summary of the conversation.
     """
-    logger.debug(
-        f"get_conversation_summary endpoint started for conversation_id: {conversation_id}"
-    )
+    logger.debug(f"get_conversation_summary endpoint started for conversation_id: {conversation_id}")
 
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -704,7 +702,7 @@ def get_conversation_summary(conversation_id: str):
     "/conversations/{conversation_id}/model",
     response_model=ConversationCreateResponse,
     summary="Update model",
-    description="Update the AI model for a conversation."
+    description="Update the AI model for a conversation.",
 )
 @log_method_call
 def update_model(conversation_id: str, request: UpdateModelRequest):
@@ -718,9 +716,7 @@ def update_model(conversation_id: str, request: UpdateModelRequest):
     Returns:
         ConversationCreateResponse: The updated conversation state.
     """
-    logger.debug(
-        f"update_model endpoint started for conversation_id: {conversation_id}"
-    )
+    logger.debug(f"update_model endpoint started for conversation_id: {conversation_id}")
 
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -735,7 +731,7 @@ def update_model(conversation_id: str, request: UpdateModelRequest):
     "/conversations/{conversation_id}/api-key",
     response_model=ConversationCreateResponse,
     summary="Update API key",
-    description="Update the API key for a conversation."
+    description="Update the API key for a conversation.",
 )
 @log_method_call
 def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
@@ -749,9 +745,7 @@ def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
     Returns:
         ConversationCreateResponse: The updated conversation state.
     """
-    logger.debug(
-        f"update_api_key endpoint started for conversation_id: {conversation_id}"
-    )
+    logger.debug(f"update_api_key endpoint started for conversation_id: {conversation_id}")
 
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -766,7 +760,7 @@ def update_api_key(conversation_id: str, request: UpdateApiKeyRequest):
     "/conversations/{conversation_id}/export",
     response_model=ExportConversationResponse,
     summary="Export conversation",
-    description="Export conversation data."
+    description="Export conversation data.",
 )
 @log_method_call
 def export_conversation(conversation_id: str):
@@ -779,9 +773,7 @@ def export_conversation(conversation_id: str):
     Returns:
         ExportConversationResponse: The exported conversation data.
     """
-    logger.debug(
-        f"export_conversation endpoint started for conversation_id: {conversation_id}"
-    )
+    logger.debug(f"export_conversation endpoint started for conversation_id: {conversation_id}")
 
     try:
         session = conversation_manager.get_session(conversation_id)
@@ -796,7 +788,7 @@ def export_conversation(conversation_id: str):
     "/conversations/import",
     response_model=ConversationCreateResponse,
     summary="Import conversation",
-    description="Import conversation data."
+    description="Import conversation data.",
 )
 @log_method_call
 def import_conversation(request: ImportConversationRequest):
@@ -823,9 +815,7 @@ def import_conversation(request: ImportConversationRequest):
         raise HTTPException(status_code=400, detail="API key is required")
 
     # Create session and restore data
-    session = conversation_manager.create_session(
-        provider=provider, api_key=api_key, models=models
-    )
+    session = conversation_manager.create_session(provider=provider, api_key=api_key, models=models)
 
     if default_model:
         session.set_model(default_model)
@@ -838,9 +828,7 @@ def import_conversation(request: ImportConversationRequest):
 
 
 @router.get(
-    "/conversations/history",
-    summary="List conversation histories",
-    description="List all conversation history files."
+    "/conversations/history", summary="List conversation histories", description="List all conversation history files."
 )
 @log_method_call
 def list_conversation_histories():
@@ -856,15 +844,13 @@ def list_conversation_histories():
         return {"success": True, "data": histories, "count": len(histories)}
     except Exception as e:
         logger.info(f"Failed to list conversation histories: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list histories: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to list histories: {str(e)}")
 
 
 @router.get(
     "/conversations/{conversation_id}/history",
     summary="Get conversation history",
-    description="Get conversation history for a specific conversation."
+    description="Get conversation history for a specific conversation.",
 )
 @log_method_call
 def get_conversation_history(conversation_id: str):
@@ -892,7 +878,7 @@ def get_conversation_history(conversation_id: str):
 @router.delete(
     "/conversations/{conversation_id}/history",
     summary="Delete conversation history",
-    description="Delete conversation history for a specific conversation."
+    description="Delete conversation history for a specific conversation.",
 )
 @log_method_call
 def delete_conversation_history(conversation_id: str):
@@ -916,18 +902,14 @@ def delete_conversation_history(conversation_id: str):
         else:
             return {"success": False, "error": "Conversation history not found"}
     except Exception as e:
-        logger.info(
-            f"Failed to delete conversation history for {conversation_id}: {e}"
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete history: {str(e)}"
-        )
+        logger.info(f"Failed to delete conversation history for {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete history: {str(e)}")
 
 
 @router.post(
     "/conversations/{conversation_id}/clear",
     summary="Clear conversation",
-    description="Clear conversation history for a specific conversation."
+    description="Clear conversation history for a specific conversation.",
 )
 @log_method_call
 def clear_conversation(conversation_id: str):
@@ -947,11 +929,7 @@ def clear_conversation(conversation_id: str):
             # Clear the conversation history in the session
             session.clear_conversation()
             logger.info(f"Conversation cleared for session: {conversation_id}")
-            return {
-                "success": True,
-                "message": "Conversation cleared successfully",
-                "conversationId": conversation_id
-            }
+            return {"success": True, "message": "Conversation cleared successfully", "conversationId": conversation_id}
         else:
             logger.info(f"Conversation session not found: {conversation_id}")
             return {"success": False, "error": "Conversation not found"}
@@ -959,18 +937,14 @@ def clear_conversation(conversation_id: str):
         logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found"}
     except Exception as e:
-        logger.info(
-            f"Failed to clear conversation for {conversation_id}: {e}"
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to clear conversation: {str(e)}"
-        )
+        logger.info(f"Failed to clear conversation for {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear conversation: {str(e)}")
 
 
 @router.get(
     "/conversations/{conversation_id}/files",
     summary="Get conversation files",
-    description="Get the list of context files selected for a conversation session."
+    description="Get the list of context files selected for a conversation session.",
 )
 @log_method_call
 def get_conversation_files(conversation_id: str):
@@ -989,12 +963,7 @@ def get_conversation_files(conversation_id: str):
         if session:
             files = session.selected_files
             logger.info(f"Retrieved {len(files)} context files for session: {conversation_id}")
-            return {
-                "success": True,
-                "conversationId": conversation_id,
-                "files": files,
-                "count": len(files)
-            }
+            return {"success": True, "conversationId": conversation_id, "files": files, "count": len(files)}
         else:
             logger.info(f"Conversation session not found: {conversation_id}")
             return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
@@ -1002,9 +971,5 @@ def get_conversation_files(conversation_id: str):
         logger.info(f"Conversation session not found: {conversation_id}")
         return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
     except Exception as e:
-        logger.info(
-            f"Failed to get conversation files for {conversation_id}: {e}"
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get conversation files: {str(e)}"
-        )
+        logger.info(f"Failed to get conversation files for {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get conversation files: {str(e)}")

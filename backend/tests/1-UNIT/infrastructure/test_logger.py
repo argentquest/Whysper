@@ -14,9 +14,6 @@ Tests for core logging system:
 import pytest
 import json
 import logging
-from pathlib import Path
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 
 class TestLogContext:
@@ -25,6 +22,7 @@ class TestLogContext:
     def test_create_empty_context(self):
         """Create context with no data"""
         from common.logger import LogContext
+
         context = LogContext()
         assert context.user_id is None
         assert context.session_id is None
@@ -41,6 +39,7 @@ class TestLogContext:
     def test_context_to_dict(self, log_context):
         """Convert context to dictionary"""
         from dataclasses import asdict
+
         context_dict = asdict(log_context)
         assert isinstance(context_dict, dict)
         assert context_dict["user_id"] == "user_123"
@@ -49,20 +48,16 @@ class TestLogContext:
     def test_context_with_additional_data(self):
         """Context with additional metadata"""
         from common.logger import LogContext
+
         additional = {"key1": "value1", "key2": "value2"}
-        context = LogContext(
-            user_id="user_123",
-            additional_data=additional
-        )
+        context = LogContext(user_id="user_123", additional_data=additional)
         assert context.additional_data == additional
 
     def test_context_with_file_location(self):
         """Context with file path and line number"""
         from common.logger import LogContext
-        context = LogContext(
-            file_path="/path/to/file.py",
-            line_number=42
-        )
+
+        context = LogContext(file_path="/path/to/file.py", line_number=42)
         assert context.file_path == "/path/to/file.py"
         assert context.line_number == 42
 
@@ -73,6 +68,7 @@ class TestStructuredFormatter:
     def test_format_basic_log_record(self):
         """Format basic log record as JSON"""
         from common.logger import StructuredFormatter
+
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
@@ -82,7 +78,7 @@ class TestStructuredFormatter:
             lineno=42,
             msg="Test message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
 
         result = formatter.format(record)
@@ -97,12 +93,14 @@ class TestStructuredFormatter:
     def test_format_with_exception(self):
         """Format log record with exception"""
         from common.logger import StructuredFormatter
+
         formatter = StructuredFormatter()
 
         try:
             raise ValueError("Test error")
         except ValueError:
             import sys
+
             record = logging.LogRecord(
                 name="test.logger",
                 level=logging.ERROR,
@@ -110,7 +108,7 @@ class TestStructuredFormatter:
                 lineno=1,
                 msg="Error occurred",
                 args=(),
-                exc_info=sys.exc_info()
+                exc_info=sys.exc_info(),
             )
 
             result = formatter.format(record)
@@ -124,6 +122,7 @@ class TestStructuredFormatter:
     def test_format_with_context(self, log_context):
         """Format log record with LogContext"""
         from common.logger import StructuredFormatter
+
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
@@ -133,7 +132,7 @@ class TestStructuredFormatter:
             lineno=1,
             msg="Contextual message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
         record.context = log_context
 
@@ -147,6 +146,7 @@ class TestStructuredFormatter:
     def test_format_json_is_valid(self):
         """Ensure formatted output is valid JSON"""
         from common.logger import StructuredFormatter
+
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
@@ -156,7 +156,7 @@ class TestStructuredFormatter:
             lineno=1,
             msg="Debug message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
 
         result = formatter.format(record)
@@ -167,6 +167,7 @@ class TestStructuredFormatter:
     def test_format_with_extra_fields(self):
         """Format with extra custom fields"""
         from common.logger import StructuredFormatter
+
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
@@ -176,7 +177,7 @@ class TestStructuredFormatter:
             lineno=1,
             msg="Message with extras",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
         record.custom_field = "custom_value"
 
@@ -193,12 +194,14 @@ class TestConsoleFormatter:
     def test_create_console_formatter(self):
         """Create console formatter instance"""
         from common.logger import ConsoleFormatter
+
         formatter = ConsoleFormatter()
         assert formatter is not None
 
     def test_format_basic_message(self):
         """Format basic console message"""
         from common.logger import ConsoleFormatter
+
         formatter = ConsoleFormatter()
 
         record = logging.LogRecord(
@@ -208,7 +211,7 @@ class TestConsoleFormatter:
             lineno=42,
             msg="Test message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
 
         result = formatter.format(record)
@@ -218,6 +221,7 @@ class TestConsoleFormatter:
     def test_format_different_levels(self):
         """Format messages with different log levels"""
         from common.logger import ConsoleFormatter
+
         formatter = ConsoleFormatter()
 
         levels = [
@@ -225,7 +229,7 @@ class TestConsoleFormatter:
             (logging.INFO, "INFO"),
             (logging.WARNING, "WARNING"),
             (logging.ERROR, "ERROR"),
-            (logging.CRITICAL, "CRITICAL")
+            (logging.CRITICAL, "CRITICAL"),
         ]
 
         for level_int, level_name in levels:
@@ -236,7 +240,7 @@ class TestConsoleFormatter:
                 lineno=1,
                 msg=f"{level_name} message",
                 args=(),
-                exc_info=None
+                exc_info=None,
             )
 
             result = formatter.format(record)
@@ -245,6 +249,7 @@ class TestConsoleFormatter:
     def test_format_is_human_readable(self):
         """Ensure output is human-readable (not JSON)"""
         from common.logger import ConsoleFormatter
+
         formatter = ConsoleFormatter()
 
         record = logging.LogRecord(
@@ -254,7 +259,7 @@ class TestConsoleFormatter:
             lineno=1,
             msg="Readable message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
 
         result = formatter.format(record)
@@ -262,7 +267,7 @@ class TestConsoleFormatter:
         try:
             json.loads(result)
             is_json = True
-        except:
+        except BaseException:
             is_json = False
 
         assert not is_json, "Console formatter should output plain text, not JSON"
@@ -274,19 +279,15 @@ class TestCodeChatLogger:
     def test_create_logger(self, log_file_path):
         """Create CodeChatLogger instance"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         assert logger is not None
 
     def test_logger_has_handlers(self, log_file_path):
         """Logger has console and file handlers"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
 
         # Logger should have handlers
         assert len(logger.logger.handlers) > 0
@@ -294,14 +295,12 @@ class TestCodeChatLogger:
     def test_log_file_created(self, log_file_path):
         """Log file is created when writing"""
         from common.logger import CodeChatLogger
+
         # Ensure unique log dir for this test to avoid conflict
         log_dir = log_file_path.parent / "test_logs_created"
         log_dir.mkdir(exist_ok=True)
 
-        logger = CodeChatLogger(
-            name="test_logger_created",
-            log_dir=str(log_dir)
-        )
+        logger = CodeChatLogger(name="test_logger_created", log_dir=str(log_dir))
         logger.info("Test message")
 
         # Check if file exists
@@ -312,14 +311,12 @@ class TestCodeChatLogger:
     def test_log_file_contains_logs(self, log_file_path):
         """Log file contains written logs"""
         from common.logger import CodeChatLogger
+
         # Ensure unique log dir for this test
         log_dir = log_file_path.parent / "test_logs_content"
         log_dir.mkdir(exist_ok=True)
 
-        logger = CodeChatLogger(
-            name="test_logger_content",
-            log_dir=str(log_dir)
-        )
+        logger = CodeChatLogger(name="test_logger_content", log_dir=str(log_dir))
         logger.info("Test message content")
 
         # Wait for flush/write? Usually logging is synchronous for file handler
@@ -329,60 +326,48 @@ class TestCodeChatLogger:
     def test_log_rotating_file_handler(self, log_file_path):
         """Logger uses rotating file handler"""
         from common.logger import CodeChatLogger
+
         # We can't easily test rotation without writing a lot, so we trust logging config
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         assert True
 
     def test_logger_info_level(self, log_file_path):
         """Logger logs info level messages"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         logger.info("Info message")
         assert True  # If no exception, test passes
 
     def test_logger_debug_level(self, log_file_path):
         """Logger logs debug level messages"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         logger.debug("Debug message")
         assert True
 
     def test_logger_warning_level(self, log_file_path):
         """Logger logs warning level messages"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         logger.info("Warning message")
         assert True
 
     def test_logger_error_level(self, log_file_path):
         """Logger logs error level messages"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         logger.info("Error message")
         assert True
 
     def test_logger_critical_level(self, log_file_path):
         """Logger logs critical level messages"""
         from common.logger import CodeChatLogger
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
         logger.critical("Critical message")
         assert True
 
@@ -393,21 +378,17 @@ class TestLoggerContextManager:
     def test_context_manager_creation(self, log_file_path):
         """Create LoggerContextManager"""
         from common.logger import LoggerContextManager, CodeChatLogger
+
         logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
-        manager = LoggerContextManager(
-            logger=logger,
-            component="test"
-        )
+        manager = LoggerContextManager(logger=logger, component="test")
         assert manager is not None
 
     def test_context_manager_with_context(self, log_file_path, log_context):
         """Use context manager with LogContext"""
         from common.logger import LoggerContextManager, CodeChatLogger
+
         logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
-        manager = LoggerContextManager(
-            logger=logger,
-            component="test"
-        )
+        manager = LoggerContextManager(logger=logger, component="test")
 
         # Should be able to use as context manager
         try:
@@ -427,10 +408,7 @@ class TestLoggerPerformance:
         import time
 
         start = time.time()
-        CodeChatLogger(
-            name="perf_test",
-            log_dir=str(log_file_path.parent)
-        )
+        CodeChatLogger(name="perf_test", log_dir=str(log_file_path.parent))
         elapsed = time.time() - start
 
         assert elapsed < performance_thresholds["logger_creation"]
@@ -440,10 +418,7 @@ class TestLoggerPerformance:
         from common.logger import CodeChatLogger
         import time
 
-        logger = CodeChatLogger(
-            name="perf_test",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="perf_test", log_dir=str(log_file_path.parent))
 
         start = time.time()
         logger.info("Performance test message")
@@ -461,10 +436,7 @@ class TestLoggerErrorHandling:
 
         # Should handle invalid path gracefully
         try:
-            logger = CodeChatLogger(
-                name="test_logger",
-                log_dir="/invalid/path/that/does/not/exist"
-            )
+            logger = CodeChatLogger(name="test_logger", log_dir="/invalid/path/that/does/not/exist")
             # May succeed or fail gracefully
             assert True
         except (OSError, IOError):
@@ -475,10 +447,7 @@ class TestLoggerErrorHandling:
         """Logger handles exception logging"""
         from common.logger import CodeChatLogger
 
-        logger = CodeChatLogger(
-            name="test_logger",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="test_logger", log_dir=str(log_file_path.parent))
 
         try:
             try:
@@ -496,10 +465,7 @@ class TestLoggerIntegration:
         """Logger works with multiple handlers"""
         from common.logger import CodeChatLogger
 
-        logger = CodeChatLogger(
-            name="integration_test",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="integration_test", log_dir=str(log_file_path.parent))
 
         # Log at different levels
         logger.debug("Debug message")
@@ -514,10 +480,7 @@ class TestLoggerIntegration:
         """Logger with context throughout execution"""
         from common.logger import CodeChatLogger
 
-        logger = CodeChatLogger(
-            name="context_test",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="context_test", log_dir=str(log_file_path.parent))
 
         # Simulate logging with context
         for i in range(5):
@@ -530,10 +493,7 @@ class TestLoggerIntegration:
         from common.logger import CodeChatLogger
         import threading
 
-        logger = CodeChatLogger(
-            name="concurrent_test",
-            log_dir=str(log_file_path.parent)
-        )
+        logger = CodeChatLogger(name="concurrent_test", log_dir=str(log_file_path.parent))
 
         def write_logs():
             for i in range(10):

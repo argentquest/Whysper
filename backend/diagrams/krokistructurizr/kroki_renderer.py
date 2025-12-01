@@ -67,9 +67,7 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
         """
         return "structurizr"
 
-    def auto_fix_pattern_based(
-        self, code: str, error_message: str, **options
-    ) -> ValidationResult:
+    def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
         """
         Implement automated syntax correction for Structurizr diagrams.
 
@@ -89,36 +87,31 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
         corrections = []
 
         # Check and add missing workspace declaration if not present
-        if not code.strip().startswith('workspace'):
+        if not code.strip().startswith("workspace"):
             self.logger.info("Detected missing 'workspace' declaration. Adding it.")
-            fixed_code = 'workspace {\n' + fixed_code + '\n}'
-            corrections.append('Added missing workspace declaration')
+            fixed_code = "workspace {\n" + fixed_code + "\n}"
+            corrections.append("Added missing workspace declaration")
 
         # Add model block if missing but required elements are present
-        if 'model {' in fixed_code:
+        if "model {" in fixed_code:
             # Already has model block, no action needed
             pass
-        elif '->' in fixed_code or 'person ' in fixed_code:
+        elif "->" in fixed_code or "person " in fixed_code:
             # Likely missing model block, so insert it
             self.logger.info("Detected missing 'model' block. Injecting it into workspace.")
-            fixed_code = fixed_code.replace(
-                'workspace {',
-                'workspace {\n  model {'
-            )
-            fixed_code = fixed_code.rstrip('}') + '\n  }\n}'
-            corrections.append('Added missing model block')
+            fixed_code = fixed_code.replace("workspace {", "workspace {\n  model {")
+            fixed_code = fixed_code.rstrip("}") + "\n  }\n}"
+            corrections.append("Added missing model block")
 
         # Ensure balanced braces by adding missing closing braces
-        if '{' in fixed_code:
-            open_count = fixed_code.count('{')
-            close_count = fixed_code.count('}')
+        if "{" in fixed_code:
+            open_count = fixed_code.count("{")
+            close_count = fixed_code.count("}")
             if open_count > close_count:
                 missing_braces = open_count - close_count
                 self.logger.info(f"Detected {missing_braces} missing closing brace(s). Appending them.")
-                fixed_code += '}' * missing_braces
-                corrections.append(
-                    f'Added {missing_braces} missing closing brace(s)'
-                )
+                fixed_code += "}" * missing_braces
+                corrections.append(f"Added {missing_braces} missing closing brace(s)")
 
         # Validate the corrected code
         self.logger.info("Validating fixed Structurizr code...")
@@ -130,9 +123,7 @@ class KrokiStructurizrProvider(KrokiBaseProvider):
             validation_result.fixed_code = fixed_code
             validation_result.correction_method = "pattern"
             if corrections:
-                self.logger.info(
-                    f"Pattern-based fixes applied successfully: {', '.join(corrections)}"
-                )
+                self.logger.info(f"Pattern-based fixes applied successfully: {', '.join(corrections)}")
             else:
                 self.logger.info("Pattern-based validation check passed (no changes needed)")
         else:

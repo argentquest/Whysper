@@ -62,15 +62,11 @@ class DiagramSessionStore:
                 "user_id": user_id,
                 "conversation_id": conversation_id,
                 "created_at": datetime.utcnow().isoformat(),
-                "expires_at": (
-                    datetime.utcnow() + timedelta(seconds=self._ttl)
-                ).isoformat(),
+                "expires_at": (datetime.utcnow() + timedelta(seconds=self._ttl)).isoformat(),
                 "initial_prompt": initial_prompt,
                 "diagram_type": diagram_type,
                 "state": {},  # Placeholder for dynamic graph state
-                "clarification_history": [
-                    {"role": "user", "content": initial_prompt}
-                ],
+                "clarification_history": [{"role": "user", "content": initial_prompt}],
                 "diagram_code": "",
                 "svg_output": "",
                 "current_state": "initialized",

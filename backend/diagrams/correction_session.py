@@ -9,7 +9,6 @@ and provide a mechanism for users to manually edit and resubmit code.
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from enum import Enum
 import uuid
 import logging
 
@@ -57,17 +56,11 @@ class CorrectionSession(BaseModel):
     final_result: Optional[str] = None  # "success", "user_intervention_needed", "failed"
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
     @log_method_call
     def add_attempt(
-        self,
-        attempt_type: CorrectionAttemptType,
-        code: str,
-        is_valid: bool,
-        error: Optional[str] = None
+        self, attempt_type: CorrectionAttemptType, code: str, is_valid: bool, error: Optional[str] = None
     ) -> CorrectionAttempt:
         """Add a correction attempt to session"""
         attempt = CorrectionAttempt(
@@ -77,7 +70,7 @@ class CorrectionSession(BaseModel):
             timestamp=datetime.now(),
             is_valid=is_valid,
             error=error,
-            success=is_valid
+            success=is_valid,
         )
 
         self.attempts.append(attempt)
@@ -131,7 +124,7 @@ class CorrectionSession(BaseModel):
             "final_result": self.final_result,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "expires_at": self.expires_at.isoformat()
+            "expires_at": self.expires_at.isoformat(),
         }
 
 
@@ -151,7 +144,7 @@ class CorrectionSessionManager:
         original_code: str,
         original_error: Optional[str],
         max_llm_retries: int,
-        timeout_seconds: int = 300
+        timeout_seconds: int = 300,
     ) -> CorrectionSession:
         """Create a new correction session"""
 
@@ -163,15 +156,12 @@ class CorrectionSessionManager:
             current_code=original_code,
             current_error=original_error,
             max_llm_retries=max_llm_retries,
-            expires_at=datetime.now() + timedelta(seconds=timeout_seconds)
+            expires_at=datetime.now() + timedelta(seconds=timeout_seconds),
         )
 
         # Add original code as first attempt
         session.add_attempt(
-            attempt_type=CorrectionAttemptType.ORIGINAL,
-            code=original_code,
-            is_valid=False,
-            error=original_error
+            attempt_type=CorrectionAttemptType.ORIGINAL, code=original_code, is_valid=False, error=original_error
         )
 
         self._sessions[session.session_id] = session
@@ -209,10 +199,7 @@ class CorrectionSessionManager:
     @log_method_call
     def cleanup_expired_sessions(self):
         """Remove expired sessions"""
-        expired = [
-            sid for sid, session in self._sessions.items()
-            if session.check_expired()
-        ]
+        expired = [sid for sid, session in self._sessions.items() if session.check_expired()]
 
         for sid in expired:
             del self._sessions[sid]
@@ -233,6 +220,7 @@ class CorrectionSessionManager:
 
 # Global singleton
 _session_manager = None
+
 
 @log_method_call
 def get_session_manager() -> CorrectionSessionManager:

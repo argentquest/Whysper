@@ -2,6 +2,7 @@ import functools
 import inspect
 from .logger import get_logger
 
+
 def log_method_call(func):
     # Helper function to log method entry with formatted args and kwargs
     def _log_entry(logger, func_name, args, kwargs):
@@ -21,13 +22,14 @@ def log_method_call(func):
         # Initialize class name as empty string
         class_name = ""
         # Check if first arg is an instance with a class
-        if args and hasattr(args[0], '__class__'):
+        if args and hasattr(args[0], "__class__"):
             class_name = args[0].__class__.__name__
         # Return fully qualified function name
         return f"{class_name}.{func.__name__}" if class_name else func.__name__
 
     # Handle async functions separately
     if inspect.iscoroutinefunction(func):
+
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Get logger for the function's module
@@ -46,6 +48,7 @@ def log_method_call(func):
                 # Log any exceptions with full traceback
                 logger.info(f"Exception in {func_name}: {e}", exc_info=True)
                 raise
+
         return async_wrapper
     else:
         # Handle synchronous functions
@@ -67,4 +70,5 @@ def log_method_call(func):
                 # Log any exceptions with full traceback
                 logger.info(f"Exception in {func_name}: {e}", exc_info=True)
                 raise
+
         return sync_wrapper

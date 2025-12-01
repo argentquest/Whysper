@@ -32,7 +32,7 @@ class ProviderTestHelper:
         provider_id: str,
         output_format: str = "svg",
         auto_fix: bool = True,
-        timeout: int = 120
+        timeout: int = 120,
     ) -> Tuple[bool, Optional[str], Dict[str, Any]]:
         """
         Render diagram using specific provider.
@@ -57,9 +57,9 @@ class ProviderTestHelper:
                     "provider_id": provider_id,
                     "output_format": output_format,
                     "auto_fix": auto_fix,
-                    "use_llm": False  # Don't use LLM for testing (cost/speed)
+                    "use_llm": False,  # Don't use LLM for testing (cost/speed)
                 },
-                timeout=timeout
+                timeout=timeout,
             )
 
             if response.status_code != 200:
@@ -68,16 +68,16 @@ class ProviderTestHelper:
 
             data = response.json()
 
-            if data.get('success'):
+            if data.get("success"):
                 metadata = {
-                    "validation": data.get('validation', {}),
-                    "provider_id": data.get('provider_id'),
-                    "output_format": data.get('output_format'),
-                    "metadata": data.get('metadata', {})
+                    "validation": data.get("validation", {}),
+                    "provider_id": data.get("provider_id"),
+                    "output_format": data.get("output_format"),
+                    "metadata": data.get("metadata", {}),
                 }
-                return (True, data.get('content'), metadata)
+                return (True, data.get("content"), metadata)
             else:
-                error_msg = data.get('error', 'Unknown error')
+                error_msg = data.get("error", "Unknown error")
                 return (False, error_msg, {"error": error_msg})
 
         except requests.exceptions.Timeout:
@@ -88,12 +88,7 @@ class ProviderTestHelper:
             return (False, f"Unexpected error: {str(e)}", {"exception": str(type(e))})
 
     def validate_with_provider(
-        self,
-        code: str,
-        diagram_type: str,
-        provider_id: str,
-        auto_fix: bool = True,
-        use_llm: bool = False
+        self, code: str, diagram_type: str, provider_id: str, auto_fix: bool = True, use_llm: bool = False
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Validate diagram using specific provider.
@@ -116,9 +111,9 @@ class ProviderTestHelper:
                     "diagram_type": diagram_type,
                     "provider_id": provider_id,
                     "auto_fix": auto_fix,
-                    "use_llm": use_llm
+                    "use_llm": use_llm,
                 },
-                timeout=120
+                timeout=120,
             )
 
             if response.status_code != 200:
@@ -126,18 +121,15 @@ class ProviderTestHelper:
                 return (False, error_msg, None)
 
             data = response.json()
-            fixed_code = data.get('fixed_code') if data.get('auto_fixed') else None
+            fixed_code = data.get("fixed_code") if data.get("auto_fixed") else None
 
-            return (data.get('is_valid'), data.get('error'), fixed_code)
+            return (data.get("is_valid"), data.get("error"), fixed_code)
 
         except Exception as e:
             return (False, str(e), None)
 
     def generate_diagram_with_llm(
-        self,
-        prompt: str,
-        diagram_type: str,
-        timeout: int = 120
+        self, prompt: str, diagram_type: str, timeout: int = 120
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Generate diagram code using LLM (MVP endpoint).
@@ -159,9 +151,9 @@ class ProviderTestHelper:
                 json={
                     "prompt": prompt,
                     "diagram_type": diagram_type,
-                    "output_format": "code"  # Get code only, not rendered
+                    "output_format": "code",  # Get code only, not rendered
                 },
-                timeout=timeout
+                timeout=timeout,
             )
 
             if response.status_code != 200:
@@ -170,13 +162,13 @@ class ProviderTestHelper:
             data = response.json()
 
             # Check if generation was successful
-            error_info = data.get('error_info', {})
-            if error_info.get('has_error', False):
-                error = error_info.get('error_message', 'Unknown error')
+            error_info = data.get("error_info", {})
+            if error_info.get("has_error", False):
+                error = error_info.get("error_message", "Unknown error")
                 return (False, error, error)
 
             # Get diagram code from response
-            diagram_code = data.get('diagram_code')
+            diagram_code = data.get("diagram_code")
             if not diagram_code:
                 return (False, "No diagram code generated", "Generation Error")
 
@@ -193,10 +185,7 @@ class ProviderTestHelper:
             Dict containing provider information
         """
         try:
-            response = requests.get(
-                f"{self.provider_endpoint}/providers",
-                timeout=30
-            )
+            response = requests.get(f"{self.provider_endpoint}/providers", timeout=30)
 
             if response.status_code == 200:
                 return response.json()
@@ -244,25 +233,22 @@ class DiagramTestRunner:
         failed = 0
 
         for i, test_case in enumerate(test_cases, 1):
-            test_id = test_case.get('id', i)
-            description = test_case.get('description', f'Test {i}')
-            code = test_case.get('code', '')
+            test_id = test_case.get("id", i)
+            description = test_case.get("description", f"Test {i}")
+            code = test_case.get("code", "")
 
             # Render with provider
             success, content, metadata = self.helper.render_with_provider(
-                code=code,
-                diagram_type=self.diagram_type,
-                provider_id=self.provider_id,
-                output_format="svg"
+                code=code, diagram_type=self.diagram_type, provider_id=self.provider_id, output_format="svg"
             )
 
             result = {
-                'test_id': test_id,
-                'description': description,
-                'success': success,
-                'error': None if success else content,
-                'content_length': len(content) if success else 0,
-                'metadata': metadata
+                "test_id": test_id,
+                "description": description,
+                "success": success,
+                "error": None if success else content,
+                "content_length": len(content) if success else 0,
+                "metadata": metadata,
             }
 
             self.results.append(result)
@@ -273,7 +259,7 @@ class DiagramTestRunner:
                 # Save SVG
                 svg_file = self.test_output_dir / "svg" / f"test_{test_id:03d}.svg"
                 svg_file.parent.mkdir(parents=True, exist_ok=True)
-                with open(svg_file, 'w', encoding='utf-8') as f:
+                with open(svg_file, "w", encoding="utf-8") as f:
                     f.write(content)
             else:
                 failed += 1
@@ -281,7 +267,7 @@ class DiagramTestRunner:
                 # Save error
                 error_file = self.test_output_dir / "errors" / f"test_{test_id:03d}_error.txt"
                 error_file.parent.mkdir(parents=True, exist_ok=True)
-                with open(error_file, 'w', encoding='utf-8') as f:
+                with open(error_file, "w", encoding="utf-8") as f:
                     f.write(f"Test ID: {test_id}\n")
                     f.write(f"Test Name: {description}\n")
                     f.write(f"Description: {description}\n\n")
@@ -294,13 +280,13 @@ class DiagramTestRunner:
         success_rate = (passed / total * 100) if total > 0 else 0
 
         summary = {
-            'provider_id': self.provider_id,
-            'diagram_type': self.diagram_type,
-            'total_tests': total,
-            'passed': passed,
-            'failed': failed,
-            'success_rate': success_rate,
-            'test_name': test_name
+            "provider_id": self.provider_id,
+            "diagram_type": self.diagram_type,
+            "total_tests": total,
+            "passed": passed,
+            "failed": failed,
+            "success_rate": success_rate,
+            "test_name": test_name,
         }
 
         print(f"\n{'=' * 80}")
@@ -318,7 +304,7 @@ class DiagramTestRunner:
         validation_file = self.test_output_dir / "errors" / "validation_results.json"
         validation_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(validation_file, 'w', encoding='utf-8') as f:
+        with open(validation_file, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2)
 
     def get_results(self) -> list:

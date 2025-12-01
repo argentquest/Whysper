@@ -80,8 +80,10 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     # IMPORTANT: Skip clarify_prompt on first run (analyze_request already asked a question)
     # This prevents asking TWO questions immediately after analysis
     if state.get("first_question_asked", False) and state.get("question_count", 0) == 0:
-        logger.info("⏭️ Skipping clarify_prompt - analyze_request already asked first question, waiting for user response",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            "⏭️ Skipping clarify_prompt - analyze_request already asked first question, waiting for user response",
+            extra={"session_id": session_id} if session_id else {},
+        )
         return {
             "llm_ready": False,
             "first_question_asked": False,  # Reset flag for next time
@@ -90,15 +92,15 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
 
     # Check if we're already ready to proceed (skip clarification)
     # BUT only if user explicitly confirmed readiness, not AI-determined
-    if (state.get("llm_ready", False) and
-        state.get("final_design_summary") and
-        state.get("user_confirmed_ready", False)):
-        logger.info("🎯 Skipping clarification - user confirmed ready with complete design summary",
-                   extra={'session_id': session_id} if session_id else {})
+    if state.get("llm_ready", False) and state.get("final_design_summary") and state.get("user_confirmed_ready", False):
+        logger.info(
+            "🎯 Skipping clarification - user confirmed ready with complete design summary",
+            extra={"session_id": session_id} if session_id else {},
+        )
         return {
             "llm_ready": True,
             "final_design_summary": state.get("final_design_summary"),
-            "current_state": "generating"
+            "current_state": "generating",
         }
 
     clarification_history = state.get("clarification_history", [])
@@ -109,26 +111,30 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     current_time = time.time()
     start_time = state.get("clarification_start_time", current_time)
     if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
-        logger.info(f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
-                      extra={'session_id': state.get("_session_id")})
+        logger.info(
+            f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+            extra={"session_id": state.get("_session_id")},
+        )
         # Send update to frontend asking for user confirmation even though timeout reached
         update_callback = state.get("_update_callback")
         if update_callback:
-            await update_callback({
-                "status": "clarification_ready",
-                "message": "Maximum clarification attempts reached. Please confirm to proceed with diagram generation.",
-                "clarity_score": state.get("clarity_score", 50),
-                "awaiting_user_confirmation": True,
-                "clarification_timeout": True,
-                "message_type": "clarification_summary",
-            })
+            await update_callback(
+                {
+                    "status": "clarification_ready",
+                    "message": "Maximum clarification attempts reached. Please confirm to proceed with diagram generation.",
+                    "clarity_score": state.get("clarity_score", 50),
+                    "awaiting_user_confirmation": True,
+                    "clarification_timeout": True,
+                    "message_type": "clarification_summary",
+                }
+            )
         # Wait for user confirmation instead of auto-proceeding
         return {
             "llm_ready": False,
             "final_design_summary": "TIMEOUT: Maximum clarification attempts reached. Awaiting user confirmation to proceed.",
             "awaiting_user_confirmation": True,
             "clarification_timeout": True,
-            "current_state": SessionState.CLARIFYING
+            "current_state": SessionState.CLARIFYING,
         }
 
     # Get both ANALYZE and CLARIFY prompts for persistent schema context
@@ -139,7 +145,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     # Combine prompts: ANALYZE provides schema context, CLARIFY guides the clarification loop
     # This ensures the LLM has full schema reference throughout all turns
     if analyze_prompt and clarify_prompt_template:
-        prompt_template = f"""{analyze_prompt}
+        prompt_template = """{analyze_prompt}
 
 ---
 
@@ -153,7 +159,7 @@ Continue refining the JSON representation based on the user's responses."""
         prompt_template = clarify_prompt_template
     else:
         # Fallback prompt if specific prompt not found
-        prompt_template = f"""You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
+        prompt_template = """You are an expert system architect. Your role is to interview the user about their system architecture and iteratively refine the JSON representation of components and connections.
 
 INSTRUCTIONS:
 1. Ask ONE clarifying question per turn to understand system components and connections
@@ -168,35 +174,41 @@ Determine if you have enough information or need to ask more questions."""
     # Prepare user content from conversation history - ONLY include user messages
     # Filter out AI responses to prevent feedback loops
     user_messages = [
-        msg for msg in clarification_history[-10:]  # Look at more messages but filter
-        if msg.get('role') == 'user'  # Only include actual user input
+        msg
+        for msg in clarification_history[-10:]  # Look at more messages but filter
+        if msg.get("role") == "user"  # Only include actual user input
     ]
-    user_content = "\n".join([
-        f"User: {msg['content']}"
-        for msg in user_messages[-5:]  # Last 5 USER messages for context
-    ])
+    user_content = "\n".join(
+        [f"User: {msg['content']}" for msg in user_messages[-5:]]  # Last 5 USER messages for context
+    )
 
     if not user_content:
         user_content = "User wants to create a diagram. Please start the clarification process."
 
     # Call AI for clarification decision
-    logger.info(f"🤖 Making LLM call for clarification - attempt {question_count + 1} (model: {model_id})",
-               extra={'session_id': session_id} if session_id else {})
-    logger.debug(f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
-               extra={'session_id': session_id} if session_id else {})
+    logger.info(
+        f"🤖 Making LLM call for clarification - attempt {question_count + 1} (model: {model_id})",
+        extra={"session_id": session_id} if session_id else {},
+    )
+    logger.debug(
+        f"📝 User context being sent to LLM: {user_content[:200]}{'...' if len(user_content) > 200 else ''}",
+        extra={"session_id": session_id} if session_id else {},
+    )
 
     try:
         ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
     except Exception as e:
         error_message = str(e)
-        logger.info(f"AI call failed in clarify_prompt: {error_message}", extra={'session_id': session_id})
+        logger.info(f"AI call failed in clarify_prompt: {error_message}", extra={"session_id": session_id})
         update_callback = state.get("_update_callback")
         if update_callback:
-            await update_callback({
-                "status": "failed",
-                "message": f"Clarification failed: {error_message}",
-                "error": error_message,
-            })
+            await update_callback(
+                {
+                    "status": "failed",
+                    "message": f"Clarification failed: {error_message}",
+                    "error": error_message,
+                }
+            )
         return {
             "llm_ready": False,
             "error_message": error_message,
@@ -208,8 +220,10 @@ Determine if you have enough information or need to ask more questions."""
         ai_response = extract_json_from_response(ai_response_str)
 
         # Log the parsed JSON structure for debugging
-        logger.debug(f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.debug(
+            f"📊 PARSED AI RESPONSE JSON:\n{json.dumps(ai_response, indent=2)}",
+            extra={"session_id": session_id} if session_id else {},
+        )
 
         question = ai_response.get("question")
         analysis_summary = ai_response.get("analysis_summary", "")
@@ -227,25 +241,29 @@ Determine if you have enough information or need to ask more questions."""
         if clarity_score >= score_target and not ready:
             logger.info(
                 f"✅ Score {clarity_score} meets target {score_target}, overriding AI ready flag",
-                extra={'session_id': session_id} if session_id else {}
+                extra={"session_id": session_id} if session_id else {},
             )
             ready = True
             if not design_summary:
-                design_summary = f"READY: System architecture understood with clarity score of {clarity_score}/{score_target}."
+                design_summary = (
+                    f"READY: System architecture understood with clarity score of {clarity_score}/{score_target}."
+                )
 
         # Send AI response to frontend with score and JSON
         update_callback = state.get("_update_callback")
         if update_callback and callable(update_callback):
-            await update_callback({
-                "status": "clarifying",
-                "question": question,
-                "analysis_summary": analysis_summary,
-                "clarity_score": clarity_score,
-                "score_target": score_target,
-                "json_representation": json_representation,
-                "message_type": "clarification",
-                "full_ai_response": ai_response_str  # Include full raw response for "Show More"
-            })
+            await update_callback(
+                {
+                    "status": "clarifying",
+                    "question": question,
+                    "analysis_summary": analysis_summary,
+                    "clarity_score": clarity_score,
+                    "score_target": score_target,
+                    "json_representation": json_representation,
+                    "message_type": "clarification",
+                    "full_ai_response": ai_response_str,  # Include full raw response for "Show More"
+                }
+            )
 
         # Check if AI thinks we're ready
         if ready or (design_summary and design_summary.startswith("READY:")):
@@ -258,22 +276,24 @@ Determine if you have enough information or need to ask more questions."""
             logger.info(
                 f"?? AI gathered enough information (score: {clarity_score}) - "
                 f"{'auto-proceeding' if auto_proceed_on_ready else 'waiting for user confirmation'}",
-                extra={'session_id': session_id} if session_id else {}
+                extra={"session_id": session_id} if session_id else {},
             )
             state["json_representation"] = json_representation
             if update_callback:
-                await update_callback({
-                    "status": "clarification_ready",
-                    "message": summary,
-                    "analysis_summary": analysis_summary,
-                    "clarity_score": clarity_score,
-                    "score_target": score_target,
-                    "clarity_scores": updated_clarity_scores,
-                    "json_representation": json_representation,
-                    "awaiting_user_confirmation": await_user_confirmation,
-                    "message_type": "clarification_summary",
-                    "full_ai_response": ai_response_str  # Include full raw response for "Show More"
-                })
+                await update_callback(
+                    {
+                        "status": "clarification_ready",
+                        "message": summary,
+                        "analysis_summary": analysis_summary,
+                        "clarity_score": clarity_score,
+                        "score_target": score_target,
+                        "clarity_scores": updated_clarity_scores,
+                        "json_representation": json_representation,
+                        "awaiting_user_confirmation": await_user_confirmation,
+                        "message_type": "clarification_summary",
+                        "full_ai_response": ai_response_str,  # Include full raw response for "Show More"
+                    }
+                )
 
             if auto_proceed_on_ready:
                 return {
@@ -284,7 +304,7 @@ Determine if you have enough information or need to ask more questions."""
                     "clarity_score": clarity_score,
                     "awaiting_user_confirmation": False,
                     "user_confirmed_ready": True,
-                    "current_state": SessionState.GENERATING
+                    "current_state": SessionState.GENERATING,
                 }
 
             return {
@@ -295,12 +315,14 @@ Determine if you have enough information or need to ask more questions."""
                 "clarity_score": clarity_score,
                 "awaiting_user_confirmation": True,
                 "user_confirmed_ready": False,
-                "current_state": SessionState.CLARIFYING
+                "current_state": SessionState.CLARIFYING,
             }
 
         # AI wants more clarification - add question to conversation history
-        logger.info(f"❓ AI requesting additional clarification (score: {clarity_score}/100)",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"❓ AI requesting additional clarification (score: {clarity_score}/100)",
+            extra={"session_id": session_id} if session_id else {},
+        )
         updated_history = clarification_history.copy()
         updated_history.append({"role": "assistant", "content": question or "Please provide more details"})
 
@@ -319,12 +341,14 @@ Determine if you have enough information or need to ask more questions."""
             "question_count": question_count + 1,
             "clarification_start_time": start_time,  # Track start time for timeout
             "awaiting_user_confirmation": False,
-            "current_state": SessionState.CLARIFYING
+            "current_state": SessionState.CLARIFYING,
         }
 
     except json.JSONDecodeError as e:
-        logger.info(f"❌ Failed to parse clarification response as JSON: {e}",
-                    extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"❌ Failed to parse clarification response as JSON: {e}",
+            extra={"session_id": session_id} if session_id else {},
+        )
         # Fallback to simple string parsing
         if ai_response_str and ai_response_str.startswith("READY:"):
             summary = ai_response_str.replace("READY:", "").strip()
@@ -333,7 +357,7 @@ Determine if you have enough information or need to ask more questions."""
                 "final_design_summary": summary,
                 "clarity_scores": clarity_scores,
                 "awaiting_user_confirmation": True,
-                "current_state": SessionState.CLARIFYING
+                "current_state": SessionState.CLARIFYING,
             }
         else:
             # Treat as a question
@@ -345,5 +369,5 @@ Determine if you have enough information or need to ask more questions."""
                 "clarity_scores": clarity_scores,
                 "question_count": question_count + 1,
                 "current_state": "clarifying",
-                "error_message": f"Clarification response not in expected JSON format: {str(e)}"
+                "error_message": f"Clarification response not in expected JSON format: {str(e)}",
             }

@@ -28,12 +28,7 @@ MMDC_EXECUTABLE = "mmdc"
 MMDC_TIMEOUT = 120  # seconds
 
 
-def render_diagram(
-    diagram_code: str,
-    diagram_type: str,
-    output_format: str = "svg",
-    **kwargs
-) -> str:
+def render_diagram(diagram_code: str, diagram_type: str, output_format: str = "svg", **kwargs) -> str:
     """
     Render a diagram using Mermaid CLI (mmdc) only.
 
@@ -127,9 +122,12 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
             # Run mmdc command
             cmd = [
                 MMDC_EXECUTABLE,
-                "-i", str(input_file),
-                "-o", str(output_file),
-                "-f", output_format.upper(),  # mmdc expects SVG or PNG
+                "-i",
+                str(input_file),
+                "-o",
+                str(output_file),
+                "-f",
+                output_format.upper(),  # mmdc expects SVG or PNG
             ]
 
             logger.debug(f"Running command: {' '.join(cmd)}")
@@ -139,14 +137,14 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
                 capture_output=True,
                 text=True,
                 timeout=MMDC_TIMEOUT,
-                shell=True  # Use shell on Windows to find .cmd files
+                shell=True,  # Use shell on Windows to find .cmd files
             )
 
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout or "Unknown error"
                 raise Exception(f"mmdc rendering failed: {error_msg}")
 
-            logger.debug(f"mmdc completed successfully")
+            logger.debug("mmdc completed successfully")
 
             # Read output file
             if not output_file.exists():
@@ -182,7 +180,7 @@ def is_mmdc_available() -> bool:
             capture_output=True,
             text=True,
             timeout=5,
-            shell=True  # Use shell on Windows
+            shell=True,  # Use shell on Windows
         )
         available = result.returncode == 0
         if available:
@@ -198,37 +196,39 @@ def is_mmdc_available() -> bool:
 # DEPRECATED: Keeping old functions below for reference only
 # These are no longer used - renderer now uses Mermaid CLI exclusively
 
+
 async def render_with_playwright(
-    diagram_code: str, diagram_type: str, output_format: str,
-    frontend_url: str, encoded_code: str, timeout: int
+    diagram_code: str, diagram_type: str, output_format: str, frontend_url: str, encoded_code: str, timeout: int
 ) -> str:
     """DEPRECATED: Render using Playwright browser with Windows fixes."""
-    
+
     browser = None
     try:
         # Initialize Playwright with Windows-specific settings
         playwright = await async_playwright().__aenter__()
-        
+
         # Try different browser launch strategies for Windows
         launch_options = {
-            'headless': True,
-            'args': [
-                '--no-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor'
-            ]
+            "headless": True,
+            "args": [
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-web-security",
+                "--disable-features=VizDisplayCompositor",
+            ],
         }
-        
+
         # Windows-specific fixes
-        if platform.system() == 'Windows':
-            launch_options['args'].extend([
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding'
-            ])
-        
+        if platform.system() == "Windows":
+            launch_options["args"].extend(
+                [
+                    "--disable-background-timer-throttling",
+                    "--disable-backgrounding-occluded-windows",
+                    "--disable-renderer-backgrounding",
+                ]
+            )
+
         logger.debug("Launching Playwright browser...")
         browser = await playwright.chromium.launch(**launch_options)
         page = await browser.new_page()
@@ -238,14 +238,15 @@ async def render_with_playwright(
 
         # Listen to console messages for debugging
         def handle_console(msg):
-            if msg.type != 'warning':  # Reduce log noise
+            if msg.type != "warning":  # Reduce log noise
                 logger.debug(f"Browser console: {msg.text}")
+
         page.on("console", handle_console)
 
         # Try React dev server first
         render_url = f"{frontend_url}/render?type={diagram_type}&code={encoded_code}"
         logger.debug(f"Trying React dev server: {render_url[:100]}...")
-        
+
         react_server_available = False
         try:
             response = await page.goto(render_url, timeout=5000)
@@ -254,24 +255,24 @@ async def render_with_playwright(
                 logger.debug("React dev server loaded successfully")
         except Exception as e:
             logger.info(f"React dev server not available: {str(e)}")
-        
+
         if not react_server_available:
             logger.info("Falling back to static HTML renderer...")
-            
+
             # Fall back to static HTML
             temp_html_content = create_standalone_html(diagram_code, diagram_type)
-            
+
             # Write to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False, encoding="utf-8") as f:
                 f.write(temp_html_content)
                 temp_file_path = f.name
-            
+
             logger.debug(f"Using static HTML fallback: {temp_file_path}")
             response = await page.goto(f"file://{temp_file_path}", timeout=timeout)
-            
+
             if not response or not response.ok:
                 raise Exception("Failed to load static HTML renderer")
-            
+
             # Clean up temp file after use
             asyncio.create_task(cleanup_temp_file(temp_file_path))
 
@@ -326,13 +327,12 @@ async def render_with_playwright(
 
 
 async def render_with_static_html(
-    diagram_code: str, diagram_type: str, output_format: str,
-    frontend_url: str, encoded_code: str, timeout: int
+    diagram_code: str, diagram_type: str, output_format: str, frontend_url: str, encoded_code: str, timeout: int
 ) -> str:
     """Fallback rendering using static HTML without Playwright."""
-    
+
     logger.info("Using static HTML fallback (no Playwright)")
-    
+
     # For SVG output, we can generate basic SVG directly
     if output_format == "svg":
         if diagram_type == "mermaid":
@@ -341,22 +341,21 @@ async def render_with_static_html(
             return generate_basic_d2_svg(diagram_code)
         elif diagram_type == "c4":
             return generate_basic_c4_svg(diagram_code)
-    
+
     # For PNG or complex cases, we need Playwright
     raise Exception(f"Static HTML fallback not supported for {output_format} output")
 
 
 async def render_with_python_svg(
-    diagram_code: str, diagram_type: str, output_format: str,
-    frontend_url: str, encoded_code: str, timeout: int
+    diagram_code: str, diagram_type: str, output_format: str, frontend_url: str, encoded_code: str, timeout: int
 ) -> str:
     """Pure Python SVG generation fallback."""
-    
+
     logger.info("Using pure Python SVG generation")
-    
+
     if output_format != "svg":
         raise Exception("Python SVG generation only supports SVG output")
-    
+
     # Generate basic SVG based on diagram type
     if diagram_type == "mermaid":
         return generate_basic_mermaid_svg(diagram_code)
@@ -366,29 +365,29 @@ async def render_with_python_svg(
 
 def generate_basic_mermaid_svg(diagram_code: str) -> str:
     """Generate a basic SVG from Mermaid-like syntax."""
-    
-    lines = diagram_code.strip().split('\n')
+
+    lines = diagram_code.strip().split("\n")
     nodes = []
     connections = []
-    
+
     for line in lines:
         line = line.strip()
-        if '-->' in line:
-            parts = line.split('-->')
+        if "-->" in line:
+            parts = line.split("-->")
             if len(parts) >= 2:
                 from_node = parts[0].strip()
                 to_part = parts[1].strip()
-                to_node = to_part.split('[')[0].strip() if '[' in to_part else to_part
+                to_node = to_part.split("[")[0].strip() if "[" in to_part else to_part
                 nodes.extend([from_node, to_node])
                 connections.append((from_node, to_node))
-    
+
     # Create basic SVG
     width = max(400, len(nodes) * 150)
     height = max(300, len(connections) * 100 + 100)
-    
-    svg = f'''<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+
+    svg = """<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+        <marker id="arrowhead" markerWidth="10" markerHeight="7"
          refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
         </marker>
@@ -397,51 +396,51 @@ def generate_basic_mermaid_svg(diagram_code: str) -> str:
         .node {{ fill: #e1f5fe; stroke: #01579b; stroke-width: 2; }}
         .node-text {{ font-family: Arial; font-size: 14px; text-anchor: middle; }}
         .edge {{ stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }}
-    </style>'''
-    
+    </style>"""
+
     # Add nodes
     for i, node in enumerate(set(nodes)):
-        x = (i + 1) * (width / (len(set(nodes)) + 1))
-        y = height // 2
-        svg += f'''
-    <rect class="node" x="{x-50}" y="{y-25}" width="100" height="50" rx="5"/>
-    <text class="node-text" x="{x}" y="{y+5}">{node}</text>'''
-    
+        (i + 1) * (width / (len(set(nodes)) + 1))
+        height // 2
+        svg += """
+    <rect class="node" x="{x - 50}" y="{y - 25}" width="100" height="50" rx="5"/>
+    <text class="node-text" x="{x}" y="{y + 5}">{node}</text>"""
+
     # Add connections
     for i, (from_node, to_node) in enumerate(connections):
         from_idx = list(set(nodes)).index(from_node)
         to_idx = list(set(nodes)).index(to_node)
-        x1 = (from_idx + 1) * (width / (len(set(nodes)) + 1))
-        x2 = (to_idx + 1) * (width / (len(set(nodes)) + 1))
-        y = height // 2
-        svg += f'''
-    <line class="edge" x1="{x1}" y1="{y+25}" x2="{x2-50}" y2="{y-25}"/>'''
-    
-    svg += '\n</svg>'
+        (from_idx + 1) * (width / (len(set(nodes)) + 1))
+        (to_idx + 1) * (width / (len(set(nodes)) + 1))
+        height // 2
+        svg += """
+    <line class="edge" x1="{x1}" y1="{y + 25}" x2="{x2 - 50}" y2="{y - 25}"/>"""
+
+    svg += "\n</svg>"
     return svg
 
 
 def generate_basic_d2_svg(diagram_code: str) -> str:
     """Generate a basic SVG from D2-like syntax."""
-    
-    lines = diagram_code.strip().split('\n')
+
+    lines = diagram_code.strip().split("\n")
     connections = []
-    
+
     for line in lines:
-        if '->' in line:
-            parts = line.split('->')
+        if "->" in line:
+            parts = line.split("->")
             if len(parts) >= 2:
                 from_node = parts[0].strip()
                 to_node = parts[1].strip()
                 connections.append((from_node, to_node))
-    
+
     # Create basic SVG similar to Mermaid
-    width = max(400, len(connections) * 200)
+    max(400, len(connections) * 200)
     height = 200
-    
-    svg = f'''<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+
+    svg = """<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+        <marker id="arrowhead" markerWidth="10" markerHeight="7"
          refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
         </marker>
@@ -450,54 +449,53 @@ def generate_basic_d2_svg(diagram_code: str) -> str:
         .node {{ fill: #f3e5f5; stroke: #4a148c; stroke-width: 2; }}
         .node-text {{ font-family: Arial; font-size: 14px; text-anchor: middle; }}
         .edge {{ stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }}
-    </style>'''
-    
+    </style>"""
+
     # Add nodes and connections
     for i, (from_node, to_node) in enumerate(connections):
-        x1 = (i + 1) * 150
-        x2 = (i + 2) * 150
-        y = height // 2
-        
+        (i + 1) * 150
+        (i + 2) * 150
+        height // 2
+
         # From node
-        svg += f'''
-    <rect class="node" x="{x1-50}" y="{y-25}" width="100" height="50" rx="5"/>
-    <text class="node-text" x="{x1}" y="{y+5}">{from_node}</text>'''
-        
+        svg += """
+    <rect class="node" x="{x1 - 50}" y="{y - 25}" width="100" height="50" rx="5"/>
+    <text class="node-text" x="{x1}" y="{y + 5}">{from_node}</text>"""
+
         # To node
-        svg += f'''
-    <rect class="node" x="{x2-50}" y="{y-25}" width="100" height="50" rx="5"/>
-    <text class="node-text" x="{x2}" y="{y+5}">{to_node}</text>'''
-        
+        svg += """
+    <rect class="node" x="{x2 - 50}" y="{y - 25}" width="100" height="50" rx="5"/>
+    <text class="node-text" x="{x2}" y="{y + 5}">{to_node}</text>"""
+
         # Connection
-        svg += f'''
-    <line class="edge" x1="{x1+50}" y1="{y}" x2="{x2-50}" y2="{y}"/>'''
-    
-    svg += '\n</svg>'
+        svg += """
+    <line class="edge" x1="{x1 + 50}" y1="{y}" x2="{x2 - 50}" y2="{y}"/>"""
+
+    svg += "\n</svg>"
     return svg
 
 
 def generate_basic_c4_svg(diagram_code: str) -> str:
     """Generate a basic SVG from C4-like syntax."""
-    
+
     # Simple C4 to basic SVG conversion
-    lines = diagram_code.strip().split('\n')
+    lines = diagram_code.strip().split("\n")
     connections = []
-    
+
     for line in lines:
-        if 'Rel(' in line:
+        if "Rel(" in line:
             # Extract relationship from C4 syntax
             import re
-            match = re.search(r'Rel\([^,]+,\s*([^,]+),', line)
+
+            match = re.search(r"Rel\([^,]+,\s*([^,]+),", line)
             if match:
                 connections.append(("System", match.group(1)))
-    
+
     # Generate basic SVG
-    width = 600
-    height = 300
-    
-    svg = f'''<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
+
+    svg = """<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+        <marker id="arrowhead" markerWidth="10" markerHeight="7"
          refX="9" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
         </marker>
@@ -507,28 +505,28 @@ def generate_basic_c4_svg(diagram_code: str) -> str:
         .person {{ fill: #e8f5e8; stroke: #2e7d32; stroke-width: 2; }}
         .text {{ font-family: Arial; font-size: 14px; text-anchor: middle; }}
         .edge {{ stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }}
-    </style>'''
-    
+    </style>"""
+
     # Add basic system
-    svg += f'''
+    svg += """
     <rect class="system" x="250" y="100" width="100" height="60" rx="5"/>
-    <text class="text" x="300" y="135">System</text>'''
-    
+    <text class="text" x="300" y="135">System</text>"""
+
     # Add connections
     for i, (from_node, to_node) in enumerate(connections):
-        svg += f'''
+        svg += """
     <line class="edge" x1="100" y1="130" x2="250" y2="130"/>
-    <text class="text" x="175" y="120">{to_node}</text>'''
-    
-    svg += '\n</svg>'
+    <text class="text" x="175" y="120">{to_node}</text>"""
+
+    svg += "\n</svg>"
     return svg
 
 
 def create_standalone_html(diagram_code: str, diagram_type: str) -> str:
     """Create a standalone HTML file with the diagram code embedded."""
-    
+
     # Create a complete standalone HTML that doesn't rely on URL parameters
-    html_content = f"""<!DOCTYPE html>
+    html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -783,7 +781,7 @@ def create_standalone_html(diagram_code: str, diagram_type: str) -> str:
                 // Use embedded diagram code and type
                 const diagramCode = `{diagram_code.replace('`', '\\`')}";
                 const diagramType = `{diagram_type}";
-                
+
                 console.log('📋 Render parameters:', {{ type: diagramType, codeLength: diagramCode.length }});
 
                 if (!diagramCode) {{
@@ -850,7 +848,7 @@ def create_standalone_html(diagram_code: str, diagram_type: str) -> str:
     </script>
 </body>
 </html>"""
-    
+
     return html_content
 
 

@@ -2,4 +2,4 @@
 from .kroki_renderer import KrokiMermaidProvider
 
 # Define the public API for this module, exposing only the KrokiMermaidProvider class
-__all__ = ['KrokiMermaidProvider']
+__all__ = ["KrokiMermaidProvider"]

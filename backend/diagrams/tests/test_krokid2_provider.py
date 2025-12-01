@@ -2,30 +2,29 @@
 Test Kroki D2 Provider Implementation
 """
 
+from diagrams.models import ProviderCapability
+from diagrams.krokid2.kroki_renderer import KrokiD2Provider
 import sys
-import os
 from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import codecs
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from diagrams.krokid2.kroki_renderer import KrokiD2Provider
-from diagrams.models import ProviderCapability
-
 
 def test_krokid2_provider_initialization():
     """Test that Kroki D2 provider initializes correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Provider Initialization")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -53,9 +52,9 @@ def test_krokid2_provider_initialization():
 
 def test_krokid2_config():
     """Test that configuration is loaded correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Configuration Loading")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -73,9 +72,9 @@ def test_krokid2_config():
 
 def test_krokid2_metadata():
     """Test provider metadata methods"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Provider Metadata")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -95,16 +94,16 @@ def test_krokid2_metadata():
 
 def test_krokid2_llm_correction_rules():
     """Test LLM correction rules"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 LLM Correction Rules")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
 
     rules = provider.get_llm_correction_rules()
     print(f"✓ Rules length: {len(rules)} characters")
-    print(f"\nRules preview:")
+    print("\nRules preview:")
     print(rules[:200] + "...")
 
     assert rules is not None
@@ -116,9 +115,9 @@ def test_krokid2_llm_correction_rules():
 
 def test_krokid2_validation():
     """Test D2 code validation via Kroki"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Validation")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -143,7 +142,7 @@ A: {
     print(f"✓ Is Valid: {result.is_valid}")
     print(f"✓ Error: {result.error}")
 
-    assert result.is_valid == True
+    assert result.is_valid
 
     # Invalid D2 code (unclosed brace)
     invalid_code = """direction: right
@@ -165,9 +164,9 @@ container {
 
 def test_krokid2_auto_fix():
     """Test pattern-based auto-fix"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Pattern-Based Auto-Fix")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -187,7 +186,7 @@ def test_krokid2_auto_fix():
     print(f"✓ Correction Method: {result.correction_method}")
 
     if result.fixed_code:
-        print(f"\nFixed code preview:")
+        print("\nFixed code preview:")
         print(result.fixed_code[:200])
 
     # The auto-fix might add direction
@@ -197,9 +196,9 @@ def test_krokid2_auto_fix():
 
 def test_krokid2_render_svg():
     """Test rendering to SVG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Rendering to SVG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -244,9 +243,9 @@ End: {
 
 def test_krokid2_render_png():
     """Test rendering to PNG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Rendering to PNG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -280,9 +279,9 @@ A -> B -> C
 
 def test_krokid2_complex_diagram():
     """Test rendering a more complex D2 diagram"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki D2 Complex Diagram")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokid2"
     provider = KrokiD2Provider(provider_folder)
@@ -336,9 +335,9 @@ WebServer: {
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("KROKI D2 PROVIDER TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     test_krokid2_provider_initialization()
     test_krokid2_config()
@@ -350,6 +349,6 @@ if __name__ == "__main__":
     test_krokid2_render_png()
     test_krokid2_complex_diagram()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✅ ALL KROKI D2 TESTS PASSED!")
-    print("="*60)
+    print("=" * 60)

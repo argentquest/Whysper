@@ -2,30 +2,29 @@
 Test Mermaid v1 Provider Implementation
 """
 
+from diagrams.models import ProviderCapability
+from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
 import sys
-import os
 from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import codecs
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
-from diagrams.models import ProviderCapability
-
 
 def test_mermaidv1_provider_initialization():
     """Test that mermaidv1 provider initializes correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Provider Initialization")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -50,9 +49,9 @@ def test_mermaidv1_provider_initialization():
 
 def test_mermaidv1_validation():
     """Test Mermaid code validation"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Validation")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -72,7 +71,7 @@ def test_mermaidv1_validation():
     print(f"✓ Is Valid: {result.is_valid}")
     print(f"✓ Error: {result.error}")
 
-    assert result.is_valid == True
+    assert result.is_valid
     assert result.error is None
 
     # Invalid Mermaid code
@@ -94,9 +93,9 @@ def test_mermaidv1_validation():
 
 def test_mermaidv1_auto_fix():
     """Test pattern-based auto-fix"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Pattern-Based Auto-Fix")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -118,7 +117,7 @@ def test_mermaidv1_auto_fix():
     print(f"✓ Correction Method: {result.correction_method}")
 
     if result.fixed_code:
-        print(f"\nFixed code preview:")
+        print("\nFixed code preview:")
         print(result.fixed_code[:200])
 
     print("\n✅ Auto-fix test passed!")
@@ -126,9 +125,9 @@ def test_mermaidv1_auto_fix():
 
 def test_mermaidv1_render():
     """Test rendering to SVG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Rendering")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -150,7 +149,7 @@ def test_mermaidv1_render():
     print(f"✓ Content Length: {len(result.content) if result.content else 0} bytes")
     print(f"✓ Error: {result.error}")
 
-    assert result.success == True
+    assert result.success
     assert result.content is not None
     assert "<svg" in result.content
 
@@ -159,9 +158,9 @@ def test_mermaidv1_render():
 
 def test_mermaidv1_config():
     """Test configuration loading"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Configuration")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -183,9 +182,9 @@ def test_mermaidv1_config():
 
 def test_mermaidv1_metadata():
     """Test provider metadata"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Mermaid v1 Metadata")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -203,15 +202,15 @@ def test_mermaidv1_metadata():
 
     assert metadata.provider_id == "mermaidv1"
     assert metadata.diagram_type == "mermaid"
-    assert metadata.requires_llm == True  # Has LLM_CORRECTION capability
+    assert metadata.requires_llm  # Has LLM_CORRECTION capability
 
     print("\n✅ Metadata test passed!")
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MERMAID V1 PROVIDER TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     try:
         provider = test_mermaidv1_provider_initialization()
@@ -221,12 +220,13 @@ if __name__ == "__main__":
         test_mermaidv1_auto_fix()
         test_mermaidv1_render()
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("✅ ALL TESTS PASSED!")
-        print("="*60)
+        print("=" * 60)
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

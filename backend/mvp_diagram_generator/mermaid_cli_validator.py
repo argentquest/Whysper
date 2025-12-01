@@ -13,6 +13,7 @@ from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
+
 def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc") -> Tuple[bool, str]:
     """
     Validates Mermaid code syntax by running the mmdc executable as a subprocess.
@@ -27,24 +28,24 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
             - str: Success message or error message
     """
     # Create temporary files for input and output
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', delete=False) as temp_input:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(mermaid_code)
         temp_input.flush()
 
     # Create a temporary output file
-    temp_output_name = temp_input_name.replace('.mmd', '.svg')
+    temp_output_name = temp_input_name.replace(".mmd", ".svg")
 
     try:
         # Command to run mmdc (Mermaid CLI) - just try to compile to SVG
         # If compilation succeeds, the syntax is valid
         result = subprocess.run(
-            [mermaid_executable, '-i', temp_input_name, '-o', temp_output_name],
+            [mermaid_executable, "-i", temp_input_name, "-o", temp_output_name],
             capture_output=True,
             text=True,
             check=True,  # Raise an error if the return code is non-zero
             timeout=120,  # Increased timeout for mmdc (can be slow on first run)
-            shell=True  # Use shell on Windows to find .cmd files
+            shell=True,  # Use shell on Windows to find .cmd files
         )
 
         # If check=True doesn't raise an exception, the validation succeeded
@@ -91,6 +92,7 @@ def validate_mermaid_with_cli(mermaid_code: str, mermaid_executable: str = "mmdc
         except Exception as e:
             logger.info(f"Failed to clean up temp output file {temp_output_name}: {e}")
 
+
 def clean_mermaid_error(error_message: str) -> str:
     """
     Clean up Mermaid CLI error messages to extract the most useful information.
@@ -103,29 +105,31 @@ def clean_mermaid_error(error_message: str) -> str:
     """
     # Remove ANSI color codes
     import re
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    cleaned = ansi_escape.sub('', error_message)
+
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    cleaned = ansi_escape.sub("", error_message)
 
     # Extract the most relevant lines (skip generic stack traces)
-    lines = cleaned.split('\n')
+    lines = cleaned.split("\n")
     relevant_lines = []
 
     for line in lines:
         # Skip empty lines and common unhelpful lines
         if not line.strip():
             continue
-        if 'at Object.' in line or 'at Function.' in line:
+        if "at Object." in line or "at Function." in line:
             continue
-        if line.strip().startswith('at ') and '(' in line:
+        if line.strip().startswith("at ") and "(" in line:
             continue
 
         relevant_lines.append(line)
 
     # Return first few relevant lines (most informative)
     if relevant_lines:
-        return '\n'.join(relevant_lines[:10])
+        return "\n".join(relevant_lines[:10])
 
     return error_message
+
 
 def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
     """
@@ -144,13 +148,14 @@ def is_mermaid_cli_available(mermaid_executable: str = "mmdc") -> bool:
             text=True,
             check=True,
             timeout=120,
-            shell=True  # Use shell on Windows to find .cmd files
+            shell=True,  # Use shell on Windows to find .cmd files
         )
         logger.debug(f"Mermaid CLI version: {result.stdout.strip()}")
         return True
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
         logger.debug(f"Mermaid CLI check failed: {e}")
         return False
+
 
 def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) -> Tuple[bool, str, str]:
     """
@@ -187,7 +192,7 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
                 logger.info(f"[MERMAID AUTO-FIX] ✅ Success on attempt {attempt + 1}!")
                 message = f"Mermaid syntax fixed after {attempt} attempt(s). {message}"
             else:
-                logger.info(f"[MERMAID AUTO-FIX] ✅ Code was already valid, no fixes needed")
+                logger.info("[MERMAID AUTO-FIX] ✅ Code was already valid, no fixes needed")
             return (True, current_code, message)
 
         # If this is the last attempt, don't try to fix anymore
@@ -197,7 +202,7 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
             return (False, current_code, message)
 
         # Apply syntax fixes and try again
-        logger.info(f"[MERMAID AUTO-FIX] Validation failed, applying syntax fixes...")
+        logger.info("[MERMAID AUTO-FIX] Validation failed, applying syntax fixes...")
         fix_result = fix_mermaid_syntax(current_code)
 
         if fix_result.corrections:
@@ -205,7 +210,7 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
             for i, correction in enumerate(fix_result.corrections, 1):
                 logger.info(f"[MERMAID AUTO-FIX]   {i}. {correction}")
         else:
-            logger.info(f"[MERMAID AUTO-FIX] No corrections could be applied")
+            logger.info("[MERMAID AUTO-FIX] No corrections could be applied")
 
         if fix_result.warnings:
             logger.info(f"[MERMAID AUTO-FIX] {len(fix_result.warnings)} warning(s):")
@@ -217,16 +222,15 @@ def validate_and_fix_mermaid_with_cli(mermaid_code: str, max_attempts: int = 3) 
 
         # If no corrections were made, don't try again
         if not fix_result.corrections:
-            logger.info(f"[MERMAID AUTO-FIX] No corrections possible, stopping attempts")
+            logger.info("[MERMAID AUTO-FIX] No corrections possible, stopping attempts")
             return (False, current_code, message)
 
-    logger.info(f"[MERMAID AUTO-FIX] ❌ Failed to fix after all attempts")
+    logger.info("[MERMAID AUTO-FIX] ❌ Failed to fix after all attempts")
     return (False, current_code, "Failed to validate Mermaid syntax after multiple attempts")
 
+
 def validate_mermaid_and_render(
-    mermaid_code: str,
-    output_format: str = "svg",
-    mermaid_executable: str = "mmdc"
+    mermaid_code: str, output_format: str = "svg", mermaid_executable: str = "mmdc"
 ) -> Tuple[bool, str, Optional[str]]:
     """
     Validates Mermaid code and renders it if valid.
@@ -242,31 +246,32 @@ def validate_mermaid_and_render(
             - str: Success/error message
             - Optional[str]: Rendered output (SVG string or base64 PNG) if successful
     """
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', delete=False) as temp_input:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as temp_input:
         temp_input_name = temp_input.name
         temp_input.write(mermaid_code)
         temp_input.flush()
 
     # Create output filename
-    output_ext = '.svg' if output_format == 'svg' else '.png'
-    temp_output_name = temp_input_name.replace('.mmd', output_ext)
+    output_ext = ".svg" if output_format == "svg" else ".png"
+    temp_output_name = temp_input_name.replace(".mmd", output_ext)
 
     try:
         # Run mmdc to render the diagram
         result = subprocess.run(
-            [mermaid_executable, '-i', temp_input_name, '-o', temp_output_name],
+            [mermaid_executable, "-i", temp_input_name, "-o", temp_output_name],
             capture_output=True,
             text=True,
             check=True,
             timeout=120,
-            shell=True  # Use shell on Windows to find .cmd files
+            shell=True,  # Use shell on Windows to find .cmd files
         )
 
         # Read the output file
-        with open(temp_output_name, 'rb' if output_format == 'png' else 'r') as f:
-            if output_format == 'png':
+        with open(temp_output_name, "rb" if output_format == "png" else "r") as f:
+            if output_format == "png":
                 import base64
-                rendered_output = base64.b64encode(f.read()).decode('utf-8')
+
+                rendered_output = base64.b64encode(f.read()).decode("utf-8")
             else:
                 rendered_output = f.read()
 

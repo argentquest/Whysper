@@ -4,8 +4,6 @@ Integration tests for diagram providers.
 Tests interactions between multiple providers and system-wide functionality.
 """
 
-import pytest
-
 
 class TestProviderDiscovery:
     """Test provider discovery and listing."""
@@ -62,20 +60,12 @@ class TestCrossProviderRendering:
         # Verifies multiple providers can generate diagrams successfully
 
         # Render Mermaid diagram first
-        mermaid_payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        mermaid_payload = {"code": mermaid_code_simple, "diagram_type": "mermaid", "output_format": "svg"}
         mermaid_response = client.post("/api/v1/diagrams/v2/render", json=mermaid_payload)
         assert mermaid_response.status_code == 200
 
         # Render D2 diagram next
-        d2_payload = {
-            "code": d2_code_simple,
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        d2_payload = {"code": d2_code_simple, "diagram_type": "d2", "output_format": "svg"}
         d2_response = client.post("/api/v1/diagrams/v2/render", json=d2_payload)
         assert d2_response.status_code == 200
 
@@ -83,11 +73,7 @@ class TestCrossProviderRendering:
         # Test rendering with multiple output formats
         # Ensures flexibility in diagram generation
         for output_format in ["svg", "png"]:
-            payload = {
-                "code": d2_code_simple,
-                "diagram_type": "d2",
-                "output_format": output_format
-            }
+            payload = {"code": d2_code_simple, "diagram_type": "d2", "output_format": output_format}
 
             # Allow some flexibility in output format support
             response = client.post("/api/v1/diagrams/v2/render", json=payload)
@@ -100,11 +86,7 @@ class TestProviderErrors:
     def test_invalid_provider_type(self, client):
         # Test system's response to an unsupported diagram type
         # Ensures robust error handling for invalid inputs
-        payload = {
-            "code": "some code",
-            "diagram_type": "invalid_type",
-            "output_format": "svg"
-        }
+        payload = {"code": "some code", "diagram_type": "invalid_type", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -114,11 +96,7 @@ class TestProviderErrors:
     def test_render_with_invalid_output_format(self, client, mermaid_code_simple):
         # Test system's response to an unsupported output format
         # Ensures graceful handling of format-related errors
-        payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid",
-            "output_format": "invalid_format"
-        }
+        payload = {"code": mermaid_code_simple, "diagram_type": "mermaid", "output_format": "invalid_format"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 

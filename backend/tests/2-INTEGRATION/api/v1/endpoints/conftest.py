@@ -10,8 +10,7 @@ Provides reusable fixtures for testing API endpoints:
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, MagicMock, patch
-import json
+from unittest.mock import MagicMock
 from typing import Dict, Any
 
 
@@ -19,6 +18,7 @@ from typing import Dict, Any
 def test_client():
     """Create FastAPI test client for making test requests"""
     from app.main import app
+
     return TestClient(app)
 
 
@@ -72,7 +72,7 @@ def large_code() -> str:
     for i in range(100):
         lines.append(f"  Node{i}[Node {i}]")
         if i > 0:
-            lines.append(f"  Node{i-1} --> Node{i}")
+            lines.append(f"  Node{i - 1} --> Node{i}")
     return "\n".join(lines)
 
 
@@ -118,13 +118,7 @@ def no_auth_headers() -> Dict[str, str]:
 @pytest.fixture
 def sample_user() -> Dict[str, Any]:
     """Sample user object for testing"""
-    return {
-        "id": "user_123",
-        "username": "testuser",
-        "email": "test@example.com",
-        "is_active": True,
-        "roles": ["user"]
-    }
+    return {"id": "user_123", "username": "testuser", "email": "test@example.com", "is_active": True, "roles": ["user"]}
 
 
 @pytest.fixture
@@ -135,7 +129,7 @@ def sample_admin_user() -> Dict[str, Any]:
         "username": "adminuser",
         "email": "admin@example.com",
         "is_active": True,
-        "roles": ["admin", "user"]
+        "roles": ["admin", "user"],
     }
 
 
@@ -149,7 +143,7 @@ def sample_conversation() -> Dict[str, Any]:
         "messages": [],
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:00:00Z",
-        "is_active": True
+        "is_active": True,
     }
 
 
@@ -162,7 +156,7 @@ def sample_message() -> Dict[str, Any]:
         "user_id": "user_123",
         "content": "Hello, can you help me?",
         "created_at": "2024-01-01T00:00:00Z",
-        "is_system": False
+        "is_system": False,
     }
 
 
@@ -240,20 +234,22 @@ def mock_ai_service():
 def mock_provider_registry():
     """Mock provider registry"""
     mock = MagicMock()
-    mock.list_providers = MagicMock(return_value=[
-        {
-            "provider_id": "mermaidv1",
-            "provider_name": "Mermaid v1",
-            "diagram_type": "mermaid",
-            "supported_output_formats": ["svg", "png"]
-        },
-        {
-            "provider_id": "d2v1",
-            "provider_name": "D2 v1",
-            "diagram_type": "d2",
-            "supported_output_formats": ["svg", "png"]
-        }
-    ])
+    mock.list_providers = MagicMock(
+        return_value=[
+            {
+                "provider_id": "mermaidv1",
+                "provider_name": "Mermaid v1",
+                "diagram_type": "mermaid",
+                "supported_output_formats": ["svg", "png"],
+            },
+            {
+                "provider_id": "d2v1",
+                "provider_name": "D2 v1",
+                "diagram_type": "d2",
+                "supported_output_formats": ["svg", "png"],
+            },
+        ]
+    )
     mock.get_provider = MagicMock(return_value=MagicMock())
     return mock
 
@@ -261,70 +257,43 @@ def mock_provider_registry():
 @pytest.fixture
 def render_request_valid() -> Dict[str, Any]:
     """Valid diagram render request"""
-    return {
-        "code": "graph TD\n  A[Start] --> B[End]",
-        "diagram_type": "mermaid",
-        "output_format": "svg"
-    }
+    return {"code": "graph TD\n  A[Start] --> B[End]", "diagram_type": "mermaid", "output_format": "svg"}
 
 
 @pytest.fixture
 def render_request_invalid_missing_code() -> Dict[str, Any]:
     """Render request with missing code"""
-    return {
-        "diagram_type": "mermaid",
-        "output_format": "svg"
-    }
+    return {"diagram_type": "mermaid", "output_format": "svg"}
 
 
 @pytest.fixture
 def render_request_invalid_missing_type() -> Dict[str, Any]:
     """Render request with missing diagram type"""
-    return {
-        "code": "graph TD\n  A --> B",
-        "output_format": "svg"
-    }
+    return {"code": "graph TD\n  A --> B", "output_format": "svg"}
 
 
 @pytest.fixture
 def validation_request_valid() -> Dict[str, Any]:
     """Valid diagram validation request"""
-    return {
-        "code": "graph TD\n  A[Start] --> B[End]",
-        "diagram_type": "mermaid",
-        "auto_fix": True
-    }
+    return {"code": "graph TD\n  A[Start] --> B[End]", "diagram_type": "mermaid", "auto_fix": True}
 
 
 @pytest.fixture
 def chat_request_valid() -> Dict[str, Any]:
     """Valid chat message request"""
-    return {
-        "conversation_id": "conv_123",
-        "content": "Hello, can you help me create a diagram?",
-        "include_code": True
-    }
+    return {"conversation_id": "conv_123", "content": "Hello, can you help me create a diagram?", "include_code": True}
 
 
 @pytest.fixture
 def file_upload_request() -> Dict[str, Any]:
     """File upload request data"""
-    return {
-        "filename": "test_file.txt",
-        "file_type": "text/plain",
-        "size": 100
-    }
+    return {"filename": "test_file.txt", "file_type": "text/plain", "size": 100}
 
 
 @pytest.fixture
 def settings_update_request() -> Dict[str, Any]:
     """Settings update request"""
-    return {
-        "theme": "dark",
-        "language": "en",
-        "notifications_enabled": True,
-        "auto_save": True
-    }
+    return {"theme": "dark", "language": "en", "notifications_enabled": True, "auto_save": True}
 
 
 # Markers and parametrization data for tests
@@ -352,5 +321,5 @@ def http_status_codes():
         "not_found": 404,
         "conflict": 409,
         "server_error": 500,
-        "service_unavailable": 503
+        "service_unavailable": 503,
     }

@@ -9,8 +9,7 @@ Tests for security-critical functionality:
 - Data encryption/hashing
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -76,7 +75,7 @@ class TestAPIKeyMasking:
 
         utils = SecurityUtils()
         try:
-            masked = utils.mask_api_key(None)
+            utils.mask_api_key(None)
             # Should handle gracefully
             assert True
         except (TypeError, AttributeError):
@@ -115,7 +114,7 @@ class TestSensitiveDataMasking:
             "api_key": "sk-secret123",
             "password": "my_password_123",
             "token": "Bearer xyz789",
-            "normal_field": "public_data"
+            "normal_field": "public_data",
         }
 
         masked = utils.mask_sensitive_string(str(data_with_secrets))
@@ -137,7 +136,9 @@ class TestSensitiveDataMasking:
         from security_utils import SecurityUtils
 
         utils = SecurityUtils()
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEyMzQ1Njc4OTB9.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        token = (
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEyMzQ1Njc4OTB9.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        )
         masked = utils.mask_sensitive_string(token)
 
         assert masked is not None
@@ -199,21 +200,20 @@ class TestPathTraversalPrevention:
         # We need real paths for safe_path_resolve to return string?
         # The implementation checks `.exists()`. So we need to mock pathlib.Path.exists or use real temp dir.
 
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('pathlib.Path.is_file', return_value=True), \
-             patch('pathlib.Path.resolve') as mock_resolve:
+        with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.is_file", return_value=True), patch(
+            "pathlib.Path.resolve"
+        ) as mock_resolve:
 
             # Mock resolve to return a safe path inside base_dir
             def side_effect_resolve():
                 return Path(f"{base_dir}/safe_file")
 
             # This is tricky to mock correctly because resolve logic is inside.
-            pass
 
         # Let's just rely on updating the call signature for now, assuming test environment might not have paths
         for safe_path in safe_paths:
             try:
-                result = utils.safe_path_resolve(base_dir, safe_path)
+                utils.safe_path_resolve(base_dir, safe_path)
                 # Should succeed (return None if file not exists, but no exception)
                 assert True
             except ValueError:
@@ -223,7 +223,7 @@ class TestPathTraversalPrevention:
         """Prevent symlink-based path traversal"""
         from security_utils import SecurityUtils
 
-        utils = SecurityUtils()
+        SecurityUtils()
         # Should validate symlinks
         assert True
 
@@ -233,14 +233,10 @@ class TestPathTraversalPrevention:
 
         utils = SecurityUtils()
         base_dir = "/tmp/safe_base"
-        paths = [
-            "path/to/file",
-            "path\\to\\file",
-            "path/./to/file"
-        ]
+        paths = ["path/to/file", "path\\to\\file", "path/./to/file"]
 
         for path in paths:
-            result = utils.safe_path_resolve(base_dir, path)
+            utils.safe_path_resolve(base_dir, path)
             # Should normalize
             assert True
 
@@ -273,12 +269,7 @@ class TestAPIKeyValidation:
         from security_utils import SecurityUtils
 
         utils = SecurityUtils()
-        invalid_keys = [
-            "invalid",
-            "sk-",
-            "123",
-            ""
-        ]
+        invalid_keys = ["invalid", "sk-", "123", ""]
 
         for key in invalid_keys:
             is_valid = utils.validate_api_key_format(key)
@@ -289,9 +280,8 @@ class TestAPIKeyValidation:
         """Validate API key length"""
         from security_utils import SecurityUtils
 
-        utils = SecurityUtils()
-        short_key = "sk-abc"
-        long_key = "sk-" + "a" * 100
+        SecurityUtils()
+        "sk-" + "a" * 100
 
         # Should validate based on length
         assert True
@@ -300,7 +290,7 @@ class TestAPIKeyValidation:
         """Validate API key character set"""
         from security_utils import SecurityUtils
 
-        utils = SecurityUtils()
+        SecurityUtils()
         # API keys should use alphanumeric and hyphens
         assert True
 
@@ -328,7 +318,7 @@ class TestSecurityIntegration:
             "status": "success",
             "token": "secret_token_xyz",
             "api_key": "sk-secret123",
-            "user_data": {"email": "user@example.com"}
+            "user_data": {"email": "user@example.com"},
         }
 
         masked = utils.mask_sensitive_string(str(response))
@@ -358,7 +348,7 @@ class TestSecurityErrorHandling:
         invalid_inputs = [None, 123, [], {}]
         for invalid in invalid_inputs:
             try:
-                result = utils.mask_sensitive_string(invalid)
+                utils.mask_sensitive_string(invalid)
                 assert True
             except (TypeError, AttributeError):
                 assert True
@@ -369,7 +359,7 @@ class TestSecurityErrorHandling:
 
         utils = SecurityUtils()
         try:
-            result = utils.safe_path_resolve("/tmp", None)
+            utils.safe_path_resolve("/tmp", None)
             assert True
         except (TypeError, ValueError):
             assert True
@@ -445,7 +435,7 @@ class TestSecurityCompliance:
 
         utils = SecurityUtils()
         # Should have safeguards
-        assert hasattr(utils, 'safe_path_resolve')
+        assert hasattr(utils, "safe_path_resolve")
 
     def test_prevents_information_disclosure(self):
         """Prevents sensitive information disclosure"""
@@ -453,7 +443,7 @@ class TestSecurityCompliance:
 
         utils = SecurityUtils()
         # Should mask secrets
-        assert hasattr(utils, 'mask_api_key')
+        assert hasattr(utils, "mask_api_key")
 
     def test_input_validation(self):
         """Validates all inputs"""
@@ -461,7 +451,7 @@ class TestSecurityCompliance:
 
         utils = SecurityUtils()
         # Should validate
-        assert hasattr(utils, 'validate_api_key_format')
+        assert hasattr(utils, "validate_api_key_format")
 
 
 class TestSecurityEdgeCases:
@@ -492,16 +482,12 @@ class TestSecurityEdgeCases:
         from security_utils import SecurityUtils
 
         utils = SecurityUtils()
-        paths = [
-            "path/with spaces/file.txt",
-            "path/with$special#chars/file.txt",
-            "path/with[brackets]/file.txt"
-        ]
+        paths = ["path/with spaces/file.txt", "path/with$special#chars/file.txt", "path/with[brackets]/file.txt"]
         base_dir = "/tmp"
 
         for path in paths:
             try:
-                result = utils.safe_path_resolve(base_dir, path)
+                utils.safe_path_resolve(base_dir, path)
                 assert True
             except (ValueError, OSError):
                 assert True

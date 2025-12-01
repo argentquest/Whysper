@@ -9,8 +9,7 @@ Tests for AI provider base classes and diagram rendering:
 - Error handling and recovery
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock
 
 
 class TestBaseAIProvider:
@@ -33,7 +32,7 @@ class TestBaseAIProvider:
 
         # Should be abstract
         try:
-            provider = BaseAIProvider()
+            BaseAIProvider()
             assert False, "Should not instantiate abstract class"
         except TypeError:
             assert True
@@ -43,12 +42,12 @@ class TestBaseAIProvider:
         from common.base_ai import BaseAIProvider
 
         required_methods = [
-            '_get_provider_config',
-            '_prepare_headers',
-            '_prepare_request_data',
-            '_extract_response_content',
-            '_extract_token_usage',
-            '_handle_api_error'
+            "_get_provider_config",
+            "_prepare_headers",
+            "_prepare_request_data",
+            "_extract_response_content",
+            "_extract_token_usage",
+            "_handle_api_error",
         ]
 
         for method in required_methods:
@@ -56,14 +55,12 @@ class TestBaseAIProvider:
 
     def test_api_key_handling(self, mock_ai_config):
         """Test secure API key handling"""
-        from common.base_ai import BaseAIProvider
 
         # Should store API keys securely
         assert mock_ai_config.api_key is not None
 
     def test_token_tracking(self):
         """Track token usage"""
-        from common.base_ai import BaseAIProvider
 
         # Should track tokens
         assert True
@@ -123,7 +120,7 @@ class TestAIProviderFactory:
 
         factory = AIProviderFactory()
         try:
-            provider = factory.create_provider("unknown_provider", "test_key")
+            factory.create_provider("unknown_provider", "test_key")
             assert False or True  # May raise exception
         except (KeyError, ValueError):
             assert True
@@ -132,7 +129,7 @@ class TestAIProviderFactory:
         """Validate provider configuration"""
         from common.ai import AIProviderFactory
 
-        factory = AIProviderFactory()
+        AIProviderFactory()
         # Should validate config
         assert True
 
@@ -140,7 +137,7 @@ class TestAIProviderFactory:
         """Dynamically load provider modules"""
         from common.ai import AIProviderFactory
 
-        factory = AIProviderFactory()
+        AIProviderFactory()
         # Should support dynamic loading
         assert True
 
@@ -165,7 +162,7 @@ class TestAIProcessor:
 
         try:
             provider = AIProviderFactory.create_provider("custom", "test_key")
-            processor = AIProcessor(provider)
+            AIProcessor(provider)
             # Should process request
             assert True
         except Exception:
@@ -177,7 +174,7 @@ class TestAIProcessor:
 
         try:
             provider = AIProviderFactory.create_provider("custom", "test_key")
-            processor = AIProcessor(provider)
+            AIProcessor(provider)
             # Should handle errors
             assert True
         except Exception:
@@ -189,7 +186,7 @@ class TestAIProcessor:
 
         try:
             provider = AIProviderFactory.create_provider("custom", "test_key")
-            processor = AIProcessor(provider)
+            AIProcessor(provider)
             # Should count tokens
             assert True
         except Exception:
@@ -205,7 +202,7 @@ class TestBaseDiagramProvider:
 
         # Should be abstract
         try:
-            provider = BaseDiagramProvider()
+            BaseDiagramProvider()
             assert False or True
         except TypeError:
             assert True
@@ -222,7 +219,6 @@ class TestBaseDiagramProvider:
 
     def test_correction_strategy(self):
         """Test diagram code correction"""
-        from diagrams.base_diagram import BaseDiagramProvider
 
         # Should support 3-tier correction
         assert True
@@ -269,7 +265,7 @@ class TestProviderRegistry:
         """Auto-discover providers from folders"""
         from diagrams.provider_registry import ProviderRegistry
 
-        registry = ProviderRegistry()
+        ProviderRegistry()
         # Should auto-discover providers
         assert True
 
@@ -277,7 +273,7 @@ class TestProviderRegistry:
         """Load provider modules dynamically"""
         from diagrams.provider_registry import ProviderRegistry
 
-        registry = ProviderRegistry()
+        ProviderRegistry()
         # Should load modules
         assert True
 
@@ -285,8 +281,8 @@ class TestProviderRegistry:
         """Registry follows singleton pattern"""
         from diagrams.provider_registry import ProviderRegistry
 
-        registry1 = ProviderRegistry()
-        registry2 = ProviderRegistry()
+        ProviderRegistry()
+        ProviderRegistry()
         # Should be same instance or behavior
         assert True
 
@@ -383,7 +379,7 @@ class TestProviderErrors:
 
     def test_handle_invalid_config(self, ai_provider_configs):
         """Handle invalid provider config"""
-        invalid_config = ai_provider_configs["invalid"]
+        ai_provider_configs["invalid"]
         # Should handle gracefully
         assert True
 
@@ -443,7 +439,6 @@ class TestProviderConfiguration:
 
     def test_load_provider_config(self):
         """Load provider configuration"""
-        from diagrams.provider_config import ProviderConfig
 
         # Should load config
         assert True

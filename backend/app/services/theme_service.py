@@ -1,4 +1,5 @@
 """Theme management service for web backend."""
+
 from __future__ import annotations
 
 import os
@@ -26,10 +27,10 @@ class ThemeManager:
         Sets up available themes and loads the user's theme preference from environment variables.
         """
         # Define the list of available themes for the application
-        self.themes = ['light', 'dark']
+        self.themes = ["light", "dark"]
 
         # Set a default theme to ensure the application always starts with a theme
-        self.current_theme_name = 'light'
+        self.current_theme_name = "light"
 
         # Load user's saved theme preference from environment variable
         self._load_theme_preference()
@@ -42,7 +43,7 @@ class ThemeManager:
         Defaults to 'light' if not set or invalid.
         """
         # Retrieve theme preference from environment variable, defaulting to 'light'
-        theme_pref = os.getenv('UI_THEME', 'light')
+        theme_pref = os.getenv("UI_THEME", "light")
 
         # Validate and set the theme preference if it's in the available themes
         if theme_pref in self.themes:
@@ -96,8 +97,8 @@ class ThemeManager:
             bool: True if the theme was successfully toggled.
         """
         # Determine the opposite theme based on current theme
-        new_theme = 'dark' if self.current_theme_name == 'light' else 'light'
-        
+        new_theme = "dark" if self.current_theme_name == "light" else "light"
+
         # Switch to the new theme and return the result
         return self.switch_theme(new_theme)
 

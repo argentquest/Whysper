@@ -3,6 +3,7 @@ import pytest
 import time
 from app.services.diagram_factory_service import DiagramSessionStore
 
+
 @pytest.mark.asyncio
 async def test_session_cleanup():
     """Test that stale sessions are cleaned up."""
@@ -23,7 +24,7 @@ async def test_session_cleanup():
 
     # Create a new session, which should trigger cleanup
     # Default TTL is 3600 (1 hour)
-    s2 = DiagramSessionStore.create_session("s2")
+    DiagramSessionStore.create_session("s2")
 
     # Verify s1 is gone
     assert DiagramSessionStore.get_session("s1") is None
@@ -32,6 +33,7 @@ async def test_session_cleanup():
     assert DiagramSessionStore.get_session("s2") is not None
 
     print("Session cleanup verified.")
+
 
 if __name__ == "__main__":
     asyncio.run(test_session_cleanup())

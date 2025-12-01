@@ -12,6 +12,8 @@ requests
 openai
 anthropic
 flake8
+black
+autopep8
 fastmcp
 mcp
 jsonschema

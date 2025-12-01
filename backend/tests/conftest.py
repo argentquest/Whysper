@@ -18,13 +18,13 @@ if backend_dir not in sys.path:
 
 # Add key subdirectories to Python path to enable importing from specific backend modules
 # This allows tests to import from providers, common, and app directories
-sys.path.insert(0, os.path.join(backend_dir, 'providers'))
-sys.path.insert(0, os.path.join(backend_dir, 'common'))
-sys.path.insert(0, os.path.join(backend_dir, 'app'))
+sys.path.insert(0, os.path.join(backend_dir, "providers"))
+sys.path.insert(0, os.path.join(backend_dir, "common"))
+sys.path.insert(0, os.path.join(backend_dir, "app"))
 
 # Set PYTHONPATH environment variable to include backend directory
 # This ensures consistent module import behavior across different environments
-os.environ['PYTHONPATH'] = f"{backend_dir}{os.pathsep}{os.environ.get('PYTHONPATH', '')}"
+os.environ["PYTHONPATH"] = f"{backend_dir}{os.pathsep}{os.environ.get('PYTHONPATH', '')}"
 
 
 def save_svg_artifact(test_name: str, diagram_type: str, content: str, provider_id: str):

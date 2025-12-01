@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_provider_diagnostics():
     """Test provider diagnostics"""
     print("\nSKIPPING: debug_provider_availability is a standalone script not meant for automated testing.")

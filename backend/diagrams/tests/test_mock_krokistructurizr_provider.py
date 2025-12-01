@@ -2,6 +2,7 @@
 Mock Test for Kroki Structurizr Provider
 """
 
+from diagrams.krokistructurizr.kroki_renderer import KrokiStructurizrProvider
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
@@ -11,9 +12,6 @@ import sys
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.krokistructurizr.kroki_renderer import KrokiStructurizrProvider
-from diagrams.models import ProviderCapability
 
 
 class TestMockKrokiStructurizrProvider(unittest.TestCase):
@@ -55,7 +53,7 @@ class TestMockKrokiStructurizrProvider(unittest.TestCase):
     def test_validate_code_valid(self, mock_post):
         """Test validate_code with valid response."""
         # Ensure availability check passes
-        with patch.object(self.provider, 'is_available', return_value=True):
+        with patch.object(self.provider, "is_available", return_value=True):
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_post.return_value = mock_response
@@ -68,7 +66,7 @@ class TestMockKrokiStructurizrProvider(unittest.TestCase):
     @patch("requests.post")
     def test_validate_code_invalid(self, mock_post):
         """Test validate_code with invalid response."""
-        with patch.object(self.provider, 'is_available', return_value=True):
+        with patch.object(self.provider, "is_available", return_value=True):
             mock_response = MagicMock()
             mock_response.status_code = 400
             mock_response.text = "Syntax Error"
@@ -82,7 +80,7 @@ class TestMockKrokiStructurizrProvider(unittest.TestCase):
     @patch("requests.post")
     def test_render_svg_success(self, mock_post):
         """Test render with SVG output."""
-        with patch.object(self.provider, 'is_available', return_value=True):
+        with patch.object(self.provider, "is_available", return_value=True):
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.text = "<svg>...</svg>"
@@ -97,7 +95,7 @@ class TestMockKrokiStructurizrProvider(unittest.TestCase):
     def test_auto_fix_pattern_based(self):
         """Test pattern-based auto-fix logic."""
         # Case 1: Missing workspace
-        with patch.object(self.provider, 'validate_code') as mock_validate:
+        with patch.object(self.provider, "validate_code") as mock_validate:
             # First it will call validate with the fixed code. Mock it to return valid.
             mock_validate.return_value = MagicMock(is_valid=True)
 
@@ -110,15 +108,17 @@ class TestMockKrokiStructurizrProvider(unittest.TestCase):
             # Now we can safely assert calls on the mocked logger
             # Check that log was called with "Added missing workspace declaration"
             # Since we iterate over all calls, we just check if it's present in any call
-            found = False
             for call in self.provider.logger.info.call_args_list:
                 args, _ = call
-                if "Added missing workspace declaration" in args[0] or "Pattern-based fixes applied successfully" in args[0]:
-                   found = True
-                   break
+                if (
+                    "Added missing workspace declaration" in args[0]
+                    or "Pattern-based fixes applied successfully" in args[0]
+                ):
+                    break
             # Note: The exact log message might be "Pattern-based fixes applied successfully: Added missing workspace declaration"
             # Or inside the list of corrections.
             # Let's just check that auto_fixed is True, which implies the logic ran.
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

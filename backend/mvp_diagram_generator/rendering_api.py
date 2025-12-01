@@ -9,7 +9,6 @@ from common.logger import get_logger
 
 # Import diagram validation functions for different diagram types
 from .diagram_validators import (
-    is_valid_d2_diagram,
     is_valid_mermaid_diagram,
     is_valid_c4_diagram,
 )
@@ -18,7 +17,6 @@ from .d2_cli_validator import validate_and_fix_d2_with_cli, is_d2_cli_available
 
 # Import rendering and conversion modules for diagram generation
 from .renderer_v2 import render_diagram  # Use new renderer with frontend HTML
-from .c4_to_d2 import convert_c4_to_d2
 
 # Import provider system for C4 rendering
 from diagrams.provider_registry import get_registry
@@ -34,6 +32,8 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 # Helper function to detect C4 diagram level based on user's prompt
+
+
 def detect_c4_level(prompt: str) -> Optional[str]:
     """
     Helper function to detect C4 diagram level based on user's prompt.
@@ -49,10 +49,10 @@ def detect_c4_level(prompt: str) -> Optional[str]:
 
     # Define patterns to match different C4 diagram levels
     patterns = [
-        (r'\bC1\b|SYSTEM\s+CONTEXT', 'C1'),
-        (r'\bC2\b|CONTAINER(?:\s+DIAGRAM)?', 'C2'),
-        (r'\bC3\b|COMPONENT(?:\s+DIAGRAM)?', 'C3'),
-        (r'\bC4\b|CODE\s+LEVEL', 'C4'),
+        (r"\bC1\b|SYSTEM\s+CONTEXT", "C1"),
+        (r"\bC2\b|CONTAINER(?:\s+DIAGRAM)?", "C2"),
+        (r"\bC3\b|COMPONENT(?:\s+DIAGRAM)?", "C3"),
+        (r"\bC4\b|CODE\s+LEVEL", "C4"),
     ]
 
     # Iterate through patterns to find matching C4 level
@@ -63,7 +63,10 @@ def detect_c4_level(prompt: str) -> Optional[str]:
 
     return None
 
+
 # Pydantic models for request and response validation
+
+
 class DiagramRequest(BaseModel):
     """
     Request model for diagram generation.
@@ -74,10 +77,11 @@ class DiagramRequest(BaseModel):
         c4_level (Optional[str]): C4 level: "C1", "C2", "C3", "C4" (auto-detected if not provided)
         output_format (str): Output format (svg, png). Defaults to "svg".
     """
-    prompt: str                           # Natural language description of diagram
-    diagram_type: str = "d2"              # Type of diagram to generate
-    c4_level: Optional[str] = None        # C4 level: "C1", "C2", "C3", "C4" (auto-detected if not provided)
-    output_format: str = "svg"            # Output format (svg, png)
+
+    prompt: str  # Natural language description of diagram
+    diagram_type: str = "d2"  # Type of diagram to generate
+    c4_level: Optional[str] = None  # C4 level: "C1", "C2", "C3", "C4" (auto-detected if not provided)
+    output_format: str = "svg"  # Output format (svg, png)
 
 
 class ErrorInfo(BaseModel):
@@ -88,8 +92,9 @@ class ErrorInfo(BaseModel):
         has_error (bool): Whether an error occurred
         error_message (str): Error message description
     """
-    has_error: bool                # Whether an error occurred
-    error_message: str             # Error message description
+
+    has_error: bool  # Whether an error occurred
+    error_message: str  # Error message description
 
 
 class DiagramResponse(BaseModel):
@@ -104,19 +109,17 @@ class DiagramResponse(BaseModel):
         diagram_code (str): Generated diagram source code
         error_info (ErrorInfo): Error information if any
     """
-    image_data: str               # Base64-encoded image data
-    image_format: str             # Format of the generated image
-    initial_prompt: str           # Original user prompt
-    full_response: str            # Complete AI response (includes thinking)
-    diagram_code: str             # Generated diagram source code
-    error_info: ErrorInfo         # Error information if any
+
+    image_data: str  # Base64-encoded image data
+    image_format: str  # Format of the generated image
+    initial_prompt: str  # Original user prompt
+    full_response: str  # Complete AI response (includes thinking)
+    diagram_code: str  # Generated diagram source code
+    error_info: ErrorInfo  # Error information if any
 
 
 @router.post("/generate", response_model=DiagramResponse)
-async def generate_diagram(
-    request: DiagramRequest,
-    settings: Settings = Depends(get_settings)
-):
+async def generate_diagram(request: DiagramRequest, settings: Settings = Depends(get_settings)):
     """
     Generate a diagram from a prompt using AI and available renderers.
 
@@ -145,7 +148,7 @@ async def generate_diagram(
 
             # Determine prompts directory, using environment settings or default path
             env_vars = env_manager.load_env_file()
-            prompts_dir = env_vars.get('PROMPTS_DIR', '').strip()
+            prompts_dir = env_vars.get("PROMPTS_DIR", "").strip()
             if not prompts_dir:
                 # Default: use relative path if no environment setting
                 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -154,7 +157,7 @@ async def generate_diagram(
                 # Use configured path, ensuring it points to prompts directory
                 if not os.path.isabs(prompts_dir):
                     prompts_dir = os.path.abspath(prompts_dir)
-                if not prompts_dir.endswith('prompts'):
+                if not prompts_dir.endswith("prompts"):
                     prompts_dir = os.path.join(prompts_dir, "prompts")
 
             # Determine appropriate prompt file for diagram type
@@ -173,7 +176,9 @@ async def generate_diagram(
                     logger.info("No C4 level detected; using generic c4-architecture.md")
 
             # Construct path to appropriate prompt file
-            prompt_file_path = os.path.join(prompts_dir, "coding", "agent", f"{diagram_type_for_prompt}-architecture.md")
+            prompt_file_path = os.path.join(
+                prompts_dir, "coding", "agent", f"{diagram_type_for_prompt}-architecture.md"
+            )
 
             with open(prompt_file_path, "r") as f:
                 agent_prompt = f.read()
@@ -198,9 +203,7 @@ async def generate_diagram(
         )
 
         # 4. Extract and validate the generated diagram code
-        code_blocks = extract_code_blocks_from_content(
-            full_response, "diagram_generation"
-        )
+        code_blocks = extract_code_blocks_from_content(full_response, "diagram_generation")
         if not code_blocks:
             # Handle case where no code blocks are found
             error_message = "No code blocks found in the AI response."
@@ -226,9 +229,7 @@ async def generate_diagram(
         if request.diagram_type == "d2":
             # Prefer CLI validation for D2 diagrams if available
             if is_d2_cli_available():
-                is_valid, corrected_code, message = validate_and_fix_d2_with_cli(
-                    diagram_code, max_attempts=8
-                )
+                is_valid, corrected_code, message = validate_and_fix_d2_with_cli(diagram_code, max_attempts=8)
                 diagram_code = corrected_code
             else:
                 # Fallback to pattern-based validation
@@ -274,26 +275,18 @@ async def generate_diagram(
                     else:
                         # Fallback to MVP renderer if provider fails
                         logger.info("Provider rendering failed, falling back to MVP renderer")
-                        image_data = await render_diagram(
-                            diagram_code, request.diagram_type, request.output_format
-                        )
+                        image_data = await render_diagram(diagram_code, request.diagram_type, request.output_format)
                 else:
                     # Fallback if no provider is available
                     logger.info("C4 provider not available, falling back to MVP renderer")
-                    image_data = await render_diagram(
-                        diagram_code, request.diagram_type, request.output_format
-                    )
+                    image_data = await render_diagram(diagram_code, request.diagram_type, request.output_format)
             except Exception as e:
                 # Handle any rendering exceptions
                 logger.info(f"Provider rendering failed: {e}, falling back to MVP renderer")
-                image_data = await render_diagram(
-                    diagram_code, request.diagram_type, request.output_format
-                )
+                image_data = await render_diagram(diagram_code, request.diagram_type, request.output_format)
         else:
             # Use standard renderer for non-C4 diagram types
-            image_data = await render_diagram(
-                diagram_code, request.diagram_type, request.output_format
-            )
+            image_data = await render_diagram(diagram_code, request.diagram_type, request.output_format)
 
         # 7. Return successful diagram generation response
         return {

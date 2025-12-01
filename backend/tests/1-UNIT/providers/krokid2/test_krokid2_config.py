@@ -2,6 +2,7 @@
 Test Kroki D2 provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
@@ -9,13 +10,11 @@ from pathlib import Path
 backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from diagrams.provider_config import get_config_loader
-
 
 def test_krokid2_config():
     # Initialize config loader to handle provider configuration
     loader = get_config_loader()
-    
+
     # Navigate to the backend root and provider-specific folder
     backend_root = Path(__file__).parent.parent.parent.parent.parent
     provider_folder = backend_root / "diagrams" / "krokid2"

@@ -21,13 +21,21 @@ Router Organization:
 - /documentation: Documentation generation
 - /auth: Authentication endpoints
 """
+
 from fastapi import APIRouter
 from .endpoints import (
-    chat, code, files, settings, system, documentation, auth, diagram_provider, diagram_events, diagram as diagram_wizard
+    chat,
+    code,
+    files,
+    settings,
+    system,
+    documentation,
+    auth,
+    diagram_provider,
+    diagram_events,
+    diagram as diagram_wizard,
 )
-from mvp_diagram_generator import (
-    rendering_api as diagram_generator_api
-)
+from mvp_diagram_generator import rendering_api as diagram_generator_api
 
 # Create the main API router to aggregate all endpoint routers
 # Serves as a centralized routing mechanism for the entire application
@@ -40,39 +48,19 @@ api_router = APIRouter()
 # =============================================================================
 
 # Include chat-related endpoints with '/chat' prefix for conversational features
-api_router.include_router(
-    chat.router,
-    prefix="/chat",
-    tags=["chat"]
-)
+api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
 
 # Include code-related endpoints for code processing and analysis
-api_router.include_router(
-    code.router,
-    prefix="/code",
-    tags=["code"]
-)
+api_router.include_router(code.router, prefix="/code", tags=["code"])
 
 # Include file system endpoints for file management operations
-api_router.include_router(
-    files.router,
-    prefix="/files",
-    tags=["files"]
-)
+api_router.include_router(files.router, prefix="/files", tags=["files"])
 
 # Include application settings endpoints for user configuration
-api_router.include_router(
-    settings.router,
-    prefix="/settings",
-    tags=["settings"]
-)
+api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 
 # Include system-level endpoints for health checks and system information
-api_router.include_router(
-    system.router,
-    prefix="/system",
-    tags=["system"]
-)
+api_router.include_router(system.router, prefix="/system", tags=["system"])
 
 # Include diagram wizard endpoints for creating and managing diagrams
 api_router.include_router(

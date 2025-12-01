@@ -5,6 +5,7 @@ for use in a REST environment.  It keeps the business logic (AI processing,
 code aggregation, persistent file context, system prompt execution) while
 removing UI dependencies so the same functionality can serve the web client.
 """
+
 from __future__ import annotations
 
 import os
@@ -18,6 +19,7 @@ from common.logger import get_logger
 from common.logging_decorator import log_method_call
 from common.models import AppState, ConversationMessage
 from pattern_matcher import pattern_matcher
+
 # from common.system_message_manager import system_message_manager  # Legacy - now using agent prompts
 from common.env_manager import env_manager
 from security_utils import SecurityUtils
@@ -379,21 +381,21 @@ class ConversationSession:
             None
         """
         logger.info(f"🔍 ADDING FILE TO SESSION {self.session_id}: {file_path}")
-        
+
         # Security Check: Prevent Path Traversal
         # Use CODE_PATH as base directory instead of current working directory
         env_vars = env_manager.load_env_file()
         code_path = env_vars.get("CODE_PATH", os.getcwd())
         logger.info(f"📂 Using CODE_PATH: {code_path}")
         logger.info(f"📄 Resolving file path: {file_path}")
-        
+
         safe_path = SecurityUtils.safe_path_resolve(code_path, file_path)
         logger.info(f"🔐 Resolved safe_path: {safe_path}")
-        
+
         if not safe_path:
             logger.info(
                 f"❌ PATH RESOLUTION FAILED for {file_path} - file not found or path traversal attempted",
-                extra={"session_id": self.session_id, "code_path": code_path, "file_path": file_path}
+                extra={"session_id": self.session_id, "code_path": code_path, "file_path": file_path},
             )
             return
 
@@ -435,7 +437,9 @@ class ConversationSession:
             file context immediately.
         """
         logger.debug(f"Clearing all files for session {self.session_id}")
-        logger.debug(f"Before clear: {len(self.selected_files)} selected, {len(self.app_state.get_persistent_files())} persistent files")
+        logger.debug(
+            f"Before clear: {len(self.selected_files)} selected, {len(self.app_state.get_persistent_files())} persistent files"
+        )
 
         # Clear selections
         self.selected_files = []
@@ -486,19 +490,22 @@ class ConversationSession:
 
         if context_files is not None:
             # Check if context files have actually changed
-            context_files_changed = (
-                len(context_files) != len(self.last_context_files) or
-                set(context_files) != set(self.last_context_files)
+            context_files_changed = len(context_files) != len(self.last_context_files) or set(context_files) != set(
+                self.last_context_files
             )
-            
+
             if context_files_changed:
-                logger.info(f"🔄 Context files changed - updating from {len(self.last_context_files)} to {len(context_files)} files")
+                logger.info(
+                    f"🔄 Context files changed - updating from {len(self.last_context_files)} to {len(context_files)} files"
+                )
                 logger.info(f"📋 Previous context: {self.last_context_files}")
                 logger.info(f"📋 New context: {context_files}")
                 self.update_selected_files(context_files)
                 self.last_context_files = context_files.copy()
             else:
-                logger.info(f"✅ Context files unchanged - keeping current selection of {len(self.selected_files)} files")
+                logger.info(
+                    f"✅ Context files unchanged - keeping current selection of {len(self.selected_files)} files"
+                )
 
         # Input validation
         if not question.strip():
@@ -515,10 +522,12 @@ class ConversationSession:
 
         # First message validation - warn if no file context but allow to proceed
         if is_first_message and not self.selected_files:
-            logger.info(f"First question has no file context in session {self.session_id} - proceeding without code context")
+            logger.info(
+                f"First question has no file context in session {self.session_id} - proceeding without code context"
+            )
 
         # Track question in session state
-        question_status = self.app_state.add_question(question)
+        self.app_state.add_question(question)
         question_index = len(self.app_state.question_history) - 1
         logger.debug(f"Question tracked with index {question_index}")
 
@@ -545,8 +554,11 @@ class ConversationSession:
         # ALWAYS include context if files are selected, regardless of message number
         has_selected_files = len(self.selected_files) > 0
         needs_codebase_context = is_first_message or self._is_tool_command(question) or has_selected_files
-        logger.info(f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message}, has_files={has_selected_files}, file_count={len(self.selected_files)})")
-        
+        logger.info(
+            f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message}, has_files={has_selected_files}, file_count={
+                len(
+                    self.selected_files)})")
+
         # Log context file update information
         if context_files is not None:
             logger.info(f"🔄 Context files updated this turn: {len(context_files)} files")
@@ -555,13 +567,13 @@ class ConversationSession:
         if not agent_prompt:
             agent_prompt = self._detect_diagram_request(question)
             if agent_prompt:
-                logger.info(f"🎨 [DIAGRAM DEBUG] Auto-detected diagram request, using agent prompt: {agent_prompt[:50]}...")
+                logger.info(
+                    f"🎨 [DIAGRAM DEBUG] Auto-detected diagram request, using agent prompt: {agent_prompt[:50]}..."
+                )
 
         # Track user message in conversation history
         logger.info("Adding user message to conversation history")
-        self.app_state.conversation_history.append(
-            ConversationMessage(role="user", content=question)
-        )
+        self.app_state.conversation_history.append(ConversationMessage(role="user", content=question))
 
         # Gather codebase content
         logger.info("Gathering codebase content for AI processing")
@@ -587,20 +599,38 @@ class ConversationSession:
 
         # DEBUG: Log agent prompt usage
         if agent_prompt:
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Using agent prompt for question: {question[:100]}..."))
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt length: {len(agent_prompt)} characters"))
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt preview: {agent_prompt[:200]}..."))
+            logger.info(
+                SecurityUtils.safe_debug_info(
+                    f"🎨 [DIAGRAM DEBUG] Using agent prompt for question: {question[:100]}..."
+                )
+            )
+            logger.info(
+                SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt length: {len(agent_prompt)} characters")
+            )
+            logger.info(
+                SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Agent prompt preview: {agent_prompt[:200]}...")
+            )
         else:
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] No agent prompt provided for question: {question[:100]}..."))
+            logger.info(
+                SecurityUtils.safe_debug_info(
+                    f"🎨 [DIAGRAM DEBUG] No agent prompt provided for question: {question[:100]}..."
+                )
+            )
 
         # DEBUG: Log AI response for diagram generation
         if "mermaid" in question.lower() or "diagram" in question.lower():
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] Question contains diagram keywords"))
-            logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response preview: {response_text[:500]}..."))
+            logger.info(SecurityUtils.safe_debug_info("🎨 [DIAGRAM DEBUG] Question contains diagram keywords"))
+            logger.info(
+                SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response preview: {response_text[:500]}...")
+            )
             if "```mermaid" in response_text:
-                logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response contains Mermaid code block"))
+                logger.info(
+                    SecurityUtils.safe_debug_info("🎨 [DIAGRAM DEBUG] AI response contains Mermaid code block")
+                )
             else:
-                logger.info(SecurityUtils.safe_debug_info(f"🎨 [DIAGRAM DEBUG] AI response does NOT contain Mermaid code block"))
+                logger.info(
+                    SecurityUtils.safe_debug_info("🎨 [DIAGRAM DEBUG] AI response does NOT contain Mermaid code block")
+                )
 
         # Calculate timing and resources
         processing_time = time.time() - start_time
@@ -622,7 +652,7 @@ class ConversationSession:
 
         # Convert markdown to HTML for frontend
         logger.debug("Converting markdown response to HTML")
-        html_response = markdown2.markdown(response_text, extras=['fenced-code-blocks', 'tables', 'codehilite'])
+        html_response = markdown2.markdown(response_text, extras=["fenced-code-blocks", "tables", "codehilite"])
 
         # Prepare and return response data
         response_data = {
@@ -636,7 +666,11 @@ class ConversationSession:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-        logger.info(f"Question processing completed for session {self.session_id} in {processing_time:.2f}s using {tokens_used} tokens")
+        logger.info(
+            f"Question processing completed for session {
+                self.session_id} in {
+                processing_time:.2f}s using {tokens_used} tokens"
+        )
         self.logger.info(
             "Question completed",
             extra={
@@ -683,7 +717,9 @@ class ConversationSession:
         # System prompt validation - warn if no file context but allow to proceed
         is_first_message = len(self.app_state.conversation_history) == 0
         if is_first_message and not self.selected_files:
-            logger.info(f"System prompt has no file context in session {self.session_id} - proceeding without code context")
+            logger.info(
+                f"System prompt has no file context in session {self.session_id} - proceeding without code context"
+            )
 
         # Gather codebase content for analysis
         logger.debug("Gathering codebase content for system prompt analysis")
@@ -741,7 +777,7 @@ class ConversationSession:
 
         # Convert to HTML and prepare response
         logger.debug("Converting system prompt response to HTML")
-        html_response = markdown2.markdown(response_text, extras=['fenced-code-blocks', 'tables', 'codehilite'])
+        html_response = markdown2.markdown(response_text, extras=["fenced-code-blocks", "tables", "codehilite"])
 
         response_data = {
             "response": html_response,
@@ -753,7 +789,11 @@ class ConversationSession:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-        logger.info(f"System prompt completed for session {self.session_id} in {processing_time:.2f}s using {tokens_used} tokens")
+        logger.info(
+            f"System prompt completed for session {
+                self.session_id} in {
+                processing_time:.2f}s using {tokens_used} tokens"
+        )
         self.logger.info(
             "System prompt executed",
             extra={
@@ -832,10 +872,12 @@ class ConversationSession:
 
     @log_method_call
     def _get_codebase_content(self, is_first_message: bool, needs_codebase_context: bool) -> str:
-        logger.info(f"🔄 GETTING CODEBASE CONTENT - first_message: {is_first_message}, needs_context: {needs_codebase_context}")
+        logger.info(
+            f"🔄 GETTING CODEBASE CONTENT - first_message: {is_first_message}, needs_context: {needs_codebase_context}"
+        )
         logger.info(f"📊 Current selected files count: {len(self.selected_files)}")
         logger.info(f"📋 Selected files: {self.selected_files}")
-        
+
         if not needs_codebase_context:
             logger.info("❌ No codebase context needed, returning empty")
             return ""
@@ -843,21 +885,21 @@ class ConversationSession:
         # Handle context for ANY message (first or subsequent)
         if self.selected_files:
             logger.info(f"📁 LOADING CONTEXT FILES - {len(self.selected_files)} files")
-            
+
             # For first message, make files persistent
             if is_first_message:
                 logger.info(f"🚀 FIRST MESSAGE - Making {len(self.selected_files)} files persistent")
                 self.app_state.set_persistent_files(self.selected_files)
-            
+
             logger.info(f"📖 Calling _load_files with: {self.selected_files}")
             content = self._load_files(self.selected_files)
             logger.info(f"📄 LOADED CONTENT - {len(content)} characters")
-            
+
             if content:
                 logger.info(f"✅ SUCCESS - Content loaded, preview: {content[:200]}...")
             else:
-                logger.info(f"❌ FAILED - No content loaded from files!")
-            
+                logger.info("❌ FAILED - No content loaded from files!")
+
             return content
         else:
             # No selected files, check for persistent files (for subsequent messages)
@@ -866,19 +908,19 @@ class ConversationSession:
                 if persistent_files:
                     logger.info(f"🔄 Using persistent files: {len(persistent_files)} files")
                     return self._load_files(persistent_files)
-            
+
             if is_first_message:
                 logger.info("⚠️ First message but NO SELECTED FILES")
             else:
                 logger.info("⚠️ No selected files or persistent files available")
-            
+
             return ""
 
     @log_method_call
     def _load_files(self, files: List[str]) -> str:
         logger.info(f"📚 LOADING FILES - {len(files)} files")
         logger.info(f"📋 Files to load: {files}")
-        
+
         try:
             if len(files) > 50:
                 logger.info("🔄 Using lazy loading (>50 files)")
@@ -886,13 +928,13 @@ class ConversationSession:
             else:
                 logger.info("🔄 Using regular loading (≤50 files)")
                 content = self.codebase_scanner.get_codebase_content(files)
-            
+
             logger.info(f"📄 LOADING RESULT - {len(content)} characters")
             if content:
                 logger.info(f"📖 Content preview: {content[:200]}...")
             else:
                 logger.info("❌ NO CONTENT RETURNED from codebase scanner!")
-            
+
             return content
         except Exception as e:
             logger.info(f"❌ EXCEPTION in _load_files: {str(e)}")
@@ -901,17 +943,16 @@ class ConversationSession:
     @log_method_call
     def _process_with_ai(self, question: str, codebase_content: str) -> str:
         conversation_for_api = []
-        
+
         # Check if we have a system message in the conversation history
         has_system_message = (
-            len(self.app_state.conversation_history) > 0 and
-            self.app_state.conversation_history[0].role == "system"
+            len(self.app_state.conversation_history) > 0 and self.app_state.conversation_history[0].role == "system"
         )
-        
+
         if has_system_message:
             # Include the system message that was already injected with agent prompt
             conversation_for_api.append(self.app_state.conversation_history[0].to_dict())
-            
+
             # Add all other messages except the last one (current user message)
             for message in self.app_state.conversation_history[1:-1]:
                 conversation_for_api.append(message.to_dict())
@@ -947,7 +988,7 @@ class ConversationSession:
         import re
 
         # Check if response contains D2 code blocks for logging purposes
-        d2_pattern = r'```d2\s*\n?(.*?)```'
+        d2_pattern = r"```d2\s*\n?(.*?)```"
         d2_matches = re.findall(d2_pattern, response_text, re.DOTALL)
 
         if not d2_matches:
@@ -955,12 +996,14 @@ class ConversationSession:
             return response_text
 
         logger.info(f"📊 [D2 DIAGRAMS] Found {len(d2_matches)} D2 diagram(s) in response")
-        logger.info(f"📊 [D2 DIAGRAMS] Validation will be handled by frontend diagramProviderService (/api/v1/diagrams/v2/validate)")
+        logger.info(
+            "📊 [D2 DIAGRAMS] Validation will be handled by frontend diagramProviderService (/api/v1/diagrams/v2/validate)"
+        )
 
         try:
             # Simply return the response as-is
             # The frontend will validate and render via the backend provider system
-            logger.info(f"✅ [D2 DIAGRAMS] Response ready for frontend processing")
+            logger.info("✅ [D2 DIAGRAMS] Response ready for frontend processing")
             return response_text
 
         except Exception as e:
@@ -969,7 +1012,9 @@ class ConversationSession:
             return response_text
 
     @log_method_call
-    def _validate_and_fix_mermaid_diagrams(self, response_text: str, original_question: str, max_retries: int = 5) -> str:
+    def _validate_and_fix_mermaid_diagrams(
+        self, response_text: str, original_question: str, max_retries: int = 5
+    ) -> str:
         """
         Mermaid diagram validation is now delegated to the backend provider service.
 
@@ -987,7 +1032,7 @@ class ConversationSession:
         import re
 
         # Check if response contains Mermaid code blocks
-        mermaid_pattern = r'```mermaid\s*\n?(.*?)```'
+        mermaid_pattern = r"```mermaid\s*\n?(.*?)```"
         mermaid_matches = re.findall(mermaid_pattern, response_text, re.DOTALL)
 
         if not mermaid_matches:
@@ -995,10 +1040,10 @@ class ConversationSession:
             return response_text
 
         logger.info(f"🎨 [MERMAID DIAGRAMS] Found {len(mermaid_matches)} Mermaid diagram(s) in response")
-        logger.info(f"🎨 [MERMAID DIAGRAMS] Validation will be handled by frontend diagramProviderService")
+        logger.info("🎨 [MERMAID DIAGRAMS] Validation will be handled by frontend diagramProviderService")
 
         try:
-            logger.info(f"✅ [MERMAID DIAGRAMS] Response ready for frontend processing")
+            logger.info("✅ [MERMAID DIAGRAMS] Response ready for frontend processing")
             return response_text
         except Exception as e:
             logger.info(f"Error in _validate_and_fix_mermaid_diagrams: {str(e)}")
@@ -1021,7 +1066,7 @@ class ConversationSession:
         import re
 
         # Match ```d2 with optional whitespace before newline or content
-        d2_pattern = r'```d2\s*\n?(.*?)```'
+        d2_pattern = r"```d2\s*\n?(.*?)```"
         d2_matches = re.findall(d2_pattern, response_text, re.DOTALL)
 
         if not d2_matches:
@@ -1029,10 +1074,10 @@ class ConversationSession:
             return response_text
 
         logger.info(f"🎯 [D2 DIAGRAMS] Found {len(d2_matches)} D2 diagram(s) in response")
-        logger.info(f"🎯 [D2 DIAGRAMS] Rendering will be handled by frontend diagramProviderService")
+        logger.info("🎯 [D2 DIAGRAMS] Rendering will be handled by frontend diagramProviderService")
 
         try:
-            logger.info(f"✅ [D2 DIAGRAMS] Response ready for frontend processing")
+            logger.info("✅ [D2 DIAGRAMS] Response ready for frontend processing")
             return response_text
         except Exception as e:
             logger.info(f"Error in _pre_render_d2_diagrams: {str(e)}")
@@ -1086,9 +1131,7 @@ class ConversationSession:
             logger.debug("Updated existing system message with current context")
         else:
             # Insert new system message at position 0
-            self.app_state.conversation_history.insert(
-                0, ConversationMessage(role="system", content=system_msg)
-            )
+            self.app_state.conversation_history.insert(0, ConversationMessage(role="system", content=system_msg))
             logger.debug("Inserted new system message with current context")
 
     @log_method_call
@@ -1108,19 +1151,17 @@ class ConversationSession:
         Returns:
             None
         """
-        self.app_state.conversation_history.append(
-            ConversationMessage(role="assistant", content=response_text)
-        )
+        self.app_state.conversation_history.append(ConversationMessage(role="assistant", content=response_text))
 
     @log_method_call
     def _format_agent_prompt(self, agent_prompt: str, codebase_content: str) -> str:
         """
         Format agent prompt with codebase content.
-        
+
         Args:
             agent_prompt: The agent prompt content
             codebase_content: The codebase content to include
-            
+
         Returns:
             Formatted system message
         """
@@ -1143,26 +1184,21 @@ class ConversationSession:
             "graph TD\n"
             "    A --> B\n"
             "```\n\n"
-            "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n"
-        )
-        
+            "VIOLATION OF THIS RULE WILL BREAK THE APPLICATION. Respond in pure markdown only.\n\n")
+
         # Check if agent prompt has a placeholder for codebase content
         if "{codebase_content}" in agent_prompt:
             formatted_prompt = agent_prompt.replace("{codebase_content}", codebase_content)
         else:
             # If no placeholder, append codebase content
             formatted_prompt = f"{agent_prompt}\n\nThe user has provided the following codebase:\n\n{codebase_content}"
-            
+
         return markdown_instruction + formatted_prompt
 
     @log_method_call
     def _update_system_prompt_history(self, response_text: str) -> None:
-        self.app_state.conversation_history.append(
-            ConversationMessage(role="user", content="[System Prompt Executed]")
-        )
-        self.app_state.conversation_history.append(
-            ConversationMessage(role="assistant", content=response_text)
-        )
+        self.app_state.conversation_history.append(ConversationMessage(role="user", content="[System Prompt Executed]"))
+        self.app_state.conversation_history.append(ConversationMessage(role="assistant", content=response_text))
 
     @log_method_call
     def _get_last_token_usage(self) -> dict:
@@ -1186,20 +1222,10 @@ class ConversationSession:
             elif provider and hasattr(provider, "_last_token_usage"):
                 # Fallback to simple token count
                 total = int(provider._last_token_usage)
-                return {
-                    "total_tokens": total,
-                    "input_tokens": 0,
-                    "output_tokens": 0,
-                    "cached_tokens": 0
-                }
+                return {"total_tokens": total, "input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
         except Exception:
             pass
-        return {
-            "total_tokens": 0,
-            "input_tokens": 0,
-            "output_tokens": 0,
-            "cached_tokens": 0
-        }
+        return {"total_tokens": 0, "input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
 
     @log_method_call
     def _detect_diagram_request(self, question: str) -> Optional[str]:
@@ -1215,22 +1241,28 @@ class ConversationSession:
         question_lower = question.lower()
 
         # Check for Mermaid diagram requests
-        if ("mermaid" in question_lower and
-            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+        if "mermaid" in question_lower and (
+            "diagram" in question_lower or "generate" in question_lower or "create" in question_lower
+        ):
             try:
                 from .settings_service import settings_service
+
                 mermaid_prompt = settings_service.get_agent_prompt_content("mermaid-architecture.md")
                 if mermaid_prompt:
-                    logger.info("🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt")
+                    logger.info(
+                        "🎨 [DIAGRAM DEBUG] Detected Mermaid diagram request, loading mermaid-architecture.md prompt"
+                    )
                     return mermaid_prompt
             except Exception as e:
                 logger.info(f"Failed to load mermaid prompt: {e}")
 
         # Check for D2 diagram requests
-        if ("d2" in question_lower and
-            ("diagram" in question_lower or "generate" in question_lower or "create" in question_lower)):
+        if "d2" in question_lower and (
+            "diagram" in question_lower or "generate" in question_lower or "create" in question_lower
+        ):
             try:
                 from .settings_service import settings_service
+
                 d2_prompt = settings_service.get_agent_prompt_content("d2-architecture.md")
                 if d2_prompt:
                     logger.info("🎨 [DIAGRAM DEBUG] Detected D2 diagram request, loading d2-architecture.md prompt")
@@ -1329,7 +1361,7 @@ class ConversationManager:
     ) -> Tuple[ConversationSession, bool]:
         """
         Get existing session or create a new one if it doesn't exist.
-        
+
         Args:
             session_id: The session ID.
             api_key: The API key.
@@ -1349,7 +1381,7 @@ class ConversationManager:
                 extra={"session_id": session_id},
             )
             return self._sessions[session_id], False
-        
+
         # Create new session
         self._logger.info(
             "Creating new conversation session",
@@ -1386,5 +1418,6 @@ class ConversationManager:
         if session_id in self._sessions:
             self._logger.info("Conversation session removed", extra={"session_id": session_id})
             del self._sessions[session_id]
+
 
 conversation_manager = ConversationManager()

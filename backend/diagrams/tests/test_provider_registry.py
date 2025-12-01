@@ -2,27 +2,16 @@
 Integration tests for Provider Registry
 """
 
+from diagrams.models import ProviderCapability, ValidationResult, RenderResult, ProviderMetadata
+from diagrams.base_diagram import BaseDiagramProvider
+from diagrams.provider_registry import ProviderRegistry, get_provider_registry, set_provider_registry
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch
 from typing import List, Optional
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.provider_registry import (
-    ProviderRegistry,
-    get_provider_registry,
-    set_provider_registry
-)
-from diagrams.base_diagram import BaseDiagramProvider
-from diagrams.models import (
-    ProviderCapability,
-    ValidationResult,
-    RenderResult,
-    ProviderMetadata
-)
 
 
 # Mock Provider for Testing
@@ -47,11 +36,7 @@ class MockMermaidProvider(BaseDiagramProvider):
 
     @property
     def capabilities(self) -> List[ProviderCapability]:
-        return [
-            ProviderCapability.VALIDATE,
-            ProviderCapability.RENDER_SVG,
-            ProviderCapability.AUTO_FIX
-        ]
+        return [ProviderCapability.VALIDATE, ProviderCapability.RENDER_SVG, ProviderCapability.AUTO_FIX]
 
     def validate_code(self, code: str, **options) -> ValidationResult:
         return ValidationResult(is_valid=True, code_length=len(code))
@@ -61,7 +46,7 @@ class MockMermaidProvider(BaseDiagramProvider):
             success=True,
             content="<svg>mock</svg>",
             output_format=output_format,
-            validation=ValidationResult(is_valid=True, code_length=len(code))
+            validation=ValidationResult(is_valid=True, code_length=len(code)),
         )
 
     def get_version(self) -> Optional[str]:
@@ -92,11 +77,7 @@ class MockD2Provider(BaseDiagramProvider):
 
     @property
     def capabilities(self) -> List[ProviderCapability]:
-        return [
-            ProviderCapability.VALIDATE,
-            ProviderCapability.RENDER_SVG,
-            ProviderCapability.BATCH
-        ]
+        return [ProviderCapability.VALIDATE, ProviderCapability.RENDER_SVG, ProviderCapability.BATCH]
 
     def validate_code(self, code: str, **options) -> ValidationResult:
         return ValidationResult(is_valid=True, code_length=len(code))
@@ -106,7 +87,7 @@ class MockD2Provider(BaseDiagramProvider):
             success=True,
             content="<svg>mock d2</svg>",
             output_format=output_format,
-            validation=ValidationResult(is_valid=True, code_length=len(code))
+            validation=ValidationResult(is_valid=True, code_length=len(code)),
         )
 
     def get_version(self) -> Optional[str]:
@@ -148,7 +129,7 @@ class UnavailableMockProvider(BaseDiagramProvider):
             content=None,
             output_format=output_format,
             validation=ValidationResult(is_valid=False, error="Not available"),
-            error="Not available"
+            error="Not available",
         )
 
     def get_version(self) -> Optional[str]:
@@ -339,7 +320,7 @@ def test_registry_get_metadata():
     assert "svg" in metadata.supported_output_formats
     assert ProviderCapability.VALIDATE in metadata.capabilities
     assert metadata.version == "1.0.0"
-    assert metadata.available == True
+    assert metadata.available
 
     print("[OK] Registry get metadata test passed")
 
@@ -412,26 +393,17 @@ def test_registry_supports_capability():
     registry.register(d2)
 
     # Find providers with AUTO_FIX
-    auto_fix_providers = [
-        p for p in registry._providers.values()
-        if p.supports_capability(ProviderCapability.AUTO_FIX)
-    ]
+    auto_fix_providers = [p for p in registry._providers.values() if p.supports_capability(ProviderCapability.AUTO_FIX)]
     assert len(auto_fix_providers) == 1
     assert auto_fix_providers[0].provider_id == "mock_mermaid"
 
     # Find providers with BATCH
-    batch_providers = [
-        p for p in registry._providers.values()
-        if p.supports_capability(ProviderCapability.BATCH)
-    ]
+    batch_providers = [p for p in registry._providers.values() if p.supports_capability(ProviderCapability.BATCH)]
     assert len(batch_providers) == 1
     assert batch_providers[0].provider_id == "mock_d2"
 
     # Find providers with VALIDATE (both should have it)
-    validate_providers = [
-        p for p in registry._providers.values()
-        if p.supports_capability(ProviderCapability.VALIDATE)
-    ]
+    validate_providers = [p for p in registry._providers.values() if p.supports_capability(ProviderCapability.VALIDATE)]
     assert len(validate_providers) == 2
 
     print("[OK] Registry supports capability test passed")
@@ -439,9 +411,9 @@ def test_registry_supports_capability():
 
 def run_all_tests():
     """Run all provider registry tests"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Testing Provider Registry")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     test_registry_creation()
     test_registry_register_provider()
@@ -456,9 +428,9 @@ def run_all_tests():
     test_registry_unregister()
     test_registry_supports_capability()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("[OK] All provider registry tests passed!")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

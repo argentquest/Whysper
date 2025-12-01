@@ -18,14 +18,13 @@ The EnvManager class is designed to be used as both a standalone utility
 and as part of the larger application's configuration system.
 """
 
+from env_validator import env_validator
 import os
-from typing import Dict, List, Tuple, Optional
-import re
+from typing import Dict, List, Tuple
 from common.logger import get_logger
 from .logging_decorator import log_method_call
 
 logger = get_logger(__name__)
-from env_validator import env_validator
 
 
 class EnvManager:
@@ -242,9 +241,7 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
         return result.is_valid, result.error_message
 
     @log_method_call
-    def validate_all_env_vars(
-        self, env_vars: Dict[str, str]
-    ) -> Dict[str, Tuple[bool, str]]:
+    def validate_all_env_vars(self, env_vars: Dict[str, str]) -> Dict[str, Tuple[bool, str]]:
         """Validate all environment variables and return results."""
         validation_results = env_validator.validate_all(env_vars)
 
@@ -314,5 +311,5 @@ TOOL_STYLEGUIDE="Please check if the following code conforms to the PEP 8 style 
 
 # Global instance
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-env_path = os.path.join(backend_dir, '.env')
+env_path = os.path.join(backend_dir, ".env")
 env_manager = EnvManager(env_path=env_path)

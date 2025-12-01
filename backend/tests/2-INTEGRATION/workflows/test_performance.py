@@ -11,7 +11,6 @@ Tests for performance characteristics and load testing:
 
 import pytest
 import time
-from unittest.mock import AsyncMock
 import asyncio
 
 
@@ -237,7 +236,7 @@ class TestResourceUsage:
         # CPU-intensive operation
         result = 0
         for i in range(100000):
-            result += i ** 2
+            result += i**2
 
         elapsed = time.time() - start
 
@@ -250,7 +249,7 @@ class TestResourceUsage:
 
         # Create and destroy objects
         for i in range(1000):
-            data = [j for j in range(100)]
+            [j for j in range(100)]
 
         # Force garbage collection
         gc.collect()
@@ -264,7 +263,6 @@ class TestScalability:
 
     def test_scale_user_count(self, load_test_config):
         """Scalability with increasing user count"""
-        config = load_test_config
 
         user_counts = [1, 5, 10, 20, 50]
         latencies = []
@@ -407,7 +405,6 @@ class TestBatchProcessing:
 
     def test_batch_query_performance(self):
         """Batch query performance"""
-        batch_size = 50
         batch_count = 20
 
         start = time.time()
@@ -429,7 +426,6 @@ class TestCachingEffectiveness:
 
     def test_cache_hit_rate(self):
         """Cache hit rate"""
-        cache = {}
         hits = 0
         misses = 0
 
@@ -448,14 +444,14 @@ class TestCachingEffectiveness:
         # With cache
         start = time.time()
         cache = {i: i * 2 for i in range(100)}
-        value = cache.get(50)
+        cache.get(50)
         cached_time = time.time() - start
 
         # Without cache (simulation)
         start = time.time()
         for i in range(100):
             if i == 50:
-                value = i * 2
+                i * 2
         uncached_time = time.time() - start
 
         # Cache should be faster
@@ -477,7 +473,7 @@ class TestLoadTesting:
     def test_linear_load_increase(self, load_test_config):
         """Linear load increase"""
         config = load_test_config
-        ramp_up_time = config["ramp_up_time"]
+        config["ramp_up_time"]
 
         # Simulate linear increase
         max_users = config["concurrent_users"]

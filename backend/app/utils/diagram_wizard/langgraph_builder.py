@@ -33,15 +33,15 @@ def route_after_clarify(state: GraphState) -> str:
     if state.get("llm_ready", False):
         logger.debug(
             "Routing from clarify_prompt to generate_json_representation "
-            f"(llm_ready=True, user_confirmed="
+            "(llm_ready=True, user_confirmed="
             f"{state.get('user_confirmed_ready', False)})",
-            extra={'session_id': state.get("_session_id")}
+            extra={"session_id": state.get("_session_id")},
         )
         return "generate_json_representation"
     else:
         logger.debug(
             "Routing from clarify_prompt to END (waiting for user input)",
-            extra={'session_id': state.get("_session_id")}
+            extra={"session_id": state.get("_session_id")},
         )
         return END
 
@@ -60,14 +60,13 @@ def route_after_diagram_type(state: GraphState) -> str:
         logger.debug(
             "Routing from determine_diagram_type to generate_code "
             f"(user_selected={state.get('diagram_type', 'unknown')})",
-            extra={'session_id': state.get("_session_id")}
+            extra={"session_id": state.get("_session_id")},
         )
         return "generate_code"
     else:
         logger.debug(
-            "Routing from determine_diagram_type to END "
-            "(waiting for user selection)",
-            extra={'session_id': state.get("_session_id")}
+            "Routing from determine_diagram_type to END " "(waiting for user selection)",
+            extra={"session_id": state.get("_session_id")},
         )
         return END
 
@@ -91,16 +90,10 @@ def build_diagram_factory_graph(service) -> StateGraph:
 
     # Add nodes representing different stages of diagram generation
     # Each node is a specific function with a clear responsibility
-    workflow.add_node(
-        "analyze_request", partial(analyze_request, service=service)
-    )
+    workflow.add_node("analyze_request", partial(analyze_request, service=service))
     workflow.add_node("clarify_prompt", clarify_prompt)
-    workflow.add_node(
-        "generate_json_representation", generate_json_representation
-    )
-    workflow.add_node(
-        "determine_diagram_type", determine_diagram_type_node
-    )
+    workflow.add_node("generate_json_representation", generate_json_representation)
+    workflow.add_node("determine_diagram_type", determine_diagram_type_node)
     workflow.add_node("generate_code", generate_code)
     # Note: validate_code and refine_code nodes are no longer used.
     # The provider's render_with_validation() handles all validation and
@@ -126,25 +119,18 @@ def build_diagram_factory_graph(service) -> StateGraph:
         "clarify_prompt",
         route_after_clarify,
         {
-            "generate_json_representation": (
-                "generate_json_representation"
-            ),
+            "generate_json_representation": ("generate_json_representation"),
             "determine_diagram_type": "determine_diagram_type",
-            END: END  # End when waiting for user input
+            END: END,  # End when waiting for user input
         },
     )
 
-    workflow.add_edge(
-        "generate_json_representation", "determine_diagram_type"
-    )
+    workflow.add_edge("generate_json_representation", "determine_diagram_type")
 
     workflow.add_conditional_edges(
         "determine_diagram_type",
         route_after_diagram_type,
-        {
-            "generate_code": "generate_code",
-            END: END  # End when waiting for user diagram type selection
-        },
+        {"generate_code": "generate_code", END: END},  # End when waiting for user diagram type selection
     )
 
     # Compile the workflow into an executable graph
@@ -156,6 +142,7 @@ def build_diagram_factory_graph(service) -> StateGraph:
 # Note: The graph is rebuilt for each service instance to ensure
 # proper state isolation
 # This prevents issues with shared state between concurrent sessions
+
 
 def get_diagram_factory_graph(service):
     """

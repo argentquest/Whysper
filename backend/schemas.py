@@ -1,4 +1,5 @@
 """Pydantic schemas for the web backend."""
+
 from __future__ import annotations
 
 from typing import List, Optional, Any, Dict
@@ -302,28 +303,31 @@ class FileCreateResponse(BaseModel):
 
 class FileUploadRequest(BaseModel):
     """Request model for file upload that bypasses local file system."""
+
     files: List[dict]  # List of file objects with name, content, and size
     target_directory: Optional[str] = Field(default="uploads", description="Target directory for uploaded files")
-    
+
     model_config = ConfigDict(populate_by_name=True)
 
 
 class FileUploadResponse(BaseModel):
     """Response model for file upload."""
+
     success: bool
     message: str
     data: dict  # Contains uploaded file paths and metadata
-    
+
     model_config = ConfigDict(populate_by_name=True)
 
 
 class UploadedFileItem(BaseModel):
     """Model for an uploaded file item that can be used in context."""
+
     path: str
     name: str
     size: int
     content: str  # File content as string
     type: str = "file"
     is_uploaded: bool = True  # Flag to indicate this is an uploaded file
-    
+
     model_config = ConfigDict(populate_by_name=True)

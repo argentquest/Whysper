@@ -1,8 +1,9 @@
 """Test script for Mermaid Validation Workflow."""
+
 import pytest
-import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from app.services.diagram_factory_service import DiagramFactoryService
+
 
 @pytest.mark.asyncio
 async def test_mermaid_validation_workflow():
@@ -28,10 +29,10 @@ async def test_mermaid_validation_workflow():
     service.graph.ainvoke.return_value = {
         "messages": [],
         "current_state": "validate_code",
-        "diagram_code": "graph TD; A-->B", # Missing semicolon maybe?
+        "diagram_code": "graph TD; A-->B",  # Missing semicolon maybe?
         "validation_error": "Syntax error",
         "is_valid": False,
-        "session_id": "test-session"
+        "session_id": "test-session",
     }
 
     await service.start_generation("Create a diagram", diagram_type="Mermaid")

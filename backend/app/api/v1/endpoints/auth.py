@@ -6,22 +6,27 @@ import os
 router = APIRouter()
 
 # Pydantic model to define the structure of the access key verification request
+
+
 class VerifyAccessKeyRequest(BaseModel):
     access_key: str
+
 
 class VerifyAccessKeyResponse(BaseModel):
     success: bool
     auth_disabled: bool
 
+
 class CheckAuthResponse(BaseModel):
     auth_required: bool
     auth_disabled: bool
+
 
 @router.post(
     "/verify",
     response_model=VerifyAccessKeyResponse,
     summary="Verify access key",
-    description="Verify the provided access key against the environment configuration."
+    description="Verify the provided access key against the environment configuration.",
 )
 @log_method_call
 async def verify_access_key(request: VerifyAccessKeyRequest):
@@ -51,11 +56,12 @@ async def verify_access_key(request: VerifyAccessKeyRequest):
         # Raise an HTTP 401 Unauthorized exception if the key is invalid
         raise HTTPException(status_code=401, detail="Invalid access key.")
 
+
 @router.get(
     "/check",
     response_model=CheckAuthResponse,
     summary="Check auth requirements",
-    description="Check if authentication is required by the server."
+    description="Check if authentication is required by the server.",
 )
 @log_method_call
 async def check_auth_required():
@@ -67,9 +73,9 @@ async def check_auth_required():
     """
     # Retrieve the access key from environment variables
     correct_key = os.getenv("ACCESS_KEY", "").strip()
-    
+
     # Return boolean flags indicating authentication requirements
     return {
         "auth_required": bool(correct_key),  # True if a key is set
-        "auth_disabled": not bool(correct_key)  # True if no key is set
+        "auth_disabled": not bool(correct_key),  # True if no key is set
     }

@@ -1,4 +1,5 @@
 """Utility helpers for applying include/exclude file pattern filters."""
+
 from __future__ import annotations
 
 import os
@@ -18,7 +19,7 @@ def _normalize_patterns(patterns: PatternInput) -> List[str]:
 
     # Split comma-separated string or use as-is for sequence
     if isinstance(patterns, str):
-        raw_patterns = patterns.split(',')
+        raw_patterns = patterns.split(",")
     else:
         raw_patterns = patterns
 
@@ -42,10 +43,7 @@ def _matches_any(patterns: Sequence[str], file_path: str) -> bool:
 
     # Extract just the filename for additional matching
     filename = os.path.basename(file_path)
-    return any(
-        fnmatch(filename, pattern) or fnmatch(file_path, pattern)
-        for pattern in patterns
-    )
+    return any(fnmatch(filename, pattern) or fnmatch(file_path, pattern) for pattern in patterns)
 
 
 @log_method_call
@@ -57,7 +55,7 @@ def filter_files(
     # Apply include and exclude filters to a list of file paths
     # Supports glob-style pattern matching for file filtering
     files_list = list(files)
-    
+
     # Normalize include and exclude patterns
     include_patterns = _normalize_patterns(include)
     exclude_patterns = _normalize_patterns(exclude)
@@ -72,16 +70,13 @@ def filter_files(
                 # Collect files that match any include pattern
                 if _matches_any([pattern], file_path):
                     included.append(file_path)
-        
+
         # Remove duplicates while preserving original order
         seen = dict.fromkeys(included)
         filtered = list(seen.keys())
 
     # Apply exclude filtering to remaining files
     if exclude_patterns:
-        filtered = [
-            file_path for file_path in filtered
-            if not _matches_any(exclude_patterns, file_path)
-        ]
+        filtered = [file_path for file_path in filtered if not _matches_any(exclude_patterns, file_path)]
 
     return filtered

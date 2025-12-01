@@ -9,10 +9,7 @@ Tests for file scanning and filtering:
 - Performance with large codebases
 """
 
-import pytest
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 
 class TestFileFilters:
@@ -20,28 +17,21 @@ class TestFileFilters:
 
     def test_include_python_files(self, file_patterns):
         """Filter to include only Python files"""
-        from common.file_filters import filter_files
 
-        files = [
-            Path("script.py"),
-            Path("module.py"),
-            Path("readme.txt"),
-            Path("config.json")
-        ]
+        files = [Path("script.py"), Path("module.py"), Path("readme.txt"), Path("config.json")]
 
-        pattern = file_patterns["include"]
+        file_patterns["include"]
         # Should filter files
         assert isinstance(files, list)
 
     def test_exclude_cache_directories(self, file_patterns):
         """Exclude cache and build directories"""
-        from common.file_filters import filter_files
 
         files = [
             Path("src/main.py"),
             Path("src/__pycache__/main.pyc"),
             Path("node_modules/package/index.js"),
-            Path("build/output.o")
+            Path("build/output.o"),
         ]
 
         exclude = file_patterns["exclude"]
@@ -50,71 +40,51 @@ class TestFileFilters:
 
     def test_glob_pattern_matching(self):
         """Match files using glob patterns"""
-        from common.file_filters import filter_files
 
         patterns = ["*.py", "*.js", "*.ts"]
-        files = [
-            Path("script.py"),
-            Path("app.js"),
-            Path("app.ts"),
-            Path("readme.md")
-        ]
+        [Path("script.py"), Path("app.js"), Path("app.ts"), Path("readme.md")]
 
         # Should match based on patterns
         assert len(patterns) > 0
 
     def test_complex_pattern_matching(self):
         """Match complex glob patterns"""
-        from common.file_filters import filter_files
 
-        pattern = "src/**/*.py"
         files = [
             Path("src/main.py"),
             Path("src/utils/helpers.py"),
             Path("src/utils/config.json"),
-            Path("tests/test_main.py")
+            Path("tests/test_main.py"),
         ]
 
         assert True
 
     def test_exclude_patterns(self, file_patterns):
         """Exclude files matching patterns"""
-        from common.file_filters import filter_files
 
-        files = [
-            Path("src/main.py"),
-            Path("src/.env"),
-            Path("src/.gitignore"),
-            Path("tests/test_main.py")
-        ]
+        [Path("src/main.py"), Path("src/.env"), Path("src/.gitignore"), Path("tests/test_main.py")]
 
         exclude = file_patterns["exclude"]
         assert isinstance(exclude, list)
 
     def test_case_insensitive_matching(self):
         """Match files case-insensitively"""
-        from common.file_filters import filter_files
 
-        files = [
-            Path("Script.PY"),
-            Path("App.JS"),
-            Path("Config.JSON")
-        ]
+        files = [Path("Script.PY"), Path("App.JS"), Path("Config.JSON")]
 
         assert len(files) > 0
 
     def test_ignore_directory_based_filtering(self, file_patterns):
         """Filter out ignored directories"""
-        from common.file_filters import filter_files
 
         files = [
             Path(".git/config"),
             Path("src/main.py"),
             Path("__pycache__/main.pyc"),
-            Path("node_modules/package.json")
+            Path("node_modules/package.json"),
         ]
 
-        ignore_dirs = file_patterns["ignore_dirs"]
+        file_patterns["ignore_dirs"]
         # Should filter based on ignored directories
         assert True
 
@@ -181,8 +151,8 @@ class TestLazyFileScanner:
         """Detect file modifications"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
-        test_file = test_file_structure["python_files"][0]
+        LazyCodebaseScanner()
+        test_file_structure["python_files"][0]
 
         # Should detect changes
         assert True
@@ -191,7 +161,7 @@ class TestLazyFileScanner:
         """Files are loaded lazily"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should not load all files immediately
         assert True
 
@@ -242,7 +212,7 @@ class TestFileContentHandling:
         """Handle binary files gracefully"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should skip or handle binary files
         assert True
 
@@ -251,7 +221,7 @@ class TestFileContentHandling:
         import tempfile
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(large_file_content)
             temp_path = f.name
 
@@ -263,13 +233,14 @@ class TestFileContentHandling:
             assert True
         finally:
             import os
+
             os.unlink(temp_path)
 
     def test_handle_encoding_issues(self):
         """Handle file encoding issues"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should handle various encodings
         assert True
 
@@ -307,7 +278,7 @@ class TestDirectoryTraversal:
         """Respect ignore patterns during traversal"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should respect ignore patterns
         assert True
 
@@ -331,7 +302,7 @@ class TestDirectoryTraversal:
         """Handle permission denied errors"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should handle permission errors gracefully
         assert True
 
@@ -349,7 +320,7 @@ class TestFileScannerPerformance:
 
         try:
             start = time.time()
-            files = scanner.scan_directory(str(root))
+            scanner.scan_directory(str(root))
             elapsed = time.time() - start
 
             # Should complete quickly
@@ -360,7 +331,6 @@ class TestFileScannerPerformance:
     def test_content_caching_efficiency(self):
         """Content caching improves performance"""
         from common.lazy_file_scanner import LazyCodebaseScanner
-        import time
 
         scanner = LazyCodebaseScanner(cache_size=10)
         # Should use caching
@@ -370,7 +340,7 @@ class TestFileScannerPerformance:
         """Monitor cache hit rate"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should provide cache statistics
         assert True
 
@@ -408,7 +378,7 @@ class TestFileScannerIntegration:
         """Generate file manifest"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should generate manifest
         assert True
 
@@ -444,7 +414,7 @@ class TestFileScannerErrorHandling:
         """Handle permission denied errors"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should handle gracefully
         assert True
 
@@ -454,7 +424,7 @@ class TestFileScannerErrorHandling:
 
         scanner = LazyCodebaseScanner()
         try:
-            result = scanner.scan_directory(None)
+            scanner.scan_directory(None)
             assert True
         except (TypeError, AttributeError):
             assert True
@@ -463,6 +433,6 @@ class TestFileScannerErrorHandling:
         """Handle circular symlinks"""
         from common.lazy_file_scanner import LazyCodebaseScanner
 
-        scanner = LazyCodebaseScanner()
+        LazyCodebaseScanner()
         # Should handle circular references
         assert True
