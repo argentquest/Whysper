@@ -30,10 +30,16 @@ async def validate_code(state: GraphState) -> Dict[str, Any]:
     Validates diagram code using the provider system directly.
     No fallback logic - simplified approach requires provider system.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        - is_valid: True if code is valid
-        - validation_error: Error message if invalid
-        - validation_details: Full validation result from provider
+        Dict[str, Any]: Updates to the graph state including validation results.
+                        Contains 'is_valid', 'validation_error', 'validation_details',
+                        and 'current_state'.
+
+    Raises:
+        ValueError: If no provider is available for the diagram type.
     """
     diagram_code = state.get("diagram_code", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
@@ -88,8 +94,11 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     Fixes invalid diagram code based on validation error.
     Uses error-specific refinement prompts.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        diagram_code: Refined and corrected code
+        Dict[str, Any]: Updates to the graph state including refined 'diagram_code'.
     """
     diagram_code = state.get("diagram_code", "")
     validation_error = state.get("validation_error", "")

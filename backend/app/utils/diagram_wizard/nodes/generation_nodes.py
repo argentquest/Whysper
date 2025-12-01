@@ -30,8 +30,12 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
     All three representations must be synchronized and valid.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        - Dictionary with 'structurizr_workspace', 'clean_structurizr', 'json_representation'
+        Dict[str, Any]: Dictionary containing 'structurizr_workspace', 'clean_structurizr',
+                        and 'json_representation', or error information.
     """
     session_id = state.get("_session_id")
     model_id = state.get("model_id", "claude")  # Get selected model
@@ -70,7 +74,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         if msg.get('role') == 'user'
     ])
 
-    logger.info(
+    logger.debug(
         f"Preparing LLM (model: {model_id})...",
         extra={'session_id': session_id}
     )
@@ -100,7 +104,8 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             "json_representation": state.get("json_representation", {}),
             "error_message": error_message,
         }
-    logger.info(
+
+    logger.debug(
         f"AI Response {ai_response_str}",
         extra={'session_id': session_id}
     )
@@ -116,13 +121,13 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
 
         # Validate Structurizr syntax (basic check)
         if not structurizr_workspace or not structurizr_workspace.startswith("workspace"):
-            logger.info(
+            logger.warning(
                 "Structurizr workspace missing or invalid format",
                 extra={'session_id': session_id}
             )
 
         if not clean_structurizr or not clean_structurizr.startswith("model"):
-            logger.info(
+            logger.warning(
                 "clean_structurizr missing or invalid format",
                 extra={'session_id': session_id}
             )
@@ -131,7 +136,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         if json_representation:
             is_valid, errors = ArchitectureSchema.validate(json_representation)
             if not is_valid:
-                logger.info(
+                logger.warning(
                     f"Legacy JSON schema validation issues: {errors}",
                     extra={'session_id': session_id}
                 )
@@ -200,9 +205,11 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     design summary and JSON representation to score all diagram types
     (Mermaid, D2, PlantUML, Structurizr) and present them to the user for selection.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        - keyword_scores: Dictionary with scoring breakdown for all diagram types
-        - awaiting_diagram_type_selection: True (pauses workflow for user input)
+        Dict[str, Any]: Updates to the graph state including keyword scores and awaiting selection flag.
     """
     session_id = state.get("_session_id")
 
@@ -300,8 +307,11 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     Generates diagram code from the structured JSON representation.
     Uses diagram-type-specific generation prompt.
 
+    Args:
+        state (GraphState): The current graph state.
+
     Returns:
-        diagram_code: The generated diagram code
+        Dict[str, Any]: Updates to the graph state including the generated diagram code.
     """
 
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
@@ -355,7 +365,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={len(llm_input_payload)}",
         extra={'session_id': session_id} if session_id else {}
     )
-    logger.info(
+    logger.debug(
         f"Payload preview (first 800 chars): {llm_input_payload[:800]}",
         extra={'session_id': session_id} if session_id else {}
     )

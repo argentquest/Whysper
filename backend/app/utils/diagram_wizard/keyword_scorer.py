@@ -7,16 +7,20 @@ and diagram-specific keyword heuristics.
 """
 
 import json
-import logging
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from .graph_state import DiagramType
+from common.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class KeywordScorer:
-    """Scores and determines diagram type based on keyword analysis."""
+    """Scores and determines diagram type based on keyword analysis.
+
+    Uses pre-defined keyword lists for Mermaid, D2, PlantUML, and Structurizr,
+    combined with base entity/action/structure keywords loaded from an external file.
+    """
 
     # Pre-defined keywords for each diagram type to help with classification
     MERMAID_KEYWORDS = [
@@ -73,7 +77,11 @@ class KeywordScorer:
     ]
 
     def __init__(self):
-        """Initialize the KeywordScorer with keywords."""
+        """Initialize the KeywordScorer with keywords.
+
+        Loads base keywords from an external JSON file and sets up
+        diagram-specific keyword lists.
+        """
         # Initialize empty lists for base keywords from external source
         self.entity_words = []
         self.action_words = []
@@ -88,7 +96,11 @@ class KeywordScorer:
         self.structurizr_keywords = self.STRUCTURIZR_KEYWORDS
 
     def _load_base_keywords(self):
-        """Load additional keywords from a JSON file."""
+        """Load additional keywords from a JSON file.
+
+        Attempts to read 'services/keywords.json' relative to the module's
+        parent directory structure. Logs warnings if the file is missing or invalid.
+        """
         # Attempt to load additional keywords from a JSON file
         try:
             # Construct path to keywords file
@@ -105,19 +117,23 @@ class KeywordScorer:
                     self.structure_words = keywords_data.get('structure_words', [])
                     logger.info(f"Loaded base keywords from {keywords_path}")
             else:
-                logger.info(f"keywords.json not found at {keywords_path}")
+                logger.warning(f"keywords.json not found at {keywords_path}")
         except Exception as e:
-            logger.info(f"Error loading base keywords from keywords.json: {e}")
+            logger.error(f"Error loading base keywords from keywords.json: {e}")
 
     def score_text(self, text: str) -> Dict[str, float]:
         """
         Score the text to determine probabilities for each diagram type.
 
+        Analyzes the input text for keyword occurrences and calculates a
+        weighted score for each supported diagram type.
+
         Args:
-            text (str): The text to analyze.
+            text (str): The text to analyze (e.g., prompt, description).
 
         Returns:
             Dict[str, float]: A dictionary mapping diagram types to percentage scores.
+                              Example: {"Mermaid": 40.5, "D2": 30.2, ...}
         """
         # Handle empty text case with default even distribution
         if not text:
@@ -189,13 +205,13 @@ class KeywordScorer:
         }
 
     @staticmethod
-    def _count_matches(text: str, keywords: list) -> int:
+    def _count_matches(text: str, keywords: List[str]) -> int:
         """
         Count occurrences of keywords in text.
 
         Args:
-            text (str): The text to search.
-            keywords (list): The list of keywords to look for.
+            text (str): The text to search (should be lowercased).
+            keywords (List[str]): The list of keywords to look for.
 
         Returns:
             int: The total count of keyword matches.
@@ -210,6 +226,9 @@ class KeywordScorer:
     def determine_diagram_type(self, text: str) -> Tuple[DiagramType, Dict[str, float]]:
         """
         Determine the best diagram type based on text analysis.
+
+        Scores the input text against all diagram types and selects the one
+        with the highest probability.
 
         Args:
             text (str): The text to analyze.
@@ -252,9 +271,9 @@ def determine_diagram_type(text: str) -> Tuple[DiagramType, Dict[str, float]]:
     for use in diagram wizard nodes.
 
     Args:
-        text: Analysis text (design summary, component descriptions, etc.)
+        text (str): Analysis text (design summary, component descriptions, etc.)
 
     Returns:
-        Tuple of (DiagramType, keyword_scores dictionary)
+        Tuple[DiagramType, Dict[str, float]]: Tuple of (DiagramType, keyword_scores dictionary)
     """
     return _scorer.determine_diagram_type(text)
