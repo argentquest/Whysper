@@ -3,6 +3,8 @@ Test Diagram Output Saving
 Shows where test diagram results are stored
 """
 
+from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
+from diagrams.d2v1.d2_renderer import D2V1Provider
 import sys
 from pathlib import Path
 import pytest
@@ -12,9 +14,6 @@ from datetime import datetime
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.d2v1.d2_renderer import D2V1Provider
-from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
 
 
 # Output directories
@@ -45,9 +44,9 @@ def mermaid_provider():
 
 def test_save_d2_diagram_output(d2_provider):
     """Test saving D2 diagram output to test directory"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Saving D2 Diagram Output")
-    print("="*60)
+    print("=" * 60)
 
     if not d2_provider.is_available():
         pytest.skip("D2 CLI not available")
@@ -77,7 +76,7 @@ Frontend -> Backend: HTTPS
 Backend -> Database: SQL
 """
 
-    print(f"\n1. Rendering D2 diagram...")
+    print("\n1. Rendering D2 diagram...")
     result = d2_provider.render(code, output_format="svg")
 
     assert result.success, f"Rendering failed: {result.error}"
@@ -88,18 +87,18 @@ Backend -> Database: SQL
     test_filename = f"d2_test_output_{timestamp}.svg"
     test_filepath = test_dir / test_filename
 
-    print(f"\n2. Saving to test directory...")
+    print("\n2. Saving to test directory...")
     with open(test_filepath, "w", encoding="utf-8") as f:
         f.write(result.content)
 
     print(f"   ✓ Saved to: {test_filepath}")
-    print(f"   ✓ File size: {len(result.content)} bytes ({len(result.content)/1024:.1f} KB)")
+    print(f"   ✓ File size: {len(result.content)} bytes ({len(result.content) / 1024:.1f} KB)")
 
     # Also save to static directory (for API downloads)
     static_filename = f"d2_diagram_{timestamp}.svg"
     static_filepath = static_dir / static_filename
 
-    print(f"\n3. Saving to static directory (for API)...")
+    print("\n3. Saving to static directory (for API)...")
     with open(static_filepath, "w", encoding="utf-8") as f:
         f.write(result.content)
 
@@ -112,8 +111,8 @@ Backend -> Database: SQL
     assert test_filepath.stat().st_size > 0
     assert static_filepath.stat().st_size > 0
 
-    print(f"\n✅ Test completed successfully!")
-    print(f"\nOutput Locations:")
+    print("\n✅ Test completed successfully!")
+    print("\nOutput Locations:")
     print(f"  Test Output: {test_filepath.absolute()}")
     print(f"  Static Output: {static_filepath.absolute()}")
 
@@ -122,9 +121,9 @@ Backend -> Database: SQL
 
 def test_save_mermaid_diagram_output(mermaid_provider):
     """Test saving Mermaid diagram output to test directory"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Saving Mermaid Diagram Output")
-    print("="*60)
+    print("=" * 60)
 
     if not mermaid_provider.is_available():
         pytest.skip("Mermaid CLI not available")
@@ -142,7 +141,7 @@ def test_save_mermaid_diagram_output(mermaid_provider):
     Success --> End
 """
 
-    print(f"\n1. Rendering Mermaid diagram...")
+    print("\n1. Rendering Mermaid diagram...")
     result = mermaid_provider.render(code, output_format="svg")
 
     assert result.success, f"Rendering failed: {result.error}"
@@ -153,18 +152,18 @@ def test_save_mermaid_diagram_output(mermaid_provider):
     test_filename = f"mermaid_test_output_{timestamp}.svg"
     test_filepath = test_dir / test_filename
 
-    print(f"\n2. Saving to test directory...")
+    print("\n2. Saving to test directory...")
     with open(test_filepath, "w", encoding="utf-8") as f:
         f.write(result.content)
 
     print(f"   ✓ Saved to: {test_filepath}")
-    print(f"   ✓ File size: {len(result.content)} bytes ({len(result.content)/1024:.1f} KB)")
+    print(f"   ✓ File size: {len(result.content)} bytes ({len(result.content) / 1024:.1f} KB)")
 
     # Also save to static directory
     static_filename = f"mermaid_diagram_{timestamp}.svg"
     static_filepath = static_dir / static_filename
 
-    print(f"\n3. Saving to static directory (for API)...")
+    print("\n3. Saving to static directory (for API)...")
     with open(static_filepath, "w", encoding="utf-8") as f:
         f.write(result.content)
 
@@ -175,8 +174,8 @@ def test_save_mermaid_diagram_output(mermaid_provider):
     assert test_filepath.exists()
     assert static_filepath.exists()
 
-    print(f"\n✅ Test completed successfully!")
-    print(f"\nOutput Locations:")
+    print("\n✅ Test completed successfully!")
+    print("\nOutput Locations:")
     print(f"  Test Output: {test_filepath.absolute()}")
     print(f"  Static Output: {static_filepath.absolute()}")
 
@@ -185,16 +184,16 @@ def test_save_mermaid_diagram_output(mermaid_provider):
 
 def test_output_directory_summary():
     """Print summary of all output directories"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DIAGRAM OUTPUT DIRECTORY SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     # Setup directories
     test_dir, static_dir = setup_output_directories()
 
-    print(f"\n[TEST OUTPUT] Test Output Directory:")
+    print("\n[TEST OUTPUT] Test Output Directory:")
     print(f"   Location: {test_dir.absolute()}")
-    print(f"   Purpose: Store test-generated diagrams for verification")
+    print("   Purpose: Store test-generated diagrams for verification")
 
     if test_dir.exists():
         files = list(test_dir.glob("*"))
@@ -202,12 +201,12 @@ def test_output_directory_summary():
         for f in files[-5:]:  # Show last 5 files
             print(f"     - {f.name} ({f.stat().st_size} bytes)")
     else:
-        print(f"   Status: Directory will be created on first test run")
+        print("   Status: Directory will be created on first test run")
 
-    print(f"\n[STATIC] Static Diagrams Directory:")
+    print("\n[STATIC] Static Diagrams Directory:")
     print(f"   Location: {static_dir.absolute()}")
-    print(f"   Purpose: Store diagrams for API download endpoints")
-    print(f"   API Endpoint: /api/v1/diagrams/download/{{filename}}")
+    print("   Purpose: Store diagrams for API download endpoints")
+    print("   API Endpoint: /api/v1/diagrams/download/{filename}")
 
     if static_dir.exists():
         files = list(static_dir.glob("*"))
@@ -215,9 +214,9 @@ def test_output_directory_summary():
         for f in files[-5:]:  # Show last 5 files
             print(f"     - {f.name} ({f.stat().st_size} bytes)")
     else:
-        print(f"   Status: Directory will be created on first use")
+        print("   Status: Directory will be created on first use")
 
-    print(f"\n[OTHER] Other Diagram Directories:")
+    print("\n[OTHER] Other Diagram Directories:")
 
     # Check for other existing directories
     backend_path = Path("backend")
@@ -233,15 +232,15 @@ def test_output_directory_summary():
             files = list(dir_path.glob("*"))
             print(f"   - {dir_path}: {len(files)} files")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
 
     return test_dir, static_dir
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DIAGRAM OUTPUT SAVING TEST")
-    print("="*60)
+    print("=" * 60)
 
     # Show directory summary first
     test_output_directory_summary()
@@ -264,6 +263,6 @@ if __name__ == "__main__":
     else:
         print("⚠️  Mermaid CLI not available, skipping Mermaid test")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("ALL TESTS COMPLETED")
-    print("="*60)
+    print("=" * 60)

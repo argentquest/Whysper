@@ -6,6 +6,7 @@ This module handles system-level operations including:
 - API status
 - Version information
 """
+
 from typing import Dict
 from fastapi import APIRouter
 from app.core.config import settings
@@ -21,6 +22,7 @@ logger = get_logger(__name__)
 # Create API router for defining endpoint routes
 router = APIRouter()
 
+
 class RootResponse(BaseModel):
     message: str
     version: str
@@ -28,6 +30,7 @@ class RootResponse(BaseModel):
     docs: str
     redoc: str
     health: str
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -38,17 +41,19 @@ class HealthResponse(BaseModel):
     platform: str
     uptime: str
 
+
 class VersionResponse(BaseModel):
     api_version: str
     api_title: str
     python_version: str
     platform: str
 
+
 @router.get(
     "/",
     response_model=RootResponse,
     summary="Root endpoint",
-    description="Return basic API metadata and navigation links."
+    description="Return basic API metadata and navigation links.",
 )
 @log_method_call
 def root() -> Dict[str, str]:
@@ -67,7 +72,7 @@ def root() -> Dict[str, str]:
         "description": settings.api_description,
         "docs": "/docs",
         "redoc": "/redoc",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -75,7 +80,7 @@ def root() -> Dict[str, str]:
     "/health",
     response_model=HealthResponse,
     summary="Health check",
-    description="Provide comprehensive system status for monitoring."
+    description="Provide comprehensive system status for monitoring.",
 )
 @log_method_call
 def health_check() -> Dict[str, str]:
@@ -97,7 +102,7 @@ def health_check() -> Dict[str, str]:
         # Include Python and system details for diagnostic purposes
         "python_version": sys.version,
         "platform": platform.platform(),
-        "uptime": "running"  # Could be enhanced with actual uptime tracking
+        "uptime": "running",  # Could be enhanced with actual uptime tracking
     }
 
 
@@ -105,7 +110,7 @@ def health_check() -> Dict[str, str]:
     "/version",
     response_model=VersionResponse,
     summary="Get version",
-    description="Return detailed version information about the API and environment."
+    description="Return detailed version information about the API and environment.",
 )
 @log_method_call
 def get_version() -> Dict[str, str]:
@@ -121,5 +126,5 @@ def get_version() -> Dict[str, str]:
         "api_title": settings.api_title,
         # Include Python version and platform for compatibility checks
         "python_version": sys.version,
-        "platform": platform.platform()
+        "platform": platform.platform(),
     }

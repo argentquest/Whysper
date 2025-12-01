@@ -1,10 +1,12 @@
 """
 System message manager for custom AI system messages.
 """
+
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from common.env_manager import env_manager
 from .logging_decorator import log_method_call
+
 
 class SystemMessageManager:
     """Manages system messages from file or default."""
@@ -15,7 +17,7 @@ class SystemMessageManager:
 
         # Get prompts directory from environment
         env_vars = env_manager.load_env_file()
-        self.prompts_dir = env_vars.get('PROMPTS_DIR', '').strip()
+        self.prompts_dir = env_vars.get("PROMPTS_DIR", "").strip()
         if not self.prompts_dir:
             # Default: current working directory
             self.prompts_dir = os.getcwd()
@@ -26,38 +28,38 @@ class SystemMessageManager:
 
         # Load current system prompt from environment or use default
         try:
-            saved_prompt = env_vars.get('CURRENT_SYSTEM_PROMPT', system_message_file)
+            saved_prompt = env_vars.get("CURRENT_SYSTEM_PROMPT", system_message_file)
             self.current_message_file = saved_prompt
-            
+
             # If CURRENT_SYSTEM_PROMPT wasn't in the .env file, save the default
-            if 'CURRENT_SYSTEM_PROMPT' not in env_vars:
-                env_manager.update_single_var('CURRENT_SYSTEM_PROMPT', system_message_file)
+            if "CURRENT_SYSTEM_PROMPT" not in env_vars:
+                env_manager.update_single_var("CURRENT_SYSTEM_PROMPT", system_message_file)
         except Exception:
             self.current_message_file = system_message_file
             # Try to save the default value
             try:
-                env_manager.update_single_var('CURRENT_SYSTEM_PROMPT', system_message_file)
+                env_manager.update_single_var("CURRENT_SYSTEM_PROMPT", system_message_file)
             except Exception:
                 pass  # Ignore if we can't save
-            
+
         self.default_system_message = (
             "You are a helpful AI assistant that helps with code analysis. "
             "The user has provided the following codebase:\n\n{codebase_content}"
         )
-    
+
     @log_method_call
     def get_system_message(self, codebase_content: str) -> str:
         """
         Get system message, either from currently selected file or default.
-        
+
         Args:
             codebase_content: The codebase content to include in the message
-            
+
         Returns:
             Complete system message ready for AI
         """
         custom_message = self.load_custom_system_message(self.current_message_file)
-        
+
         if custom_message:
             # Use custom system message
             # Replace placeholder if it exists
@@ -69,7 +71,7 @@ class SystemMessageManager:
         else:
             # Use default system message
             return self.default_system_message.format(codebase_content=codebase_content)
-    
+
     @log_method_call
     def load_custom_system_message(self, filename: str = None) -> Optional[str]:
         """
@@ -82,13 +84,13 @@ class SystemMessageManager:
             Custom system message content or None if file doesn't exist or error
         """
         # Handle empty string as None
-        if not filename or filename.strip() == '':
+        if not filename or filename.strip() == "":
             filename = None
 
         target_file = filename if filename else self.current_message_file
 
         # If still no valid filename, return None
-        if not target_file or target_file.strip() == '':
+        if not target_file or target_file.strip() == "":
             return None
 
         # Construct full path using prompts directory
@@ -99,7 +101,7 @@ class SystemMessageManager:
             return None
 
         try:
-            with open(target_file, 'r', encoding='utf-8') as f:
+            with open(target_file, "r", encoding="utf-8") as f:
                 content = f.read().strip()
 
             if not content:
@@ -110,7 +112,7 @@ class SystemMessageManager:
         except Exception as e:
             print(f"Error reading system message file: {e}")
             return None
-    
+
     @log_method_call
     def save_custom_system_message(self, message: str) -> bool:
         """
@@ -128,13 +130,13 @@ class SystemMessageManager:
             if not os.path.isabs(file_path):
                 file_path = os.path.join(self.prompts_dir, file_path)
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(message)
             return True
         except Exception as e:
             print(f"Error saving system message file: {e}")
             return False
-    
+
     @log_method_call
     def delete_custom_system_message(self) -> bool:
         """
@@ -157,17 +159,17 @@ class SystemMessageManager:
         except Exception as e:
             print(f"Error deleting system message file: {e}")
             return False
-    
+
     @log_method_call
     def has_custom_system_message(self) -> bool:
         """
         Check if current system message file exists and has content.
-        
+
         Returns:
             True if current system message exists, False otherwise
         """
         return self.load_custom_system_message(self.current_message_file) is not None
-    
+
     @log_method_call
     def scan_system_message_files(self) -> List[str]:
         """
@@ -180,52 +182,54 @@ class SystemMessageManager:
             files = []
 
             for filename in os.listdir(self.prompts_dir):
-                if filename.startswith('systemmessage') and filename.endswith('.txt'):
+                if filename.startswith("systemmessage") and filename.endswith(".txt"):
                     # Check if file has content
                     if self.load_custom_system_message(filename):
                         files.append(filename)
 
             # Sort files for consistent ordering
             return sorted(files)
-            
+
         except Exception as e:
             print(f"Error scanning for system message files: {e}")
             return []
-    
+
     @log_method_call
     def get_system_message_files_info(self) -> List[dict]:
         """
         Get detailed information about all system message files.
-        
+
         Returns:
             List of dictionaries with file info
         """
         files = self.scan_system_message_files()
         file_info = []
-        
+
         for filename in files:
             try:
                 content = self.load_custom_system_message(filename)
                 if content:
                     # Create display name from filename
-                    display_name = filename.replace('.txt', '').replace('systemmessage', '')
-                    if display_name.startswith('_'):
+                    display_name = filename.replace(".txt", "").replace("systemmessage", "")
+                    if display_name.startswith("_"):
                         display_name = display_name[1:]  # Remove leading underscore
                     if not display_name:
                         display_name = "Default"
-                    
-                    file_info.append({
-                        'filename': filename,
-                        'display_name': display_name.title(),
-                        'preview': content[:100] + "..." if len(content) > 100 else content,
-                        'length': len(content),
-                        'is_current': filename == self.current_message_file
-                    })
+
+                    file_info.append(
+                        {
+                            "filename": filename,
+                            "display_name": display_name.title(),
+                            "preview": content[:100] + "..." if len(content) > 100 else content,
+                            "length": len(content),
+                            "is_current": filename == self.current_message_file,
+                        }
+                    )
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
-        
+
         return file_info
-    
+
     @log_method_call
     def set_current_system_message_file(self, filename: str) -> bool:
         """
@@ -247,42 +251,42 @@ class SystemMessageManager:
                     self.current_message_file = filename
                     # Save the current system prompt to environment variables
                     try:
-                        env_manager.update_single_var('CURRENT_SYSTEM_PROMPT', filename)
+                        env_manager.update_single_var("CURRENT_SYSTEM_PROMPT", filename)
                     except Exception as e:
                         print(f"Warning: Could not save current system prompt to .env: {e}")
                     return True
         return False
-    
+
     @log_method_call
     def get_current_system_message_file(self) -> str:
         """
         Get the currently active system message filename.
-        
+
         Returns:
             Current system message filename
         """
         return self.current_message_file
-    
+
     @log_method_call
     def get_display_name_for_file(self, filename: str) -> str:
         """
         Get a user-friendly display name for a system message file.
-        
+
         Args:
             filename: System message filename
-            
+
         Returns:
             User-friendly display name
         """
         if not filename or filename == self.system_message_file:
             return "Default"
-        
-        display_name = filename.replace('.txt', '').replace('systemmessage', '')
-        if display_name.startswith('_'):
+
+        display_name = filename.replace(".txt", "").replace("systemmessage", "")
+        if display_name.startswith("_"):
             display_name = display_name[1:]
-        
+
         return display_name.title() if display_name else "Default"
-    
+
     @log_method_call
     def get_system_message_info(self) -> dict:
         """
@@ -299,20 +303,23 @@ class SystemMessageManager:
             file_path = os.path.join(self.prompts_dir, file_path)
 
         return {
-            'has_custom': custom_message is not None,
-            'file_path': os.path.abspath(file_path),
-            'file_exists': os.path.exists(file_path),
-            'custom_message': custom_message,
-            'default_message': self.default_system_message,
-            'preview': (custom_message[:200] + "..." if custom_message and len(custom_message) > 200
-                       else custom_message) if custom_message else None
+            "has_custom": custom_message is not None,
+            "file_path": os.path.abspath(file_path),
+            "file_exists": os.path.exists(file_path),
+            "custom_message": custom_message,
+            "default_message": self.default_system_message,
+            "preview": (
+                (custom_message[:200] + "..." if custom_message and len(custom_message) > 200 else custom_message)
+                if custom_message
+                else None
+            ),
         }
-    
+
     @log_method_call
     def create_example_system_message(self) -> str:
         """
         Create an example system message file content.
-        
+
         Returns:
             Example system message content
         """
@@ -330,6 +337,7 @@ The user has provided the following codebase for analysis:
 {codebase_content}
 
 Please provide thoughtful, detailed responses that help improve the code and the developer's understanding."""
+
 
 # Global instance
 system_message_manager = SystemMessageManager()

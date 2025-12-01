@@ -2,33 +2,33 @@
 Test Kroki Mermaid Provider Implementation
 """
 
+from diagrams.models import ProviderCapability
+from diagrams.krokimermaid.kroki_renderer import KrokiMermaidProvider
 import sys
-import os
 from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import codecs
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from diagrams.krokimermaid.kroki_renderer import KrokiMermaidProvider
-from diagrams.models import ProviderCapability
 
-
-# Marker: Use this file as template for test_krokistructurizr_provider.py, test_krokic4_provider.py, test_krokiplantuml_provider.py
+# Marker: Use this file as template for test_krokistructurizr_provider.py,
+# test_krokic4_provider.py, test_krokiplantuml_provider.py
 
 
 def test_krokimermaid_provider_initialization():
     """Test that Kroki Mermaid provider initializes correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Provider Initialization")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -56,9 +56,9 @@ def test_krokimermaid_provider_initialization():
 
 def test_krokimermaid_config():
     """Test that configuration is loaded correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Configuration Loading")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -76,9 +76,9 @@ def test_krokimermaid_config():
 
 def test_krokimermaid_metadata():
     """Test provider metadata methods"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Provider Metadata")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -98,16 +98,16 @@ def test_krokimermaid_metadata():
 
 def test_krokimermaid_llm_correction_rules():
     """Test LLM correction rules"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid LLM Correction Rules")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
 
     rules = provider.get_llm_correction_rules()
     print(f"✓ Rules length: {len(rules)} characters")
-    print(f"\nRules preview:")
+    print("\nRules preview:")
     print(rules[:200] + "...")
 
     assert rules is not None
@@ -119,9 +119,9 @@ def test_krokimermaid_llm_correction_rules():
 
 def test_krokimermaid_validation():
     """Test Mermaid code validation via Kroki"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Validation")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -144,7 +144,7 @@ def test_krokimermaid_validation():
     print(f"✓ Is Valid: {result.is_valid}")
     print(f"✓ Error: {result.error}")
 
-    assert result.is_valid == True
+    assert result.is_valid
 
     # Invalid Mermaid code (missing end for subgraph)
     invalid_code = """flowchart TD
@@ -166,9 +166,9 @@ def test_krokimermaid_validation():
 
 def test_krokimermaid_auto_fix():
     """Test pattern-based auto-fix for Mermaid"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Pattern-Based Auto-Fix")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -188,7 +188,7 @@ def test_krokimermaid_auto_fix():
     print(f"✓ Correction Method: {result.correction_method}")
 
     if result.fixed_code:
-        print(f"\nFixed code preview:")
+        print("\nFixed code preview:")
         print(result.fixed_code[:200])
 
     print("\n✅ Auto-fix test passed!")
@@ -196,9 +196,9 @@ def test_krokimermaid_auto_fix():
 
 def test_krokimermaid_render_svg():
     """Test rendering to SVG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Rendering to SVG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -235,9 +235,9 @@ def test_krokimermaid_render_svg():
 
 def test_krokimermaid_render_png():
     """Test rendering to PNG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Rendering to PNG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -270,9 +270,9 @@ def test_krokimermaid_render_png():
 
 def test_krokimermaid_complex_diagram():
     """Test rendering a more complex Mermaid diagram"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Kroki Mermaid Complex Diagram")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "krokimermaid"
     provider = KrokiMermaidProvider(provider_folder)
@@ -311,9 +311,9 @@ def test_krokimermaid_complex_diagram():
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("KROKI MERMAID PROVIDER TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     test_krokimermaid_provider_initialization()
     test_krokimermaid_config()
@@ -325,6 +325,6 @@ if __name__ == "__main__":
     test_krokimermaid_render_png()
     test_krokimermaid_complex_diagram()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✅ ALL KROKI MERMAID TESTS PASSED!")
-    print("="*60)
+    print("=" * 60)

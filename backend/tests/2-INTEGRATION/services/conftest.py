@@ -8,7 +8,7 @@ Provides reusable fixtures for testing backend services:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock
 from datetime import datetime
 from typing import Dict, Any, List
 
@@ -46,7 +46,7 @@ def sample_user_data() -> Dict[str, Any]:
         "email": "test@example.com",
         "is_active": True,
         "created_at": datetime.now(),
-        "updated_at": datetime.now()
+        "updated_at": datetime.now(),
     }
 
 
@@ -61,7 +61,7 @@ def sample_conversation_data() -> Dict[str, Any]:
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
         "is_active": True,
-        "message_count": 0
+        "message_count": 0,
     }
 
 
@@ -75,7 +75,7 @@ def sample_message_data() -> Dict[str, Any]:
         "content": "Hello, this is a test message",
         "created_at": datetime.now(),
         "is_system": False,
-        "role": "user"
+        "role": "user",
     }
 
 
@@ -91,7 +91,7 @@ def sample_file_data() -> Dict[str, Any]:
         "path": "/uploads/test_file.txt",
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
-        "is_deleted": False
+        "is_deleted": False,
     }
 
 
@@ -108,7 +108,7 @@ def sample_diagram_data() -> Dict[str, Any]:
         "output_format": "svg",
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
-        "is_saved": True
+        "is_saved": True,
     }
 
 
@@ -121,7 +121,7 @@ def sample_history_entry() -> Dict[str, Any]:
         "action": "render_diagram",
         "details": {"diagram_type": "mermaid", "provider": "mermaidv1"},
         "timestamp": datetime.now(),
-        "status": "success"
+        "status": "success",
     }
 
 
@@ -138,7 +138,7 @@ def sample_settings() -> Dict[str, Any]:
         "auto_render": True,
         "default_diagram_type": "mermaid",
         "created_at": datetime.now(),
-        "updated_at": datetime.now()
+        "updated_at": datetime.now(),
     }
 
 
@@ -233,7 +233,7 @@ def conversation_list() -> List[Dict[str, Any]]:
             "user_id": "user_123",
             "title": f"Conversation {i}",
             "created_at": datetime.now(),
-            "message_count": i * 5
+            "message_count": i * 5,
         }
         for i in range(1, 4)
     ]
@@ -249,7 +249,7 @@ def message_list() -> List[Dict[str, Any]]:
             "user_id": "user_123",
             "content": f"Message {i}",
             "created_at": datetime.now(),
-            "is_system": i % 2 == 0
+            "is_system": i % 2 == 0,
         }
         for i in range(1, 6)
     ]
@@ -265,7 +265,7 @@ def file_list() -> List[Dict[str, Any]]:
             "filename": f"file_{i}.txt",
             "file_type": "text/plain",
             "size": 1024 * i,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
         for i in range(1, 4)
     ]

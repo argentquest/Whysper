@@ -2,6 +2,7 @@
 Mock Test for Kroki Mermaid Provider
 """
 
+from diagrams.krokimermaid.kroki_renderer import KrokiMermaidProvider
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
@@ -11,8 +12,6 @@ import sys
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.krokimermaid.kroki_renderer import KrokiMermaidProvider
 
 
 class TestMockKrokiMermaidProvider(unittest.TestCase):
@@ -39,7 +38,7 @@ class TestMockKrokiMermaidProvider(unittest.TestCase):
 
     def test_auto_fix_pattern_based(self):
         """Test mermaid specific pattern fixes."""
-        with patch.object(self.provider, 'validate_code') as mock_validate:
+        with patch.object(self.provider, "validate_code") as mock_validate:
             mock_validate.return_value = MagicMock(is_valid=True)
 
             # Case: Missing diagram type, but has arrows
@@ -54,5 +53,6 @@ class TestMockKrokiMermaidProvider(unittest.TestCase):
             result = self.provider.auto_fix_pattern_based(code, "Error")
             self.assertIn("A-->B", result.fixed_code.replace(" ", ""))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

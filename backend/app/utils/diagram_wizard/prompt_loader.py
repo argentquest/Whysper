@@ -50,9 +50,7 @@ def load_prompts() -> Dict[str, str]:
         clarify_path = prompt_dir / "CLARIFY_PROMPTS.md"
         if clarify_path.exists():
             # Extract specific section for universal clarification
-            _prompt_cache["clarify_universal"] = _extract_section(
-                clarify_path, "Universal Clarification Prompt"
-            )
+            _prompt_cache["clarify_universal"] = _extract_section(clarify_path, "Universal Clarification Prompt")
 
     # Load generic JSON generation prompt
     json_gen_path = prompt_dir / "JSON_GENERATION_PROMPT.md"
@@ -84,21 +82,13 @@ def load_prompts() -> Dict[str, str]:
     if generate_path.exists():
         # Only load if optimized prompts weren't found
         if "generate_mermaid" not in _prompt_cache:
-            _prompt_cache["generate_mermaid"] = _extract_section(
-                generate_path, "Mermaid Generation Prompt"
-            )
+            _prompt_cache["generate_mermaid"] = _extract_section(generate_path, "Mermaid Generation Prompt")
         if "generate_d2" not in _prompt_cache:
-            _prompt_cache["generate_d2"] = _extract_section(
-                generate_path, "D2 Generation Prompt"
-            )
+            _prompt_cache["generate_d2"] = _extract_section(generate_path, "D2 Generation Prompt")
         if "generate_plantuml" not in _prompt_cache:
-            _prompt_cache["generate_plantuml"] = _extract_section(
-                generate_path, "PlantUML Generation Prompt"
-            )
+            _prompt_cache["generate_plantuml"] = _extract_section(generate_path, "PlantUML Generation Prompt")
         if "generate_structurizr" not in _prompt_cache:
-            _prompt_cache["generate_structurizr"] = _extract_section(
-                generate_path, "Structurizr Generation Prompt"
-            )
+            _prompt_cache["generate_structurizr"] = _extract_section(generate_path, "Structurizr Generation Prompt")
 
     # Load first-pass diagram code generation prompts (diagram-type specific system prompts)
     for diag_type in ["mermaid", "d2", "plantuml", "structurizr"]:
@@ -110,18 +100,10 @@ def load_prompts() -> Dict[str, str]:
     refine_path = prompt_dir / "REFINE_PROMPTS.md"
     if refine_path.exists():
         # Extract specific sections for refining different diagram types
-        _prompt_cache["refine_mermaid"] = _extract_section(
-            refine_path, "Mermaid Refinement Prompt"
-        )
-        _prompt_cache["refine_d2"] = _extract_section(
-            refine_path, "D2 Refinement Prompt"
-        )
-        _prompt_cache["refine_plantuml"] = _extract_section(
-            refine_path, "PlantUML Refinement Prompt"
-        )
-        _prompt_cache["refine_structurizr"] = _extract_section(
-            refine_path, "Structurizr Refinement Prompt"
-        )
+        _prompt_cache["refine_mermaid"] = _extract_section(refine_path, "Mermaid Refinement Prompt")
+        _prompt_cache["refine_d2"] = _extract_section(refine_path, "D2 Refinement Prompt")
+        _prompt_cache["refine_plantuml"] = _extract_section(refine_path, "PlantUML Refinement Prompt")
+        _prompt_cache["refine_structurizr"] = _extract_section(refine_path, "Structurizr Refinement Prompt")
 
     return _prompt_cache
 
@@ -224,7 +206,7 @@ def _extract_section(file_path: Path, section_header: str) -> str:
 
         # Extract section lines, handling cases with or without an ending section
         if section_end is None:
-            section_lines = lines[section_start + 1:]
+            section_lines = lines[section_start + 1 :]
         else:
             section_lines = lines[section_start + 1 : section_end]
 

@@ -2,30 +2,29 @@
 Test D2 v1 Provider Implementation
 """
 
+from diagrams.models import ProviderCapability
+from diagrams.d2v1.d2_renderer import D2V1Provider
 import sys
-import os
 from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import codecs
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from diagrams.d2v1.d2_renderer import D2V1Provider
-from diagrams.models import ProviderCapability
-
 
 def test_d2v1_provider_initialization():
     """Test that d2v1 provider initializes correctly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Provider Initialization")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -49,9 +48,9 @@ def test_d2v1_provider_initialization():
 
 def test_d2v1_validation():
     """Test D2 code validation"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Validation")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -72,7 +71,7 @@ x -> y -> z
     print(f"✓ Is Valid: {result.is_valid}")
     print(f"✓ Error: {result.error}")
 
-    assert result.is_valid == True
+    assert result.is_valid
     assert result.error is None
 
     # Invalid D2 code (unclosed brace)
@@ -96,9 +95,9 @@ container {
 
 def test_d2v1_auto_fix():
     """Test pattern-based auto-fix"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Pattern-Based Auto-Fix")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -118,7 +117,7 @@ def test_d2v1_auto_fix():
     print(f"✓ Correction Method: {result.correction_method}")
 
     if result.fixed_code:
-        print(f"\nFixed code preview:")
+        print("\nFixed code preview:")
         print(result.fixed_code[:200])
 
     # The auto-fix should add direction
@@ -130,9 +129,9 @@ def test_d2v1_auto_fix():
 
 def test_d2v1_render_svg():
     """Test rendering to SVG"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Rendering to SVG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -166,7 +165,7 @@ End: {
     print(f"✓ Content Length: {len(result.content) if result.content else 0} bytes")
     print(f"✓ Error: {result.error}")
 
-    assert result.success == True
+    assert result.success
     assert result.content is not None
     assert len(result.content) > 0
     assert "<svg" in result.content or "<?xml" in result.content
@@ -176,9 +175,9 @@ End: {
 
 def test_d2v1_render_png():
     """Test rendering to PNG (skipped - PNG rendering is slow/unstable)"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Rendering to PNG")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -207,7 +206,7 @@ A -> B -> C
     print(f"✓ Content Length: {len(result.content) if result.content else 0} bytes")
     print(f"✓ Error: {result.error}")
 
-    assert result.success == True
+    assert result.success
     assert result.content is not None
     assert len(result.content) > 0
     # PNG is base64 encoded, so just check it's a string
@@ -218,9 +217,9 @@ A -> B -> C
 
 def test_d2v1_render_native_d2():
     """Test 'rendering' to native D2 format (just returns the code)"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Native D2 Format")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -243,7 +242,7 @@ x -> y -> z
     print(f"✓ Output Format: {result.output_format}")
     print(f"✓ Content matches input: {result.content == code}")
 
-    assert result.success == True
+    assert result.success
     assert result.content == code
     assert result.output_format == "d2"
 
@@ -252,9 +251,9 @@ x -> y -> z
 
 def test_d2v1_complex_diagram():
     """Test rendering a complex D2 diagram with various features"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Complex Diagram")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -319,9 +318,9 @@ app.frontend -> users: Display
 
 def test_d2v1_config():
     """Test configuration loading"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Configuration")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -339,7 +338,7 @@ def test_d2v1_config():
     assert config.provider_id == "d2v1"
     assert config.llm_correction.max_retries == 8  # From d2v1/config.json override
     assert config.llm_correction.max_tokens == 6000  # From d2v1/config.json
-    assert config.batch.enabled == True
+    assert config.batch.enabled
     assert config.batch.max_items == 100
 
     print("\n✅ Configuration test passed!")
@@ -347,9 +346,9 @@ def test_d2v1_config():
 
 def test_d2v1_metadata():
     """Test provider metadata"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 Metadata")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -367,7 +366,7 @@ def test_d2v1_metadata():
 
     assert metadata.provider_id == "d2v1"
     assert metadata.diagram_type == "d2"
-    assert metadata.requires_llm == True  # Has LLM_CORRECTION capability
+    assert metadata.requires_llm  # Has LLM_CORRECTION capability
     assert "svg" in metadata.supported_output_formats
     assert "png" in metadata.supported_output_formats
 
@@ -376,9 +375,9 @@ def test_d2v1_metadata():
 
 def test_d2v1_llm_correction_rules():
     """Test that D2 provider has LLM correction rules"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: D2 v1 LLM Correction Rules")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -388,7 +387,7 @@ def test_d2v1_llm_correction_rules():
     print(f"✓ Rules provided: {rules is not None}")
     if rules:
         print(f"✓ Rules length: {len(rules)} chars")
-        print(f"\nRules preview:")
+        print("\nRules preview:")
         print(rules[:300])
 
     assert rules is not None
@@ -400,9 +399,9 @@ def test_d2v1_llm_correction_rules():
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("D2 V1 PROVIDER TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     try:
         test_d2v1_provider_initialization()
@@ -416,12 +415,13 @@ if __name__ == "__main__":
         test_d2v1_render_png()
         test_d2v1_complex_diagram()
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("✅ ALL TESTS PASSED!")
-        print("="*60)
+        print("=" * 60)
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

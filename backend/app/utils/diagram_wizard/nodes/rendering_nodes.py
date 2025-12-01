@@ -14,6 +14,7 @@ from .llm_helpers import _get_model_for_id
 # Import provider registry for rendering
 try:
     from diagrams.provider_registry import get_registry
+
     PROVIDER_AVAILABLE = True
 except ImportError:
     PROVIDER_AVAILABLE = False
@@ -54,28 +55,17 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     logger.info(
         f"🎨 Rendering {diagram_type} diagram to SVG using provider system "
         f"(prompt style: {model_id}, actual model: {actual_model})",
-        extra={'session_id': session_id} if session_id else {}
+        extra={"session_id": session_id} if session_id else {},
     )
 
     if not diagram_code.strip():
-        return {
-            "svg_output": "",
-            "error_message": "No diagram code to render",
-            "current_state": SessionState.ERROR
-        }
+        return {"svg_output": "", "error_message": "No diagram code to render", "current_state": SessionState.ERROR}
 
     # Check if provider system is available
     if not PROVIDER_AVAILABLE:
         error_msg = "Provider registry not available for rendering"
-        logger.info(
-            error_msg,
-            extra={'session_id': session_id} if session_id else {}
-        )
-        return {
-            "svg_output": "",
-            "error_message": error_msg,
-            "current_state": SessionState.ERROR
-        }
+        logger.info(error_msg, extra={"session_id": session_id} if session_id else {})
+        return {"svg_output": "", "error_message": error_msg, "current_state": SessionState.ERROR}
 
     # Direct provider system call - no fallback
     provider_registry = get_registry()
@@ -87,10 +77,12 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     # Send rendering status update to frontend
     update_callback = state.get("_update_callback")
     if update_callback:
-        await update_callback({
-            "status": "rendering",
-            "message": f"Rendering {diagram_type.value} diagram to SVG...",
-        })
+        await update_callback(
+            {
+                "status": "rendering",
+                "message": f"Rendering {diagram_type.value} diagram to SVG...",
+            }
+        )
 
     try:
         # Provider's render_with_validation handles the complete pipeline:
@@ -106,40 +98,37 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
             auto_fix=True,  # Enable pattern-based fixes
             llm_correction=True,  # Enable LLM correction
             model=actual_model,  # Use actual model from .env (e.g., "anthropic/claude-3.5-sonnet")
-            progress_callback=update_callback  # Pass for detailed progress
+            progress_callback=update_callback,  # Pass for detailed progress
         )
 
         if result.success:
             # Send rendered status update with SVG to frontend
             if update_callback:
-                await update_callback({
-                    "status": "rendered",
-                    "message": "✅ Diagram rendered successfully",
-                })
+                await update_callback(
+                    {
+                        "status": "rendered",
+                        "message": "✅ Diagram rendered successfully",
+                    }
+                )
 
-            return {
-                "svg_output": result.content,
-                "current_state": SessionState.READY
-            }
+            return {"svg_output": result.content, "current_state": SessionState.READY}
         else:
             # Send error status update
             if update_callback:
-                await update_callback({
-                    "status": "error",
-                    "message": f"Rendering failed: {result.error}",
-                    "error": result.error,
-                })
+                await update_callback(
+                    {
+                        "status": "error",
+                        "message": f"Rendering failed: {result.error}",
+                        "error": result.error,
+                    }
+                )
 
             return {
                 "svg_output": "",
                 "error_message": f"Rendering failed: {result.error}",
-                "current_state": SessionState.ERROR
+                "current_state": SessionState.ERROR,
             }
     except Exception as e:
         error_msg = f"Critical provider error during rendering: {str(e)}"
-        logger.info(error_msg, exc_info=True, extra={'session_id': session_id} if session_id else {})
-        return {
-            "svg_output": "",
-            "error_message": error_msg,
-            "current_state": SessionState.ERROR
-        }
+        logger.info(error_msg, exc_info=True, extra={"session_id": session_id} if session_id else {})
+        return {"svg_output": "", "error_message": error_msg, "current_state": SessionState.ERROR}

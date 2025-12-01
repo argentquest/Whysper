@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class CorrectionStrategy(str, Enum):
     """Strategy for error correction"""
+
     NONE = "none"
     PATTERN_ONLY = "pattern_only"
     LLM_ONLY = "llm_only"
@@ -31,6 +32,7 @@ class CorrectionStrategy(str, Enum):
 
 class LLMCorrectionConfig(BaseModel):
     """LLM correction configuration"""
+
     enabled: bool = True
     max_retries: int = Field(default=3, ge=0, le=10)
     temperature: float = Field(default=0.3, ge=0.0, le=2.0)
@@ -40,35 +42,41 @@ class LLMCorrectionConfig(BaseModel):
 
 class PatternCorrectionConfig(BaseModel):
     """Pattern-based correction configuration"""
+
     enabled: bool = True
 
 
 class UserCorrectionConfig(BaseModel):
     """User correction configuration"""
+
     enabled: bool = True
     session_timeout_seconds: int = Field(default=300, ge=60, le=3600)
 
 
 class ValidationConfig(BaseModel):
     """Validation configuration"""
+
     timeout_seconds: int = Field(default=120, ge=10, le=600)
     max_code_length_bytes: int = Field(default=512000, ge=1024, le=524288)
 
 
 class RenderingConfig(BaseModel):
     """Rendering configuration"""
+
     timeout_seconds: int = Field(default=120, ge=10, le=600)
     default_output_format: str = "svg"
 
 
 class BatchConfig(BaseModel):
     """Batch rendering configuration"""
+
     enabled: bool = False
     max_items: int = Field(default=50, ge=1, le=100)
 
 
 class DefaultConfig(BaseModel):
     """Default configuration that applies to all providers"""
+
     llm_correction: LLMCorrectionConfig = Field(default_factory=LLMCorrectionConfig)
     pattern_correction: PatternCorrectionConfig = Field(default_factory=PatternCorrectionConfig)
     correction_strategy: CorrectionStrategy = Field(default=CorrectionStrategy.PATTERN_THEN_LLM)
@@ -80,6 +88,7 @@ class DefaultConfig(BaseModel):
 
 class GlobalSettings(BaseModel):
     """Global settings that affect entire diagram system"""
+
     session_cleanup_interval_seconds: int = Field(default=300, ge=60, le=3600)
     max_concurrent_renders: int = Field(default=10, ge=1, le=100)
     enable_metrics: bool = True
@@ -88,6 +97,7 @@ class GlobalSettings(BaseModel):
 
 class RootConfig(BaseModel):
     """Root configuration file (backend/diagrams/config.json)"""
+
     version: str = "1.0"
     description: str = "Default configuration for all diagram providers"
     defaults: DefaultConfig = Field(default_factory=DefaultConfig)
@@ -121,9 +131,7 @@ class ProviderConfig(BaseModel):
     # Provider-specific custom settings (not in defaults)
     custom: Dict[str, Any] = Field(default_factory=dict)
 
-    model_config = {
-        "use_enum_values": True
-    }
+    model_config = {"use_enum_values": True}
 
 
 class ConfigMerger:
@@ -157,10 +165,7 @@ class ConfigMerger:
 
     @staticmethod
     @log_method_call
-    def merge_configs(
-        root_config: RootConfig,
-        provider_config_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def merge_configs(root_config: RootConfig, provider_config_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Merge root defaults with provider overrides.
 
@@ -175,20 +180,20 @@ class ConfigMerger:
         merged = root_config.defaults.model_dump()
 
         # Get provider overrides
-        provider_overrides = provider_config_data.get('overrides', {})
+        provider_overrides = provider_config_data.get("overrides", {})
 
         # Deep merge overrides into defaults
         merged = ConfigMerger.deep_merge(merged, provider_overrides)
 
         # Add provider-specific required fields
-        merged['provider_id'] = provider_config_data['provider_id']
-        merged['provider_name'] = provider_config_data['provider_name']
-        merged['description'] = provider_config_data.get('description', '')
-        merged['diagram_type'] = provider_config_data['diagram_type']
-        merged['supported_output_formats'] = provider_config_data['supported_output_formats']
+        merged["provider_id"] = provider_config_data["provider_id"]
+        merged["provider_name"] = provider_config_data["provider_name"]
+        merged["description"] = provider_config_data.get("description", "")
+        merged["diagram_type"] = provider_config_data["diagram_type"]
+        merged["supported_output_formats"] = provider_config_data["supported_output_formats"]
 
         # Add custom settings (not merged, just added)
-        merged['custom'] = provider_config_data.get('custom', {})
+        merged["custom"] = provider_config_data.get("custom", {})
 
         return merged
 
@@ -219,7 +224,7 @@ class ProviderConfigLoader:
             return default_config
 
         try:
-            with open(root_config_file, 'r', encoding='utf-8') as f:
+            with open(root_config_file, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
 
             config = RootConfig(**config_data)
@@ -237,13 +242,8 @@ class ProviderConfigLoader:
         root_config_file = self.diagrams_root / "config.json"
 
         try:
-            with open(root_config_file, 'w', encoding='utf-8') as f:
-                json.dump(
-                    config.model_dump(mode='json'),
-                    f,
-                    indent=2,
-                    ensure_ascii=False
-                )
+            with open(root_config_file, "w", encoding="utf-8") as f:
+                json.dump(config.model_dump(mode="json"), f, indent=2, ensure_ascii=False)
 
             logger.info("Saved root configuration")
         except Exception as e:
@@ -269,11 +269,11 @@ class ProviderConfigLoader:
             return self._create_minimal_provider_config(provider_id)
 
         try:
-            with open(provider_config_file, 'r', encoding='utf-8') as f:
+            with open(provider_config_file, "r", encoding="utf-8") as f:
                 provider_data = json.load(f)
 
             # Validate required fields
-            required_fields = ['provider_id', 'provider_name', 'diagram_type', 'supported_output_formats']
+            required_fields = ["provider_id", "provider_name", "diagram_type", "supported_output_formats"]
             for field in required_fields:
                 if field not in provider_data:
                     logger.info(f"Provider config missing required field: {field}")
@@ -301,35 +301,34 @@ class ProviderConfigLoader:
     def _create_minimal_provider_config(self, provider_id: str) -> ProviderConfig:
         """Create minimal provider config using all defaults"""
         # Detect diagram type from provider_id
-        if 'mermaid' in provider_id.lower():
-            diagram_type = 'mermaid'
-            formats = ['mermaid', 'svg']
-        elif 'd2' in provider_id.lower():
-            diagram_type = 'd2'
-            formats = ['d2', 'svg']
+        if "mermaid" in provider_id.lower():
+            diagram_type = "mermaid"
+            formats = ["mermaid", "svg"]
+        elif "d2" in provider_id.lower():
+            diagram_type = "d2"
+            formats = ["d2", "svg"]
         else:
-            diagram_type = provider_id.replace('v1', '').replace('v2', '')
-            formats = ['svg']
+            diagram_type = provider_id.replace("v1", "").replace("v2", "")
+            formats = ["svg"]
 
         # Use all defaults from root config
         merged_data = self.root_config.defaults.model_dump()
-        merged_data.update({
-            'provider_id': provider_id,
-            'provider_name': f"{diagram_type.capitalize()} Renderer",
-            'description': f"Auto-generated config for {provider_id}",
-            'diagram_type': diagram_type,
-            'supported_output_formats': formats,
-            'custom': {}
-        })
+        merged_data.update(
+            {
+                "provider_id": provider_id,
+                "provider_name": f"{diagram_type.capitalize()} Renderer",
+                "description": f"Auto-generated config for {provider_id}",
+                "diagram_type": diagram_type,
+                "supported_output_formats": formats,
+                "custom": {},
+            }
+        )
 
         return ProviderConfig(**merged_data)
 
     @log_method_call
     def save_provider_config(
-        self,
-        config: ProviderConfig,
-        provider_folder: Path,
-        include_defaults: bool = False
+        self, config: ProviderConfig, provider_folder: Path, include_defaults: bool = False
     ) -> None:
         """
         Save provider configuration.
@@ -345,14 +344,14 @@ class ProviderConfigLoader:
         try:
             if include_defaults:
                 # Save full config
-                config_data = config.model_dump(mode='json')
+                config_data = config.model_dump(mode="json")
             else:
                 # Save only overrides by comparing with defaults
                 config_data = self._extract_overrides(config)
 
             provider_folder.mkdir(parents=True, exist_ok=True)
 
-            with open(provider_config_file, 'w', encoding='utf-8') as f:
+            with open(provider_config_file, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved config for {config.provider_id}")
@@ -373,8 +372,15 @@ class ProviderConfigLoader:
         overrides = {}
 
         # Compare each section with defaults
-        for section in ['llm_correction', 'pattern_correction', 'correction_strategy',
-                        'user_correction', 'validation', 'rendering', 'batch']:
+        for section in [
+            "llm_correction",
+            "pattern_correction",
+            "correction_strategy",
+            "user_correction",
+            "validation",
+            "rendering",
+            "batch",
+        ]:
 
             if section in current and section in defaults:
                 if isinstance(current[section], dict):
@@ -391,18 +397,18 @@ class ProviderConfigLoader:
 
         # Build minimal config with overrides
         result = {
-            'provider_id': config.provider_id,
-            'provider_name': config.provider_name,
-            'description': config.description,
-            'diagram_type': config.diagram_type,
-            'supported_output_formats': config.supported_output_formats,
+            "provider_id": config.provider_id,
+            "provider_name": config.provider_name,
+            "description": config.description,
+            "diagram_type": config.diagram_type,
+            "supported_output_formats": config.supported_output_formats,
         }
 
         if overrides:
-            result['overrides'] = overrides
+            result["overrides"] = overrides
 
         if config.custom:
-            result['custom'] = config.custom
+            result["custom"] = config.custom
 
         return result
 

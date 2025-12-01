@@ -2,14 +2,13 @@
 Test d2v1 provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
 # Add backend directory to Python path to enable module imports
 backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.provider_config import get_config_loader
 
 
 def test_d2v1_config():
@@ -37,7 +36,7 @@ def test_d2v1_config():
     assert config.llm_correction.max_tokens == 6000, "Should override to 6000"
 
     # Verify batch processing configuration overrides
-    assert config.batch.enabled == True, "Should override to True"
+    assert config.batch.enabled, "Should override to True"
     assert config.batch.max_items == 100, "Should override to 100"
 
     # Confirm default settings that were not explicitly overridden

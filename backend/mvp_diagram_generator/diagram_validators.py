@@ -19,33 +19,33 @@ from .mermaid_syntax_fixer import fix_mermaid_syntax
 # Define keywords for detecting different diagram types
 # These keywords help quickly identify the type of diagram syntax
 MERMAID_KEYWORDS = [
-    "classDiagram",      # UML class diagrams
-    "sequenceDiagram",   # Sequence diagrams
-    "graph",            # Graph diagrams (old syntax)
-    "flowchart",        # Flowcharts (new syntax)
-    "stateDiagram",     # State diagrams
+    "classDiagram",  # UML class diagrams
+    "sequenceDiagram",  # Sequence diagrams
+    "graph",  # Graph diagrams (old syntax)
+    "flowchart",  # Flowcharts (new syntax)
+    "stateDiagram",  # State diagrams
     "stateDiagram-v2",  # State diagrams v2
-    "erDiagram",        # Entity-relationship diagrams
-    "gantt",            # Gantt charts
-    "pie",              # Pie charts
-    "journey",          # User journey diagrams
-    "gitGraph",         # Git graphs
-    "mindmap",          # Mind maps
-    "timeline",         # Timeline diagrams
-    "quadrantChart",    # Quadrant charts
+    "erDiagram",  # Entity-relationship diagrams
+    "gantt",  # Gantt charts
+    "pie",  # Pie charts
+    "journey",  # User journey diagrams
+    "gitGraph",  # Git graphs
+    "mindmap",  # Mind maps
+    "timeline",  # Timeline diagrams
+    "quadrantChart",  # Quadrant charts
     "requirementDiagram",  # Requirement diagrams
-    "sankey-beta",      # Sankey diagrams (beta)
-    "gitgraph",         # Alternative git graph syntax
+    "sankey-beta",  # Sankey diagrams (beta)
+    "gitgraph",  # Alternative git graph syntax
 ]
 
 # Define keywords for C4 model diagrams
 # Used to detect different levels of architectural diagrams
 C4_KEYWORDS = [
-    "C4Context",        # Context level - shows system boundaries
-    "C4Container",      # Container level - shows containers/applications
-    "C4Component",      # Component level - shows components within containers
-    "C4Dynamic",        # Dynamic diagrams - show runtime interactions
-    "C4Deployment",     # Deployment diagrams - show infrastructure
+    "C4Context",  # Context level - shows system boundaries
+    "C4Container",  # Container level - shows containers/applications
+    "C4Component",  # Component level - shows components within containers
+    "C4Dynamic",  # Dynamic diagrams - show runtime interactions
+    "C4Deployment",  # Deployment diagrams - show infrastructure
 ]
 
 # Define regex patterns to detect D2 diagram syntax
@@ -73,6 +73,7 @@ D2_PATTERNS = [
     re.compile(r"direction\s*:", re.IGNORECASE),
 ]
 
+
 def is_valid_mermaid_diagram(code: str) -> bool:
     # Validate input: ensure it's a non-empty string
     if not code or not isinstance(code, str):
@@ -93,6 +94,7 @@ def is_valid_mermaid_diagram(code: str) -> bool:
 
         # If CLI validation fails, try to fix and validate again
         from .mermaid_cli_validator import validate_and_fix_mermaid_with_cli
+
         is_valid, fixed_code, _ = validate_and_fix_mermaid_with_cli(trimmed)
         return is_valid
 
@@ -100,6 +102,7 @@ def is_valid_mermaid_diagram(code: str) -> bool:
     # Use syntax fixer to attempt repairing the diagram
     result = fix_mermaid_syntax(trimmed)
     return result.is_valid
+
 
 def is_valid_d2_diagram(code: str) -> bool:
     # Validate input: ensure it's a non-empty string
@@ -118,16 +121,18 @@ def is_valid_d2_diagram(code: str) -> bool:
         is_valid, _ = validate_d2_with_cli(trimmed)
         if is_valid:
             return True
-        
+
         # If CLI validation fails, try to fix and validate again
         from .d2_cli_validator import validate_and_fix_d2_with_cli
+
         is_valid, fixed_code, _ = validate_and_fix_d2_with_cli(trimmed)
         return is_valid
-    
+
     # Fallback to pattern-based validation if CLI is not available
     # Use syntax fixer to attempt repairing the diagram
     result = fix_d2_syntax(trimmed)
     return result.is_valid
+
 
 def is_valid_c4_diagram(code: str) -> bool:
     # Validate input: ensure it's a non-empty string
@@ -136,22 +141,27 @@ def is_valid_c4_diagram(code: str) -> bool:
 
     # Check for C4 keywords that indicate valid C4 diagram syntax
     # This is a simple pattern-based detection method
-    if any(
-        re.search(rf"\b{keyword}\b", code)
-        for keyword in C4_KEYWORDS
-    ):
+    if any(re.search(rf"\b{keyword}\b", code) for keyword in C4_KEYWORDS):
         return True
 
     # Define additional PlantUML C4 functions to validate
     # These functions are commonly used in C4 model diagrams
     c4_functions = [
-        "Person", "System", "Container", "Component",
-        "Rel", "RelU", "RelBack", "RelLeft", "RelRight", "RelUp", "RelDown",
-        "System_Boundary", "Container_Boundary", "Component_Boundary"
+        "Person",
+        "System",
+        "Container",
+        "Component",
+        "Rel",
+        "RelU",
+        "RelBack",
+        "RelLeft",
+        "RelRight",
+        "RelUp",
+        "RelDown",
+        "System_Boundary",
+        "Container_Boundary",
+        "Component_Boundary",
     ]
 
     # Check if any C4 functions are present in the code
-    return any(
-        re.search(rf"\b{func}\s*\(", code)
-        for func in c4_functions
-    )
+    return any(re.search(rf"\b{func}\s*\(", code) for func in c4_functions)

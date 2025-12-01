@@ -44,6 +44,7 @@ Expected Results:
 - LLM corrections require running server (tested separately)
 """
 
+from diagrams.d2v1.d2_renderer import D2V1Provider
 import sys
 from pathlib import Path
 import pytest
@@ -52,9 +53,6 @@ import pytest
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.d2v1.d2_renderer import D2V1Provider
-from diagrams.llm_correction_service import get_llm_correction_service
 
 
 # =====================================================================
@@ -80,9 +78,8 @@ z: End
 x -> y -> z
 """,
         "valid": True,
-        "description": "Simple valid flow"
+        "description": "Simple valid flow",
     },
-
     "test_002_missing_direction_invalid": {
         "code": """x: Start
 y: Process
@@ -92,9 +89,8 @@ x -> y -> z
 """,
         "valid": False,
         "description": "Missing direction (can be auto-fixed)",
-        "expected_fix": "Should add 'direction: right' at start"
+        "expected_fix": "Should add 'direction: right' at start",
     },
-
     "test_003_containers_valid": {
         "code": """direction: right
 
@@ -128,9 +124,8 @@ backend.api -> backend.service
 backend.service -> database
 """,
         "valid": True,
-        "description": "Valid diagram with containers"
+        "description": "Valid diagram with containers",
     },
-
     "test_004_unclosed_brace_invalid": {
         "code": """direction: right
 
@@ -142,9 +137,8 @@ container {
 """,
         "valid": False,
         "description": "Unclosed brace (should be caught by validator)",
-        "expected_fix": "Should add closing brace"
+        "expected_fix": "Should add closing brace",
     },
-
     "test_005_shapes_and_styles_valid": {
         "code": """direction: down
 
@@ -174,9 +168,8 @@ app -> db: Stores Data
 app -> cache: Checks Cache
 """,
         "valid": True,
-        "description": "Valid diagram with various shapes and styles"
+        "description": "Valid diagram with various shapes and styles",
     },
-
     "test_006_bidirectional_connections_valid": {
         "code": """direction: right
 
@@ -188,9 +181,8 @@ client <-> server: HTTP
 server <-> database: SQL
 """,
         "valid": True,
-        "description": "Valid diagram with bidirectional connections"
+        "description": "Valid diagram with bidirectional connections",
     },
-
     "test_007_invalid_arrow_spacing_invalid": {
         "code": """direction: right
 
@@ -200,9 +192,8 @@ C - > D
 """,
         "valid": False,
         "description": "Invalid arrow syntax with spaces",
-        "expected_fix": "Should fix arrow syntax to ->"
+        "expected_fix": "Should fix arrow syntax to ->",
     },
-
     "test_008_classes_and_sql_valid": {
         "code": """direction: down
 
@@ -232,9 +223,8 @@ classes.user.id -> classes.order.user_id
 classes.order.id -> classes.item.order_id
 """,
         "valid": True,
-        "description": "Valid SQL table diagram"
+        "description": "Valid SQL table diagram",
     },
-
     "test_009_network_architecture_valid": {
         "code": """direction: right
 
@@ -270,9 +260,8 @@ app1 -> db: Query
 app2 -> db: Query
 """,
         "valid": True,
-        "description": "Valid network architecture diagram"
+        "description": "Valid network architecture diagram",
     },
-
     "test_010_label_without_quotes_invalid": {
         "code": """direction: right
 
@@ -283,8 +272,8 @@ A -> B: Connection with spaces
 """,
         "valid": False,
         "description": "Label with spaces should be quoted",
-        "expected_fix": "Should add quotes around connection label"
-    }
+        "expected_fix": "Should add quotes around connection label",
+    },
 }
 
 
@@ -355,11 +344,11 @@ def test_d2_diagram_samples(test_id, d2_provider):
     test_data = D2_TEST_DIAGRAMS[test_id]
 
     # ===== Test Header =====
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TEST: {test_id}")
     print(f"Description: {test_data['description']}")
     print(f"Expected Valid: {test_data['valid']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # ===== Pre-flight Check =====
     # Skip test if D2 CLI is not installed (e.g., in CI without D2)
@@ -372,7 +361,7 @@ def test_d2_diagram_samples(test_id, d2_provider):
     # ===== Step 1: VALIDATION =====
     # This calls the D2 CLI to validate syntax
     # Expected: ~100-300ms for validation
-    print(f"\n1. Validating code...")
+    print("\n1. Validating code...")
     validation_result = d2_provider.validate_code(code)
 
     print(f"   Is Valid: {validation_result.is_valid}")
@@ -384,11 +373,8 @@ def test_d2_diagram_samples(test_id, d2_provider):
     # Only run for invalid diagrams (expected_valid = False)
     # This tests the pattern-based correction system
     if not expected_valid and not validation_result.is_valid:
-        print(f"\n2. Testing pattern-based auto-fix...")
-        fix_result = d2_provider.auto_fix_pattern_based(
-            code,
-            validation_result.error or "Syntax error"
-        )
+        print("\n2. Testing pattern-based auto-fix...")
+        fix_result = d2_provider.auto_fix_pattern_based(code, validation_result.error or "Syntax error")
 
         print(f"   Auto Fixed: {fix_result.auto_fixed}")
         print(f"   Correction Method: {fix_result.correction_method}")
@@ -404,7 +390,7 @@ def test_d2_diagram_samples(test_id, d2_provider):
     # Only render if code is valid (or expected to be valid)
     # This generates actual SVG using D2 CLI
     if expected_valid or (validation_result.is_valid):
-        print(f"\n3. Testing SVG rendering...")
+        print("\n3. Testing SVG rendering...")
         render_result = d2_provider.render(code, output_format="svg")
 
         print(f"   Render Success: {render_result.success}")
@@ -423,9 +409,9 @@ def test_d2_diagram_samples(test_id, d2_provider):
 
 def test_d2_summary(d2_provider):
     """Summary of all D2 test diagrams"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("D2 TEST DIAGRAMS SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     valid_count = sum(1 for d in D2_TEST_DIAGRAMS.values() if d["valid"])
     invalid_count = len(D2_TEST_DIAGRAMS) - valid_count
@@ -438,7 +424,7 @@ def test_d2_summary(d2_provider):
     if d2_provider.is_available():
         print(f"D2 Version: {d2_provider.get_version()}")
 
-    print(f"\nDiagram Features Covered:")
+    print("\nDiagram Features Covered:")
     features = [
         "Simple flows",
         "Containers and nesting",
@@ -447,19 +433,19 @@ def test_d2_summary(d2_provider):
         "Bidirectional connections",
         "SQL tables",
         "Network architectures",
-        "Cloud shapes"
+        "Cloud shapes",
     ]
 
     for feature in features:
         print(f"  - {feature}")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("D2 DIAGRAM SAMPLES TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "d2v1"
     provider = D2V1Provider(provider_folder)
@@ -472,4 +458,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"\n❌ Test {test_id} failed: {e}")
             import traceback
+
             traceback.print_exc()

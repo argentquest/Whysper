@@ -5,15 +5,21 @@ from app.services.diagram_factory_service import DiagramSessionStore, DiagramFac
 from app.utils.diagram_wizard.graph_state import DiagramType, SessionState
 
 # Helper to mock call_llm
+
+
 async def mock_call_llm(*args, **kwargs):
     prompt = args[0] if args else kwargs.get("prompt", "")
     if "Analyze" in prompt:
-         return '{"analysis_summary": "Analysis complete", "assessment_score": 90, "json_representation": {}, "question": null}'
+        return '{"analysis_summary": "Analysis complete", "assessment_score": 90, "json_representation": {}, "question": null}'
     return "{}"
 
+
 # Helper to mock get_prompt
+
+
 def mock_get_prompt(*args, **kwargs):
     return "Dummy Prompt"
+
 
 @pytest.mark.asyncio
 async def test_resilience_provider_crash():
@@ -21,9 +27,9 @@ async def test_resilience_provider_crash():
     session = DiagramSessionStore.create_session()
     service = DiagramFactoryService(session)
 
-    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=mock_call_llm), \
-         patch("app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt), \
-         patch("app.utils.diagram_wizard.nodes.rendering_nodes.get_registry") as mock_get_registry:
+    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=mock_call_llm), patch(
+        "app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt
+    ), patch("app.utils.diagram_wizard.nodes.rendering_nodes.get_registry") as mock_get_registry:
 
         # Setup provider mock to raise exception
         mock_registry = MagicMock()
@@ -38,7 +44,7 @@ async def test_resilience_provider_crash():
             "diagram_type": DiagramType.MERMAID,
             "is_valid": True,
             "_session_id": session.session_id,
-            "_update_callback": service._push_update
+            "_update_callback": service._push_update,
         }
 
         # Import the rendering node directly to test it in isolation first
@@ -52,6 +58,7 @@ async def test_resilience_provider_crash():
         assert "Critical Provider Crash" in result.get("error_message", "")
         assert result.get("svg_output") == ""
 
+
 @pytest.mark.asyncio
 async def test_resilience_malformed_llm_json():
     """Test behavior when LLM returns malformed JSON."""
@@ -62,8 +69,9 @@ async def test_resilience_malformed_llm_json():
     async def bad_json_llm(*args, **kwargs):
         return "I am not returning JSON today."
 
-    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=bad_json_llm), \
-         patch("app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt):
+    with patch("app.utils.diagram_wizard.nodes.analysis_nodes.call_llm", side_effect=bad_json_llm), patch(
+        "app.utils.diagram_wizard.nodes.analysis_nodes.get_prompt", side_effect=mock_get_prompt
+    ):
 
         await service.start_generation("test prompt", diagram_type="auto")
 

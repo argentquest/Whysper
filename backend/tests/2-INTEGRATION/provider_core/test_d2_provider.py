@@ -2,14 +2,12 @@
 Tests for D2 diagram provider rendering.
 """
 
-import pytest
+from conftest import save_svg_artifact
 import sys
-import os
 from pathlib import Path
 
 # Import from root conftest
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from conftest import save_svg_artifact
 
 
 class TestD2RenderingBasic:
@@ -17,11 +15,7 @@ class TestD2RenderingBasic:
 
     def test_render_simple_diagram(self, client, d2_code_simple):
         """Test rendering a simple D2 diagram."""
-        payload = {
-            "code": d2_code_simple,
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        payload = {"code": d2_code_simple, "diagram_type": "d2", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -39,11 +33,7 @@ class TestD2RenderingBasic:
 
     def test_render_complex_diagram(self, client, d2_code_complex):
         """Test rendering a complex D2 diagram with styling."""
-        payload = {
-            "code": d2_code_complex,
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        payload = {"code": d2_code_complex, "diagram_type": "d2", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -57,12 +47,7 @@ class TestD2RenderingBasic:
 
     def test_render_with_auto_fix(self, client, d2_code_simple):
         """Test rendering with auto-fix enabled."""
-        payload = {
-            "code": d2_code_simple,
-            "diagram_type": "d2",
-            "output_format": "svg",
-            "auto_fix": True
-        }
+        payload = {"code": d2_code_simple, "diagram_type": "d2", "output_format": "svg", "auto_fix": True}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -75,11 +60,7 @@ class TestD2RenderingBasic:
 
     def test_render_response_format(self, client, d2_code_simple):
         """Test that response has all required fields."""
-        payload = {
-            "code": d2_code_simple,
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        payload = {"code": d2_code_simple, "diagram_type": "d2", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
         data = response.json()
@@ -100,10 +81,7 @@ class TestD2Validation:
 
     def test_validate_valid_diagram(self, client, d2_code_simple):
         """Test validating a valid D2 diagram."""
-        payload = {
-            "code": d2_code_simple,
-            "diagram_type": "d2"
-        }
+        payload = {"code": d2_code_simple, "diagram_type": "d2"}
 
         response = client.post("/api/v1/diagrams/v2/validate", json=payload)
 
@@ -115,10 +93,7 @@ class TestD2Validation:
 
     def test_validate_invalid_diagram(self, client, invalid_d2):
         """Test validating an invalid D2 diagram."""
-        payload = {
-            "code": invalid_d2,
-            "diagram_type": "d2"
-        }
+        payload = {"code": invalid_d2, "diagram_type": "d2"}
 
         response = client.post("/api/v1/diagrams/v2/validate", json=payload)
 
@@ -137,7 +112,7 @@ class TestD2ErrorHandling:
         """Test error when diagram_type is missing."""
         payload = {
             "code": d2_code_simple,
-            "output_format": "svg"
+            "output_format": "svg",
             # Missing diagram_type
         }
 
@@ -149,7 +124,7 @@ class TestD2ErrorHandling:
         """Test error when code is missing."""
         payload = {
             "diagram_type": "d2",
-            "output_format": "svg"
+            "output_format": "svg",
             # Missing code
         }
 
@@ -159,11 +134,7 @@ class TestD2ErrorHandling:
 
     def test_empty_code(self, client):
         """Test error with empty code."""
-        payload = {
-            "code": "",
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        payload = {"code": "", "diagram_type": "d2", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 

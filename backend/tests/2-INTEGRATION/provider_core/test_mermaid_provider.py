@@ -2,14 +2,12 @@
 Tests for Mermaid diagram provider rendering.
 """
 
-import pytest
+from conftest import save_svg_artifact
 import sys
-import os
 from pathlib import Path
 
 # Import from root conftest
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from conftest import save_svg_artifact
 
 
 class TestMermaidRenderingBasic:
@@ -17,11 +15,7 @@ class TestMermaidRenderingBasic:
 
     def test_render_simple_flowchart(self, client, mermaid_code_simple):
         """Test rendering a simple flowchart."""
-        payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        payload = {"code": mermaid_code_simple, "diagram_type": "mermaid", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -39,11 +33,7 @@ class TestMermaidRenderingBasic:
 
     def test_render_complex_flowchart(self, client, mermaid_code_complex):
         """Test rendering a complex flowchart."""
-        payload = {
-            "code": mermaid_code_complex,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        payload = {"code": mermaid_code_complex, "diagram_type": "mermaid", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -57,12 +47,7 @@ class TestMermaidRenderingBasic:
 
     def test_render_with_auto_fix(self, client, mermaid_code_simple):
         """Test rendering with auto-fix enabled."""
-        payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid",
-            "output_format": "svg",
-            "auto_fix": True
-        }
+        payload = {"code": mermaid_code_simple, "diagram_type": "mermaid", "output_format": "svg", "auto_fix": True}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 
@@ -75,11 +60,7 @@ class TestMermaidRenderingBasic:
 
     def test_render_response_format(self, client, mermaid_code_simple):
         """Test that response has all required fields."""
-        payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        payload = {"code": mermaid_code_simple, "diagram_type": "mermaid", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
         data = response.json()
@@ -100,10 +81,7 @@ class TestMermaidValidation:
 
     def test_validate_valid_diagram(self, client, mermaid_code_simple):
         """Test validating a valid diagram."""
-        payload = {
-            "code": mermaid_code_simple,
-            "diagram_type": "mermaid"
-        }
+        payload = {"code": mermaid_code_simple, "diagram_type": "mermaid"}
 
         response = client.post("/api/v1/diagrams/v2/validate", json=payload)
 
@@ -115,10 +93,7 @@ class TestMermaidValidation:
 
     def test_validate_invalid_diagram(self, client, invalid_mermaid):
         """Test validating an invalid diagram."""
-        payload = {
-            "code": invalid_mermaid,
-            "diagram_type": "mermaid"
-        }
+        payload = {"code": invalid_mermaid, "diagram_type": "mermaid"}
 
         response = client.post("/api/v1/diagrams/v2/validate", json=payload)
 
@@ -137,7 +112,7 @@ class TestMermaidErrorHandling:
         """Test error when diagram_type is missing."""
         payload = {
             "code": mermaid_code_simple,
-            "output_format": "svg"
+            "output_format": "svg",
             # Missing diagram_type
         }
 
@@ -149,7 +124,7 @@ class TestMermaidErrorHandling:
         """Test error when code is missing."""
         payload = {
             "diagram_type": "mermaid",
-            "output_format": "svg"
+            "output_format": "svg",
             # Missing code
         }
 
@@ -159,11 +134,7 @@ class TestMermaidErrorHandling:
 
     def test_empty_code(self, client):
         """Test error with empty code."""
-        payload = {
-            "code": "",
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        payload = {"code": "", "diagram_type": "mermaid", "output_format": "svg"}
 
         response = client.post("/api/v1/diagrams/v2/render", json=payload)
 

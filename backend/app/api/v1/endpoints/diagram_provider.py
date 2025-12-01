@@ -4,17 +4,15 @@ Uses the new modular provider system (backend/diagrams/)
 Supports Mermaid, D2, and future diagram types
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from fastapi.responses import Response, FileResponse, StreamingResponse
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 import logging
 from common.logging_decorator import log_method_call
 from pathlib import Path
 from datetime import datetime
-import os
 import re
-import json
 
 from diagrams.provider_registry import get_registry, ProviderRegistry
 from diagrams.base_diagram import BaseDiagramProvider
@@ -29,6 +27,7 @@ router = APIRouter()
 # ===================================================================
 # Request/Response Models
 # ===================================================================
+
 
 class DiagramRenderRequest(BaseModel):
     """Request model for diagram rendering"""
@@ -45,7 +44,7 @@ class DiagramRenderRequest(BaseModel):
             "example": {
                 "code": "flowchart TD\n  A[Start] --> B[End]",
                 "diagram_type": "mermaid",
-                "output_format": "svg"
+                "output_format": "svg",
             }
         }
 
@@ -100,7 +99,7 @@ class DiagramGenerationRequest(BaseModel):
             "example": {
                 "prompt": "Create a simple architecture showing frontend connecting to backend",
                 "diagram_type": "mermaid",
-                "output_format": "svg"
+                "output_format": "svg",
             }
         }
 
@@ -143,10 +142,9 @@ class ProvidersListResponse(BaseModel):
 # Helper Functions
 # ===================================================================
 
+
 def get_provider_for_request(
-    diagram_type: str,
-    provider_id: Optional[str] = None,
-    registry: ProviderRegistry = None
+    diagram_type: str, provider_id: Optional[str] = None, registry: ProviderRegistry = None
 ) -> BaseDiagramProvider:
     """
     Get appropriate provider for the request
@@ -169,40 +167,27 @@ def get_provider_for_request(
     if provider_id:
         provider = registry.get(provider_id)
         if not provider:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Provider '{provider_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Provider '{provider_id}' not found")
         if not provider.is_available():
             raise HTTPException(
-                status_code=503,
-                detail=f"Provider '{provider_id}' is not available. Check CLI installation."
+                status_code=503, detail=f"Provider '{provider_id}' is not available. Check CLI installation."
             )
         return provider
 
     # Get default provider for diagram type
     provider = registry.get_default_provider(diagram_type)
     if not provider:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No provider found for diagram type '{diagram_type}'"
-        )
+        raise HTTPException(status_code=404, detail=f"No provider found for diagram type '{diagram_type}'")
 
     if not provider.is_available():
         raise HTTPException(
-            status_code=503,
-            detail=f"Default provider for '{diagram_type}' is not available. Check CLI installation."
+            status_code=503, detail=f"Default provider for '{diagram_type}' is not available. Check CLI installation."
         )
 
     return provider
 
 
-def save_diagram_to_file(
-    content: str,
-    output_format: str,
-    diagram_type: str,
-    code_hash: int
-) -> str:
+def save_diagram_to_file(content: str, output_format: str, diagram_type: str, code_hash: int) -> str:
     """
     Save diagram content to file
 
@@ -221,6 +206,7 @@ def save_diagram_to_file(
     # Save file
     if output_format == "png":
         import base64
+
         with open(file_path, "wb") as f:
             f.write(base64.b64decode(content))
     else:
@@ -235,12 +221,10 @@ def save_diagram_to_file(
 # API Endpoints
 # ===================================================================
 
+
 @router.post("/render", response_model=DiagramRenderResponse)
 @log_method_call
-async def render_diagram(
-    request: DiagramRenderRequest,
-    background_tasks: BackgroundTasks
-):
+async def render_diagram(request: DiagramRenderRequest, background_tasks: BackgroundTasks):
     """
     Render a diagram using the provider system
 
@@ -266,29 +250,19 @@ async def render_diagram(
         registry = get_registry()
 
         # Get appropriate provider
-        provider = get_provider_for_request(
-            request.diagram_type,
-            request.provider_id,
-            registry
-        )
+        provider = get_provider_for_request(request.diagram_type, request.provider_id, registry)
 
         logger.info(f"[DIAGRAM RENDER] Using provider: {provider.provider_id}")
 
         # Render diagram
-        result = provider.render(
-            request.code,
-            output_format=request.output_format
-        )
+        result = provider.render(request.code, output_format=request.output_format)
 
         # Save to file if requested
         file_path = None
         if request.save_to_file and result.success and result.content:
             try:
                 file_path = save_diagram_to_file(
-                    result.content,
-                    result.output_format,
-                    request.diagram_type,
-                    hash(request.code)
+                    result.content, result.output_format, request.diagram_type, hash(request.code)
                 )
             except Exception as save_error:
                 logger.info(f"Failed to save file: {save_error}")
@@ -305,7 +279,7 @@ async def render_diagram(
                 "error": result.validation.error,
                 "auto_fixed": result.validation.auto_fixed,
                 "llm_corrected": result.validation.llm_corrected,
-                "correction_method": result.validation.correction_method
+                "correction_method": result.validation.correction_method,
             },
             metadata={
                 "provider_id": provider.provider_id,
@@ -314,11 +288,11 @@ async def render_diagram(
                 "timestamp": datetime.now().isoformat(),
                 "code_length": len(request.code),
                 **(request.metadata or {}),
-                **(result.metadata or {})
+                **(result.metadata or {}),
             },
             error=result.error,
             file_path=file_path,
-            provider_id=provider.provider_id
+            provider_id=provider.provider_id,
         )
 
         logger.info(f"[DIAGRAM RENDER] Completed in {duration:.2f}s, success: {result.success}")
@@ -329,10 +303,7 @@ async def render_diagram(
         raise
     except Exception as e:
         logger.info(f"[DIAGRAM RENDER] Unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error during diagram rendering: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error during diagram rendering: {str(e)}")
 
 
 @router.post("/validate", response_model=DiagramValidationResponse)
@@ -348,11 +319,7 @@ async def validate_diagram(request: DiagramValidationRequest):
     try:
         # Get provider
         registry = get_registry()
-        provider = get_provider_for_request(
-            request.diagram_type,
-            request.provider_id,
-            registry
-        )
+        provider = get_provider_for_request(request.diagram_type, request.provider_id, registry)
 
         logger.info(f"[DIAGRAM VALIDATE] Using provider: {provider.provider_id}")
 
@@ -363,10 +330,7 @@ async def validate_diagram(request: DiagramValidationRequest):
         if not validation_result.is_valid and request.auto_fix:
             logger.info("[DIAGRAM VALIDATE] Attempting auto-fix...")
 
-            fix_result = provider.auto_fix_pattern_based(
-                request.code,
-                validation_result.error or "Syntax error"
-            )
+            fix_result = provider.auto_fix_pattern_based(request.code, validation_result.error or "Syntax error")
 
             if fix_result.is_valid and fix_result.auto_fixed:
                 validation_result = fix_result
@@ -385,7 +349,7 @@ async def validate_diagram(request: DiagramValidationRequest):
             llm_corrected=validation_result.llm_corrected,
             fixed_code=validation_result.fixed_code,
             correction_method=validation_result.correction_method,
-            provider_id=provider.provider_id
+            provider_id=provider.provider_id,
         )
 
         logger.info(f"[DIAGRAM VALIDATE] Completed, valid: {validation_result.is_valid}")
@@ -396,10 +360,7 @@ async def validate_diagram(request: DiagramValidationRequest):
         raise
     except Exception as e:
         logger.info(f"[DIAGRAM VALIDATE] Unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error during validation: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error during validation: {str(e)}")
 
 
 @router.get("/providers", response_model=ProvidersListResponse)
@@ -417,17 +378,19 @@ async def list_providers():
 
         providers_info = []
         for metadata in all_providers:
-            providers_info.append(ProviderInfoResponse(
-                provider_id=metadata.provider_id,
-                provider_name=metadata.provider_name,
-                diagram_type=metadata.diagram_type,
-                description=metadata.description,
-                supported_output_formats=metadata.supported_output_formats,
-                capabilities=[cap.value for cap in metadata.capabilities],
-                version=metadata.version,
-                available=metadata.available,
-                requires_llm=metadata.requires_llm
-            ))
+            providers_info.append(
+                ProviderInfoResponse(
+                    provider_id=metadata.provider_id,
+                    provider_name=metadata.provider_name,
+                    diagram_type=metadata.diagram_type,
+                    description=metadata.description,
+                    supported_output_formats=metadata.supported_output_formats,
+                    capabilities=[cap.value for cap in metadata.capabilities],
+                    version=metadata.version,
+                    available=metadata.available,
+                    requires_llm=metadata.requires_llm,
+                )
+            )
 
         stats = registry.get_statistics()
 
@@ -435,15 +398,12 @@ async def list_providers():
             total_providers=stats["total_providers"],
             available_providers=stats["available_providers"],
             unavailable_providers=stats["unavailable_providers"],
-            providers=providers_info
+            providers=providers_info,
         )
 
     except Exception as e:
         logger.info(f"[PROVIDERS LIST] Error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving providers: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error retrieving providers: {str(e)}")
 
 
 @router.get("/providers/{provider_id}", response_model=ProviderInfoResponse)
@@ -457,10 +417,7 @@ async def get_provider_info(provider_id: str):
         provider = registry.get(provider_id)
 
         if not provider:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Provider '{provider_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Provider '{provider_id}' not found")
 
         metadata = provider.get_metadata()
 
@@ -473,17 +430,14 @@ async def get_provider_info(provider_id: str):
             capabilities=[cap.value for cap in metadata.capabilities],
             version=metadata.version,
             available=metadata.available,
-            requires_llm=metadata.requires_llm
+            requires_llm=metadata.requires_llm,
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.info(f"[PROVIDER INFO] Error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving provider info: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error retrieving provider info: {str(e)}")
 
 
 @router.get("/health")
@@ -501,15 +455,11 @@ async def health_check():
             "total_providers": stats["total_providers"],
             "available_providers": stats["available_providers"],
             "diagram_types": stats["diagram_types"],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
         logger.info(f"[HEALTH] Health check failed: {e}")
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"status": "unhealthy", "error": str(e), "timestamp": datetime.now().isoformat()}
 
 
 @router.get("/download/{filename}")
@@ -528,10 +478,7 @@ async def download_diagram(filename: str):
     # Ensure filename has valid extension
     valid_extensions = [".svg", ".png", ".d2", ".mmd"]
     if not any(filename.endswith(ext) for ext in valid_extensions):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only {', '.join(valid_extensions)} files can be downloaded"
-        )
+        raise HTTPException(status_code=400, detail=f"Only {', '.join(valid_extensions)} files can be downloaded")
 
     # Construct file path
     diagram_dir = Path("backend") / "static" / "diagrams"
@@ -540,10 +487,7 @@ async def download_diagram(filename: str):
     # Check if file exists
     if not file_path.exists() or not file_path.is_file():
         logger.info(f"[DOWNLOAD] File not found: {file_path}")
-        raise HTTPException(
-            status_code=404,
-            detail=f"Diagram file '{filename}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Diagram file '{filename}' not found")
 
     logger.info(f"[DOWNLOAD] Serving file: {filename}")
 
@@ -563,7 +507,7 @@ async def download_diagram(filename: str):
         path=str(file_path),
         media_type=media_type,
         filename=filename,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -571,8 +515,10 @@ async def download_diagram(filename: str):
 # Diagram Generation Endpoint (for ArchStudio)
 # ===================================================================
 
+
 class GenerateDiagramRequest(BaseModel):
     """Request model for diagram generation using an agent"""
+
     agentId: str = Field(..., description="Agent ID to use for generation")
     prompt: str = Field(..., description="User prompt for the agent", min_length=1)
     diagramType: Optional[str] = Field("mermaid", description="Diagram type (mermaid, d2, plantuml, etc.)")
@@ -580,6 +526,7 @@ class GenerateDiagramRequest(BaseModel):
 
 class GenerateDiagramResponse(BaseModel):
     """Response model for diagram generation"""
+
     requestId: str = Field(..., description="Unique request ID for tracking")
     diagram: Optional[DiagramRenderResponse] = Field(None, description="Initial diagram response if available")
 
@@ -614,12 +561,14 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
         from app.services.settings_service import settings_service
 
         # Log all request details for debugging
-        logger.info(f"[GENERATE] =============== DIAGRAM GENERATION REQUEST ===============")
+        logger.info("[GENERATE] =============== DIAGRAM GENERATION REQUEST ===============")
         logger.info(f"[GENERATE] Request ID: {request_id}")
         logger.info(f"[GENERATE] Agent ID: '{request.agentId}'")
         logger.info(f"[GENERATE] Diagram Type: '{request.diagramType}' (type={type(request.diagramType).__name__})")
         logger.info(f"[GENERATE] User Prompt Length: {len(request.prompt)} characters")
-        logger.info(f"[GENERATE] User Prompt Preview: {request.prompt[:200] if len(request.prompt) > 200 else request.prompt}...")
+        logger.info(
+            f"[GENERATE] User Prompt Preview: {request.prompt[:200] if len(request.prompt) > 200 else request.prompt}..."
+        )
 
         # =====================================================================
         # STEP 1: Load the agent's system prompt
@@ -627,7 +576,11 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
         agent_prompt_filename = f"{request.agentId}.md"
         agent_system_prompt = settings_service.get_agent_prompt_content(agent_prompt_filename)
         logger.info(f"[GENERATE] Agent System Prompt Length: {len(agent_system_prompt)} characters")
-        logger.info(f"[GENERATE] Agent System Prompt Preview: {agent_system_prompt[:200] if len(agent_system_prompt) > 200 else agent_system_prompt}...")
+        logger.info(
+            f"[GENERATE] Agent System Prompt Preview: {
+                agent_system_prompt[
+                    :200] if len(agent_system_prompt) > 200 else agent_system_prompt}..."
+        )
 
         # =====================================================================
         # STEP 2: Get the provider registry and find providers for diagram type
@@ -638,10 +591,7 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
 
         if not providers_for_type:
             logger.info(f"[GENERATE] No providers found for diagram type: {request.diagramType}")
-            raise HTTPException(
-                status_code=404,
-                detail=f"No diagram providers found for type '{request.diagramType}'"
-            )
+            raise HTTPException(status_code=404, detail=f"No diagram providers found for type '{request.diagramType}'")
 
         # Get the default provider for this diagram type
         default_provider = registry.get_default_provider(request.diagramType)
@@ -658,26 +608,20 @@ def generate_diagram(request: GenerateDiagramRequest, background_tasks: Backgrou
             agent_system_prompt=agent_system_prompt,
             user_prompt=request.prompt,
             diagram_type=request.diagramType,
-            provider=default_provider
+            provider=default_provider,
         )
 
         logger.info(f"[GENERATE] Background task scheduled for request {request_id}")
-        logger.info(f"[GENERATE] ========================================================")
+        logger.info("[GENERATE] ========================================================")
 
         # Return immediately with request ID; diagram will be sent via SSE
-        return GenerateDiagramResponse(
-            requestId=request_id,
-            diagram=None  # Diagram will be sent via SSE when ready
-        )
+        return GenerateDiagramResponse(requestId=request_id, diagram=None)  # Diagram will be sent via SSE when ready
 
     except HTTPException:
         raise
     except Exception as e:
         logger.info(f"[GENERATE] Error generating diagram: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate diagram: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate diagram: {str(e)}")
 
 
 # =====================================================================
@@ -692,7 +636,7 @@ async def _generate_diagram_async(
     agent_system_prompt: str,
     user_prompt: str,
     diagram_type: str,
-    provider: BaseDiagramProvider
+    provider: BaseDiagramProvider,
 ):
     """
     Async task to generate diagram using LLM and provider infrastructure.
@@ -711,7 +655,6 @@ async def _generate_diagram_async(
         diagram_type: Type of diagram to generate
         provider: Provider instance for rendering
     """
-    import re
 
     logger.info(f"[GENERATE_ASYNC] Starting diagram generation for request {request_id}")
     logger.info(f"[GENERATE_ASYNC] Using provider: {provider.provider_id}")
@@ -720,14 +663,13 @@ async def _generate_diagram_async(
         # =====================================================================
         # STEP 1: Call LLM with agent prompt + user prompt
         # =====================================================================
-        logger.info(f"[GENERATE_ASYNC] Calling OpenRouter LLM...")
+        logger.info("[GENERATE_ASYNC] Calling OpenRouter LLM...")
 
         # Get OpenRouter provider
         openrouter = OpenRouterProvider(api_key=settings.api_key)
 
         # Combine agent system prompt with user prompt
         # The agent prompt provides context on how to generate the specific diagram type
-        combined_system_prompt = agent_system_prompt
 
         # Call LLM
         llm_response = openrouter.process_question(
@@ -736,11 +678,13 @@ async def _generate_diagram_async(
             codebase_content="",  # Not needed for diagram generation
             model=settings.default_model or "openai/gpt-4",
             max_tokens=int(settings.max_tokens) or 4000,
-            temperature=settings.temperature or 0.5
+            temperature=settings.temperature or 0.5,
         )
 
         logger.info(f"[GENERATE_ASYNC] LLM Response Length: {len(llm_response)} characters")
-        logger.info(f"[GENERATE_ASYNC] LLM Response Preview: {llm_response[:300] if len(llm_response) > 300 else llm_response}...")
+        logger.info(
+            f"[GENERATE_ASYNC] LLM Response Preview: {llm_response[:300] if len(llm_response) > 300 else llm_response}..."
+        )
 
         # =====================================================================
         # STEP 2: Extract diagram code from LLM response
@@ -755,7 +699,9 @@ async def _generate_diagram_async(
             raise ValueError(f"Could not extract {diagram_type} diagram code from LLM response")
 
         logger.info(f"[GENERATE_ASYNC] Extracted diagram code length: {len(diagram_code)} characters")
-        logger.info(f"[GENERATE_ASYNC] Extracted code preview: {diagram_code[:200] if len(diagram_code) > 200 else diagram_code}...")
+        logger.info(
+            f"[GENERATE_ASYNC] Extracted code preview: {diagram_code[:200] if len(diagram_code) > 200 else diagram_code}..."
+        )
 
         # =====================================================================
         # STEP 3: Validate and render using provider infrastructure
@@ -768,10 +714,7 @@ async def _generate_diagram_async(
         # - LLM-based correction (if enabled, may take 30-90s)
         # - Rendering to SVG/PNG
         render_result = await provider.render_with_validation(
-            code=diagram_code,
-            output_format="svg",
-            auto_fix=True,
-            llm_correction=True
+            code=diagram_code, output_format="svg", auto_fix=True, llm_correction=True
         )
 
         # =====================================================================
@@ -784,7 +727,7 @@ async def _generate_diagram_async(
             "agent_id": agent_id,
             "diagram_type": diagram_type,
             "provider_id": provider.provider_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         if render_result.success:
@@ -795,11 +738,7 @@ async def _generate_diagram_async(
 
     except Exception as e:
         logger.info(f"[GENERATE_ASYNC] ❌ Error during diagram generation: {str(e)}", exc_info=True)
-        _pending_requests[request_id] = {
-            "status": "error",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        _pending_requests[request_id] = {"status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
 
 
 def _extract_diagram_code(response: str, diagram_type: str) -> Optional[str]:
@@ -841,18 +780,18 @@ def _extract_diagram_code(response: str, diagram_type: str) -> Optional[str]:
         return matches[0].strip()
 
     # Fallback: try to find any indented code block
-    lines = response.split('\n')
+    lines = response.split("\n")
     code_lines = []
     in_code = False
 
     for line in lines:
-        if line.strip().startswith('```'):
+        if line.strip().startswith("```"):
             in_code = not in_code
         elif in_code:
             code_lines.append(line)
 
     if code_lines:
-        return '\n'.join(code_lines).strip()
+        return "\n".join(code_lines).strip()
 
     return None
 
@@ -879,7 +818,6 @@ def stream_diagram(requestId: str):
     """
     import asyncio
     import json
-    import time
 
     logger.debug(f"[STREAM] Client connected to stream for request: {requestId}")
 
@@ -918,10 +856,10 @@ def stream_diagram(requestId: str):
                                 "error": render_result.validation.error,
                                 "autoFixed": render_result.validation.auto_fixed,
                                 "llmCorrected": render_result.validation.llm_corrected,
-                                "correctionMethod": render_result.validation.correction_method
+                                "correctionMethod": render_result.validation.correction_method,
                             },
                             "metadata": render_result.metadata,
-                            "timestamp": request_data["timestamp"]
+                            "timestamp": request_data["timestamp"],
                         }
 
                         if render_result.success:
@@ -942,11 +880,10 @@ def stream_diagram(requestId: str):
 
                     elif request_data["status"] == "error":
                         # Send error event
-                        logger.info(f"[STREAM] Diagram generation error for request {requestId}: {request_data['error']}")
-                        error_response = {
-                            "requestId": requestId,
-                            "error": request_data["error"]
-                        }
+                        logger.info(
+                            f"[STREAM] Diagram generation error for request {requestId}: {request_data['error']}"
+                        )
+                        error_response = {"requestId": requestId, "error": request_data["error"]}
                         yield f"event: error\ndata: {json.dumps(error_response)}\n\n"
 
                         # Clean up
@@ -959,7 +896,7 @@ def stream_diagram(requestId: str):
 
                 # Send keepalive to keep connection alive
                 if elapsed % 10 == 0:
-                    yield f": keepalive\n\n"
+                    yield ": keepalive\n\n"
 
             # Timeout waiting for diagram
             logger.info(f"[STREAM] Timeout waiting for diagram generation for request {requestId}")
@@ -980,9 +917,5 @@ def stream_diagram(requestId: str):
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
     )

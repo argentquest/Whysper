@@ -10,20 +10,21 @@ import sys
 import os
 
 # Fix encoding for Windows
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Setup path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
-print("="*70)
+print("=" * 70)
 print("DIAGRAM WIZARD - PROVIDER INTEGRATION TEST")
-print("="*70)
+print("=" * 70)
 
 # Test 1: Check imports work
 print("\nTest 1: Verify imports...")
 try:
-    from app.utils.diagram_wizard.graph_state import GraphState, DiagramType
+    from app.utils.diagram_wizard.graph_state import DiagramType
+
     print("✅ graph_state imports OK")
 except ImportError as e:
     print(f"❌ Failed to import graph_state: {e}")
@@ -31,6 +32,7 @@ except ImportError as e:
 
 try:
     from app.utils.diagram_wizard import nodes
+
     print("✅ nodes module imports OK")
 except ImportError as e:
     print(f"❌ Failed to import nodes: {e}")
@@ -40,8 +42,9 @@ except ImportError as e:
 print("\nTest 2: Check provider registry...")
 try:
     from diagrams.provider_registry import get_registry
+
     registry = get_registry()
-    print(f"✅ Provider registry available")
+    print("✅ Provider registry available")
 
     # List available providers
     mermaid_provider = registry.get_provider("mermaidv1")
@@ -49,19 +52,19 @@ try:
     plantuml_provider = registry.get_provider("krokiplantuml")
 
     if mermaid_provider:
-        print(f"   ✅ Mermaid provider (mermaidv1) available")
+        print("   ✅ Mermaid provider (mermaidv1) available")
     else:
-        print(f"   ⚠️  Mermaid provider not available")
+        print("   ⚠️  Mermaid provider not available")
 
     if d2_provider:
-        print(f"   ✅ D2 provider (d2v1) available")
+        print("   ✅ D2 provider (d2v1) available")
     else:
-        print(f"   ⚠️  D2 provider not available")
+        print("   ⚠️  D2 provider not available")
 
     if plantuml_provider:
-        print(f"   ✅ PlantUML provider (krokiplantuml) available")
+        print("   ✅ PlantUML provider (krokiplantuml) available")
     else:
-        print(f"   ⚠️  PlantUML provider not available")
+        print("   ⚠️  PlantUML provider not available")
 
 except ImportError as e:
     print(f"❌ Provider registry not available: {e}")
@@ -81,7 +84,7 @@ async def test_validate():
 
     try:
         result = await nodes.validate_code(state)
-        print(f"✅ validate_code executed")
+        print("✅ validate_code executed")
         print(f"   - is_valid: {result.get('is_valid')}")
         print(f"   - current_state: {result.get('current_state')}")
         print(f"   - provider_id: {result.get('provider_id', 'Not set')}")
@@ -89,6 +92,7 @@ async def test_validate():
     except Exception as e:
         print(f"❌ validate_code failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -106,7 +110,7 @@ async def test_render():
 
     try:
         result = await nodes.render_diagram(state)
-        print(f"✅ render_diagram executed")
+        print("✅ render_diagram executed")
         print(f"   - current_state: {result.get('current_state')}")
         print(f"   - svg_output length: {len(result.get('svg_output', ''))}")
         has_svg = len(result.get("svg_output", "")) > 0
@@ -115,6 +119,7 @@ async def test_render():
     except Exception as e:
         print(f"❌ render_diagram failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -155,6 +160,7 @@ async def test_full_workflow():
     except Exception as e:
         print(f"❌ Workflow failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -168,17 +174,17 @@ async def run_tests():
     return all(results)
 
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("RUNNING ASYNC NODE TESTS")
-print("="*70)
+print("=" * 70)
 
 success = asyncio.run(run_tests())
 
 # Summary
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 if success:
     print("✅ ALL INTEGRATION TESTS PASSED")
-    print("="*70)
+    print("=" * 70)
     print("\nIntegration Status:")
     print("✅ Diagram wizard nodes imported successfully")
     print("✅ Provider registry integration confirmed")
@@ -189,5 +195,5 @@ if success:
     sys.exit(0)
 else:
     print("❌ SOME TESTS FAILED")
-    print("="*70)
+    print("=" * 70)
     sys.exit(1)

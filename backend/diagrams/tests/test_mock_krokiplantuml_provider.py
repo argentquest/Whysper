@@ -2,6 +2,7 @@
 Mock Test for Kroki PlantUML Provider
 """
 
+from diagrams.krokiplantuml.kroki_renderer import KrokiPlantUMLProvider
 import unittest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
@@ -11,8 +12,6 @@ import sys
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.krokiplantuml.kroki_renderer import KrokiPlantUMLProvider
 
 
 class TestMockKrokiPlantUMLProvider(unittest.TestCase):
@@ -42,5 +41,6 @@ class TestMockKrokiPlantUMLProvider(unittest.TestCase):
         self.assertEqual(self.provider.diagram_type, "plantuml")
         self.assertEqual(self.provider.diagram_endpoint, "plantuml")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

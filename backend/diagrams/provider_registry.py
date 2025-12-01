@@ -13,7 +13,6 @@ import json
 
 from .base_diagram import BaseDiagramProvider
 from .models import ProviderMetadata
-from .provider_config import ProviderConfigLoader
 from .llm_correction_service import get_llm_correction_service
 
 from common.logging_decorator import log_method_call
@@ -54,9 +53,9 @@ class ProviderRegistry:
             # Skip non-directories and special folders
             if not folder.is_dir():
                 continue
-            if folder.name.startswith('_'):
+            if folder.name.startswith("_"):
                 continue
-            if folder.name in ['tests', '__pycache__']:
+            if folder.name in ["tests", "__pycache__"]:
                 continue
 
             provider_id = folder.name
@@ -113,27 +112,27 @@ class ProviderRegistry:
         base_name = provider_id.lower()
 
         # Remove version suffix
-        base_name = base_name.replace('v1', '').replace('v2', '')
+        base_name = base_name.replace("v1", "").replace("v2", "")
 
         # Remove hyphens
-        base_name = base_name.replace('-', '_')
+        base_name = base_name.replace("-", "_")
 
         # Map to renderer module name
         # Check for kroki-based providers first (they have precedence)
-        if 'kroki' in base_name:
-            return 'kroki_renderer'
-        elif 'mermaid' in base_name:
-            return 'mermaid_renderer'
-        elif 'd2' in base_name:
-            return 'd2_renderer'
-        elif 'plantuml' in base_name:
-            return 'plantuml_renderer'
-        elif 'c4' in base_name:
-            return 'c4_renderer'
-        elif 'structurizr' in base_name:
-            return 'kroki_renderer'
+        if "kroki" in base_name:
+            return "kroki_renderer"
+        elif "mermaid" in base_name:
+            return "mermaid_renderer"
+        elif "d2" in base_name:
+            return "d2_renderer"
+        elif "plantuml" in base_name:
+            return "plantuml_renderer"
+        elif "c4" in base_name:
+            return "c4_renderer"
+        elif "structurizr" in base_name:
+            return "kroki_renderer"
         else:
-            return 'renderer'
+            return "renderer"
 
     @log_method_call
     def _find_provider_class(self, module) -> Optional[Type[BaseDiagramProvider]]:
@@ -147,9 +146,7 @@ class ProviderRegistry:
         candidate = None
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if (isinstance(attr, type) and
-                issubclass(attr, BaseDiagramProvider) and
-                attr != BaseDiagramProvider):
+            if isinstance(attr, type) and issubclass(attr, BaseDiagramProvider) and attr != BaseDiagramProvider:
                 # Skip abstract/base Kroki classes
                 if attr == KrokiBaseProvider:
                     continue
@@ -227,8 +224,7 @@ class ProviderRegistry:
             List of providers that support this diagram type
         """
         return [
-            p for p in self._providers.values()
-            if p.diagram_type.lower() == diagram_type.lower() and p.is_available()
+            p for p in self._providers.values() if p.diagram_type.lower() == diagram_type.lower() and p.is_available()
         ]
 
     @log_method_call
@@ -243,9 +239,9 @@ class ProviderRegistry:
             List of providers that support this format
         """
         return [
-            p for p in self._providers.values()
-            if output_format.lower() in [fmt.lower() for fmt in p.supported_output_formats]
-            and p.is_available()
+            p
+            for p in self._providers.values()
+            if output_format.lower() in [fmt.lower() for fmt in p.supported_output_formats] and p.is_available()
         ]
 
     @log_method_call
@@ -268,9 +264,9 @@ class ProviderRegistry:
         try:
             config_file = self.diagrams_root / "config.json"
             if config_file.exists():
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     root_config = json.load(f)
-                    preferences = root_config.get('provider_preferences', {})
+                    preferences = root_config.get("provider_preferences", {})
                     preferred_provider_id = preferences.get(diagram_type.lower())
 
                     if preferred_provider_id:
@@ -278,13 +274,14 @@ class ProviderRegistry:
                             if p.provider_id == preferred_provider_id:
                                 logger.debug(f"Using configured preference for {diagram_type}: {preferred_provider_id}")
                                 return p
-                        logger.info(f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
+                        logger.info(
+                            f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
         except Exception as e:
             logger.debug(f"Could not load provider preferences from config: {e}")
 
         # STEP 2: Prefer v1 providers (fallback)
         for p in providers:
-            if 'v1' in p.provider_id.lower():
+            if "v1" in p.provider_id.lower():
                 logger.debug(f"Using v1 provider for {diagram_type}: {p.provider_id}")
                 return p
 
@@ -332,7 +329,7 @@ class ProviderRegistry:
             "available_providers": available,
             "unavailable_providers": unavailable,
             "diagram_types": diagram_types,
-            "provider_ids": list(self._providers.keys())
+            "provider_ids": list(self._providers.keys()),
         }
 
 

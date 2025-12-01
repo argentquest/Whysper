@@ -23,6 +23,7 @@ router = APIRouter()
 
 class DiagramEventPayload(BaseModel):
     """Event payload structure for diagram operations"""
+
     event_type: str  # Track type of diagram event
     diagram_type: str  # Specify diagram rendering technology
     code_length: Optional[int] = None  # Track complexity of diagram code
@@ -37,6 +38,7 @@ class DiagramEventPayload(BaseModel):
 
 class DiagramEventResponse(BaseModel):
     """Response model for diagram event logging"""
+
     success: bool
     message: str
     event_type: str
@@ -48,7 +50,7 @@ class DiagramEventResponse(BaseModel):
     tags=["diagrams", "logging"],
     summary="Log a diagram event",
     description="Log diagram-related events for debugging and analytics",
-    response_model=DiagramEventResponse
+    response_model=DiagramEventResponse,
 )
 @log_method_call
 def log_diagram_event(event: DiagramEventPayload):
@@ -95,13 +97,10 @@ def log_diagram_event(event: DiagramEventPayload):
             "success": True,
             "message": "Event logged successfully",
             "event_type": event.event_type,
-            "diagram_type": event.diagram_type
+            "diagram_type": event.diagram_type,
         }
 
     except Exception as e:
         # Catch and log any unexpected errors during event logging
         logger.info(f"Error logging diagram event: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to log event: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to log event: {str(e)}")

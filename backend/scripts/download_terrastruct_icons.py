@@ -20,10 +20,7 @@ import time
 import logging
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -35,9 +32,7 @@ class TerrastructIconScraper:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        })
+        self.session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
         self.downloaded = 0
         self.failed = 0
 
@@ -54,20 +49,20 @@ class TerrastructIconScraper:
 
     def extract_icon_urls(self, html: str) -> list:
         """Extract icon URLs from HTML"""
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
         icon_urls = []
 
         # Find all links that end with .svg
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            if href.endswith('.svg'):
+        for link in soup.find_all("a", href=True):
+            href = link["href"]
+            if href.endswith(".svg"):
                 full_url = urljoin(self.base_url, href)
                 icon_urls.append(full_url)
 
         # Also check for img tags with svg sources
-        for img in soup.find_all('img', src=True):
-            src = img['src']
-            if src.endswith('.svg'):
+        for img in soup.find_all("img", src=True):
+            src = img["src"]
+            if src.endswith(".svg"):
                 full_url = urljoin(self.base_url, src)
                 icon_urls.append(full_url)
 
@@ -75,14 +70,14 @@ class TerrastructIconScraper:
 
     def extract_category_links(self, html: str) -> list:
         """Extract category/folder links from the main page"""
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, "html.parser")
         category_urls = []
 
         # Look for links that might be categories
-        for link in soup.find_all('a', href=True):
-            href = link['href']
+        for link in soup.find_all("a", href=True):
+            href = link["href"]
             # Categories typically have paths like /aws/, /gcp/, /azure/, etc.
-            if href.startswith('/') and href.endswith('/') and len(href) > 2:
+            if href.startswith("/") and href.endswith("/") and len(href) > 2:
                 full_url = urljoin(self.base_url, href)
                 category_urls.append(full_url)
 
@@ -93,7 +88,7 @@ class TerrastructIconScraper:
         try:
             # Parse URL to get the path
             parsed = urlparse(url)
-            rel_path = parsed.path.lstrip('/')
+            rel_path = parsed.path.lstrip("/")
 
             # Create local file path
             local_file = self.output_dir / rel_path
@@ -163,7 +158,7 @@ class TerrastructIconScraper:
 
         # Summary
         logger.info("\n" + "=" * 60)
-        logger.info(f"Download complete!")
+        logger.info("Download complete!")
         logger.info(f"Successfully downloaded: {self.downloaded}")
         logger.info(f"Failed: {self.failed}")
         logger.info(f"Output directory: {self.output_dir}")

@@ -2,6 +2,7 @@
 Test Kroki Structurizr provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
@@ -10,7 +11,6 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
 # Import configuration loader function from diagrams module
-from diagrams.provider_config import get_config_loader
 
 
 def test_krokistructurizr_config():

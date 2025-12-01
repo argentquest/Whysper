@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Scrape all SVG icons from https://icons.terrastruct.com/ and name them
@@ -34,14 +33,15 @@ START_URL = "https://icons.terrastruct.com/"
 OUTPUT_DIR = "icons_by_caption"
 
 # Politeness & robustness
-REQUEST_DELAY_SEC = 0.5   # baseline delay between requests
-RETRY_WAIT_SEC = 4        # wait between retries on 403 or transient errors
-TIMEOUT = 20              # request timeout in seconds
-MAX_PAGES = 5000          # safety cap for crawling breadth
+REQUEST_DELAY_SEC = 0.5  # baseline delay between requests
+RETRY_WAIT_SEC = 4  # wait between retries on 403 or transient errors
+TIMEOUT = 20  # request timeout in seconds
+MAX_PAGES = 5000  # safety cap for crawling breadth
 SAME_DOMAIN_ONLY = True
-MAX_RETRIES = 3           # number of retries on 403 / request errors
+MAX_RETRIES = 3  # number of retries on 403 / request errors
 
 # ---------- Utilities ----------
+
 
 def slugify(text: str) -> str:
     """
@@ -58,6 +58,7 @@ def slugify(text: str) -> str:
     text = text.strip("-")
     return text[:120] or "unnamed"
 
+
 def normalize_link(href: Optional[str], base_url: str) -> Optional[str]:
     """
     Make absolute URLs; ignore fragments and non-http schemes.
@@ -68,6 +69,7 @@ def normalize_link(href: Optional[str], base_url: str) -> Optional[str]:
         return None
     return urljoin(base_url, href)
 
+
 def is_same_domain(url: str, root_netloc: str) -> bool:
     """
     Restrict crawling to the same host.
@@ -77,6 +79,7 @@ def is_same_domain(url: str, root_netloc: str) -> bool:
         return (netloc == root_netloc) or (netloc == "")
     except Exception:
         return False
+
 
 def fetch(url: str, session: requests.Session, max_retries: int = MAX_RETRIES) -> Optional[requests.Response]:
     """
@@ -98,7 +101,9 @@ def fetch(url: str, session: requests.Session, max_retries: int = MAX_RETRIES) -
             # Handle 403 with retry
             if resp.status_code == 403 and attempt < max_retries:
                 attempt += 1
-                print(f"[WARN] 403 for {url}. Waiting {RETRY_WAIT_SEC}s and retrying (attempt {attempt}/{max_retries})...")
+                print(
+                    f"[WARN] 403 for {url}. Waiting {RETRY_WAIT_SEC}s and retrying (attempt {attempt}/{max_retries})..."
+                )
                 time.sleep(RETRY_WAIT_SEC)
                 continue
 
@@ -109,13 +114,15 @@ def fetch(url: str, session: requests.Session, max_retries: int = MAX_RETRIES) -
         except requests.RequestException as e:
             if attempt < max_retries:
                 attempt += 1
-                print(f"[WARN] Request error for {url}: {e}. Waiting {RETRY_WAIT_SEC}s and retrying (attempt {attempt}/{max_retries})...")
+                print(
+                    f"[WARN] Request error for {url}: {e}. Waiting {RETRY_WAIT_SEC}s and retrying (attempt {attempt}/{max_retries})...")
                 time.sleep(RETRY_WAIT_SEC)
                 continue
             print(f"[ERR] Exhausted retries for {url}: {e}")
             return None
 
     return None
+
 
 def ensure_unique_path(dirpath: str, basename: str, ext: str = ".svg") -> str:
     """
@@ -131,7 +138,9 @@ def ensure_unique_path(dirpath: str, basename: str, ext: str = ".svg") -> str:
             return candidate
         i += 1
 
+
 # ---------- Caption detection ----------
+
 
 def find_caption_near_tag(tag) -> Optional[str]:
     """
@@ -182,7 +191,9 @@ def find_caption_near_tag(tag) -> Optional[str]:
 
     return None
 
+
 # ---------- Extract icon candidates from a page ----------
+
 
 def extract_icon_candidates(soup: BeautifulSoup, base_url: str) -> List[Tuple[str, str]]:
     """
@@ -214,13 +225,15 @@ def extract_icon_candidates(soup: BeautifulSoup, base_url: str) -> List[Tuple[st
         if not href:
             continue
         if href.lower().endswith(".svg"):
-            caption = (find_caption_near_tag(a) or a.get_text(strip=True) or "")
+            caption = find_caption_near_tag(a) or a.get_text(strip=True) or ""
             candidates.add((href, caption))
 
     # Inline #id typically points to sprites; ignoring here
     return list(candidates)
 
+
 # ---------- Main crawl ----------
+
 
 def crawl_and_download_svgs(start_url: str = START_URL, output_dir: str = OUTPUT_DIR):
     os.makedirs(output_dir, exist_ok=True)
@@ -231,16 +244,18 @@ def crawl_and_download_svgs(start_url: str = START_URL, output_dir: str = OUTPUT
 
     session = requests.Session()
     # Use browser-like headers; include referer to reduce false 403s
-    session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Referer": "https://icons.terrastruct.com/",
-    })
+    session.headers.update(
+        {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://icons.terrastruct.com/",
+        }
+    )
 
     visited_pages: Set[str] = set()
     to_visit: List[str] = [start_url]
@@ -311,6 +326,7 @@ def crawl_and_download_svgs(start_url: str = START_URL, output_dir: str = OUTPUT
 
     print(f"\n[DONE] Downloaded {downloaded} SVG icon(s) into '{output_dir}'.")
     print(f"Visited {len(visited_pages)} page(s).")
+
 
 if __name__ == "__main__":
     start = START_URL if len(sys.argv) < 2 else sys.argv[1]

@@ -11,24 +11,22 @@ Key Features:
 - Mounted as a FastAPI router in the main application
 """
 
+from security_utils import SecurityUtils
+from common.logging_decorator import log_method_call
+from common.logger import get_logger
+from mvp_diagram_generator.renderer_v2 import render_diagram as render_diagram_impl
 import json
 import sys
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-import mcp
 from mcp.server import Server
-from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
 # Add parent directory to path for imports
 sys.path.insert(0, "../..")
 
-from mvp_diagram_generator.renderer_v2 import render_diagram as render_diagram_impl
-from common.logger import get_logger
-from common.logging_decorator import log_method_call
-from security_utils import SecurityUtils
 
 logger = get_logger(__name__)
 
@@ -78,18 +76,15 @@ async def list_tools() -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "prompt": {
-                        "type": "string",
-                        "description": "Natural language description of the diagram"
-                    },
+                    "prompt": {"type": "string", "description": "Natural language description of the diagram"},
                     "diagram_type": {
                         "type": "string",
                         "enum": ["mermaid", "d2", "c4"],
-                        "description": "Type of diagram to generate"
-                    }
+                        "description": "Type of diagram to generate",
+                    },
                 },
-                "required": ["prompt", "diagram_type"]
-            }
+                "required": ["prompt", "diagram_type"],
+            },
         ),
         Tool(
             name="render_diagram",
@@ -97,24 +92,21 @@ async def list_tools() -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "code": {
-                        "type": "string",
-                        "description": "The diagram source code to render"
-                    },
+                    "code": {"type": "string", "description": "The diagram source code to render"},
                     "diagram_type": {
                         "type": "string",
                         "enum": ["mermaid", "d2", "c4"],
-                        "description": "Type of diagram"
+                        "description": "Type of diagram",
                     },
                     "output_format": {
                         "type": "string",
                         "enum": ["svg", "png"],
                         "description": "Output format",
-                        "default": "svg"
-                    }
+                        "default": "svg",
+                    },
                 },
-                "required": ["code", "diagram_type"]
-            }
+                "required": ["code", "diagram_type"],
+            },
         ),
         Tool(
             name="generate_and_render",
@@ -122,25 +114,22 @@ async def list_tools() -> List[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "prompt": {
-                        "type": "string",
-                        "description": "Natural language description of the diagram"
-                    },
+                    "prompt": {"type": "string", "description": "Natural language description of the diagram"},
                     "diagram_type": {
                         "type": "string",
                         "enum": ["mermaid", "d2", "c4"],
-                        "description": "Type of diagram to generate"
+                        "description": "Type of diagram to generate",
                     },
                     "output_format": {
                         "type": "string",
                         "enum": ["svg", "png"],
                         "description": "Output format",
-                        "default": "svg"
-                    }
+                        "default": "svg",
+                    },
                 },
-                "required": ["prompt", "diagram_type"]
-            }
-        )
+                "required": ["prompt", "diagram_type"],
+            },
+        ),
     ]
 
 
@@ -159,13 +148,7 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
             raise ValueError(f"Unknown tool: {name}")
     except Exception as e:
         logger.info(f"Error calling tool {name}: {str(e)}")
-        return [TextContent(
-            type="text",
-            text=json.dumps({
-                "error": str(e),
-                "tool": name
-            })
-        )]
+        return [TextContent(type="text", text=json.dumps({"error": str(e), "tool": name}))]
 
 
 @log_method_call
@@ -180,37 +163,27 @@ async def handle_generate_diagram(arguments: dict) -> List[TextContent]:
     logger.info(f"Generating {diagram_type} diagram from prompt")
 
     # Use secure debug logging for sensitive information
-    debug_info = {
-        'diagram_type': diagram_type,
-        'prompt_length': len(prompt)
-    }
+    debug_info = {"diagram_type": diagram_type, "prompt_length": len(prompt)}
     logger.debug(f"Diagram generation request: {SecurityUtils.safe_debug_info(debug_info)}")
 
     # For now, return a placeholder implementation
     if diagram_type == "mermaid":
-        diagram_code = f"""flowchart TD
+        diagram_code = """flowchart TD
     A[Start] --> B[{prompt}]
     B --> C[End]"""
     elif diagram_type == "d2":
-        diagram_code = f"""# {prompt}
+        diagram_code = """# {prompt}
 A -> B -> C"""
     elif diagram_type == "c4":
-        diagram_code = f"""# {prompt}
+        diagram_code = """# {prompt}
 System_1 -> System_2"""
     else:
         raise ValueError(f"Unsupported diagram type: {diagram_type}")
 
-    result = {
-        "diagram_code": diagram_code,
-        "diagram_type": diagram_type,
-        "prompt": prompt
-    }
+    result = {"diagram_code": diagram_code, "diagram_type": diagram_type, "prompt": prompt}
 
     logger.info(f"Successfully generated {diagram_type} diagram")
-    return [TextContent(
-        type="text",
-        text=json.dumps(result, indent=2)
-    )]
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 @log_method_call
@@ -226,31 +199,16 @@ async def handle_render_diagram(arguments: dict) -> List[TextContent]:
     logger.info(f"Rendering {diagram_type} diagram to {output_format}")
 
     # Use secure debug logging
-    debug_info = {
-        'diagram_type': diagram_type,
-        'output_format': output_format,
-        'code_length': len(code)
-    }
+    debug_info = {"diagram_type": diagram_type, "output_format": output_format, "code_length": len(code)}
     logger.debug(f"Diagram render request: {SecurityUtils.safe_debug_info(debug_info)}")
 
     # Render the diagram using the existing renderer
-    image_data = await render_diagram_impl(
-        diagram_code=code,
-        diagram_type=diagram_type,
-        output_format=output_format
-    )
+    image_data = await render_diagram_impl(diagram_code=code, diagram_type=diagram_type, output_format=output_format)
 
-    result = {
-        "image_data": image_data,
-        "output_format": output_format,
-        "diagram_type": diagram_type
-    }
+    result = {"image_data": image_data, "output_format": output_format, "diagram_type": diagram_type}
 
     logger.info(f"Successfully rendered {diagram_type} diagram to {output_format}")
-    return [TextContent(
-        type="text",
-        text=json.dumps(result, indent=2)
-    )]
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 @log_method_call
@@ -266,19 +224,14 @@ async def handle_generate_and_render(arguments: dict) -> List[TextContent]:
     logger.info(f"Generating and rendering {diagram_type} diagram")
 
     # Step 1: Generate diagram code
-    gen_result = await handle_generate_diagram({
-        "prompt": prompt,
-        "diagram_type": diagram_type
-    })
+    gen_result = await handle_generate_diagram({"prompt": prompt, "diagram_type": diagram_type})
     gen_data = json.loads(gen_result[0].text)
     diagram_code = gen_data["diagram_code"]
 
     # Step 2: Render the diagram
-    render_result = await handle_render_diagram({
-        "code": diagram_code,
-        "diagram_type": diagram_type,
-        "output_format": output_format
-    })
+    render_result = await handle_render_diagram(
+        {"code": diagram_code, "diagram_type": diagram_type, "output_format": output_format}
+    )
     render_data = json.loads(render_result[0].text)
 
     result = {
@@ -286,14 +239,11 @@ async def handle_generate_and_render(arguments: dict) -> List[TextContent]:
         "image_data": render_data["image_data"],
         "output_format": output_format,
         "diagram_type": diagram_type,
-        "prompt": prompt
+        "prompt": prompt,
     }
 
     logger.info(f"Successfully generated and rendered {diagram_type} diagram")
-    return [TextContent(
-        type="text",
-        text=json.dumps(result, indent=2)
-    )]
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 # FastAPI endpoint wrappers for MCP tools
@@ -302,10 +252,7 @@ async def handle_generate_and_render(arguments: dict) -> List[TextContent]:
 async def api_generate_diagram(request: GenerateDiagramRequest):
     """FastAPI endpoint for generate_diagram tool."""
     try:
-        result = await handle_generate_diagram({
-            "prompt": request.prompt,
-            "diagram_type": request.diagram_type
-        })
+        result = await handle_generate_diagram({"prompt": request.prompt, "diagram_type": request.diagram_type})
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
         logger.info(f"API error in generate_diagram: {str(e)}")
@@ -317,11 +264,9 @@ async def api_generate_diagram(request: GenerateDiagramRequest):
 async def api_render_diagram(request: RenderDiagramRequest):
     """FastAPI endpoint for render_diagram tool."""
     try:
-        result = await handle_render_diagram({
-            "code": request.code,
-            "diagram_type": request.diagram_type,
-            "output_format": request.output_format
-        })
+        result = await handle_render_diagram(
+            {"code": request.code, "diagram_type": request.diagram_type, "output_format": request.output_format}
+        )
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
         logger.info(f"API error in render_diagram: {str(e)}")
@@ -333,11 +278,9 @@ async def api_render_diagram(request: RenderDiagramRequest):
 async def api_generate_and_render(request: GenerateAndRenderRequest):
     """FastAPI endpoint for generate_and_render tool."""
     try:
-        result = await handle_generate_and_render({
-            "prompt": request.prompt,
-            "diagram_type": request.diagram_type,
-            "output_format": request.output_format
-        })
+        result = await handle_generate_and_render(
+            {"prompt": request.prompt, "diagram_type": request.diagram_type, "output_format": request.output_format}
+        )
         return ToolResponse(content=[{"type": "text", "text": result[0].text}])
     except Exception as e:
         logger.info(f"API error in generate_and_render: {str(e)}")
@@ -362,11 +305,7 @@ async def api_call_tool(request: ToolRequest):
     except Exception as e:
         logger.info(f"Error calling tool {request.name}: {str(e)}")
         return ToolResponse(
-            content=[{
-                "type": "text",
-                "text": json.dumps({"error": str(e), "tool": request.name})
-            }],
-            isError=True
+            content=[{"type": "text", "text": json.dumps({"error": str(e), "tool": request.name})}], isError=True
         )
 
 
@@ -384,8 +323,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             message = json.loads(data)
 
-            logger.debug(f"Received WebSocket message: "
-                        f"{SecurityUtils.safe_debug_info(message)}")
+            logger.debug("Received WebSocket message: " f"{SecurityUtils.safe_debug_info(message)}")
 
             # Handle different MCP message types
             if message.get("method") == "tools/list":
@@ -393,7 +331,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 response = {
                     "jsonrpc": "2.0",
                     "id": message.get("id"),
-                    "result": {"tools": [tool.dict() for tool in tools]}
+                    "result": {"tools": [tool.dict() for tool in tools]},
                 }
             elif message.get("method") == "tools/call":
                 params = message.get("params", {})
@@ -401,13 +339,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 response = {
                     "jsonrpc": "2.0",
                     "id": message.get("id"),
-                    "result": {"content": [{"type": r.type, "text": r.text} for r in result]}
+                    "result": {"content": [{"type": r.type, "text": r.text} for r in result]},
                 }
             else:
                 response = {
                     "jsonrpc": "2.0",
                     "id": message.get("id"),
-                    "error": {"code": -32601, "message": "Method not found"}
+                    "error": {"code": -32601, "message": "Method not found"},
                 }
 
             await websocket.send_text(json.dumps(response))

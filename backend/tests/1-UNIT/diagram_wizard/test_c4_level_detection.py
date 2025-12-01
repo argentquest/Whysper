@@ -1,4 +1,5 @@
 """Test script for C4 level detection."""
+
 import re
 from typing import Optional
 import pytest
@@ -6,6 +7,7 @@ import pytest
 # Note: Ideally this should be imported from the actual codebase.
 # Currently, the detection logic is embedded here for unit testing purposes
 # as the original function location was not definitive.
+
 
 def detect_c4_level(prompt: str) -> Optional[str]:
     """
@@ -19,10 +21,10 @@ def detect_c4_level(prompt: str) -> Optional[str]:
 
     # Look for explicit C4 level indicators
     patterns = [
-        (r'\bC1\b|SYSTEM\s+CONTEXT', 'C1'),
-        (r'\bC2\b|CONTAINER(?:\s+DIAGRAM)?', 'C2'),
-        (r'\bC3\b|COMPONENT(?:\s+DIAGRAM)?', 'C3'),
-        (r'\bC4\b|CODE\s+LEVEL', 'C4'),
+        (r"\bC1\b|SYSTEM\s+CONTEXT", "C1"),
+        (r"\bC2\b|CONTAINER(?:\s+DIAGRAM)?", "C2"),
+        (r"\bC3\b|COMPONENT(?:\s+DIAGRAM)?", "C3"),
+        (r"\bC4\b|CODE\s+LEVEL", "C4"),
     ]
 
     for pattern, level in patterns:
@@ -31,34 +33,32 @@ def detect_c4_level(prompt: str) -> Optional[str]:
 
     return None
 
+
 # Test cases
 test_cases = [
     # C1 tests
     ("Create a C1 diagram for an e-commerce system", "C1"),
     ("I need a system context diagram showing users and external services", "C1"),
     ("Show the C1 level architecture with actors and the main system", "C1"),
-
     # C2 tests
     ("Create a C2 diagram showing all internal containers", "C2"),
     ("I need a container diagram for the microservices system", "C2"),
     ("Show the C2 architecture with APIs, databases, and services", "C2"),
     ("Create a container level architecture", "C2"),
-
     # C3 tests
     ("Create a C3 diagram for the order service", "C3"),
     ("I need a component diagram showing the internals of the API gateway", "C3"),
     ("Show the C3 level with all components inside the payment service", "C3"),
     ("Create a component level diagram", "C3"),
-
     # C4 tests
     ("Create a C4 code level diagram showing class relationships", "C4"),
     ("I need a code level architecture with detailed class structures", "C4"),
-
     # None tests (no level detected)
     ("Create a flowchart showing the user registration process", None),
     ("I need a simple diagram with boxes and arrows", None),
     ("Show the system flow", None),
 ]
+
 
 @pytest.mark.parametrize("prompt, expected_level", test_cases)
 def test_c4_level_detection(prompt, expected_level):

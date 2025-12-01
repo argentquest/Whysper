@@ -26,12 +26,7 @@ MMDC_EXECUTABLE = "mmdc"
 MMDC_TIMEOUT = 120  # seconds
 
 
-def render_diagram(
-    diagram_code: str,
-    diagram_type: str,
-    output_format: str = "svg",
-    **kwargs
-) -> str:
+def render_diagram(diagram_code: str, diagram_type: str, output_format: str = "svg", **kwargs) -> str:
     # Log the start of diagram rendering with type and format
     logger.info(f"Rendering {diagram_type} diagram to {output_format} using Mermaid CLI")
 
@@ -78,9 +73,12 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
             # Prepare mmdc command with input and output file specifications
             cmd = [
                 MMDC_EXECUTABLE,
-                "-i", str(input_file),
-                "-o", str(output_file),
-                "-f", output_format.upper(),  # mmdc expects uppercase format
+                "-i",
+                str(input_file),
+                "-o",
+                str(output_file),
+                "-f",
+                output_format.upper(),  # mmdc expects uppercase format
             ]
 
             logger.debug(f"Running command: {' '.join(cmd)}")
@@ -91,7 +89,7 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
                 capture_output=True,
                 text=True,
                 timeout=MMDC_TIMEOUT,
-                shell=True  # Use shell on Windows to find .cmd files
+                shell=True,  # Use shell on Windows to find .cmd files
             )
 
             # Check if command execution was successful
@@ -99,7 +97,7 @@ def render_with_mmdc(diagram_code: str, output_format: str) -> str:
                 error_msg = result.stderr or result.stdout or "Unknown error"
                 raise Exception(f"mmdc rendering failed: {error_msg}")
 
-            logger.debug(f"mmdc completed successfully")
+            logger.debug("mmdc completed successfully")
 
             # Verify output file was created
             if not output_file.exists():
@@ -129,7 +127,7 @@ def is_mmdc_available() -> bool:
             capture_output=True,
             text=True,
             timeout=5,
-            shell=True  # Use shell on Windows
+            shell=True,  # Use shell on Windows
         )
         # Determine availability based on return code
         available = result.returncode == 0

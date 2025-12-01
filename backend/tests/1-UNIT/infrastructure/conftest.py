@@ -14,7 +14,7 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock
 from io import StringIO
 import logging
 import json
@@ -25,16 +25,18 @@ from typing import Dict, Any
 # LOGGER FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def log_context():
     """Create a basic log context"""
     from common.logger import LogContext
+
     return LogContext(
         user_id="user_123",
         session_id="sess_abc123",
         component="test_component",
         operation="test_operation",
-        request_id="req_xyz789"
+        request_id="req_xyz789",
     )
 
 
@@ -55,10 +57,8 @@ def log_file_path(temp_log_dir):
 def logger_instance(log_file_path):
     """Create logger instance for testing"""
     from common.logger import CodeChatLogger
-    return CodeChatLogger(
-        name="test_logger",
-        log_file=str(log_file_path)
-    )
+
+    return CodeChatLogger(name="test_logger", log_file=str(log_file_path))
 
 
 @pytest.fixture
@@ -83,10 +83,11 @@ def mock_logger():
 # ENVIRONMENT & CONFIG FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def temp_env_file():
     """Create temporary .env file"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
         f.write("TEST_VAR=test_value\n")
         f.write("TEST_NUMBER=123\n")
         f.write("TEST_BOOL=true\n")
@@ -104,18 +105,14 @@ def valid_env_vars() -> Dict[str, str]:
         "LOG_LEVEL": "INFO",
         "DATABASE_URL": "sqlite:///app.db",
         "OPENAI_API_KEY": "sk-test-key-12345",
-        "ENABLE_LOGGING": "true"
+        "ENABLE_LOGGING": "true",
     }
 
 
 @pytest.fixture
 def invalid_env_vars() -> Dict[str, str]:
     """Invalid environment variables for testing"""
-    return {
-        "API_PORT": "not_a_number",
-        "INVALID_URL": "not a valid url",
-        "API_KEY": "invalid_key_format"
-    }
+    return {"API_PORT": "not_a_number", "INVALID_URL": "not a valid url", "API_KEY": "invalid_key_format"}
 
 
 @pytest.fixture
@@ -135,6 +132,7 @@ def mock_settings():
 # SECURITY FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def api_keys_to_test() -> Dict[str, str]:
     """Sample API keys for security testing"""
@@ -143,7 +141,7 @@ def api_keys_to_test() -> Dict[str, str]:
         "anthropic": "sk-ant-abc123def456ghi789jkl012",
         "generic": "api_key_1234567890abcdef",
         "short": "key123",
-        "empty": ""
+        "empty": "",
     }
 
 
@@ -154,10 +152,7 @@ def sensitive_data() -> Dict[str, Any]:
         "api_key": "sk-proj-secret123456789",
         "password": "super_secret_password",
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-        "nested": {
-            "api_key": "sk-proj-another-secret",
-            "email": "test@example.com"
-        }
+        "nested": {"api_key": "sk-proj-another-secret", "email": "test@example.com"},
     }
 
 
@@ -169,43 +164,28 @@ def unsafe_paths() -> list:
         "..\\..\\..\\windows\\system32",
         "../../secrets/config.json",
         "/etc/shadow",
-        "C:\\Windows\\System32\\config"
+        "C:\\Windows\\System32\\config",
     ]
 
 
 @pytest.fixture
 def safe_paths() -> list:
     """Safe file paths for validation"""
-    return [
-        "/home/user/documents/file.txt",
-        "./relative/path/to/file.py",
-        "project/src/main.py",
-        "./safe_directory/"
-    ]
+    return ["/home/user/documents/file.txt", "./relative/path/to/file.py", "project/src/main.py", "./safe_directory/"]
 
 
 # ============================================================================
 # FILE SYSTEM FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def test_file_structure(temp_log_dir):
     """Create test file structure"""
     structure = {
-        "python_files": [
-            temp_log_dir / "script1.py",
-            temp_log_dir / "script2.py",
-            temp_log_dir / "module.py"
-        ],
-        "js_files": [
-            temp_log_dir / "app.js",
-            temp_log_dir / "utils.js"
-        ],
-        "ignored_files": [
-            temp_log_dir / ".gitignore",
-            temp_log_dir / "__pycache__",
-            temp_log_dir / "node_modules"
-        ]
+        "python_files": [temp_log_dir / "script1.py", temp_log_dir / "script2.py", temp_log_dir / "module.py"],
+        "js_files": [temp_log_dir / "app.js", temp_log_dir / "utils.js"],
+        "ignored_files": [temp_log_dir / ".gitignore", temp_log_dir / "__pycache__", temp_log_dir / "node_modules"],
     }
 
     # Create files
@@ -225,7 +205,7 @@ def file_patterns():
     return {
         "include": ["*.py", "*.js", "*.ts"],
         "exclude": ["__pycache__", "node_modules", ".git", "*.pyc"],
-        "ignore_dirs": [".git", "__pycache__", "node_modules", "venv"]
+        "ignore_dirs": [".git", "__pycache__", "node_modules", "venv"],
     }
 
 
@@ -240,6 +220,7 @@ def large_file_content() -> str:
 # DATA MODEL FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def sample_app_config() -> Dict[str, Any]:
     """Sample application configuration"""
@@ -251,7 +232,7 @@ def sample_app_config() -> Dict[str, Any]:
         "max_connections": 10,
         "timeout": 30,
         "enable_cors": True,
-        "cors_origins": ["http://localhost:3000", "https://example.com"]
+        "cors_origins": ["http://localhost:3000", "https://example.com"],
     }
 
 
@@ -265,10 +246,7 @@ def sample_conversation_message() -> Dict[str, Any]:
         "content": "Hello, how can you help?",
         "role": "user",
         "created_at": "2024-01-01T00:00:00Z",
-        "metadata": {
-            "source": "api",
-            "version": "1.0"
-        }
+        "metadata": {"source": "api", "version": "1.0"},
     }
 
 
@@ -281,16 +259,14 @@ def sample_question_status() -> Dict[str, Any]:
         "progress": 100,
         "created_at": "2024-01-01T00:00:00Z",
         "completed_at": "2024-01-01T00:05:00Z",
-        "result": {
-            "diagram_code": "graph TD\nA-->B",
-            "provider": "mermaid"
-        }
+        "result": {"diagram_code": "graph TD\nA-->B", "provider": "mermaid"},
     }
 
 
 # ============================================================================
 # AI PROVIDER FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_ai_config():
@@ -326,26 +302,23 @@ def ai_provider_configs() -> Dict[str, Dict[str, Any]]:
             "api_key": "sk-proj-abc123",
             "model": "gpt-4",
             "temperature": 0.7,
-            "max_tokens": 2000
+            "max_tokens": 2000,
         },
         "anthropic": {
             "provider_name": "anthropic",
             "api_key": "sk-ant-abc123",
             "model": "claude-3-opus",
             "temperature": 0.5,
-            "max_tokens": 4000
+            "max_tokens": 4000,
         },
-        "invalid": {
-            "provider_name": "invalid_provider",
-            "api_key": None,
-            "model": None
-        }
+        "invalid": {"provider_name": "invalid_provider", "api_key": None, "model": None},
     }
 
 
 # ============================================================================
 # DIAGRAM PROVIDER FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_diagram_provider():
@@ -375,7 +348,7 @@ def diagram_codes() -> Dict[str, str]:
 Server -> Database
 Database -> Server
 Server -> Browser -> User""",
-        "invalid": "this is not valid diagram code @#$%"
+        "invalid": "this is not valid diagram code @#$%",
     }
 
 
@@ -383,10 +356,9 @@ Server -> Browser -> User""",
 def mock_provider_registry():
     """Mock provider registry"""
     mock = MagicMock()
-    mock.list_providers = MagicMock(return_value=[
-        {"provider_id": "mermaid_v1", "name": "Mermaid"},
-        {"provider_id": "d2_v1", "name": "D2"}
-    ])
+    mock.list_providers = MagicMock(
+        return_value=[{"provider_id": "mermaid_v1", "name": "Mermaid"}, {"provider_id": "d2_v1", "name": "D2"}]
+    )
     mock.get_provider = MagicMock(return_value=MagicMock())
     mock.register = MagicMock()
     return mock
@@ -395,6 +367,7 @@ def mock_provider_registry():
 # ============================================================================
 # SYSTEM MESSAGE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_system_message() -> str:
@@ -417,7 +390,7 @@ def system_message_placeholders() -> Dict[str, str]:
         "user_name": "John Doe",
         "session_id": "sess_abc123",
         "providers": "mermaid, d2, plantuml",
-        "timestamp": "2024-01-01T00:00:00Z"
+        "timestamp": "2024-01-01T00:00:00Z",
     }
 
 
@@ -425,16 +398,14 @@ def system_message_placeholders() -> Dict[str, str]:
 # REQUEST/RESPONSE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mock_http_request():
     """Mock HTTP request object"""
     mock = MagicMock()
     mock.method = "POST"
     mock.url = "http://localhost:8003/api/v1/diagrams/render"
-    mock.headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer test_token"
-    }
+    mock.headers = {"Content-Type": "application/json", "Authorization": "Bearer test_token"}
     mock.body = json.dumps({"code": "graph TD\nA-->B"})
     return mock
 
@@ -445,17 +416,14 @@ def mock_http_response():
     mock = MagicMock()
     mock.status_code = 200
     mock.content_type = "application/json"
-    mock.body = json.dumps({
-        "success": True,
-        "data": "<svg>...</svg>",
-        "metadata": {"provider": "mermaid"}
-    })
+    mock.body = json.dumps({"success": True, "data": "<svg>...</svg>", "metadata": {"provider": "mermaid"}})
     return mock
 
 
 # ============================================================================
 # ERROR SCENARIO FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def error_scenarios() -> Dict[str, Exception]:
@@ -467,7 +435,7 @@ def error_scenarios() -> Dict[str, Exception]:
         "runtime_error": RuntimeError("Runtime error"),
         "os_error": OSError("OS error"),
         "timeout_error": TimeoutError("Request timed out"),
-        "connection_error": ConnectionError("Connection failed")
+        "connection_error": ConnectionError("Connection failed"),
     }
 
 
@@ -478,7 +446,7 @@ def network_errors():
         "connection_refused": ConnectionRefusedError("Connection refused"),
         "host_unreachable": ConnectionError("Host unreachable"),
         "timeout": TimeoutError("Connection timeout"),
-        "dns_error": OSError("Name or service not known")
+        "dns_error": OSError("Name or service not known"),
     }
 
 
@@ -486,32 +454,23 @@ def network_errors():
 # PERFORMANCE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def performance_thresholds() -> Dict[str, float]:
     """Performance thresholds (in seconds)"""
-    return {
-        "logger_creation": 0.1,
-        "log_write": 0.01,
-        "config_load": 0.5,
-        "file_scan": 1.0,
-        "api_call": 5.0
-    }
+    return {"logger_creation": 0.1, "log_write": 0.01, "config_load": 0.5, "file_scan": 1.0, "api_call": 5.0}
 
 
 @pytest.fixture
 def load_test_data() -> Dict[str, int]:
     """Data sizes for load testing"""
-    return {
-        "small": 100,
-        "medium": 1000,
-        "large": 10000,
-        "huge": 100000
-    }
+    return {"small": 100, "medium": 1000, "large": 10000, "huge": 100000}
 
 
 # ============================================================================
 # MOCK SERVICE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_db_connection():

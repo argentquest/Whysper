@@ -11,6 +11,8 @@ router = APIRouter()
 
 # Define a Pydantic model for documentation generation request
 # Provides type hints and validation for input parameters
+
+
 class GenerateDocumentationRequest(BaseModel):
     file_paths: List[str]
     documentation_type: str = "all"
@@ -19,15 +21,17 @@ class GenerateDocumentationRequest(BaseModel):
     include_diagrams: bool = True
     target_audience: str = "developers"
 
+
 class GenerateDocumentationResponse(BaseModel):
     session_guid: str
     documentation_results: Dict[str, str]
+
 
 @router.post(
     "/generate",
     response_model=GenerateDocumentationResponse,
     summary="Generate documentation",
-    description="Generate documentation for specified files."
+    description="Generate documentation for specified files.",
 )
 @log_method_call
 async def generate_documentation(request: GenerateDocumentationRequest):
@@ -51,7 +55,7 @@ async def generate_documentation(request: GenerateDocumentationRequest):
             include_diagrams=request.include_diagrams,
             target_audience=request.target_audience,
         )
-        
+
         # Generate documentation and return the result
         # Uses a service method that caches the results with a GUID
         result = documentation_service.generate_documentation_with_guid(doc_request)
@@ -60,10 +64,11 @@ async def generate_documentation(request: GenerateDocumentationRequest):
         # Catch and convert any errors to an HTTP 500 server error
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get(
     "/download/{session_guid}",
     summary="Download documentation",
-    description="Retrieve and download documentation for a specific session."
+    description="Retrieve and download documentation for a specific session.",
 )
 @log_method_call
 async def download_documentation(session_guid: str):
@@ -85,7 +90,7 @@ async def download_documentation(session_guid: str):
 
         # Retrieve cached documentation and file paths
         documentation_results, file_paths = documentation_service.cache[session_guid]
-        
+
         # Create a zip file of the documentation
         # Includes option to include source files
         zip_bytes = documentation_service.create_documentation_zip(
@@ -94,7 +99,7 @@ async def download_documentation(session_guid: str):
             session_guid=session_guid,
             include_source_files=True,
         )
-        
+
         # Stream the zip file as a downloadable response
         # Sets appropriate headers for file download
         return StreamingResponse(

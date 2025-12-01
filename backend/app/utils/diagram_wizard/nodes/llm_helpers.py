@@ -21,13 +21,13 @@ logger = get_logger(__name__)
 def extract_json_from_response(response_text: str) -> Dict[str, Any]:
     """
     Extract and parse JSON from an LLM response that may be wrapped in markdown code blocks.
-    
+
     Args:
         response_text (str): The raw response text from the LLM.
-        
+
     Returns:
         Dict[str, Any]: Parsed JSON dictionary.
-        
+
     Raises:
         json.JSONDecodeError: If the response cannot be parsed as JSON.
     """
@@ -38,21 +38,21 @@ def extract_json_from_response(response_text: str) -> Dict[str, Any]:
         # Try to extract JSON from markdown code blocks
         # Pattern matches ```json ... ``` or ``` ... ```
         # Use greedy match (.*) to capture nested JSON objects like {"a": {"b": "c"}}
-        json_pattern = r'```(?:json)?\s*(\{.*\})\s*```'
+        json_pattern = r"```(?:json)?\s*(\{.*\})\s*```"
         match = re.search(json_pattern, response_text, re.DOTALL)
-        
+
         if match:
             json_str = match.group(1)
             return json.loads(json_str)
-        
+
         # If no code blocks found, try to find JSON object in the text
         # Look for content between curly braces
-        brace_pattern = r'\{.*\}'
+        brace_pattern = r"\{.*\}"
         match = re.search(brace_pattern, response_text, re.DOTALL)
-        
+
         if match:
             return json.loads(match.group(0))
-        
+
         # If all else fails, raise the original error
         raise
 
@@ -69,7 +69,7 @@ def get_diagram_type_str(diagram_type: Union[DiagramType, str]) -> str:
     Returns:
         str: The string representation of the diagram type.
     """
-    return diagram_type.value if hasattr(diagram_type, 'value') else str(diagram_type)
+    return diagram_type.value if hasattr(diagram_type, "value") else str(diagram_type)
 
 
 def _get_model_for_id(model_id: str = None) -> str:
@@ -116,27 +116,30 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         model = _get_model_for_id(model_id)
 
         if not api_key:
-            logger.info("No API key configured for diagram wizard AI calls",
-                        extra={'session_id': session_id} if session_id else {})
+            logger.info(
+                "No API key configured for diagram wizard AI calls",
+                extra={"session_id": session_id} if session_id else {},
+            )
             raise Exception("No API key configured. Please configure your AI provider API key in settings.")
 
         # Log AI call initiation (visible via SSE)
-        logger.info("🤖 Starting AI call for diagram generation",
-                   extra={'session_id': session_id} if session_id else {})
-        logger.info(f"📋 Model: {model} | Provider: {provider}",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            "🤖 Starting AI call for diagram generation", extra={"session_id": session_id} if session_id else {}
+        )
+        logger.info(f"📋 Model: {model} | Provider: {provider}", extra={"session_id": session_id} if session_id else {})
 
         # Create AI processor
         processor = create_ai_processor(api_key=api_key, provider=provider)
 
         # Format conversation for AI call
-        conversation_history = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": user_content}
-        ]
+        conversation_history = [{"role": "system", "content": prompt}, {"role": "user", "content": user_content}]
 
-        logger.info(f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {len(prompt)} chars, content: {len(user_content)} chars)",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {
+                len(prompt)} chars, content: {
+                len(user_content)} chars)",
+            extra={"session_id": session_id} if session_id else {},
+        )
 
         # Pull token and temperature configuration from settings
         try:
@@ -157,7 +160,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
             connect_timeout = 30
             read_timeout = 120
         total_timeout = connect_timeout + read_timeout + 15
-  
+
         # Make the AI call in a worker thread with an overall timeout
         try:
             result = await asyncio.wait_for(
@@ -175,7 +178,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         except asyncio.TimeoutError as timeout_err:
             logger.info(
                 f"AI call exceeded timeout ({total_timeout}s)",
-                extra={'session_id': session_id} if session_id else {},
+                extra={"session_id": session_id} if session_id else {},
             )
             raise Exception(
                 f"AI call timed out after {total_timeout}s. Please try again or simplify the request."
@@ -194,25 +197,27 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
             processing_time = result.get("processing_time", 0.0)
 
         # Log successful AI response (visible via SSE)
-        logger.info(f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"✅ LLM RESPONSE RECEIVED: {len(response)} chars | {tokens_used} tokens | {processing_time:.1f}s",
+            extra={"session_id": session_id} if session_id else {},
+        )
 
         # Log the FULL raw AI response for debugging
-        logger.debug(f"📄 FULL USER HISTORY :\n{conversation_history}",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.debug(
+            f"📄 FULL USER HISTORY :\n{conversation_history}", extra={"session_id": session_id} if session_id else {}
+        )
 
-        logger.debug(f"📄 FULL HISTORY :\n{user_content}",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.debug(f"📄 FULL HISTORY :\n{user_content}", extra={"session_id": session_id} if session_id else {})
 
         # Log the FULL raw AI response for debugging
-        logger.debug(f"📄 FULL LLM RAW RESPONSE:\n{response}",
-                   extra={'session_id': session_id} if session_id else {})
+        logger.debug(f"📄 FULL LLM RAW RESPONSE:\n{response}", extra={"session_id": session_id} if session_id else {})
 
         return response
     except httpx.RequestError as e:
         error_msg = f"Network error during AI call: {str(e)}. Please check your internet connection and try again."
-        logger.info(f"❌ AI call failed due to a network error: {e}",
-                    extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"❌ AI call failed due to a network error: {e}", extra={"session_id": session_id} if session_id else {}
+        )
         raise Exception(error_msg)
     except Exception as e:
         # Check if it's an API key error from the error message
@@ -222,6 +227,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         else:
             error_msg = f"AI call failed: {str(e)}"
 
-        logger.info(f"❌ An error occurred during the AI call: {e}",
-                    extra={'session_id': session_id} if session_id else {})
+        logger.info(
+            f"❌ An error occurred during the AI call: {e}", extra={"session_id": session_id} if session_id else {}
+        )
         raise Exception(error_msg) from e

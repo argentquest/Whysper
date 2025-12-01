@@ -9,9 +9,6 @@ Tests for:
 Coverage: 47 tests
 """
 
-import pytest
-from fastapi.testclient import TestClient
-
 
 class TestListProviders:
     """Test listing available diagram providers"""
@@ -79,21 +76,13 @@ class TestRenderEndpoint:
 
     def test_render_valid_mermaid_code_returns_200(self, test_client, sample_mermaid_code):
         """POST /render with valid Mermaid code returns 200"""
-        request_data = {
-            "code": sample_mermaid_code,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": sample_mermaid_code, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code == 200
 
     def test_render_valid_d2_code_returns_200(self, test_client, sample_d2_code):
         """POST /render with valid D2 code returns 200"""
-        request_data = {
-            "code": sample_d2_code,
-            "diagram_type": "d2",
-            "output_format": "svg"
-        }
+        request_data = {"code": sample_d2_code, "diagram_type": "d2", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [200, 500]  # Allow 500 if D2 not available
 
@@ -112,48 +101,31 @@ class TestRenderEndpoint:
 
     def test_render_empty_code_returns_422(self, test_client, empty_code):
         """Empty code returns 422 Bad Request"""
-        request_data = {
-            "code": empty_code,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": empty_code, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code == 422  # Pydantic validation
 
     def test_render_missing_code_returns_422(self, test_client):
         """Missing code field returns 422"""
-        request_data = {
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code == 422
 
     def test_render_missing_diagram_type_returns_422(self, test_client, simple_mermaid_code):
         """Missing diagram_type returns 422"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "output_format": "svg"
-        }
+        request_data = {"code": simple_mermaid_code, "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code == 422
 
     def test_render_invalid_diagram_type_returns_error(self, test_client, simple_mermaid_code):
         """Invalid diagram type returns error"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "nonexistent",
-            "output_format": "svg"
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "nonexistent", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [400, 404]
 
     def test_render_returns_svg_by_default(self, test_client, simple_mermaid_code):
         """Default output format is SVG"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "mermaid"
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "mermaid"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         if response.status_code == 200:
             data = response.json()
@@ -161,21 +133,13 @@ class TestRenderEndpoint:
 
     def test_render_with_special_characters(self, test_client, code_with_special_chars):
         """Render code with special characters"""
-        request_data = {
-            "code": code_with_special_chars,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": code_with_special_chars, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [200, 400]  # May be invalid
 
     def test_render_large_code(self, test_client, large_code):
         """Render very large code"""
-        request_data = {
-            "code": large_code,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": large_code, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [200, 400, 413]  # May fail due to size
 
@@ -192,7 +156,7 @@ class TestRenderEndpoint:
             "code": simple_mermaid_code,
             "diagram_type": "mermaid",
             "provider_id": "mermaidv1",
-            "output_format": "svg"
+            "output_format": "svg",
         }
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         if response.status_code == 200:
@@ -201,22 +165,14 @@ class TestRenderEndpoint:
 
     def test_render_with_svg_format(self, test_client, simple_mermaid_code):
         """Render with SVG output format"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         if response.status_code == 200:
             assert "svg" in response.json().get("output_format", "").lower()
 
     def test_render_with_png_format(self, test_client, simple_mermaid_code):
         """Render with PNG output format"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "mermaid",
-            "output_format": "png"
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "mermaid", "output_format": "png"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         # PNG may not be supported on all systems
         assert response.status_code in [200, 400, 500]
@@ -227,11 +183,7 @@ class TestValidateEndpoint:
 
     def test_validate_valid_code_returns_200(self, test_client, simple_mermaid_code):
         """POST /validate with valid code returns 200"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 200
 
@@ -249,11 +201,7 @@ class TestValidateEndpoint:
 
     def test_validate_invalid_code_returns_200(self, test_client, invalid_diagram_code):
         """Invalid code still returns 200 with is_valid=false"""
-        request_data = {
-            "code": invalid_diagram_code,
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"code": invalid_diagram_code, "diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 200
         data = response.json()
@@ -261,49 +209,31 @@ class TestValidateEndpoint:
 
     def test_validate_with_auto_fix_enabled(self, test_client, mermaid_code_with_error):
         """Validation with auto_fix enabled"""
-        request_data = {
-            "code": mermaid_code_with_error,
-            "diagram_type": "mermaid",
-            "auto_fix": True
-        }
+        request_data = {"code": mermaid_code_with_error, "diagram_type": "mermaid", "auto_fix": True}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 200
 
     def test_validate_missing_code_returns_422(self, test_client):
         """Missing code field returns 422"""
-        request_data = {
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 422
 
     def test_validate_missing_diagram_type_returns_422(self, test_client, simple_mermaid_code):
         """Missing diagram_type returns 422"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "auto_fix": False
-        }
+        request_data = {"code": simple_mermaid_code, "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 422
 
     def test_validate_empty_code_returns_422(self, test_client):
         """Empty code returns 422"""
-        request_data = {
-            "code": "",
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"code": "", "diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 422
 
     def test_validate_includes_code_length(self, test_client, simple_mermaid_code):
         """Validation response includes code_length"""
-        request_data = {
-            "code": simple_mermaid_code,
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"code": simple_mermaid_code, "diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         if response.status_code == 200:
             data = response.json()
@@ -312,21 +242,13 @@ class TestValidateEndpoint:
 
     def test_validate_large_code(self, test_client, large_code):
         """Validate large code"""
-        request_data = {
-            "code": large_code,
-            "diagram_type": "mermaid",
-            "auto_fix": False
-        }
+        request_data = {"code": large_code, "diagram_type": "mermaid", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code in [200, 413]
 
     def test_validate_d2_code(self, test_client, sample_d2_code):
         """Validate D2 code"""
-        request_data = {
-            "code": sample_d2_code,
-            "diagram_type": "d2",
-            "auto_fix": False
-        }
+        request_data = {"code": sample_d2_code, "diagram_type": "d2", "auto_fix": False}
         response = test_client.post("/api/v1/diagrams/v2/validate", json=request_data)
         assert response.status_code == 200
 
@@ -340,7 +262,7 @@ class TestErrorHandling:
             "code": simple_mermaid_code,
             "diagram_type": "mermaid",
             "provider_id": "nonexistent_provider_xyz",
-            "output_format": "svg"
+            "output_format": "svg",
         }
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [400, 404]
@@ -348,20 +270,14 @@ class TestErrorHandling:
     def test_render_invalid_json_returns_422(self, test_client):
         """Invalid JSON returns 422"""
         response = test_client.post(
-            "/api/v1/diagrams/v2/render",
-            data="invalid json {",
-            headers={"Content-Type": "application/json"}
+            "/api/v1/diagrams/v2/render", data="invalid json {", headers={"Content-Type": "application/json"}
         )
         assert response.status_code == 422
 
     def test_render_very_large_code_over_limit(self, test_client):
         """Very large code over size limit"""
         huge_code = "graph TD\n" + ("  A --> B\n" * 10000)
-        request_data = {
-            "code": huge_code,
-            "diagram_type": "mermaid",
-            "output_format": "svg"
-        }
+        request_data = {"code": huge_code, "diagram_type": "mermaid", "output_format": "svg"}
         response = test_client.post("/api/v1/diagrams/v2/render", json=request_data)
         assert response.status_code in [200, 400, 413, 500]
 

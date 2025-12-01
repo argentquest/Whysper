@@ -37,6 +37,7 @@ Error Handling:
 This provider is designed to be easily extended and customized for different
 AI services while maintaining compatibility with the BaseAIProvider interface.
 """
+
 import os
 from typing import Dict, Any, List, Tuple
 from common.base_ai import BaseAIProvider, AIProviderConfig
@@ -60,21 +61,14 @@ class CustomProvider(BaseAIProvider):
             "response_content_path": ["choices", 0, "message", "content"],
             "response_usage_path": "usage",
             "supports_tokens": True,
-            "custom_headers": {
-                "HTTP-Referer": settings.openrouter_http_referer,
-                "X-Title": settings.openrouter_title
-            },
+            "custom_headers": {"HTTP-Referer": settings.openrouter_http_referer, "X-Title": settings.openrouter_title},
             "request_timeout": settings.custom_provider_request_timeout,
             "default_max_tokens": settings.max_tokens,
             "default_temperature": settings.temperature,
         }
         super().__init__(api_key)
 
-    def configure_api(self,
-                     api_url: str = None,
-                     auth_header: str = None,
-                     auth_format: str = None,
-                     **kwargs):
+    def configure_api(self, api_url: str = None, auth_header: str = None, auth_format: str = None, **kwargs):
         """Configure the API parameters for this custom provider."""
         if api_url:
             self.custom_config["api_url"] = api_url
@@ -92,9 +86,7 @@ class CustomProvider(BaseAIProvider):
     def _get_provider_config(self) -> AIProviderConfig:
         """Get custom provider configuration."""
         config = AIProviderConfig(
-            name="custom",
-            api_url=self.custom_config["api_url"],
-            supports_tokens=self.custom_config["supports_tokens"]
+            name="custom", api_url=self.custom_config["api_url"], supports_tokens=self.custom_config["supports_tokens"]
         )
 
         # Set custom authentication
@@ -115,14 +107,16 @@ class CustomProvider(BaseAIProvider):
 
         return headers
 
-    def _prepare_request_data(self, messages: List[Dict], model: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
+    def _prepare_request_data(
+        self, messages: List[Dict], model: str, max_tokens: int, temperature: float
+    ) -> Dict[str, Any]:
         """Prepare custom request data."""
         data = {
             self.custom_config["model_param"]: model,
             self.custom_config["messages_param"]: messages,
             self.custom_config["max_tokens_param"]: max_tokens,
             self.custom_config["temperature_param"]: temperature,
-            self.custom_config["stream_param"]: False
+            self.custom_config["stream_param"]: False,
         }
 
         return data
@@ -177,7 +171,7 @@ class CustomProvider(BaseAIProvider):
             500: "Internal server error",
             502: "Bad gateway - service temporarily unavailable",
             503: "Service unavailable",
-            504: "Gateway timeout"
+            504: "Gateway timeout",
         }
 
         if status_code in error_messages:
@@ -195,7 +189,7 @@ class CustomProvider(BaseAIProvider):
             "auth_method": self.custom_config["auth_header"],
             "response_content_path": self.custom_config["response_content_path"],
             "supports_custom_configuration": True,
-            "configurable": True
+            "configurable": True,
         }
 
         base_info.update(custom_info)
@@ -212,7 +206,7 @@ class CustomProvider(BaseAIProvider):
             "connection_successful": False,
             "response_time_ms": None,
             "status_code": None,
-            "error_message": None
+            "error_message": None,
         }
 
         try:
@@ -220,22 +214,24 @@ class CustomProvider(BaseAIProvider):
             start_time = datetime.now()
 
             # Make a simple test request (you might need to adjust this based on the API)
-            verify_ssl = os.getenv('VALIDATE_SSL', 'true').lower() == 'true'
+            verify_ssl = os.getenv("VALIDATE_SSL", "true").lower() == "true"
             response = requests.get(
                 self.custom_config["api_url"].replace("/chat/completions", "/models"),
                 headers=headers,
                 timeout=self.custom_config["request_timeout"],
-                verify=verify_ssl
+                verify=verify_ssl,
             )
 
             end_time = datetime.now()
             response_time = (end_time - start_time).total_seconds() * 1000
 
-            test_result.update({
-                "connection_successful": response.status_code == 200,
-                "response_time_ms": round(response_time, 2),
-                "status_code": response.status_code
-            })
+            test_result.update(
+                {
+                    "connection_successful": response.status_code == 200,
+                    "response_time_ms": round(response_time, 2),
+                    "status_code": response.status_code,
+                }
+            )
 
         except requests.exceptions.RequestException as e:
             test_result["error_message"] = str(e)

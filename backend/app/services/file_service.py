@@ -1,4 +1,5 @@
 """File scanning utilities for the web backend."""
+
 from __future__ import annotations
 
 import os
@@ -65,18 +66,10 @@ class FileService:
         if validation["is_valid"]:
             self._base_directory = directory
             logger.info(f"Base directory changed to: {directory}")
-            return {
-                "success": True,
-                "message": f"Base directory set to {directory}",
-                "directory": directory
-            }
+            return {"success": True, "message": f"Base directory set to {directory}", "directory": directory}
         else:
             logger.info(f"Failed to set base directory: {validation['error']}")
-            return {
-                "success": False,
-                "message": validation["error"],
-                "error": validation["error"]
-            }
+            return {"success": False, "message": validation["error"], "error": validation["error"]}
 
     @log_method_call
     def get_base_directory(self) -> str:
@@ -92,13 +85,13 @@ class FileService:
     def validate_directory(self, directory: str) -> Dict[str, Any]:
         """
         Validate if a given directory path is safe and accessible.
-        
+
         Uses the internal scanner's logic to check for security vulnerabilities
         (e.g., path traversal) and accessibility.
-        
+
         Args:
             directory: The path to validate.
-        
+
         Returns:
             Dict[str, Any]: A dict containing {"is_valid": bool, "error": str}
         """
@@ -222,9 +215,7 @@ class FileService:
         if directory == root_path:
             return children_map[root_path]
 
-        parent_node = self._ensure_directory(
-            children_map, directory.parent, root_path
-        )
+        parent_node = self._ensure_directory(children_map, directory.parent, root_path)
         node = {
             "name": directory.name,
             "path": str(directory),
@@ -236,9 +227,7 @@ class FileService:
         return node
 
     @log_method_call
-    def _serialize_file_info(
-        self, info: FileInfo, base_directory: str
-    ) -> Dict[str, Any]:
+    def _serialize_file_info(self, info: FileInfo, base_directory: str) -> Dict[str, Any]:
         """
         Serialize FileInfo object to a dictionary.
 
@@ -276,10 +265,7 @@ class FileService:
             rel_path = os.path.relpath(root_dir, root)
             folder_path = "." if rel_path == "." else rel_path
             file_count = len(files)
-            results.append({
-                "path": folder_path,
-                "fileCount": file_count
-            })
+            results.append({"path": folder_path, "fileCount": file_count})
         results.sort(key=lambda x: x["path"])
         return results
 

@@ -25,55 +25,162 @@ class KeywordScorer:
     # Pre-defined keywords for each diagram type to help with classification
     MERMAID_KEYWORDS = [
         # Flowchart and process flow indicators
-        "flowchart", "flow", "process", "workflow", "decision",
-        "step", "if", "then", "condition", "branch", "fork", "merge",
-        "action", "task", "function", "procedure", "algorithm",
+        "flowchart",
+        "flow",
+        "process",
+        "workflow",
+        "decision",
+        "step",
+        "if",
+        "then",
+        "condition",
+        "branch",
+        "fork",
+        "merge",
+        "action",
+        "task",
+        "function",
+        "procedure",
+        "algorithm",
         # Sequence diagram indicators
-        "sequence", "interaction", "message", "call", "respond", "exchange",
-        "order", "step by step", "timeline", "actor", "participant",
-        "async", "synchronous", "request", "reply",
+        "sequence",
+        "interaction",
+        "message",
+        "call",
+        "respond",
+        "exchange",
+        "order",
+        "step by step",
+        "timeline",
+        "actor",
+        "participant",
+        "async",
+        "synchronous",
+        "request",
+        "reply",
         # State diagram indicators
-        "state", "states", "state machine", "transition", "state diagram",
-        "initial", "final", "event", "trigger", "status"
+        "state",
+        "states",
+        "state machine",
+        "transition",
+        "state diagram",
+        "initial",
+        "final",
+        "event",
+        "trigger",
+        "status",
     ]
 
     D2_KEYWORDS = [
         # Architecture and system design indicators
-        "architecture", "system", "components", "services", "microservice",
-        "infrastructure", "deployment", "topology", "network", "distributed",
-        "client", "server", "backend", "frontend", "database", "cache",
-        "queue", "message broker", "load balancer", "gateway", "api",
-        "external service", "integration", "connection", "communication",
-        "relationship", "connects", "integrates"
+        "architecture",
+        "system",
+        "components",
+        "services",
+        "microservice",
+        "infrastructure",
+        "deployment",
+        "topology",
+        "network",
+        "distributed",
+        "client",
+        "server",
+        "backend",
+        "frontend",
+        "database",
+        "cache",
+        "queue",
+        "message broker",
+        "load balancer",
+        "gateway",
+        "api",
+        "external service",
+        "integration",
+        "connection",
+        "communication",
+        "relationship",
+        "connects",
+        "integrates",
     ]
 
     PLANTUML_KEYWORDS = [
         # UML diagram indicators
-        "class", "classes", "inheritance", "interface", "abstract",
-        "attribute", "method", "relationship", "association", "composition",
-        "aggregation", "dependency", "structure", "hierarchy",
+        "class",
+        "classes",
+        "inheritance",
+        "interface",
+        "abstract",
+        "attribute",
+        "method",
+        "relationship",
+        "association",
+        "composition",
+        "aggregation",
+        "dependency",
+        "structure",
+        "hierarchy",
         # Component diagram indicators
-        "component", "components", "module", "subsystem",
-        "package", "library", "connector", "port",
+        "component",
+        "components",
+        "module",
+        "subsystem",
+        "package",
+        "library",
+        "connector",
+        "port",
         # Use case diagram indicators
-        "use case", "scenario", "requirement", "behavior", "functionality",
+        "use case",
+        "scenario",
+        "requirement",
+        "behavior",
+        "functionality",
         # UML general
-        "uml", "diagram", "modeling", "class diagram", "component diagram"
+        "uml",
+        "diagram",
+        "modeling",
+        "class diagram",
+        "component diagram",
     ]
 
     STRUCTURIZR_KEYWORDS = [
         # C4 model indicators
-        "c4", "c4 model", "context", "container", "component",
-        "person", "software system", "enterprise", "boundary",
+        "c4",
+        "c4 model",
+        "context",
+        "container",
+        "component",
+        "person",
+        "software system",
+        "enterprise",
+        "boundary",
         # Architectural views
-        "system context", "container diagram", "component diagram", "deployment",
-        "landscape", "dynamic", "deployment diagram",
+        "system context",
+        "container diagram",
+        "component diagram",
+        "deployment",
+        "landscape",
+        "dynamic",
+        "deployment diagram",
         # Structurizr DSL specific
-        "workspace", "model", "views", "styles", "theme",
-        "relationship", "uses", "includes", "extends",
+        "workspace",
+        "model",
+        "views",
+        "styles",
+        "theme",
+        "relationship",
+        "uses",
+        "includes",
+        "extends",
         # Software architecture focus
-        "bounded context", "subdomain", "aggregate", "entity", "value object",
-        "strategic", "tactical", "domain", "architecture diagram"
+        "bounded context",
+        "subdomain",
+        "aggregate",
+        "entity",
+        "value object",
+        "strategic",
+        "tactical",
+        "domain",
+        "architecture diagram",
     ]
 
     def __init__(self):
@@ -105,16 +212,16 @@ class KeywordScorer:
         try:
             # Construct path to keywords file
             keywords_path = Path(__file__).parent.parent.parent / "services" / "keywords.json"
-            
+
             # Check if keywords file exists
             if keywords_path.exists():
                 # Load keywords from JSON file
-                with open(keywords_path, 'r', encoding='utf-8') as f:
+                with open(keywords_path, "r", encoding="utf-8") as f:
                     keywords_data = json.load(f)
                     # Extract different types of keywords
-                    self.entity_words = keywords_data.get('entity_words', [])
-                    self.action_words = keywords_data.get('action_words', [])
-                    self.structure_words = keywords_data.get('structure_words', [])
+                    self.entity_words = keywords_data.get("entity_words", [])
+                    self.action_words = keywords_data.get("action_words", [])
+                    self.structure_words = keywords_data.get("structure_words", [])
                     logger.info(f"Loaded base keywords from {keywords_path}")
             else:
                 logger.info(f"keywords.json not found at {keywords_path}")
@@ -161,27 +268,27 @@ class KeywordScorer:
         # Calculate weighted scores for each diagram type
         # Considers both specific keywords and contextual keywords
         d2_base_score = (
-            d2_diagram_score * 3 +  # Heavy weight for explicit architecture keywords
-            structure_matches * 1.5 +
-            entity_matches * 0.8
+            d2_diagram_score * 3  # Heavy weight for explicit architecture keywords
+            + structure_matches * 1.5
+            + entity_matches * 0.8
         )
 
         mermaid_base_score = (
-            mermaid_diagram_score * 3 +  # Heavy weight for explicit flow keywords
-            action_matches * 1.5 +
-            entity_matches * 0.8
+            mermaid_diagram_score * 3  # Heavy weight for explicit flow keywords
+            + action_matches * 1.5
+            + entity_matches * 0.8
         )
 
         plantuml_base_score = (
-            plantuml_diagram_score * 3 +  # Heavy weight for explicit UML keywords
-            structure_matches * 1.5 +
-            entity_matches * 0.8
+            plantuml_diagram_score * 3  # Heavy weight for explicit UML keywords
+            + structure_matches * 1.5
+            + entity_matches * 0.8
         )
 
         structurizr_base_score = (
-            structurizr_diagram_score * 3 +  # Heavy weight for C4/architecture keywords
-            structure_matches * 1.5 +
-            entity_matches * 0.8
+            structurizr_diagram_score * 3  # Heavy weight for C4/architecture keywords
+            + structure_matches * 1.5
+            + entity_matches * 0.8
         )
 
         # Calculate total score for normalization
@@ -260,8 +367,10 @@ class KeywordScorer:
 
         return diagram_type, scores
 
+
 # Module-level function for convenience (used by nodes.py)
 _scorer = KeywordScorer()
+
 
 def determine_diagram_type(text: str) -> Tuple[DiagramType, Dict[str, float]]:
     """

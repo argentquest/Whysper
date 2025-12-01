@@ -2,6 +2,12 @@
 Integration tests for Correction Session Management
 """
 
+from diagrams.models import CorrectionAttemptType
+from diagrams.correction_session import (
+    CorrectionSession,
+    CorrectionSessionManager,
+    get_session_manager,
+)
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -9,14 +15,6 @@ from datetime import datetime, timedelta
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.correction_session import (
-    CorrectionSession,
-    CorrectionSessionManager,
-    get_session_manager,
-    set_session_manager
-)
-from diagrams.models import CorrectionAttemptType
 
 
 def test_session_creation():
@@ -29,7 +27,7 @@ def test_session_creation():
         current_code="graph TD\n  A -> B",
         current_error="Invalid syntax",
         max_llm_retries=5,
-        expires_at=datetime.now() + timedelta(seconds=300)
+        expires_at=datetime.now() + timedelta(seconds=300),
     )
 
     assert session.session_id is not None, "Session should have ID"
@@ -50,15 +48,12 @@ def test_session_add_attempt():
         original_code="invalid",
         current_code="invalid",
         max_llm_retries=3,
-        expires_at=datetime.now() + timedelta(seconds=300)
+        expires_at=datetime.now() + timedelta(seconds=300),
     )
 
     # Add ORIGINAL attempt
     attempt1 = session.add_attempt(
-        attempt_type=CorrectionAttemptType.ORIGINAL,
-        code="invalid",
-        is_valid=False,
-        error="Syntax error"
+        attempt_type=CorrectionAttemptType.ORIGINAL, code="invalid", is_valid=False, error="Syntax error"
     )
 
     assert len(session.attempts) == 1
@@ -67,10 +62,7 @@ def test_session_add_attempt():
 
     # Add PATTERN attempt
     attempt2 = session.add_attempt(
-        attempt_type=CorrectionAttemptType.PATTERN,
-        code="fixed by pattern",
-        is_valid=False,
-        error="Still has error"
+        attempt_type=CorrectionAttemptType.PATTERN, code="fixed by pattern", is_valid=False, error="Still has error"
     )
 
     assert len(session.attempts) == 2
@@ -78,11 +70,7 @@ def test_session_add_attempt():
     assert session.current_code == "fixed by pattern"
 
     # Add LLM attempt
-    attempt3 = session.add_attempt(
-        attempt_type=CorrectionAttemptType.LLM,
-        code="fixed by llm",
-        is_valid=True
-    )
+    attempt3 = session.add_attempt(attempt_type=CorrectionAttemptType.LLM, code="fixed by llm", is_valid=True)
 
     assert len(session.attempts) == 3
     assert session.llm_retries_used == 1
@@ -100,25 +88,17 @@ def test_session_llm_retry_limit():
         original_code="test",
         current_code="test",
         max_llm_retries=2,
-        expires_at=datetime.now() + timedelta(seconds=300)
+        expires_at=datetime.now() + timedelta(seconds=300),
     )
 
     assert session.can_use_llm(), "Should allow LLM when under limit"
 
     # Use first retry
-    session.add_attempt(
-        attempt_type=CorrectionAttemptType.LLM,
-        code="attempt1",
-        is_valid=False
-    )
+    session.add_attempt(attempt_type=CorrectionAttemptType.LLM, code="attempt1", is_valid=False)
     assert session.can_use_llm(), "Should still allow LLM"
 
     # Use second retry
-    session.add_attempt(
-        attempt_type=CorrectionAttemptType.LLM,
-        code="attempt2",
-        is_valid=False
-    )
+    session.add_attempt(attempt_type=CorrectionAttemptType.LLM, code="attempt2", is_valid=False)
     assert not session.can_use_llm(), "Should not allow more LLM retries"
     assert session.llm_retries_used == 2
 
@@ -134,7 +114,7 @@ def test_session_expiration():
         original_code="test",
         current_code="test",
         max_llm_retries=3,
-        expires_at=datetime.now() - timedelta(seconds=1)  # Already expired
+        expires_at=datetime.now() - timedelta(seconds=1),  # Already expired
     )
 
     assert not session.is_expired, "Should not be marked expired initially"
@@ -154,7 +134,7 @@ def test_session_summary():
         original_code="test",
         current_code="test",
         max_llm_retries=5,
-        expires_at=datetime.now() + timedelta(seconds=300)
+        expires_at=datetime.now() + timedelta(seconds=300),
     )
 
     session.add_attempt(CorrectionAttemptType.ORIGINAL, "code1", False, "error1")
@@ -169,7 +149,7 @@ def test_session_summary():
     assert summary["llm_retries_used"] == 1
     assert summary["llm_retries_remaining"] == 4
     assert summary["pattern_attempts"] == 1
-    assert summary["is_valid"] == True
+    assert summary["is_valid"]
 
     print("[OK] Session summary test passed")
 
@@ -184,7 +164,7 @@ def test_session_manager_creation():
         original_code="test code",
         original_error="test error",
         max_llm_retries=5,
-        timeout_seconds=300
+        timeout_seconds=300,
     )
 
     assert session is not None
@@ -200,11 +180,7 @@ def test_session_manager_get_session():
     manager = CorrectionSessionManager()
 
     session = manager.create_session(
-        provider_id="test",
-        diagram_type="test",
-        original_code="test",
-        original_error=None,
-        max_llm_retries=3
+        provider_id="test", diagram_type="test", original_code="test", original_error=None, max_llm_retries=3
     )
 
     session_id = session.session_id
@@ -226,11 +202,7 @@ def test_session_manager_update():
     manager = CorrectionSessionManager()
 
     session = manager.create_session(
-        provider_id="test",
-        diagram_type="test",
-        original_code="test",
-        original_error=None,
-        max_llm_retries=3
+        provider_id="test", diagram_type="test", original_code="test", original_error=None, max_llm_retries=3
     )
 
     # Modify session
@@ -252,11 +224,7 @@ def test_session_manager_delete():
     manager = CorrectionSessionManager()
 
     session = manager.create_session(
-        provider_id="test",
-        diagram_type="test",
-        original_code="test",
-        original_error=None,
-        max_llm_retries=3
+        provider_id="test", diagram_type="test", original_code="test", original_error=None, max_llm_retries=3
     )
 
     session_id = session.session_id
@@ -280,7 +248,7 @@ def test_session_manager_cleanup_expired():
         original_code="test",
         original_error=None,
         max_llm_retries=3,
-        timeout_seconds=-1  # Expires immediately
+        timeout_seconds=-1,  # Expires immediately
     )
 
     # Create valid session
@@ -290,7 +258,7 @@ def test_session_manager_cleanup_expired():
         original_code="test",
         original_error=None,
         max_llm_retries=3,
-        timeout_seconds=300
+        timeout_seconds=300,
     )
 
     assert manager.get_active_sessions_count() == 2
@@ -326,7 +294,7 @@ def test_session_manager_active_count():
     session1 = manager.create_session("test1", "mermaid", "code1", None, 3)
     assert manager.get_active_sessions_count() == 1
 
-    session2 = manager.create_session("test2", "d2", "code2", None, 3)
+    manager.create_session("test2", "d2", "code2", None, 3)
     assert manager.get_active_sessions_count() == 2
 
     manager.delete_session(session1.session_id)
@@ -337,9 +305,9 @@ def test_session_manager_active_count():
 
 def run_all_tests():
     """Run all correction session tests"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Testing Correction Session Management")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     test_session_creation()
     test_session_add_attempt()
@@ -354,9 +322,9 @@ def run_all_tests():
     test_session_manager_singleton()
     test_session_manager_active_count()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("[OK] All correction session tests passed!")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

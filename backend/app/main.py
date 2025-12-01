@@ -13,6 +13,9 @@ Key Features:
 Note: This is the API-only version. For full application with frontend serving,
 use backend/main.py instead.
 """
+
+from common.env_manager import env_manager
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,15 +40,14 @@ async def lifespan(app: FastAPI):
 
     # Initialize real-time log broadcasting for monitoring and debugging
     from common.log_broadcaster import setup_log_broadcasting
+
     setup_log_broadcasting()
     logger.info("Real-time log broadcasting enabled - connect to GET /api/v1/logs/stream")
 
     # Log MCP server integration details for system observability
     logger.info("FastMCP server integration initialized")
     logger.info("MCP endpoints available at /mcp/*")
-    logger.info(
-        "MCP tools: generate_diagram, render_diagram, generate_and_render"
-    )
+    logger.info("MCP tools: generate_diagram, render_diagram, generate_and_render")
     logger.info("MCP WebSocket endpoint: /mcp/ws")
 
     yield  # Application runs here with managed resources
@@ -56,20 +58,20 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI application with comprehensive configuration
 app = FastAPI(
-    title=settings.api_title,              # API title for documentation
+    title=settings.api_title,  # API title for documentation
     description=settings.api_description,  # API description for documentation
-    version=settings.api_version,          # API version for versioning
-    debug=settings.debug,                  # Debug mode for development
-    lifespan=lifespan,                     # Lifespan context manager
+    version=settings.api_version,  # API version for versioning
+    debug=settings.debug,  # Debug mode for development
+    lifespan=lifespan,  # Lifespan context manager
 )
 
 # Configure CORS middleware to enable cross-origin communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,   # Allowed frontend origins
-    allow_credentials=True,                # Allow cookies and auth headers
-    allow_methods=["*"],                   # Allow all HTTP methods
-    allow_headers=["*"],                   # Allow all headers
+    allow_origins=settings.cors_origins,  # Allowed frontend origins
+    allow_credentials=True,  # Allow cookies and auth headers
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 # Include main API router with versioned prefix for structured routing
@@ -80,12 +82,10 @@ mcp_router = get_mcp_router()
 app.include_router(mcp_router)
 
 # Mount static files with flexible directory configuration
-import os
-from common.env_manager import env_manager
 
 # Determine static file directory with fallback mechanism
 env_vars = env_manager.load_env_file()
-static_dir = env_vars.get('STATIC_DIR', '').strip()
+static_dir = env_vars.get("STATIC_DIR", "").strip()
 if not static_dir:
     # Use default static directory if no environment config
     static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
@@ -101,12 +101,12 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 if __name__ == "__main__":
     # Import uvicorn dynamically to optimize module loading
     import uvicorn
-    
+
     # Launch development server with configurable parameters
     uvicorn.run(
-        "app.main:app",           # Application module and instance
-        host=settings.host,       # Server host (default: 0.0.0.0)
-        port=settings.port,       # Server port (default: 8001)
-        reload=settings.reload,   # Auto-reload on code changes (development)
-        log_level="info"          # Logging level for uvicorn
+        "app.main:app",  # Application module and instance
+        host=settings.host,  # Server host (default: 0.0.0.0)
+        port=settings.port,  # Server port (default: 8001)
+        reload=settings.reload,  # Auto-reload on code changes (development)
+        log_level="info",  # Logging level for uvicorn
     )

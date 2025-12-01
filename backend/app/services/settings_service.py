@@ -1,4 +1,5 @@
 """Environment and theme helpers for the web backend."""
+
 from __future__ import annotations
 
 import os
@@ -36,10 +37,7 @@ class SettingsService:
                 - activeBrand: Active brand code.
         """
         env_vars = env_manager.load_env_file()
-        masked = {
-            key: SecurityUtils.mask_api_key(value) if "KEY" in key else value
-            for key, value in env_vars.items()
-        }
+        masked = {key: SecurityUtils.mask_api_key(value) if "KEY" in key else value for key, value in env_vars.items()}
 
         # Get frontend timeout (default to 120 seconds if not set)
         frontend_timeout = int(env_vars.get("FRONT_END_TIMEOUT", "120"))
@@ -68,28 +66,28 @@ class SettingsService:
         Returns:
             Optional[Dict[str, Any]]: Parsed metadata dictionary or None if no frontmatter found.
         """
-        if not content.startswith('---'):
+        if not content.startswith("---"):
             return None
 
         try:
             # Find the end of frontmatter
-            end_pos = content.find('---', 3)
+            end_pos = content.find("---", 3)
             if end_pos == -1:
                 return None
 
             frontmatter = content[3:end_pos].strip()
             # Simple YAML parsing for basic key-value pairs
             metadata = {}
-            for line in frontmatter.split('\n'):
+            for line in frontmatter.split("\n"):
                 line = line.strip()
-                if ':' in line and not line.startswith('#'):
-                    key, value = line.split(':', 1)
+                if ":" in line and not line.startswith("#"):
+                    key, value = line.split(":", 1)
                     key = key.strip()
                     value = value.strip()
                     # Handle arrays like [item1, item2]
-                    if value.startswith('[') and value.endswith(']'):
+                    if value.startswith("[") and value.endswith("]"):
                         # Simple array parsing
-                        items = [item.strip().strip('"').strip("'") for item in value[1:-1].split(',') if item.strip()]
+                        items = [item.strip().strip('"').strip("'") for item in value[1:-1].split(",") if item.strip()]
                         metadata[key] = items
                     else:
                         # Remove quotes if present
@@ -118,39 +116,41 @@ class SettingsService:
 
             if os.path.exists(prompts_dir):
                 for filename in os.listdir(prompts_dir):
-                    if filename.endswith('.md'):
+                    if filename.endswith(".md"):
                         file_path = os.path.join(prompts_dir, filename)
                         name = filename[:-3]  # Remove .md extension
 
                         # Try to parse YAML frontmatter
                         metadata = None
                         try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
+                            with open(file_path, "r", encoding="utf-8") as f:
                                 content = f.read()
                                 metadata = self._parse_yaml_frontmatter(content)
                         except Exception:
                             pass
 
-                        if metadata and 'title' in metadata:
-                            title = metadata['title']
-                            description = metadata.get('description', '')
-                            category = metadata.get('category', [])
+                        if metadata and "title" in metadata:
+                            title = metadata["title"]
+                            description = metadata.get("description", "")
+                            category = metadata.get("category", [])
                         else:
                             # Fallback to filename-based title
-                            title = name.replace('-', ' ').replace('_', ' ').title()
-                            description = ''
+                            title = name.replace("-", " ").replace("_", " ").title()
+                            description = ""
                             category = []
 
-                        agent_prompts.append({
-                            "name": name,
-                            "title": title,
-                            "description": description,
-                            "category": category,
-                            "filename": filename
-                        })
+                        agent_prompts.append(
+                            {
+                                "name": name,
+                                "title": title,
+                                "description": description,
+                                "category": category,
+                                "filename": filename,
+                            }
+                        )
 
             # Sort by title for consistent ordering
-            agent_prompts.sort(key=lambda x: x['title'])
+            agent_prompts.sort(key=lambda x: x["title"])
             return agent_prompts
 
         except Exception as e:
@@ -166,10 +166,12 @@ class SettingsService:
             List[Dict[str, str]]: List of subagent commands.
         """
         try:
-            commands_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "subagent", "master.json")
+            commands_file = os.path.join(
+                os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "subagent", "master.json"
+            )
 
             if os.path.exists(commands_file):
-                with open(commands_file, 'r', encoding='utf-8') as f:
+                with open(commands_file, "r", encoding="utf-8") as f:
                     commands = json.load(f)
                 return commands
             else:
@@ -195,8 +197,8 @@ class SettingsService:
             prompts_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "prompts", "coding", "agent")
             file_path = os.path.join(prompts_dir, filename)
 
-            if os.path.exists(file_path) and filename.endswith('.md'):
-                with open(file_path, 'r', encoding='utf-8') as f:
+            if os.path.exists(file_path) and filename.endswith(".md"):
+                with open(file_path, "r", encoding="utf-8") as f:
                     return f.read()
             else:
                 logger.info(f"Agent prompt file not found: {file_path}")
@@ -233,11 +235,7 @@ class SettingsService:
             except Exception as e:
                 errors.append({"key": key, "error": str(e)})
 
-        return {
-            "success": len(errors) == 0,
-            "updated": updated,
-            "errors": errors
-        }
+        return {"success": len(errors) == 0, "updated": updated, "errors": errors}
 
     @log_method_call
     def set_theme(self, theme_name: str) -> Tuple[bool, str]:
@@ -284,17 +282,17 @@ class SettingsService:
             architecture_agents = []
 
             for agent in all_agents:
-                name = agent.get('name', '').lower()
-                title = agent.get('title', '').lower()
-                description = agent.get('description', '').lower()
-                category = agent.get('category', [])
+                name = agent.get("name", "").lower()
+                title = agent.get("title", "").lower()
+                description = agent.get("description", "").lower()
+                category = agent.get("category", [])
 
                 # Check if 'architecture' is in name, title, description, or category
                 has_architecture = (
-                    'architecture' in name or
-                    'architecture' in title or
-                    'architecture' in description or
-                    any('architecture' in str(cat).lower() for cat in category)
+                    "architecture" in name
+                    or "architecture" in title
+                    or "architecture" in description
+                    or any("architecture" in str(cat).lower() for cat in category)
                 )
 
                 if has_architecture:
@@ -325,7 +323,7 @@ class SettingsService:
             agentoption_file = os.path.join(agentoption_dir, "agentoption.json")
 
             if os.path.exists(agentoption_file):
-                with open(agentoption_file, 'r', encoding='utf-8') as f:
+                with open(agentoption_file, "r", encoding="utf-8") as f:
                     options = json.load(f)
                     logger.debug(f"Loaded {len(options)} options for agent '{agent_id}'")
                     return options

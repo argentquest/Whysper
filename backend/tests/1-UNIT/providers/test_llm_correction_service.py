@@ -2,15 +2,14 @@
 Integration tests for LLM Correction Service
 """
 
+from diagrams.llm_correction_service import LLMCorrectionService, get_llm_correction_service
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 # Add backend to path for importing local modules
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.llm_correction_service import LLMCorrectionService, get_llm_correction_service
 
 
 def test_llm_service_singleton():
@@ -54,7 +53,7 @@ def test_correction_prompt_building():
         diagram_type=diagram_type,
         invalid_code=invalid_code,
         error_message=error_message,
-        provider_specific_rules=provider_rules
+        provider_specific_rules=provider_rules,
     )
 
     # Verify all key elements are included in the prompt
@@ -115,7 +114,7 @@ graph TD
         error_message="Invalid arrow syntax",
         provider_specific_rules="Use --> for arrows",
         max_tokens=2000,
-        temperature=0.2
+        temperature=0.2,
     )
 
     # Verify correction results and processor interactions
@@ -141,14 +140,14 @@ def test_correction_failure_handling():
 
     # Attempt correction with expectation of failure
     success, corrected_code, message = service.correct_diagram_code(
-        diagram_type="mermaid",
-        invalid_code="invalid code",
-        error_message="Some error"
+        diagram_type="mermaid", invalid_code="invalid code", error_message="Some error"
     )
 
     # Verify failure handling mechanisms
     assert not success, "Should report failure"
-    assert "Could not extract" in message or "Failed" in message or "Empty response" in message, "Should provide error message"
+    assert (
+        "Could not extract" in message or "Failed" in message or "Empty response" in message
+    ), "Should provide error message"
     assert corrected_code == "invalid code", "Should return original code on failure"
 
     print("[OK] Correction failure handling test passed")
@@ -168,7 +167,7 @@ def test_provider_specific_rules():
         diagram_type="mermaid",
         invalid_code="test code",
         error_message="test error",
-        provider_specific_rules=provider_rules
+        provider_specific_rules=provider_rules,
     )
 
     # Verify provider rules are in the prompt
@@ -181,9 +180,9 @@ def test_provider_specific_rules():
 
 def run_all_tests():
     # Orchestrate and run the entire test suite
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Testing LLM Correction Service")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     test_llm_service_singleton()
     test_llm_service_availability_without_processor()
@@ -194,9 +193,9 @@ def run_all_tests():
     test_correction_failure_handling()
     test_provider_specific_rules()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("[OK] All LLM correction service tests passed!")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

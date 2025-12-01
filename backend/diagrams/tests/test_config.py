@@ -8,6 +8,8 @@ Tests:
 4. Config comparison
 """
 
+import json
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 import pytest
@@ -15,9 +17,6 @@ import pytest
 # Add backend directory to Python path for module imports
 backend_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.provider_config import get_config_loader
-import json
 
 
 def test_root_config():
@@ -32,7 +31,7 @@ def test_root_config():
     root_config = loader.get_root_config()
 
     # Print out key default configuration parameters for verification
-    print(f"[OK] Root config loaded successfully")
+    print("[OK] Root config loaded successfully")
     print(f"   Version: {root_config.version}")
     print(f"   LLM max retries (default): {root_config.defaults.llm_correction.max_retries}")
     print(f"   Correction strategy (default): {root_config.defaults.correction_strategy}")
@@ -48,8 +47,7 @@ def test_provider_config(provider_name: str):
     provider_folder = diagrams_root / provider_name
 
     # Ensure the provider folder exists
-    assert provider_folder.exists(), \
-        f"Provider folder not found: {provider_folder}"
+    assert provider_folder.exists(), f"Provider folder not found: {provider_folder}"
 
     # Load provider-specific configuration
     config = loader.load_provider_config(provider_folder)
@@ -99,7 +97,11 @@ def test_config_comparison():
         defaults = root_config.defaults
         # Check and print LLM, validation, and batch setting overrides
         if config.llm_correction.max_retries != defaults.llm_correction.max_retries:
-            print(f"  llm_correction.max_retries: {defaults.llm_correction.max_retries} -> {config.llm_correction.max_retries} [OVERRIDDEN]")
+            print(
+                f"  llm_correction.max_retries: {
+                    defaults.llm_correction.max_retries} -> {
+                    config.llm_correction.max_retries} [OVERRIDDEN]"
+            )
 
         # Similar comparisons for other configuration parameters...
 
@@ -167,6 +169,7 @@ def main():
         # Handle and print any test failures
         print(f"\n[ERROR] TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
 
 

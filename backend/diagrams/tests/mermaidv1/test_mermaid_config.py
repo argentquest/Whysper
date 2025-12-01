@@ -2,6 +2,7 @@
 Test mermaidv1 provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
@@ -10,13 +11,12 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
 # Import configuration loader for diagram providers
-from diagrams.provider_config import get_config_loader
 
 
 def test_mermaidv1_config():
     # Initialize config loader to handle provider-specific configurations
     loader = get_config_loader()
-    
+
     # Construct paths to the mermaidv1 provider configuration folder
     diagrams_root = Path(__file__).parent.parent.parent
     provider_folder = diagrams_root / "mermaidv1"
@@ -28,7 +28,7 @@ def test_mermaidv1_config():
     assert config is not None, "Config should load successfully"
     assert config.provider_id == "mermaidv1"
     assert config.diagram_type == "mermaid"
-    
+
     # Ensure supported output formats include SVG and PNG
     assert "svg" in config.supported_output_formats
     assert "png" in config.supported_output_formats

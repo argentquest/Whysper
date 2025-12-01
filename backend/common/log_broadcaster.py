@@ -8,10 +8,11 @@ for real-time progress feedback.
 PRIVACY: Logs are filtered by session/conversation ID to ensure users only
 see their own activity.
 """
+
 import logging
 import asyncio
 import queue
-from typing import Set, Dict, Optional
+from typing import Dict, Optional
 from datetime import datetime
 from .logging_decorator import log_method_call
 
@@ -47,15 +48,24 @@ class LogBroadcaster:
                        If None, client receives all logs (backward compatibility).
         """
         cls._client_sessions[client_queue] = session_id
-        print(f"📡 [LOG BROADCASTER] Client connected (session: {session_id or 'ALL'}). Total clients: {len(cls._client_sessions)}")
+        print(
+            f"📡 [LOG BROADCASTER] Client connected (session: {
+                session_id or 'ALL'}). Total clients: {
+                len(
+                    cls._client_sessions)}"
+        )
 
     @classmethod
     @log_method_call
     def remove_client(cls, client_queue: asyncio.Queue):
         """Unregister an SSE client"""
-        session_id = cls._client_sessions.get(client_queue, 'unknown')
+        session_id = cls._client_sessions.get(client_queue, "unknown")
         cls._client_sessions.pop(client_queue, None)
-        print(f"📡 [LOG BROADCASTER] Client disconnected (session: {session_id}). Total clients: {len(cls._client_sessions)}")
+        print(
+            f"📡 [LOG BROADCASTER] Client disconnected (session: {session_id}). Total clients: {
+                len(
+                    cls._client_sessions)}"
+        )
 
     @classmethod
     def broadcast_log(cls, level: str, message: str, logger_name: str, session_id: Optional[str] = None):
@@ -74,11 +84,11 @@ class LogBroadcaster:
         truncated_message = message[:300] if len(message) > 300 else message
 
         log_event = {
-            'timestamp': datetime.now().isoformat(),
-            'level': level,
-            'message': truncated_message,
-            'logger': logger_name,
-            'session_id': session_id,
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "message": truncated_message,
+            "logger": logger_name,
+            "session_id": session_id,
         }
 
         # Send to matching clients only
@@ -88,9 +98,9 @@ class LogBroadcaster:
         for client_queue, client_session_id in cls._client_sessions.items():
             # Filter: only send if session matches, or if either is None (broadcast mode)
             should_send = (
-                client_session_id is None or  # Client wants all logs
-                session_id is None or          # Global log (no session)
-                client_session_id == session_id  # Session match
+                client_session_id is None  # Client wants all logs
+                or session_id is None  # Global log (no session)
+                or client_session_id == session_id  # Session match
             )
 
             if should_send:
@@ -107,7 +117,9 @@ class LogBroadcaster:
 
         # Debug output for session filtering
         if session_id:
-            print(f"📡 [LOG BROADCASTER] Sent log to {sent_count}/{len(cls._client_sessions)} clients (session: {session_id})")
+            print(
+                f"📡 [LOG BROADCASTER] Sent log to {sent_count}/{len(cls._client_sessions)} clients (session: {session_id})"
+            )
 
         # Clean up disconnected clients
         for client in disconnected_clients:
@@ -136,17 +148,14 @@ class SSELoggingHandler(logging.Handler):
                 # Session ID can be in multiple formats:
                 # - record.session_id (if passed via extra={'session_id': ...})
                 # - Extracted from logger name (e.g., 'conversation.conv-123')
-                session_id = getattr(record, 'session_id', None)
+                session_id = getattr(record, "session_id", None)
 
                 # If not in record, try to extract from logger name
-                if not session_id and record.name.startswith('conversation.'):
-                    session_id = record.name.split('.', 1)[1]
+                if not session_id and record.name.startswith("conversation."):
+                    session_id = record.name.split(".", 1)[1]
 
                 LogBroadcaster.broadcast_log(
-                    level=record.levelname,
-                    message=message,
-                    logger_name=record.name,
-                    session_id=session_id
+                    level=record.levelname, message=message, logger_name=record.name, session_id=session_id
                 )
             except Exception:
                 # Don't let logging errors break the application
@@ -178,7 +187,7 @@ def setup_log_broadcasting():
     sse_handler.setLevel(logging.INFO)
 
     # Simple formatter (just the message, timestamp added by broadcaster)
-    formatter = logging.Formatter('%(message)s')
+    formatter = logging.Formatter("%(message)s")
     sse_handler.setFormatter(formatter)
 
     root_logger.addHandler(sse_handler)

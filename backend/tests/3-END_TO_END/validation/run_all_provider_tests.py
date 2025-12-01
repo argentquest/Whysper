@@ -17,67 +17,67 @@ import json
 import sys
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 from datetime import datetime
 
 # Test configuration - maps test directory to (provider_id, diagram_type, test_file)
 TEST_CONFIGS = [
     {
-        'name': 'LLM D2',
-        'dir': 'llmd2test',
-        'provider_id': 'd2v1',
-        'diagram_type': 'd2',
-        'test_file': 'test25.json',
-        'key': 'd2_capability_tests'
+        "name": "LLM D2",
+        "dir": "llmd2test",
+        "provider_id": "d2v1",
+        "diagram_type": "d2",
+        "test_file": "test25.json",
+        "key": "d2_capability_tests",
     },
     {
-        'name': 'LLM Mermaid',
-        'dir': 'llmmermaidtest',
-        'provider_id': 'mermaidv1',
-        'diagram_type': 'mermaid',
-        'test_file': 'test25.json',
-        'key': 'mermaid_capability_tests'
+        "name": "LLM Mermaid",
+        "dir": "llmmermaidtest",
+        "provider_id": "mermaidv1",
+        "diagram_type": "mermaid",
+        "test_file": "test25.json",
+        "key": "mermaid_capability_tests",
     },
     {
-        'name': 'Kroki D2',
-        'dir': 'llmkrokid2test',
-        'provider_id': 'krokid2',
-        'diagram_type': 'd2',
-        'test_file': 'test25.json',
-        'key': 'd2_capability_tests'
+        "name": "Kroki D2",
+        "dir": "llmkrokid2test",
+        "provider_id": "krokid2",
+        "diagram_type": "d2",
+        "test_file": "test25.json",
+        "key": "d2_capability_tests",
     },
     {
-        'name': 'Kroki Mermaid',
-        'dir': 'llmkrokimermaidtest',
-        'provider_id': 'krokimermaid',
-        'diagram_type': 'mermaid',
-        'test_file': 'test25.json',
-        'key': 'mermaid_capability_tests'
+        "name": "Kroki Mermaid",
+        "dir": "llmkrokimermaidtest",
+        "provider_id": "krokimermaid",
+        "diagram_type": "mermaid",
+        "test_file": "test25.json",
+        "key": "mermaid_capability_tests",
     },
     {
-        'name': 'Kroki C4',
-        'dir': 'llmkrokic4test',
-        'provider_id': 'krokic4',
-        'diagram_type': 'c4',
-        'test_file': 'test25.json',
-        'key': 'c4_capability_tests'
+        "name": "Kroki C4",
+        "dir": "llmkrokic4test",
+        "provider_id": "krokic4",
+        "diagram_type": "c4",
+        "test_file": "test25.json",
+        "key": "c4_capability_tests",
     },
     {
-        'name': 'Kroki PlantUML',
-        'dir': 'llmkrokiplantumtest',
-        'provider_id': 'krokiplantuml',
-        'diagram_type': 'plantuml',
-        'test_file': 'test25.json',
-        'key': 'plantuml_capability_tests'
+        "name": "Kroki PlantUML",
+        "dir": "llmkrokiplantumtest",
+        "provider_id": "krokiplantuml",
+        "diagram_type": "plantuml",
+        "test_file": "test25.json",
+        "key": "plantuml_capability_tests",
     },
     {
-        'name': 'Kroki Structurizr',
-        'dir': 'llmkrokistructurizrtest',
-        'provider_id': 'krokistructurizr',
-        'diagram_type': 'structurizr',
-        'test_file': 'test25.json',
-        'key': 'structurizr_capability_tests'
-    }
+        "name": "Kroki Structurizr",
+        "dir": "llmkrokistructurizrtest",
+        "provider_id": "krokistructurizr",
+        "diagram_type": "structurizr",
+        "test_file": "test25.json",
+        "key": "structurizr_capability_tests",
+    },
 ]
 
 
@@ -86,7 +86,7 @@ def create_test_script(config: Dict[str, Any], test_dir: Path) -> Path:
 
     script_path = test_dir / f"validate_all_25_{config['provider_id']}_provider.py"
 
-    script_content = f'''"""
+    script_content = '''"""
 Provider System Test - {config['name']}
 
 Tests the {config['provider_id']} provider using the provider system endpoint.
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         sys.exit(0 if result['success_rate'] >= 50 else 1)
 '''
 
-    script_path.write_text(script_content, encoding='utf-8')
+    script_path.write_text(script_content, encoding="utf-8")
     return script_path
 
 
@@ -271,54 +271,40 @@ def run_test_suite(test_dir: Path, script_name: str) -> Dict[str, Any]:
 
     if not script_path.exists():
         return {
-            'success': False,
-            'error': f'Script not found: {script_path}',
-            'passed': 0,
-            'failed': 25,
-            'success_rate': 0
+            "success": False,
+            "error": f"Script not found: {script_path}",
+            "passed": 0,
+            "failed": 25,
+            "success_rate": 0,
         }
 
     try:
         result = subprocess.run(
-            [sys.executable, str(script_path)],
-            cwd=str(test_dir),
-            capture_output=True,
-            text=True,
-            timeout=300
+            [sys.executable, str(script_path)], cwd=str(test_dir), capture_output=True, text=True, timeout=300
         )
 
         # Parse output for success rate
-        lines = result.stdout.split('\n')
+        lines = result.stdout.split("\n")
         for line in lines:
-            if 'Result:' in line and 'passed' in line:
+            if "Result:" in line and "passed" in line:
                 return {
-                    'success': True,
-                    'output': result.stdout,
-                    'error': result.stderr if result.returncode != 0 else None
+                    "success": True,
+                    "output": result.stdout,
+                    "error": result.stderr if result.returncode != 0 else None,
                 }
 
-        return {
-            'success': result.returncode == 0,
-            'output': result.stdout,
-            'error': result.stderr
-        }
+        return {"success": result.returncode == 0, "output": result.stdout, "error": result.stderr}
 
     except subprocess.TimeoutExpired:
         return {
-            'success': False,
-            'error': 'Test timeout (5 minutes exceeded)',
-            'passed': 0,
-            'failed': 25,
-            'success_rate': 0
+            "success": False,
+            "error": "Test timeout (5 minutes exceeded)",
+            "passed": 0,
+            "failed": 25,
+            "success_rate": 0,
         }
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e),
-            'passed': 0,
-            'failed': 25,
-            'success_rate': 0
-        }
+        return {"success": False, "error": str(e), "passed": 0, "failed": 25, "success_rate": 0}
 
 
 def main():
@@ -335,16 +321,18 @@ def main():
     start_time = datetime.now()
 
     for config in TEST_CONFIGS:
-        test_dir = base_dir / config['dir']
+        test_dir = base_dir / config["dir"]
 
         if not test_dir.exists():
             print(f"\n❌ Test directory not found: {test_dir}")
-            results.append({
-                'name': config['name'],
-                'provider_id': config['provider_id'],
-                'success': False,
-                'error': 'Directory not found'
-            })
+            results.append(
+                {
+                    "name": config["name"],
+                    "provider_id": config["provider_id"],
+                    "success": False,
+                    "error": "Directory not found",
+                }
+            )
             continue
 
         print(f"\n{'=' * 100}")
@@ -357,21 +345,23 @@ def main():
         print(f"Created test script: {script_path.name}")
 
         # Run test suite
-        print(f"\nExecuting tests...")
+        print("\nExecuting tests...")
         result = run_test_suite(test_dir, script_path.name)
 
-        results.append({
-            'name': config['name'],
-            'provider_id': config['provider_id'],
-            'diagram_type': config['diagram_type'],
-            **result
-        })
+        results.append(
+            {
+                "name": config["name"],
+                "provider_id": config["provider_id"],
+                "diagram_type": config["diagram_type"],
+                **result,
+            }
+        )
 
         # Print output
-        if result.get('output'):
-            print(result['output'][-500:] if len(result['output']) > 500 else result['output'])
+        if result.get("output"):
+            print(result["output"][-500:] if len(result["output"]) > 500 else result["output"])
 
-        if result.get('error'):
+        if result.get("error"):
             print(f"Error: {result['error'][:200]}")
 
     # Final summary
@@ -380,7 +370,7 @@ def main():
     print("=" * 100)
 
     for result in results:
-        status = "✅" if result['success'] else "❌"
+        status = "✅" if result["success"] else "❌"
         print(f"{status} {result['name']:25} ({result.get('provider_id', 'N/A'):20})")
 
     elapsed = datetime.now() - start_time
@@ -389,13 +379,17 @@ def main():
 
     # Save results
     summary_file = base_dir / ".." / "PROVIDER_TEST_RESULTS.json"
-    with open(summary_file, 'w') as f:
-        json.dump({
-            'timestamp': datetime.now().isoformat(),
-            'total_suites': len(TEST_CONFIGS),
-            'completed': sum(1 for r in results if r['success']),
-            'results': results
-        }, f, indent=2)
+    with open(summary_file, "w") as f:
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "total_suites": len(TEST_CONFIGS),
+                "completed": sum(1 for r in results if r["success"]),
+                "results": results,
+            },
+            f,
+            indent=2,
+        )
 
     print(f"Results saved to: {summary_file}")
 

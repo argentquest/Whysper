@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
@@ -7,7 +7,6 @@ import logging
 from app.services.diagram_factory_service import (
     DiagramFactoryService,
     DiagramSessionStore,
-    DiagramSession,
 )
 from common.logging_decorator import log_method_call
 from schemas import (
@@ -17,7 +16,7 @@ from schemas import (
     DiagramConfirmReadyRequest,
     DiagramSelectTypeRequest,
     DiagramApproveRenderRequest,
-    DiagramRenderWizardRequest
+    DiagramRenderWizardRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ router = APIRouter()
     "/start",
     response_model=DiagramSessionResponse,
     summary="Start diagram generation",
-    description="Initialize a new diagram generation session."
+    description="Initialize a new diagram generation session.",
 )
 @log_method_call
 async def start_diagram_generation(request: DiagramStartRequest):
@@ -46,7 +45,12 @@ async def start_diagram_generation(request: DiagramStartRequest):
     """
     # Initialize a new diagram generation session with optional model selection
     try:
-        logger.info(f"🚀 Starting diagram generation with prompt: {request.initial_prompt[:100]}... (session_id provided: {request.session_id is not None})")
+        logger.info(
+            f"🚀 Starting diagram generation with prompt: {
+                request.initial_prompt[
+                    :100]}... (session_id provided: {
+                request.session_id is not None})"
+        )
         # Create a unique session for tracking diagram generation progress
         # If session_id is provided (from frontend tab), use it; otherwise generate a new one
         session = DiagramSessionStore.create_session(session_id=request.session_id)
@@ -61,7 +65,7 @@ async def start_diagram_generation(request: DiagramStartRequest):
         return {
             "session_id": session.session_id,
             "status": service.get_status(),
-            "message": "Diagram generation started"
+            "message": "Diagram generation started",
         }
     except Exception as e:
         # Log and re-raise any errors during session initialization
@@ -72,7 +76,7 @@ async def start_diagram_generation(request: DiagramStartRequest):
 @router.get(
     "/stream/{session_id}",
     summary="Stream diagram updates",
-    description="Stream real-time updates for a diagram generation session."
+    description="Stream real-time updates for a diagram generation session.",
 )
 @log_method_call
 async def stream_diagram_updates(session_id: str):
@@ -133,9 +137,7 @@ async def stream_diagram_updates(session_id: str):
 
 
 @router.post(
-    "/clarify",
-    summary="Submit clarification",
-    description="Submit a user response to a clarification question."
+    "/clarify", summary="Submit clarification", description="Submit a user response to a clarification question."
 )
 @log_method_call
 async def submit_clarification(request: DiagramClarifyRequest):
@@ -171,7 +173,7 @@ async def submit_clarification(request: DiagramClarifyRequest):
 @router.post(
     "/confirm_ready",
     summary="Confirm readiness",
-    description="Confirm that the user is ready to proceed with diagram generation."
+    description="Confirm that the user is ready to proceed with diagram generation.",
 )
 @log_method_call
 async def confirm_ready(request: DiagramConfirmReadyRequest):
@@ -207,7 +209,7 @@ async def confirm_ready(request: DiagramConfirmReadyRequest):
 @router.post(
     "/select_diagram_type",
     summary="Select diagram type",
-    description="Select the preferred diagram type for generation."
+    description="Select the preferred diagram type for generation.",
 )
 @log_method_call
 async def select_diagram_type(request: DiagramSelectTypeRequest):
@@ -240,11 +242,7 @@ async def select_diagram_type(request: DiagramSelectTypeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post(
-    "/approve_render",
-    summary="Approve render",
-    description="Approve the current diagram for rendering."
-)
+@router.post("/approve_render", summary="Approve render", description="Approve the current diagram for rendering.")
 @log_method_call
 async def approve_render(request: DiagramApproveRenderRequest):
     """
@@ -277,9 +275,7 @@ async def approve_render(request: DiagramApproveRenderRequest):
 
 
 @router.post(
-    "/render",
-    summary="Render diagram",
-    description="Render a diagram from the session's code or provided code."
+    "/render", summary="Render diagram", description="Render a diagram from the session's code or provided code."
 )
 @log_method_call
 async def render_diagram(request: DiagramRenderWizardRequest):
@@ -313,9 +309,7 @@ async def render_diagram(request: DiagramRenderWizardRequest):
 
 
 @router.get(
-    "/{session_id}",
-    summary="Get diagram status",
-    description="Get the current status of a diagram generation session."
+    "/{session_id}", summary="Get diagram status", description="Get the current status of a diagram generation session."
 )
 @log_method_call
 async def get_diagram_status(session_id: str):
@@ -346,11 +340,7 @@ async def get_diagram_status(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete(
-    "/{session_id}",
-    summary="Delete session",
-    description="Delete a diagram generation session."
-)
+@router.delete("/{session_id}", summary="Delete session", description="Delete a diagram generation session.")
 @log_method_call
 async def delete_session(session_id: str):
     """

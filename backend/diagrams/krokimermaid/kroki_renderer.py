@@ -73,9 +73,7 @@ class KrokiMermaidProvider(KrokiBaseProvider):
         """
         return "mermaid"
 
-    def auto_fix_pattern_based(
-        self, code: str, error_message: str, **options
-    ) -> ValidationResult:
+    def auto_fix_pattern_based(self, code: str, error_message: str, **options) -> ValidationResult:
         """
         Attempt pattern-based auto-fix for Mermaid syntax.
 
@@ -98,38 +96,45 @@ class KrokiMermaidProvider(KrokiBaseProvider):
         # Checks if known Mermaid keywords are present at the start of the code
         if not any(
             code.strip().startswith(prefix)
-            for prefix in ['graph ', 'flowchart ', 'sequenceDiagram', 'classDiagram',
-                          'stateDiagram', 'erDiagram', 'gantt', 'pie', 'journey']
+            for prefix in [
+                "graph ",
+                "flowchart ",
+                "sequenceDiagram",
+                "classDiagram",
+                "stateDiagram",
+                "erDiagram",
+                "gantt",
+                "pie",
+                "journey",
+            ]
         ):
             self.logger.info("Missing diagram type declaration detected.")
             # Try to infer diagram type from content
-            if '-->' in code or '->' in code:
+            if "-->" in code or "->" in code:
                 self.logger.info("Inferring 'flowchart TD' from arrow syntax.")
-                fixed_code = 'flowchart TD\n' + fixed_code
-                corrections.append('Added missing flowchart declaration')
-            elif 'sequenceDiagram' in error_message.lower():
+                fixed_code = "flowchart TD\n" + fixed_code
+                corrections.append("Added missing flowchart declaration")
+            elif "sequenceDiagram" in error_message.lower():
                 self.logger.info("Error message suggests 'sequenceDiagram'. Adding it.")
-                fixed_code = 'sequenceDiagram\n' + fixed_code
-                corrections.append('Added missing sequenceDiagram declaration')
+                fixed_code = "sequenceDiagram\n" + fixed_code
+                corrections.append("Added missing sequenceDiagram declaration")
 
         # Mermaid-specific fix 2: Normalize arrow syntax
         # " - >" is a common typo for "-->"
-        if ' - >' in fixed_code:
+        if " - >" in fixed_code:
             self.logger.info("Detected invalid arrow syntax ' - >'. Normalizing to '-->'.")
-            fixed_code = fixed_code.replace(' - >', '-->')
-            corrections.append('Normalized arrow syntax (- > to -->)')
+            fixed_code = fixed_code.replace(" - >", "-->")
+            corrections.append("Normalized arrow syntax (- > to -->)")
 
         # Generic fix: Add missing braces for subgraphs
-        if '{' in fixed_code:
-            open_count = fixed_code.count('{')
-            close_count = fixed_code.count('}')
+        if "{" in fixed_code:
+            open_count = fixed_code.count("{")
+            close_count = fixed_code.count("}")
             if open_count > close_count:
                 missing_braces = open_count - close_count
                 self.logger.info(f"Detected {missing_braces} missing closing brace(s). Appending them.")
-                fixed_code += '}' * missing_braces
-                corrections.append(
-                    f'Added {missing_braces} missing closing brace(s)'
-                )
+                fixed_code += "}" * missing_braces
+                corrections.append(f"Added {missing_braces} missing closing brace(s)")
 
         # Validate fixed code
         self.logger.info("Validating fixed Mermaid code...")
@@ -140,9 +145,7 @@ class KrokiMermaidProvider(KrokiBaseProvider):
             validation_result.fixed_code = fixed_code
             validation_result.correction_method = "pattern"
             if corrections:
-                self.logger.info(
-                    f"Pattern-based fixes applied successfully: {', '.join(corrections)}"
-                )
+                self.logger.info(f"Pattern-based fixes applied successfully: {', '.join(corrections)}")
             else:
                 self.logger.info("Pattern-based validation check passed (no changes needed)")
         else:

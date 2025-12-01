@@ -32,7 +32,11 @@ class LLMCorrectionService:
         """
         self.ai_processor = ai_processor
         self._initialized = ai_processor is not None  # Initialize if processor provided
-        logger.info("LLM correction service created (not yet initialized)" if ai_processor is None else "LLM correction service created with AI processor")
+        logger.info(
+            "LLM correction service created (not yet initialized)"
+            if ai_processor is None
+            else "LLM correction service created with AI processor"
+        )
 
     @log_method_call
     def initialize(self, api_key: str = None, provider: str = "openrouter"):
@@ -46,6 +50,7 @@ class LLMCorrectionService:
         if self.ai_processor is None:
             try:
                 from common.ai import create_ai_processor
+
                 self.ai_processor = create_ai_processor(api_key=api_key or "", provider=provider)
                 self._initialized = True
                 logger.info(f"LLM correction service initialized with provider: {provider}")
@@ -70,7 +75,7 @@ class LLMCorrectionService:
         provider_specific_rules: Optional[str] = None,
         max_tokens: int = 4000,
         temperature: float = 0.3,
-        model: Optional[str] = None
+        model: Optional[str] = None,
     ) -> Tuple[bool, str, str]:
         """
         Use LLM to correct diagram code based on error feedback.
@@ -96,7 +101,7 @@ class LLMCorrectionService:
             diagram_type=diagram_type,
             invalid_code=invalid_code,
             error_message=error_message,
-            provider_specific_rules=provider_specific_rules
+            provider_specific_rules=provider_specific_rules,
         )
 
         # Provide a focused system message so we don't fall back to the default codebase prompt
@@ -127,21 +132,19 @@ class LLMCorrectionService:
                 codebase_content="",
                 model=model,
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
             )
 
             logger.info(f"[LLM CORRECTION] Received response ({len(corrected_response)} chars)")
 
             # Extract corrected code from response
-            corrected_code = self._extract_code_from_response(
-                corrected_response, diagram_type
-            )
+            corrected_code = self._extract_code_from_response(corrected_response, diagram_type)
 
             if corrected_code:
-                logger.info(f"[LLM CORRECTION] ✅ Successfully extracted corrected code")
+                logger.info("[LLM CORRECTION] ✅ Successfully extracted corrected code")
                 return True, corrected_code, "LLM correction applied"
             else:
-                logger.info(f"[LLM CORRECTION] ❌ Could not extract code from response")
+                logger.info("[LLM CORRECTION] ❌ Could not extract code from response")
                 return False, invalid_code, "Could not extract corrected code from LLM response"
 
         except Exception as e:
@@ -150,11 +153,7 @@ class LLMCorrectionService:
 
     @log_method_call
     def _build_correction_prompt(
-        self,
-        diagram_type: str,
-        invalid_code: str,
-        error_message: str,
-        provider_specific_rules: Optional[str]
+        self, diagram_type: str, invalid_code: str, error_message: str, provider_specific_rules: Optional[str]
     ) -> str:
         """Build correction prompt for LLM"""
 
@@ -164,7 +163,7 @@ class LLMCorrectionService:
             "Maintain original intent and structure",
             "Keep diagram simple and readable",
             "Use proper syntax according to specification",
-            "Do NOT add explanations - return ONLY corrected code block"
+            "Do NOT add explanations - return ONLY corrected code block",
         ]
 
         # Diagram-type-specific rules
@@ -199,7 +198,7 @@ The code must be complete and valid."""
         # Keep this empty to avoid mixing baked-in rules with the provider files.
         logger.debug(
             "Type-specific rules are sourced from provider markdown; returning empty list",
-            extra={"diagram_type": diagram_type}
+            extra={"diagram_type": diagram_type},
         )
         return []
 
@@ -208,7 +207,7 @@ The code must be complete and valid."""
         """Extract diagram code from LLM response"""
 
         # Try to extract code block with specific type
-        pattern = rf'```{diagram_type}\s*\n?(.*?)```'
+        pattern = rf"```{diagram_type}\s*\n?(.*?)```"
         matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
 
         if matches:
@@ -217,32 +216,40 @@ The code must be complete and valid."""
             return extracted
 
         # Try generic code block
-        pattern = r'```\s*\n?(.*?)```'
+        pattern = r"```\s*\n?(.*?)```"
         matches = re.findall(pattern, response, re.DOTALL)
 
         if matches:
             # Return first code block
             extracted = matches[0].strip()
-            logger.debug(f"[LLM CORRECTION] Extracted code with generic fence")
+            logger.debug("[LLM CORRECTION] Extracted code with generic fence")
             return extracted
 
         # If no code blocks found, try to find diagram-type-specific keywords
         # and extract portion that looks like code
         if diagram_type.lower() == "mermaid":
             # Look for mermaid diagram keywords
-            keywords = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram',
-                       'stateDiagram', 'erDiagram', 'gantt', 'pie']
+            keywords = [
+                "flowchart",
+                "graph",
+                "sequenceDiagram",
+                "classDiagram",
+                "stateDiagram",
+                "erDiagram",
+                "gantt",
+                "pie",
+            ]
             for keyword in keywords:
                 if keyword in response:
                     # Try to extract from keyword to end
                     start_idx = response.find(keyword)
                     # Find next triple backticks or end
-                    end_idx = response.find('```', start_idx)
+                    end_idx = response.find("```", start_idx)
                     if end_idx == -1:
                         extracted = response[start_idx:].strip()
                     else:
                         extracted = response[start_idx:end_idx].strip()
-                    logger.debug(f"[LLM CORRECTION] Extracted mermaid code by keyword detection")
+                    logger.debug("[LLM CORRECTION] Extracted mermaid code by keyword detection")
                     return extracted
 
         # Last resort: return entire response stripped
@@ -264,6 +271,7 @@ def get_llm_correction_service() -> LLMCorrectionService:
         # Try to initialize with existing settings if available
         try:
             from common.env_manager import env_manager
+
             env_vars = env_manager.load_env_file()
             api_key = env_vars.get("API_KEY", "")
             provider = env_vars.get("AI_PROVIDER", "openrouter")

@@ -205,9 +205,7 @@ class ArchitectureSchema:
         return len(errors) == 0, errors
 
     @staticmethod
-    def get_components_by_type(
-        schema: Dict[str, Any], component_type: str
-    ) -> List[Dict[str, Any]]:
+    def get_components_by_type(schema: Dict[str, Any], component_type: str) -> List[Dict[str, Any]]:
         """
         Get all components of a specific type.
 
@@ -218,16 +216,10 @@ class ArchitectureSchema:
         Returns:
             List of matching components
         """
-        return [
-            c
-            for c in schema.get("components", [])
-            if c.get("type") == component_type
-        ]
+        return [c for c in schema.get("components", []) if c.get("type") == component_type]
 
     @staticmethod
-    def get_connections_for_component(
-        schema: Dict[str, Any], component_id: str
-    ) -> List[Dict[str, Any]]:
+    def get_connections_for_component(schema: Dict[str, Any], component_id: str) -> List[Dict[str, Any]]:
         """
         Get all connections involving a component.
 
@@ -239,16 +231,10 @@ class ArchitectureSchema:
             List of connections (incoming and outgoing)
         """
         conns = schema.get("connections", [])
-        return [
-            c
-            for c in conns
-            if c.get("from") == component_id or c.get("to") == component_id
-        ]
+        return [c for c in conns if c.get("from") == component_id or c.get("to") == component_id]
 
     @staticmethod
-    def get_component_by_id(
-        schema: Dict[str, Any], component_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_component_by_id(schema: Dict[str, Any], component_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a component by ID.
 
@@ -610,9 +596,7 @@ class ArchitectureComments:
         return comments
 
     @staticmethod
-    def get_comments_by_type(
-        schema: Dict[str, Any], comment_type: str
-    ) -> List[Dict[str, Any]]:
+    def get_comments_by_type(schema: Dict[str, Any], comment_type: str) -> List[Dict[str, Any]]:
         """
         Get all comments of a specific type.
 
@@ -623,13 +607,10 @@ class ArchitectureComments:
         Returns:
             List of matching comments
         """
-        return [c for c in ArchitectureComments.get_all_comments(schema)
-                if c.get("type") == comment_type]
+        return [c for c in ArchitectureComments.get_all_comments(schema) if c.get("type") == comment_type]
 
     @staticmethod
-    def get_comments_by_priority(
-        schema: Dict[str, Any], priorities: List[str]
-    ) -> List[Dict[str, Any]]:
+    def get_comments_by_priority(schema: Dict[str, Any], priorities: List[str]) -> List[Dict[str, Any]]:
         """
         Get comments with specific priorities.
 
@@ -640,13 +621,10 @@ class ArchitectureComments:
         Returns:
             List of matching comments
         """
-        return [c for c in ArchitectureComments.get_all_comments(schema)
-                if c.get("priority") in priorities]
+        return [c for c in ArchitectureComments.get_all_comments(schema) if c.get("priority") in priorities]
 
     @staticmethod
-    def get_comments_by_tag(
-        schema: Dict[str, Any], tag: str
-    ) -> List[Dict[str, Any]]:
+    def get_comments_by_tag(schema: Dict[str, Any], tag: str) -> List[Dict[str, Any]]:
         """
         Get comments with a specific tag.
 
@@ -657,8 +635,7 @@ class ArchitectureComments:
         Returns:
             List of matching comments
         """
-        return [c for c in ArchitectureComments.get_all_comments(schema)
-                if tag in c.get("tags", [])]
+        return [c for c in ArchitectureComments.get_all_comments(schema) if tag in c.get("tags", [])]
 
     @staticmethod
     def get_open_todos(schema: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -671,13 +648,14 @@ class ArchitectureComments:
         Returns:
             List of open TODOs
         """
-        return [c for c in ArchitectureComments.get_all_comments(schema)
-                if c.get("type") == "todo" and c.get("status") == "open"]
+        return [
+            c
+            for c in ArchitectureComments.get_all_comments(schema)
+            if c.get("type") == "todo" and c.get("status") == "open"
+        ]
 
     @staticmethod
-    def get_component_comments(
-        schema: Dict[str, Any], component_id: str
-    ) -> List[Dict[str, Any]]:
+    def get_component_comments(schema: Dict[str, Any], component_id: str) -> List[Dict[str, Any]]:
         """
         Get all comments for a specific component.
 

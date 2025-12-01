@@ -2,6 +2,7 @@
 Test Kroki D2 provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
@@ -10,7 +11,6 @@ backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
 
 # Import configuration loader utility for provider settings
-from diagrams.provider_config import get_config_loader
 
 
 def test_krokid2_config():
@@ -19,7 +19,7 @@ def test_krokid2_config():
 
     # Determine the root directory for diagram providers
     diagrams_root = Path(__file__).parent.parent.parent
-    
+
     # Specify the specific provider folder for Kroki D2
     provider_folder = diagrams_root / "krokid2"
 
@@ -28,7 +28,7 @@ def test_krokid2_config():
 
     # Validate configuration has loaded correctly
     assert config is not None, "Config should load successfully"
-    
+
     # Check specific configuration properties
     assert config.provider_id == "krokid2"
     assert config.diagram_type == "d2"

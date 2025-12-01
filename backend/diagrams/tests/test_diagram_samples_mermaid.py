@@ -3,6 +3,7 @@ Test Mermaid Provider with 10 Different Diagram Samples
 Including valid and invalid diagrams to test LLM corrections
 """
 
+from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
 import sys
 from pathlib import Path
 import pytest
@@ -11,9 +12,6 @@ import pytest
 backend_dir = Path(__file__).parent.parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
-
-from diagrams.mermaidv1.mermaid_renderer import MermaidV1Provider
-from diagrams.llm_correction_service import get_llm_correction_service
 
 
 # Test Diagrams - Mix of valid and invalid
@@ -28,9 +26,8 @@ MERMAID_TEST_DIAGRAMS = {
     Error --> End
 """,
         "valid": True,
-        "description": "Simple valid flowchart"
+        "description": "Simple valid flowchart",
     },
-
     "test_002_flowchart_wrong_arrows_invalid": {
         "code": """flowchart TD
     A[Start] -> B[Process]
@@ -39,9 +36,8 @@ MERMAID_TEST_DIAGRAMS = {
 """,
         "valid": False,
         "description": "Flowchart with wrong arrow syntax (should be -->)",
-        "expected_fix": "auto_fix should convert -> to -->"
+        "expected_fix": "auto_fix should convert -> to -->",
     },
-
     "test_003_sequence_diagram_valid": {
         "code": """sequenceDiagram
     participant User
@@ -57,9 +53,8 @@ MERMAID_TEST_DIAGRAMS = {
     Frontend-->>User: Success
 """,
         "valid": True,
-        "description": "Valid sequence diagram"
+        "description": "Valid sequence diagram",
     },
-
     "test_004_sequence_missing_diagram_type_invalid": {
         "code": """participant User
     participant System
@@ -69,9 +64,8 @@ MERMAID_TEST_DIAGRAMS = {
 """,
         "valid": False,
         "description": "Missing diagram type declaration",
-        "expected_fix": "Should add 'sequenceDiagram' at the start"
+        "expected_fix": "Should add 'sequenceDiagram' at the start",
     },
-
     "test_005_class_diagram_valid": {
         "code": """classDiagram
     class Animal {
@@ -94,9 +88,8 @@ MERMAID_TEST_DIAGRAMS = {
     Animal <|-- Cat
 """,
         "valid": True,
-        "description": "Valid class diagram"
+        "description": "Valid class diagram",
     },
-
     "test_006_state_diagram_valid": {
         "code": """stateDiagram-v2
     [*] --> Idle
@@ -108,9 +101,8 @@ MERMAID_TEST_DIAGRAMS = {
     Failed --> [*]: Give Up
 """,
         "valid": True,
-        "description": "Valid state diagram"
+        "description": "Valid state diagram",
     },
-
     "test_007_flowchart_missing_node_labels_invalid": {
         "code": """flowchart LR
     A --> B
@@ -119,9 +111,8 @@ MERMAID_TEST_DIAGRAMS = {
 """,
         "valid": False,
         "description": "Nodes without labels (technically valid but poor practice)",
-        "expected_fix": "LLM might suggest adding descriptive labels"
+        "expected_fix": "LLM might suggest adding descriptive labels",
     },
-
     "test_008_er_diagram_valid": {
         "code": """erDiagram
     CUSTOMER ||--o{ ORDER : places
@@ -146,9 +137,8 @@ MERMAID_TEST_DIAGRAMS = {
     }
 """,
         "valid": True,
-        "description": "Valid ER diagram"
+        "description": "Valid ER diagram",
     },
-
     "test_009_gantt_chart_valid": {
         "code": """gantt
     title Project Schedule
@@ -164,9 +154,8 @@ MERMAID_TEST_DIAGRAMS = {
     User Testing     :c2, after c1, 5d
 """,
         "valid": True,
-        "description": "Valid Gantt chart"
+        "description": "Valid Gantt chart",
     },
-
     "test_010_pie_chart_syntax_error_invalid": {
         "code": """pie
     title Distribution
@@ -176,8 +165,8 @@ MERMAID_TEST_DIAGRAMS = {
 """,
         "valid": False,
         "description": "Pie chart with missing colon",
-        "expected_fix": "Should add colon before last number"
-    }
+        "expected_fix": "Should add colon before last number",
+    },
 }
 
 
@@ -193,11 +182,11 @@ def test_mermaid_diagram_samples(test_id, mermaid_provider):
     """Test each Mermaid diagram sample"""
     test_data = MERMAID_TEST_DIAGRAMS[test_id]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TEST: {test_id}")
     print(f"Description: {test_data['description']}")
     print(f"Expected Valid: {test_data['valid']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not mermaid_provider.is_available():
         pytest.skip("Mermaid CLI not available")
@@ -206,7 +195,7 @@ def test_mermaid_diagram_samples(test_id, mermaid_provider):
     expected_valid = test_data["valid"]
 
     # Step 1: Validate the code
-    print(f"\n1. Validating code...")
+    print("\n1. Validating code...")
     validation_result = mermaid_provider.validate_code(code)
 
     print(f"   Is Valid: {validation_result.is_valid}")
@@ -215,11 +204,8 @@ def test_mermaid_diagram_samples(test_id, mermaid_provider):
 
     # Step 2: For invalid diagrams, test auto-fix
     if not expected_valid and not validation_result.is_valid:
-        print(f"\n2. Testing pattern-based auto-fix...")
-        fix_result = mermaid_provider.auto_fix_pattern_based(
-            code,
-            validation_result.error or "Syntax error"
-        )
+        print("\n2. Testing pattern-based auto-fix...")
+        fix_result = mermaid_provider.auto_fix_pattern_based(code, validation_result.error or "Syntax error")
 
         print(f"   Auto Fixed: {fix_result.auto_fixed}")
         print(f"   Correction Method: {fix_result.correction_method}")
@@ -233,7 +219,7 @@ def test_mermaid_diagram_samples(test_id, mermaid_provider):
 
     # Step 3: For valid diagrams, test rendering
     if expected_valid or (validation_result.is_valid):
-        print(f"\n3. Testing SVG rendering...")
+        print("\n3. Testing SVG rendering...")
         render_result = mermaid_provider.render(code, output_format="svg")
 
         print(f"   Render Success: {render_result.success}")
@@ -249,9 +235,9 @@ def test_mermaid_diagram_samples(test_id, mermaid_provider):
 
 def test_mermaid_summary(mermaid_provider):
     """Summary of all Mermaid test diagrams"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("MERMAID TEST DIAGRAMS SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     valid_count = sum(1 for d in MERMAID_TEST_DIAGRAMS.values() if d["valid"])
     invalid_count = len(MERMAID_TEST_DIAGRAMS) - valid_count
@@ -264,23 +250,23 @@ def test_mermaid_summary(mermaid_provider):
     if mermaid_provider.is_available():
         print(f"Mermaid Version: {mermaid_provider.get_version()}")
 
-    print(f"\nDiagram Types Covered:")
+    print("\nDiagram Types Covered:")
     types = set()
     for test_data in MERMAID_TEST_DIAGRAMS.values():
         # Extract diagram type from code
-        first_line = test_data["code"].strip().split('\n')[0]
+        first_line = test_data["code"].strip().split("\n")[0]
         types.add(first_line.split()[0])
 
     for t in sorted(types):
         print(f"  - {t}")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MERMAID DIAGRAM SAMPLES TEST SUITE")
-    print("="*60)
+    print("=" * 60)
 
     provider_folder = Path(__file__).parent.parent / "mermaidv1"
     provider = MermaidV1Provider(provider_folder)
@@ -293,4 +279,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"\n❌ Test {test_id} failed: {e}")
             import traceback
+
             traceback.print_exc()

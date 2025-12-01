@@ -22,13 +22,13 @@ class SessionState(str, Enum):
     """Session state throughout the diagram wizard workflow."""
 
     # Define possible states in the diagram generation workflow
-    CLARIFYING = "clarifying"       # Gathering and refining requirements
-    GENERATING = "generating"        # Creating diagram code
-    VALIDATING = "validating"        # Checking diagram code quality
+    CLARIFYING = "clarifying"  # Gathering and refining requirements
+    GENERATING = "generating"  # Creating diagram code
+    VALIDATING = "validating"  # Checking diagram code quality
     VALIDATION_ERROR = "validation_error"  # Error in diagram code
-    RENDERING = "rendering"          # Converting diagram to visual format
-    READY = "ready"                  # Workflow complete
-    ERROR = "error"                  # General error state
+    RENDERING = "rendering"  # Converting diagram to visual format
+    READY = "ready"  # Workflow complete
+    ERROR = "error"  # General error state
 
 
 class GraphState(TypedDict, total=False):

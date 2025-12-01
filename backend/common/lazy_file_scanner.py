@@ -65,7 +65,7 @@ class LazyCodebaseScanner:
             cache_size: Maximum number of files to cache in memory
             max_file_size: Maximum file size to cache (bytes)
         """
-        
+
         logger.info(
             "Initializing LazyCodebaseScanner",
             cache_size=cache_size,
@@ -112,13 +112,13 @@ class LazyCodebaseScanner:
             ".bat",
             ".ps1",
             # Added for expanded code access (safe additions)
-            ".svg",      # SVG diagrams and vector graphics
-            ".lock",     # Dependency lock files (package-lock.json, poetry.lock, etc.)
-            ".toml",     # TOML configuration files
-            ".ini",      # INI configuration files
-            ".gradle",   # Gradle build files
-            ".pom",      # Maven POM files
-            ".properties", # Java properties files
+            ".svg",  # SVG diagrams and vector graphics
+            ".lock",  # Dependency lock files (package-lock.json, poetry.lock, etc.)
+            ".toml",  # TOML configuration files
+            ".ini",  # INI configuration files
+            ".gradle",  # Gradle build files
+            ".pom",  # Maven POM files
+            ".properties",  # Java properties files
         ]
         self.special_files = [
             ".env",
@@ -140,11 +140,7 @@ class LazyCodebaseScanner:
             + ".tox,.nox,.pytest_cache,htmlcov,cover",
         )
         # Note: "results" and "logs" folders removed to allow access to generated content and logs
-        self.ignore_folders = set(
-            folder.strip()
-            for folder in ignore_folders_env.split(",")
-            if folder.strip()
-        )
+        self.ignore_folders = set(folder.strip() for folder in ignore_folders_env.split(",") if folder.strip())
 
         # Add folders from .gitignore to ignore_folders
         gitignore_path = os.path.join(os.getcwd(), ".gitignore")
@@ -163,11 +159,10 @@ class LazyCodebaseScanner:
                     path=gitignore_path,
                     error=str(e),
                 )
-        
+
         self.hardcoded_excludes = ["jink"]
 
         logger.debug("Ignore folders set", folders=list(self.ignore_folders))
-
 
         # Statistics
         self.stats = {
@@ -182,9 +177,7 @@ class LazyCodebaseScanner:
 
     @log_method_call
     @log_performance()
-    def scan_directory_lazy(
-        self, directory: str, progress_callback=None
-    ) -> Generator[List[FileInfo], None, None]:
+    def scan_directory_lazy(self, directory: str, progress_callback=None) -> Generator[List[FileInfo], None, None]:
         """
         Lazily scan directory and yield file information in batches.
 
@@ -209,20 +202,11 @@ class LazyCodebaseScanner:
             try:
                 logger.debug("Loading .gitignore patterns", path=gitignore_path)
                 with open(gitignore_path, "r", encoding="utf-8") as f:
-                    raw_patterns = [
-                        line.strip()
-                        for line in f
-                        if line.strip() and not line.startswith("#")
-                    ]
+                    raw_patterns = [line.strip() for line in f if line.strip() and not line.startswith("#")]
                     gitignore_patterns = _normalize_patterns(raw_patterns)
-                    logger.debug(
-                        f"Loaded {len(gitignore_patterns)} gitignore patterns"
-                    )
+                    logger.debug(f"Loaded {len(gitignore_patterns)} gitignore patterns")
             except Exception as e:
-                logger.info(
-                    "Failed to load .gitignore", path=gitignore_path, error=str(e)
-                )
-                pass
+                logger.info("Failed to load .gitignore", path=gitignore_path, error=str(e))
         exclude_patterns = gitignore_patterns + self.hardcoded_excludes
 
         # Check if we have cached results that are still valid
@@ -262,11 +246,7 @@ class LazyCodebaseScanner:
                     continue
 
                 # Filter subdirectories based on .gitignore patterns
-                dirs[:] = [
-                    d
-                    for d in dirs
-                    if not _matches_any(gitignore_patterns, os.path.join(root, d))
-                ]
+                dirs[:] = [d for d in dirs if not _matches_any(gitignore_patterns, os.path.join(root, d))]
 
                 for filename in filenames:
                     full_path = os.path.join(root, filename)
@@ -307,9 +287,7 @@ class LazyCodebaseScanner:
             )
 
         except Exception as e:
-            logger.info(
-                "Error during directory scan", directory=directory, error=str(e)
-            )
+            logger.info("Error during directory scan", directory=directory, error=str(e))
             raise Exception(f"Error scanning directory: {str(e)}")
         finally:
             scan_time = time.time() - start_time
@@ -353,15 +331,11 @@ class LazyCodebaseScanner:
                     # Move to end of OrderedDict (most recently used)
                     self._content_cache.move_to_end(file_path)
                     self.stats["cache_hits"] += 1
-                    logger.debug(
-                        "Cache hit for file", file=os.path.basename(file_path)
-                    )
+                    logger.debug("Cache hit for file", file=os.path.basename(file_path))
                     return cached_content.content
             except OSError:
                 # File doesn't exist anymore, remove from cache
-                logger.info(
-                    "Cached file no longer exists, removing from cache", file=file_path
-                )
+                logger.info("Cached file no longer exists, removing from cache", file=file_path)
                 self._remove_from_cache(file_path)
 
         # Load file content
@@ -403,9 +377,7 @@ class LazyCodebaseScanner:
 
     @log_method_call
     @log_performance()
-    def get_codebase_content_lazy(
-        self, file_paths: List[str], max_total_size: int = 100 * 1024 * 1024
-    ) -> str:
+    def get_codebase_content_lazy(self, file_paths: List[str], max_total_size: int = 100 * 1024 * 1024) -> str:
         """
         Get combined content from multiple files with size limits.
 
@@ -503,9 +475,7 @@ class LazyCodebaseScanner:
                         stats["special_files"].append(file_info.relative_path)
 
                     # Track largest files (keep top 10)
-                    stats["largest_files"].append(
-                        (file_info.relative_path, file_info.size)
-                    )
+                    stats["largest_files"].append((file_info.relative_path, file_info.size))
                     stats["largest_files"].sort(key=lambda x: x[1], reverse=True)
                     if len(stats["largest_files"]) > 10:
                         stats["largest_files"] = stats["largest_files"][:10]
@@ -530,10 +500,7 @@ class LazyCodebaseScanner:
             **self.stats,
             "cache_size": len(self._content_cache),
             "max_cache_size": self.cache_size,
-            "cache_hit_rate": (
-                self.stats["cache_hits"]
-                / max(1, self.stats["cache_hits"] + self.stats["cache_misses"])
-            )
+            "cache_hit_rate": (self.stats["cache_hits"] / max(1, self.stats["cache_hits"] + self.stats["cache_misses"]))
             * 100,
         }
 
@@ -571,9 +538,7 @@ class LazyCodebaseScanner:
         """Get combined codebase content (alias for compatibility)."""
         # Filter out ignored folders
         filtered_files = [
-            file_path
-            for file_path in files
-            if not self._should_skip_directory(os.path.dirname(file_path))
+            file_path for file_path in files if not self._should_skip_directory(os.path.dirname(file_path))
         ]
         return self.get_codebase_content_lazy(filtered_files)
 
@@ -597,12 +562,7 @@ class LazyCodebaseScanner:
     @log_method_call
     def _is_directory_valid(self, directory: str) -> bool:
         """Check if directory is valid and accessible."""
-        return (
-            directory
-            and os.path.exists(directory)
-            and os.path.isdir(directory)
-            and os.access(directory, os.R_OK)
-        )
+        return directory and os.path.exists(directory) and os.path.isdir(directory) and os.access(directory, os.R_OK)
 
     @log_method_call
     def _should_skip_directory(self, directory_path: str) -> bool:
@@ -613,10 +573,7 @@ class LazyCodebaseScanner:
     @log_method_call
     def _is_supported_file(self, filename: str) -> bool:
         """Check if file is supported."""
-        return (
-            any(filename.endswith(ext) for ext in self.supported_extensions)
-            or filename in self.special_files
-        )
+        return any(filename.endswith(ext) for ext in self.supported_extensions) or filename in self.special_files
 
     @log_method_call
     def _get_cached_directory_info(self, directory: str) -> Optional[List[FileInfo]]:
@@ -641,14 +598,12 @@ class LazyCodebaseScanner:
         self._directory_scan_times[directory] = time.time()
 
     @log_method_call
-    def _cache_file_content(
-        self, file_path: str, content: str, content_hash: str, size: int
-    ):
+    def _cache_file_content(self, file_path: str, content: str, content_hash: str, size: int):
         """Cache file content with LRU eviction."""
         # Update existing entry and move to end (most recently used)
         if file_path in self._content_cache:
             del self._content_cache[file_path]
-        
+
         # Remove oldest entries if cache is full
         while len(self._content_cache) >= self.cache_size:
             # Popitem(last=False) removes the first (least recently used) item

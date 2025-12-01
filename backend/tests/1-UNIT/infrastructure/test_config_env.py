@@ -9,11 +9,10 @@ Tests for core configuration and environment management:
 - Error handling and recovery
 """
 
-import pytest
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestEnvManager:
@@ -35,13 +34,14 @@ class TestEnvManager:
 
     def test_env_var_with_quotes(self):
         """Handle environment variables with quotes"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('TEST_QUOTED="quoted value"\n')
             f.write("TEST_SINGLE='single quoted'\n")
             env_path = f.name
 
         try:
             from common.env_manager import EnvManager
+
             manager = EnvManager(env_path)
             manager.load_env_file()
             assert manager.env_vars.get("TEST_QUOTED") == "quoted value"
@@ -51,7 +51,7 @@ class TestEnvManager:
 
     def test_env_var_with_comments(self):
         """Handle environment variables with comments"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write("# This is a comment\n")
             f.write("VALID_VAR=value\n")
             f.write("ANOTHER_VAR=another # inline comment\n")
@@ -59,6 +59,7 @@ class TestEnvManager:
 
         try:
             from common.env_manager import EnvManager
+
             manager = EnvManager(env_path)
             manager.load_env_file()
             assert manager.env_vars.get("VALID_VAR") == "value"
@@ -93,7 +94,7 @@ class TestEnvManager:
 
         # EnvManager uses its own env_vars dict, not os.environ directly usually, unless it falls back
         # But here we test getting from loaded vars
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write("TEST_KEY=test_value\n")
             env_path = f.name
 
@@ -109,7 +110,7 @@ class TestEnvManager:
         """Get environment variable with default"""
         from common.env_manager import EnvManager
 
-        manager = EnvManager() # No file
+        manager = EnvManager()  # No file
         value = manager.env_vars.get("NONEXISTENT_VAR", "default_value")
         assert value == "default_value"
 
@@ -148,7 +149,7 @@ class TestEnvManager:
         from common.env_manager import EnvManager
 
         manager = EnvManager("/nonexistent/path/.env")
-        with patch.object(manager, '_create_default_env'):
+        with patch.object(manager, "_create_default_env"):
             try:
                 manager.load_env_file()
                 # Should not fail if handled gracefully
@@ -163,6 +164,7 @@ class TestEnvManager:
             env_path = Path(tmpdir) / ".env"
 
             from common.env_manager import EnvManager
+
             manager = EnvManager(str(env_path))
             manager._create_default_env()
             assert env_path.exists()
@@ -285,12 +287,12 @@ class TestSettings:
     def test_settings_cors_configuration(self, mock_settings):
         """Settings includes CORS configuration"""
         # Should have CORS-related settings
-        assert hasattr(mock_settings, 'enable_logging') or True
+        assert hasattr(mock_settings, "enable_logging") or True
 
     def test_settings_api_keys(self, mock_settings):
         """Settings handles API keys securely"""
         # Should have API key field
-        assert hasattr(mock_settings, 'openai_api_key') or True
+        assert hasattr(mock_settings, "openai_api_key") or True
 
     def test_settings_validation(self):
         """Settings validates configuration"""
@@ -299,7 +301,7 @@ class TestSettings:
         # Invalid settings should fail or warn
         try:
             with patch.dict(os.environ, {"API_PORT": "invalid"}):
-                settings = Settings()
+                Settings()
         except (ValueError, TypeError):
             assert True
 
@@ -324,7 +326,7 @@ class TestConfigParsing:
         import json
         import tempfile
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(sample_app_config, f)
             config_path = f.name
 
@@ -340,15 +342,16 @@ class TestConfigParsing:
         """Handle invalid JSON configuration"""
         import tempfile
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("{ invalid json")
             config_path = f.name
 
         try:
             import json
+
             try:
                 with open(config_path) as f:
-                    config = json.load(f)
+                    json.load(f)
                 assert False, "Should fail on invalid JSON"
             except json.JSONDecodeError:
                 assert True
@@ -388,7 +391,7 @@ class TestEnvironmentIntegration:
 
         with patch.dict(os.environ, {"API_PORT": "9999"}):
             try:
-                settings = Settings()
+                Settings()
                 # Port should be overridden
                 assert True
             except Exception:
@@ -426,7 +429,7 @@ class TestConfigurationErrors:
         import tempfile
         import json
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("definitely not valid json!@#$%")
             config_path = f.name
 
@@ -466,14 +469,13 @@ class TestConfigurationSecurity:
 
         utils = SecurityUtils()
         # Should have masking capability
-        assert hasattr(utils, 'mask_api_key') or True
+        assert hasattr(utils, "mask_api_key") or True
 
     def test_config_file_permissions(self):
         """Configuration files have secure permissions"""
         import tempfile
-        import stat
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write("SECRET=secret_value\n")
             config_path = f.name
 
@@ -499,7 +501,7 @@ class TestConfigurationPerformance:
 
         try:
             start = time.time()
-            settings = Settings()
+            Settings()
             elapsed = time.time() - start
             # Should be fast
             assert elapsed < 2.0  # Generous threshold

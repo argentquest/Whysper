@@ -1,4 +1,3 @@
-from typing import Any
 from schemas import ConversationSummaryModel
 from common.logger import get_logger
 
@@ -10,12 +9,14 @@ def session_summary_model(session) -> ConversationSummaryModel:
     # Log the start of session summary conversion for debugging purposes
     logger.debug(f"Converting session summary for session: {session.session_id}")
 
-    # Retrieve the summary data from the session object 
+    # Retrieve the summary data from the session object
     # This extracts key metadata and conversation details
     summary = session.get_summary()
 
     # Log details about retrieved summary to track conversation depth
-    logger.debug(f"Session summary retrieved: {len(summary.question_history)} questions, {len(summary.conversation_history)} messages")
+    logger.debug(
+        f"Session summary retrieved: {len(summary.question_history)} questions, {len(summary.conversation_history)} messages"
+    )
 
     # Create and return a standardized summary model with all session metadata
     # This transforms internal session state into a consistent API response format

@@ -1,8 +1,9 @@
 """Test script for C4 Manual Workflow."""
+
 import pytest
-import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from app.services.diagram_factory_service import DiagramFactoryService
+
 
 @pytest.mark.asyncio
 async def test_c4_manual_workflow():
@@ -29,7 +30,7 @@ async def test_c4_manual_workflow():
         "current_state": "clarify_prompt",
         "next_step": "clarify_prompt",
         "clarification_question": "What kind of diagram?",
-        "session_id": "test-session"
+        "session_id": "test-session",
     }
 
     await service.start_generation("Create a diagram", diagram_type="auto")
@@ -46,7 +47,7 @@ async def test_c4_manual_workflow():
         "current_state": "clarify_prompt",
         "next_step": "clarify_prompt",
         "clarification_question": "More details?",
-        "session_id": "test-session"
+        "session_id": "test-session",
     }
     await service.handle_clarification("Details")
 

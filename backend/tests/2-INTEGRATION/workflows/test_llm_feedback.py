@@ -1,8 +1,9 @@
 """Test script for LLM Feedback Workflow."""
+
 import pytest
-import asyncio
 from unittest.mock import MagicMock, AsyncMock
 from app.services.diagram_factory_service import DiagramFactoryService
+
 
 @pytest.mark.asyncio
 async def test_llm_feedback_workflow():
@@ -30,7 +31,7 @@ async def test_llm_feedback_workflow():
         "messages": [],
         "current_state": "generate_code",
         "diagram_code": "graph TD; A-->B;",
-        "session_id": "test-session"
+        "session_id": "test-session",
     }
 
     await service.start_generation("Create a diagram", diagram_type="Mermaid")
@@ -44,7 +45,7 @@ async def test_llm_feedback_workflow():
         "messages": [],
         "current_state": "generate_code",
         "diagram_code": "graph TD; A-->B; B-->C;",
-        "session_id": "test-session"
+        "session_id": "test-session",
     }
 
     await service.handle_clarification("Add another node C")

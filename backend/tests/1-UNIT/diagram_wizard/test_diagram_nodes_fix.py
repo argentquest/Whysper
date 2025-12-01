@@ -2,6 +2,7 @@ import pytest
 from app.utils.diagram_wizard.nodes import validation_nodes, rendering_nodes
 from app.utils.diagram_wizard.graph_state import SessionState, DiagramType
 
+
 @pytest.mark.asyncio
 async def test_validate_code_no_provider():
     # Save original
@@ -9,11 +10,7 @@ async def test_validate_code_no_provider():
     validation_nodes.PROVIDER_AVAILABLE = False
 
     try:
-        state = {
-            "diagram_code": "graph TD; A-->B;",
-            "diagram_type": DiagramType.MERMAID,
-            "_session_id": "test"
-        }
+        state = {"diagram_code": "graph TD; A-->B;", "diagram_type": DiagramType.MERMAID, "_session_id": "test"}
         result = await validation_nodes.validate_code(state)
 
         assert result["is_valid"] is False
@@ -22,6 +19,7 @@ async def test_validate_code_no_provider():
     finally:
         validation_nodes.PROVIDER_AVAILABLE = original
 
+
 @pytest.mark.asyncio
 async def test_render_diagram_no_provider():
     # Save original
@@ -29,11 +27,7 @@ async def test_render_diagram_no_provider():
     rendering_nodes.PROVIDER_AVAILABLE = False
 
     try:
-        state = {
-            "diagram_code": "graph TD; A-->B;",
-            "diagram_type": DiagramType.MERMAID,
-            "_session_id": "test"
-        }
+        state = {"diagram_code": "graph TD; A-->B;", "diagram_type": DiagramType.MERMAID, "_session_id": "test"}
         result = await rendering_nodes.render_diagram(state)
 
         assert result["svg_output"] == ""

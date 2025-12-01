@@ -2,14 +2,13 @@
 Test Kroki C4 provider configuration
 """
 
+from diagrams.provider_config import get_config_loader
 import sys
 from pathlib import Path
 
 # Add backend directory to Python path for import resolution
 backend_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(backend_dir))
-
-from diagrams.provider_config import get_config_loader
 
 
 def test_krokic4_config():

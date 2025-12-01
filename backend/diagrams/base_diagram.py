@@ -10,15 +10,9 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any, Callable, Awaitable
 from datetime import datetime
 import logging
-import asyncio
 
 from .provider_config import ProviderConfig, load_provider_config
-from .models import (
-    ProviderCapability,
-    ValidationResult,
-    RenderResult,
-    ProviderMetadata
-)
+from .models import ProviderCapability, ValidationResult, RenderResult, ProviderMetadata
 from common.logging_decorator import log_method_call
 
 
@@ -104,8 +98,7 @@ class BaseDiagramProvider(ABC):
             provider_folder: Path to the provider's folder (contains config.json)
         """
         logging.getLogger(__name__).info(
-            "Initializing BaseDiagramProvider",
-            extra={"provider_folder": str(provider_folder)}
+            "Initializing BaseDiagramProvider", extra={"provider_folder": str(provider_folder)}
         )
         self.provider_folder = provider_folder
         self.config = self._load_config()
@@ -128,8 +121,7 @@ class BaseDiagramProvider(ABC):
     def _load_config(self) -> Optional[ProviderConfig]:
         """Load configuration from config.json in provider folder"""
         logging.getLogger(__name__).info(
-            "Loading provider config",
-            extra={"provider_folder": str(self.provider_folder)}
+            "Loading provider config", extra={"provider_folder": str(self.provider_folder)}
         )
         config = load_provider_config(self.provider_folder)
 
@@ -138,8 +130,7 @@ class BaseDiagramProvider(ABC):
             self.logger.info(f"Loaded config for {config.provider_name}")
 
         logging.getLogger(__name__).info(
-            "Completed provider config load",
-            extra={"provider_id": getattr(config, 'provider_id', None)}
+            "Completed provider config load", extra={"provider_id": getattr(config, "provider_id", None)}
         )
         return config
 
@@ -148,10 +139,7 @@ class BaseDiagramProvider(ABC):
         """Validate that config matches provider implementation"""
         self.logger.info(
             "Validating provider config",
-            extra={
-                "config_provider_id": self.config.provider_id,
-                "impl_provider_id": self.provider_id
-            }
+            extra={"config_provider_id": self.config.provider_id, "impl_provider_id": self.provider_id},
         )
         if self.config.provider_id != self.provider_id:
             self.logger.info(
@@ -164,10 +152,9 @@ class BaseDiagramProvider(ABC):
     def _setup_logging(self):
         """Setup logging for this provider"""
         logging.getLogger(__name__).info(
-            "Setting up provider logger",
-            extra={"provider_id": getattr(self, 'provider_id', None)}
+            "Setting up provider logger", extra={"provider_id": getattr(self, "provider_id", None)}
         )
-        if hasattr(self, 'config') and self.config:
+        if hasattr(self, "config") and self.config:
             return logging.getLogger(f"diagrams.{self.config.provider_id}")
         return logging.getLogger(f"diagrams.{self.provider_folder.name}")
 
@@ -182,7 +169,6 @@ class BaseDiagramProvider(ABC):
         Unique identifier for this provider (same as folder name).
         Example: "mermaidv1", "d2v1", "mermaid-playwright"
         """
-        pass
 
     @property
     @abstractmethod
@@ -191,7 +177,6 @@ class BaseDiagramProvider(ABC):
         Human-readable name for this provider.
         Example: "Mermaid CLI Renderer v1", "D2 CLI Renderer v1"
         """
-        pass
 
     @property
     @abstractmethod
@@ -200,7 +185,6 @@ class BaseDiagramProvider(ABC):
         Primary diagram type this provider handles.
         Example: "mermaid", "d2", "plantuml"
         """
-        pass
 
     @property
     @abstractmethod
@@ -209,7 +193,6 @@ class BaseDiagramProvider(ABC):
         List of output formats this provider supports.
         Example: ["mermaid", "svg", "png"]
         """
-        pass
 
     @property
     @abstractmethod
@@ -218,7 +201,6 @@ class BaseDiagramProvider(ABC):
         List of capabilities this provider supports.
         Example: [VALIDATE, RENDER_SVG, RENDER_PNG, AUTO_FIX, LLM_CORRECTION]
         """
-        pass
 
     # =====================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses
@@ -236,15 +218,9 @@ class BaseDiagramProvider(ABC):
         Returns:
             ValidationResult with validation status and errors
         """
-        pass
 
     @abstractmethod
-    def render(
-        self,
-        code: str,
-        output_format: str = "svg",
-        **options
-    ) -> RenderResult:
+    def render(self, code: str, output_format: str = "svg", **options) -> RenderResult:
         """
         Render diagram code to specified format.
 
@@ -256,17 +232,14 @@ class BaseDiagramProvider(ABC):
         Returns:
             RenderResult with rendered content and metadata
         """
-        pass
 
     @abstractmethod
     def get_version(self) -> Optional[str]:
         """Get version of underlying tool/library"""
-        pass
 
     @abstractmethod
     def is_available(self) -> bool:
         """Check if provider is available and properly configured"""
-        pass
 
     # =====================================================================
     # OPTIONAL METHODS - Can be overridden for pattern-based auto-fix
@@ -291,21 +264,10 @@ class BaseDiagramProvider(ABC):
         Returns:
             ValidationResult with fixed code if successful
         """
-        self.logger.info(
-            "Starting default auto_fix_pattern_based",
-            extra={"code_length": len(code)}
-        )
+        self.logger.info("Starting default auto_fix_pattern_based", extra={"code_length": len(code)})
         # Default implementation: no pattern-based fixing
-        result = ValidationResult(
-            is_valid=False,
-            error=error_message,
-            auto_fixed=False,
-            code_length=len(code)
-        )
-        self.logger.info(
-            "Completed default auto_fix_pattern_based",
-            extra={"auto_fixed": result.auto_fixed}
-        )
+        result = ValidationResult(is_valid=False, error=error_message, auto_fixed=False, code_length=len(code))
+        self.logger.info("Completed default auto_fix_pattern_based", extra={"auto_fixed": result.auto_fixed})
         return result
 
     @log_method_call
@@ -325,9 +287,7 @@ class BaseDiagramProvider(ABC):
     # =====================================================================
 
     async def _send_progress(
-        self,
-        progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]],
-        update: Dict[str, Any]
+        self, progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]], update: Dict[str, Any]
     ):
         """
         Send progress update via callback if provided.
@@ -385,15 +345,14 @@ class BaseDiagramProvider(ABC):
             version=self.get_version(),
             available=self.is_available(),
             description=self.config.description or self.__doc__,
-            requires_llm=ProviderCapability.LLM_CORRECTION in self.capabilities
+            requires_llm=ProviderCapability.LLM_CORRECTION in self.capabilities,
         )
 
     @log_method_call
     def supports_capability(self, capability: ProviderCapability) -> bool:
         """Check if this provider supports a specific capability"""
         self.logger.info(
-            "Checking capability support",
-            extra={"provider_id": self.provider_id, "capability": capability.name}
+            "Checking capability support", extra={"provider_id": self.provider_id, "capability": capability.name}
         )
         return capability in self.capabilities
 
@@ -401,8 +360,7 @@ class BaseDiagramProvider(ABC):
     def supports_output_format(self, output_format: str) -> bool:
         """Check if this provider supports a specific output format"""
         self.logger.info(
-            "Checking output format support",
-            extra={"provider_id": self.provider_id, "format": output_format}
+            "Checking output format support", extra={"provider_id": self.provider_id, "format": output_format}
         )
         return output_format.lower() in [fmt.lower() for fmt in self.supported_output_formats]
 
@@ -416,7 +374,7 @@ class BaseDiagramProvider(ABC):
         max_retries: Optional[int] = None,
         model: Optional[str] = None,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
-        **options
+        **options,
     ) -> RenderResult:
         """
         Render with automatic validation and correction (template method pattern).
@@ -538,19 +496,18 @@ class BaseDiagramProvider(ABC):
                 validation=ValidationResult(
                     is_valid=False,
                     error=f"Output format '{output_format}' not supported by {self.provider_id}",
-                    code_length=len(code)
+                    code_length=len(code),
                 ),
                 metadata=self._create_metadata(start_time),
-                error=f"Unsupported output format: {output_format}"
+                error=f"Unsupported output format: {output_format}",
             )
 
         # Step 1: Initial validation
         self.logger.info(f"[{self.provider_id}] Step 1/4: Validating code...")
-        await self._send_progress(progress_callback, {
-            "status": "validating",
-            "message": f"Validating {self.diagram_type} code...",
-            "step": "1/4"
-        })
+        await self._send_progress(
+            progress_callback,
+            {"status": "validating", "message": f"Validating {self.diagram_type} code...", "step": "1/4"},
+        )
 
         validation_result = self.validate_code(code, **options)
         current_code = code
@@ -558,34 +515,41 @@ class BaseDiagramProvider(ABC):
         # Step 2: Pattern-based auto-fix
         if not validation_result.is_valid and auto_fix and self.supports_capability(ProviderCapability.AUTO_FIX):
             self.logger.info(f"[{self.provider_id}] Step 2/4: Attempting pattern-based auto-fix...")
-            await self._send_progress(progress_callback, {
-                "status": "auto_fixing",
-                "message": f"Attempting pattern-based auto-fix for {self.diagram_type}...",
-                "step": "2/4"
-            })
-
-            validation_result = self.auto_fix_pattern_based(
-                current_code, validation_result.error, **options
+            await self._send_progress(
+                progress_callback,
+                {
+                    "status": "auto_fixing",
+                    "message": f"Attempting pattern-based auto-fix for {self.diagram_type}...",
+                    "step": "2/4",
+                },
             )
+
+            validation_result = self.auto_fix_pattern_based(current_code, validation_result.error, **options)
 
             if validation_result.auto_fixed and validation_result.fixed_code:
                 current_code = validation_result.fixed_code
                 self.logger.info(f"[{self.provider_id}] ✅ Pattern-based fix successful")
-                await self._send_progress(progress_callback, {
-                    "status": "auto_fixed",
-                    "message": f"✅ Pattern-based fix successful",
-                    "step": "2/4"
-                })
+                await self._send_progress(
+                    progress_callback,
+                    {"status": "auto_fixed", "message": "✅ Pattern-based fix successful", "step": "2/4"},
+                )
 
         # Step 3: LLM-based correction
-        if not validation_result.is_valid and llm_correction and self.supports_capability(ProviderCapability.LLM_CORRECTION):
+        if (
+            not validation_result.is_valid
+            and llm_correction
+            and self.supports_capability(ProviderCapability.LLM_CORRECTION)
+        ):
             self.logger.info(f"[{self.provider_id}] Step 3/4: Attempting LLM-based correction...")
-            await self._send_progress(progress_callback, {
-                "status": "llm_correcting",
-                "message": f"Attempting AI-powered correction for {self.diagram_type}...",
-                "step": "3/4",
-                "max_retries": max_retries
-            })
+            await self._send_progress(
+                progress_callback,
+                {
+                    "status": "llm_correcting",
+                    "message": f"Attempting AI-powered correction for {self.diagram_type}...",
+                    "step": "3/4",
+                    "max_retries": max_retries,
+                },
+            )
 
             validation_result = await self._attempt_llm_correction(
                 current_code, validation_result.error, max_retries, model, progress_callback, **options
@@ -594,11 +558,10 @@ class BaseDiagramProvider(ABC):
             if validation_result.llm_corrected and validation_result.fixed_code:
                 current_code = validation_result.fixed_code
                 self.logger.info(f"[{self.provider_id}] ✅ LLM correction successful")
-                await self._send_progress(progress_callback, {
-                    "status": "llm_corrected",
-                    "message": f"✅ AI correction successful",
-                    "step": "3/4"
-                })
+                await self._send_progress(
+                    progress_callback,
+                    {"status": "llm_corrected", "message": "✅ AI correction successful", "step": "3/4"},
+                )
 
         # If still invalid, try to render anyway as best attempt
         if not validation_result.is_valid:
@@ -611,56 +574,45 @@ class BaseDiagramProvider(ABC):
             # Try to render the best-attempt code even if validation failed
             # This allows users to see what was attempted
             try:
-                render_result = self.render(
-                    current_code, output_format, **options
-                )
+                render_result = self.render(current_code, output_format, **options)
                 render_result.validation = validation_result
-                render_result.metadata.update(
-                    self._create_metadata(start_time)
-                )
+                render_result.metadata.update(self._create_metadata(start_time))
                 # Mark as failed even if render succeeded, since validation
                 # failed
                 render_result.success = False
-                render_result.error = (
-                    f"Validation failed: {validation_result.error}. "
-                    f"Rendered best attempt."
-                )
+                render_result.error = f"Validation failed: {validation_result.error}. " "Rendered best attempt."
                 return render_result
             except Exception as e:
-                self.logger.info(
-                    f"[{self.provider_id}] Render of invalid code "
-                    f"also failed: {e}"
-                )
+                self.logger.info(f"[{self.provider_id}] Render of invalid code " f"also failed: {e}")
                 return RenderResult(
                     success=False,
                     content=current_code,  # Return code for debugging
                     output_format="text",
                     validation=validation_result,
                     metadata=self._create_metadata(start_time),
-                    error=validation_result.error
+                    error=validation_result.error,
                 )
 
         # Step 4: Render
         self.logger.info(f"[{self.provider_id}] Step 4/4: Rendering to {output_format}...")
-        await self._send_progress(progress_callback, {
-            "status": "rendering",
-            "message": f"Rendering {self.diagram_type} to {output_format.upper()}...",
-            "step": "4/4"
-        })
+        await self._send_progress(
+            progress_callback,
+            {
+                "status": "rendering",
+                "message": f"Rendering {self.diagram_type} to {output_format.upper()}...",
+                "step": "4/4",
+            },
+        )
 
         render_result = self.render(current_code, output_format, **options)
 
         if render_result.success:
-            await self._send_progress(progress_callback, {
-                "status": "render_complete",
-                "message": f"? {self.diagram_type} rendered successfully",
-                "step": "4/4"
-            })
+            await self._send_progress(
+                progress_callback,
+                {"status": "render_complete", "message": f"? {self.diagram_type} rendered successfully", "step": "4/4"},
+            )
             if render_result.output_format.lower() == "svg" and render_result.content:
-                self.logger.info(
-                    "SVG output",
-                    extra={"svg": render_result.content}
-                )
+                self.logger.info("SVG output", extra={"svg": render_result.content})
 
         # Update metadata
         duration = (datetime.now() - start_time).total_seconds()
@@ -674,7 +626,7 @@ class BaseDiagramProvider(ABC):
 
         self.logger.info(
             "Completed render_with_validation",
-            extra={"provider_id": self.provider_id, "duration_sec": duration, "success": render_result.success}
+            extra={"provider_id": self.provider_id, "duration_sec": duration, "success": render_result.success},
         )
         return render_result
 
@@ -686,22 +638,16 @@ class BaseDiagramProvider(ABC):
         max_retries: int,
         model: Optional[str] = None,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
-        **options
+        **options,
     ) -> ValidationResult:
         """Attempt LLM-based correction with retries"""
         self.logger.info(
-            "Starting _attempt_llm_correction",
-            extra={"provider_id": self.provider_id, "max_retries": max_retries}
+            "Starting _attempt_llm_correction", extra={"provider_id": self.provider_id, "max_retries": max_retries}
         )
 
         if not self._llm_correction_service or not self._llm_correction_service.is_available():
             self.logger.info(f"[{self.provider_id}] LLM correction service not available")
-            return ValidationResult(
-                is_valid=False,
-                error=error_message,
-                llm_corrected=False,
-                code_length=len(code)
-            )
+            return ValidationResult(is_valid=False, error=error_message, llm_corrected=False, code_length=len(code))
 
         current_code = code
         current_error = error_message
@@ -710,13 +656,16 @@ class BaseDiagramProvider(ABC):
             self.logger.info(f"[{self.provider_id}] LLM correction attempt {attempt}/{max_retries}")
 
             # Send progress update for retry attempt
-            await self._send_progress(progress_callback, {
-                "status": "llm_correcting",
-                "message": f"AI correction attempt {attempt}/{max_retries}...",
-                "step": "3/4",
-                "attempt": attempt,
-                "max_retries": max_retries
-            })
+            await self._send_progress(
+                progress_callback,
+                {
+                    "status": "llm_correcting",
+                    "message": f"AI correction attempt {attempt}/{max_retries}...",
+                    "step": "3/4",
+                    "attempt": attempt,
+                    "max_retries": max_retries,
+                },
+            )
 
             # Request correction from LLM
             # Use session model if provided, otherwise fall back to config
@@ -728,7 +677,7 @@ class BaseDiagramProvider(ABC):
                 provider_specific_rules=self.get_llm_correction_rules(),
                 max_tokens=self.config.llm_correction.max_tokens,
                 temperature=self.config.llm_correction.temperature,
-                model=llm_model
+                model=llm_model,
             )
 
             if not success:
@@ -746,7 +695,7 @@ class BaseDiagramProvider(ABC):
                 self.logger.info(f"[{self.provider_id}] ✅ LLM correction succeeded on attempt {attempt}")
                 self.logger.info(
                     "Completed _attempt_llm_correction",
-                    extra={"provider_id": self.provider_id, "attempt": attempt, "success": True}
+                    extra={"provider_id": self.provider_id, "attempt": attempt, "success": True},
                 )
                 return validation_result
             else:
@@ -761,29 +710,22 @@ class BaseDiagramProvider(ABC):
         # All attempts failed
         self.logger.info(f"[{self.provider_id}] ❌ LLM correction failed after {max_retries} attempts")
         result = ValidationResult(
-            is_valid=False,
-            error=current_error,
-            llm_corrected=False,
-            code_length=len(current_code)
+            is_valid=False, error=current_error, llm_corrected=False, code_length=len(current_code)
         )
         self.logger.info(
-            "Completed _attempt_llm_correction",
-            extra={"provider_id": self.provider_id, "success": result.is_valid}
+            "Completed _attempt_llm_correction", extra={"provider_id": self.provider_id, "success": result.is_valid}
         )
         return result
 
     @log_method_call
     def _create_metadata(self, start_time: datetime) -> Dict[str, Any]:
         """Create standard metadata dictionary"""
-        self.logger.info(
-            "Creating metadata",
-            extra={"provider_id": self.provider_id}
-        )
+        self.logger.info("Creating metadata", extra={"provider_id": self.provider_id})
         return {
             "provider": self.provider_id,
             "provider_name": self.provider_name,
             "render_time": (datetime.now() - start_time).total_seconds(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     # =====================================================================
@@ -791,12 +733,7 @@ class BaseDiagramProvider(ABC):
     # =====================================================================
 
     @log_method_call
-    def render_batch(
-        self,
-        codes: List[str],
-        output_format: str = "svg",
-        **options
-    ) -> List[RenderResult]:
+    def render_batch(self, codes: List[str], output_format: str = "svg", **options) -> List[RenderResult]:
         """
         Render multiple diagrams (override for optimized batch processing).
 
@@ -805,21 +742,16 @@ class BaseDiagramProvider(ABC):
         """
         self.logger.info(
             "Starting batch render",
-            extra={"provider_id": self.provider_id, "count": len(codes), "format": output_format}
+            extra={"provider_id": self.provider_id, "count": len(codes), "format": output_format},
         )
         if not self.supports_capability(ProviderCapability.BATCH):
-            raise NotImplementedError(
-                f"Provider {self.provider_id} does not support batch rendering"
-            )
+            raise NotImplementedError(f"Provider {self.provider_id} does not support batch rendering")
 
         results = []
         for i, code in enumerate(codes):
-            self.logger.info(f"[{self.provider_id}] Batch render {i+1}/{len(codes)}")
+            self.logger.info(f"[{self.provider_id}] Batch render {i + 1}/{len(codes)}")
             result = self.render_with_validation(code, output_format, **options)
             results.append(result)
 
-        self.logger.info(
-            "Completed batch render",
-            extra={"provider_id": self.provider_id, "count": len(results)}
-        )
+        self.logger.info("Completed batch render", extra={"provider_id": self.provider_id, "count": len(results)})
         return results

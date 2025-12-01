@@ -45,20 +45,20 @@ if __name__ == "__main__":
 @pytest.fixture
 def sample_javascript_code() -> str:
     """Sample JavaScript code"""
-    return '''function helloWorld() {
+    return """function helloWorld() {
     console.log("Hello, World!");
     return true;
 }
 
 const result = helloWorld();
 console.assert(result === true);
-'''
+"""
 
 
 @pytest.fixture
 def sample_java_code() -> str:
     """Sample Java code"""
-    return '''public class HelloWorld {
+    return """public class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
@@ -67,26 +67,26 @@ def sample_java_code() -> str:
         return true;
     }
 }
-'''
+"""
 
 
 @pytest.fixture
 def sample_cpp_code() -> str:
     """Sample C++ code"""
-    return '''#include <iostream>
+    return """#include <iostream>
 using namespace std;
 
 int main() {
     cout << "Hello, World!" << endl;
     return 0;
 }
-'''
+"""
 
 
 @pytest.fixture
 def markdown_with_code_blocks() -> str:
     """Markdown with multiple code blocks"""
-    return '''# Example Document
+    return """# Example Document
 
 Here's some Python code:
 
@@ -102,24 +102,24 @@ More content here.
 
 class Example {
     public static void main(String[] args) {}
-}'''
+}"""
 
 
 @pytest.fixture
 def markdown_with_inline_code() -> str:
     """Markdown with inline code"""
-    return '''# Example
+    return """# Example
 
 Use `print()` to output text.
 
 The `if` statement is used for conditionals.
-'''
+"""
 
 
 @pytest.fixture
 def html_with_code() -> str:
     """HTML with code elements"""
-    return '''<html>
+    return """<html>
 <body>
 <h1>Example</h1>
 
@@ -131,7 +131,7 @@ def example():
 <p>Some text with <code>inline code</code>.</p>
 </body>
 </html>
-'''
+"""
 
 
 @pytest.fixture
@@ -152,7 +152,7 @@ def mixed_language_code() -> Dict[str, str]:
 @pytest.fixture
 def code_with_special_chars() -> str:
     """Code with special characters"""
-    return '''
+    return """
 def special_chars():
     # String with quotes: "hello", 'world'
     s = "Test with émojis: 🎉 ✨"
@@ -164,30 +164,30 @@ def special_chars():
     variables = [α, β, γ]
 
     return s
-'''
+"""
 
 
 @pytest.fixture
 def code_with_syntax_error() -> str:
     """Code with syntax errors"""
-    return '''
+    return """
 def broken_function()
     print("Missing colon above")
     if True
         return "Missing colon on if"
-'''
+"""
 
 
 @pytest.fixture
 def code_with_logical_error() -> str:
     """Code with logical errors"""
-    return '''
+    return """
 def add(a, b):
     return a - b  # Wrong operation
 
 def divide_by_zero():
     return 10 / 0
-'''
+"""
 
 
 @pytest.fixture
@@ -233,12 +233,12 @@ def code_by_language() -> Dict[str, str]:
 @pytest.fixture
 def ambiguous_code() -> str:
     """Code that's ambiguous between languages"""
-    return '''
+    return """
     // This could be C++, Java, or C#
     public void hello() {
         System.out.println("Hello");
     }
-'''
+"""
 
 
 @pytest.fixture

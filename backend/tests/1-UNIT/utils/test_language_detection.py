@@ -10,7 +10,6 @@ Tests for detecting programming language:
 Coverage: 25 tests
 """
 
-import pytest
 from pathlib import Path
 
 
@@ -113,19 +112,19 @@ class TestDetectFromContent:
     def test_detect_ruby_from_content(self):
         """Ruby detected from keywords"""
         ruby_code = "def func\n  puts 'hello'\nend"
-        keywords = ["def", "puts", "end"]
+        keywords = ["de", "puts", "end"]
         is_ruby = any(kw in ruby_code for kw in keywords)
         assert is_ruby
 
     def test_detect_go_from_content(self):
         """Go detected from keywords"""
-        go_code = "func main() {\n  fmt.Println(\"hello\")\n}"
+        go_code = 'func main() {\n  fmt.Println("hello")\n}'
         assert "func" in go_code
         assert "fmt.Println" in go_code
 
     def test_detect_rust_from_content(self):
         """Rust detected from keywords"""
-        rust_code = "fn main() {\n  println!(\"hello\");\n}"
+        rust_code = 'fn main() {\n  println!("hello");\n}'
         assert "fn" in rust_code
         assert "println!" in rust_code
 

@@ -11,7 +11,7 @@ Provides reusable fixtures for integration and end-to-end testing:
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from typing import Dict, Any, List
 
 
@@ -19,10 +19,12 @@ from typing import Dict, Any, List
 # APPLICATION FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def app():
     """Create FastAPI test application"""
     from app.main import app as main_app
+
     return main_app
 
 
@@ -30,6 +32,7 @@ def app():
 def async_client(app):
     """Create async HTTP client"""
     from httpx import AsyncClient
+
     return AsyncClient(app=app, base_url="http://test")
 
 
@@ -37,12 +40,14 @@ def async_client(app):
 def client(app):
     """Create synchronous test client"""
     from fastapi.testclient import TestClient
+
     return TestClient(app)
 
 
 # ============================================================================
 # WORKFLOW FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def diagram_generation_workflow() -> Dict[str, Any]:
@@ -52,7 +57,7 @@ def diagram_generation_workflow() -> Dict[str, Any]:
         "prompt": "Create a flowchart for user authentication",
         "diagram_type": "mermaid",
         "expected_code": "graph TD\nA[Start] --> B[Login]\nB --> C[Authenticate]",
-        "expected_format": "svg"
+        "expected_format": "svg",
     }
 
 
@@ -66,9 +71,9 @@ def conversation_workflow() -> Dict[str, Any]:
             {"content": "Create a flowchart", "role": "user"},
             {"content": "Here's a flowchart", "role": "assistant"},
             {"content": "Make it more detailed", "role": "user"},
-            {"content": "Updated flowchart", "role": "assistant"}
+            {"content": "Updated flowchart", "role": "assistant"},
         ],
-        "expected_message_count": 4
+        "expected_message_count": 4,
     }
 
 
@@ -79,7 +84,7 @@ def file_upload_workflow() -> Dict[str, Any]:
         "file_name": "test_code.py",
         "file_content": "def hello():\n    print('Hello, World!')",
         "file_type": "text/plain",
-        "expected_language": "python"
+        "expected_language": "python",
     }
 
 
@@ -90,13 +95,14 @@ def multi_provider_workflow() -> Dict[str, Any]:
         "diagram_code": "graph LR\n  A[Start] --> B[End]",
         "providers": ["mermaid", "d2"],
         "output_formats": ["svg", "png"],
-        "expected_outputs": 4
+        "expected_outputs": 4,
     }
 
 
 # ============================================================================
 # SERVICE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_conversation_service():
@@ -146,6 +152,7 @@ def mock_ai_service():
 # AUTHENTICATION FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def auth_token():
     """Valid authentication token"""
@@ -168,6 +175,7 @@ def invalid_auth_headers():
 # DATABASE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mock_db():
     """Mock database connection"""
@@ -188,22 +196,23 @@ def sample_db_data() -> Dict[str, List[Dict]]:
     return {
         "users": [
             {"id": "user_123", "email": "user@example.com", "created_at": "2024-01-01"},
-            {"id": "user_456", "email": "user2@example.com", "created_at": "2024-01-02"}
+            {"id": "user_456", "email": "user2@example.com", "created_at": "2024-01-02"},
         ],
         "conversations": [
             {"id": "conv_123", "user_id": "user_123", "title": "Test", "created_at": "2024-01-01"},
-            {"id": "conv_456", "user_id": "user_456", "title": "Test2", "created_at": "2024-01-02"}
+            {"id": "conv_456", "user_id": "user_456", "title": "Test2", "created_at": "2024-01-02"},
         ],
         "messages": [
             {"id": "msg_123", "conversation_id": "conv_123", "content": "Hello"},
-            {"id": "msg_456", "conversation_id": "conv_123", "content": "Hi"}
-        ]
+            {"id": "msg_456", "conversation_id": "conv_123", "content": "Hi"},
+        ],
     }
 
 
 # ============================================================================
 # REQUEST/RESPONSE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def complete_diagram_request() -> Dict[str, Any]:
@@ -212,18 +221,14 @@ def complete_diagram_request() -> Dict[str, Any]:
         "code": "graph TD\n  A[Start] --> B[End]",
         "diagram_type": "mermaid",
         "output_format": "svg",
-        "provider_id": "mermaid_v1"
+        "provider_id": "mermaid_v1",
     }
 
 
 @pytest.fixture
 def complete_conversation_request() -> Dict[str, Any]:
     """Complete conversation request"""
-    return {
-        "conversation_id": "conv_123",
-        "content": "Can you help with diagrams?",
-        "include_code": True
-    }
+    return {"conversation_id": "conv_123", "content": "Can you help with diagrams?", "include_code": True}
 
 
 @pytest.fixture
@@ -232,13 +237,14 @@ def complete_generation_request() -> Dict[str, Any]:
     return {
         "prompt": "Create a flowchart for authentication",
         "diagram_type": "mermaid",
-        "user_context": {"user_id": "user_123"}
+        "user_context": {"user_id": "user_123"},
     }
 
 
 # ============================================================================
 # SCENARIO FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def success_scenario() -> Dict[str, Any]:
@@ -249,9 +255,9 @@ def success_scenario() -> Dict[str, Any]:
             {"action": "create_conversation", "expected": "success"},
             {"action": "send_message", "expected": "success"},
             {"action": "render_diagram", "expected": "success"},
-            {"action": "save_result", "expected": "success"}
+            {"action": "save_result", "expected": "success"},
         ],
-        "expected_outcome": "all_successful"
+        "expected_outcome": "all_successful",
     }
 
 
@@ -263,9 +269,9 @@ def error_recovery_scenario() -> Dict[str, Any]:
         "steps": [
             {"action": "invalid_request", "expected": "error"},
             {"action": "retry_request", "expected": "success"},
-            {"action": "verify_state", "expected": "consistent"}
+            {"action": "verify_state", "expected": "consistent"},
         ],
-        "expected_outcome": "recovered"
+        "expected_outcome": "recovered",
     }
 
 
@@ -277,13 +283,14 @@ def concurrent_scenario() -> Dict[str, Any]:
         "concurrent_users": 5,
         "operations_per_user": 10,
         "expected_total_operations": 50,
-        "expected_success_rate": 0.95
+        "expected_success_rate": 0.95,
     }
 
 
 # ============================================================================
 # PERFORMANCE FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def performance_baseline() -> Dict[str, float]:
@@ -294,7 +301,7 @@ def performance_baseline() -> Dict[str, float]:
         "file_upload": 1.0,
         "conversation_creation": 0.2,
         "database_query": 0.1,
-        "concurrent_request": 1.0
+        "concurrent_request": 1.0,
     }
 
 
@@ -308,7 +315,7 @@ def load_test_config() -> Dict[str, Any]:
         "ramp_up_time": 5,
         "hold_time": 10,
         "ramp_down_time": 5,
-        "expected_success_rate": 0.99
+        "expected_success_rate": 0.99,
     }
 
 
@@ -316,16 +323,11 @@ def load_test_config() -> Dict[str, Any]:
 # STATE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def application_state() -> Dict[str, Any]:
     """Application state tracker"""
-    return {
-        "conversations": {},
-        "messages": {},
-        "files": {},
-        "users": {},
-        "diagrams": {}
-    }
+    return {"conversations": {}, "messages": {}, "files": {}, "users": {}, "diagrams": {}}
 
 
 @pytest.fixture
@@ -337,7 +339,7 @@ def user_session() -> Dict[str, Any]:
         "created_at": "2024-01-01T00:00:00Z",
         "last_activity": "2024-01-01T00:00:00Z",
         "authenticated": True,
-        "permissions": ["read", "write", "delete"]
+        "permissions": ["read", "write", "delete"],
     }
 
 
@@ -345,17 +347,11 @@ def user_session() -> Dict[str, Any]:
 # MONITORING FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def metrics_tracker():
     """Track test metrics"""
-    return {
-        "requests": [],
-        "responses": [],
-        "errors": [],
-        "latencies": [],
-        "memory_usage": [],
-        "cpu_usage": []
-    }
+    return {"requests": [], "responses": [], "errors": [], "latencies": [], "memory_usage": [], "cpu_usage": []}
 
 
 @pytest.fixture
@@ -367,6 +363,7 @@ def event_log():
 # ============================================================================
 # UTILITY FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def async_event_loop():
