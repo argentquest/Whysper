@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Stop-Process -Force)",
+      "Bash(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd ''$PWD''; .\\.venv\\Scripts\\Activate.ps1; python -m uvicorn app.main:app --reload --port 8003\" -WindowStyle Normal)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr ready:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(for file in ./api/settings.ts ./components/DiagramWizard/hooks/useDiagramSession.ts ./components/modals/D2TesterModal.tsx ./components/modals/HelpModal.tsx ./components/modals/MermaidTesterModal.tsx ./services/api.ts ./services/diagram/diagramApi.ts ./services/diagram/validationService.ts ./services/sseClient.ts)",
+      "Bash(do powershell -Command \"(Get-Content ''$file'') -replace ''8003'', ''8000'' | Set-Content ''$file''\")",
+      "Bash(done)",
+      "Bash(Stop-Process -Name \"python\" -Force -ErrorAction SilentlyContinue)",
+      "Bash(git clone:*)",
+      "Bash(dir /b)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Path backend\\diagrams -Directory | Select-Object -ExpandProperty Name\")",
+      "Bash(powershell -Command:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(python:*)",
+      "Bash(.venv\\Scripts\\python.exe:*)",
+      "Bash(npm test:*)",
+      "Bash(timeout:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

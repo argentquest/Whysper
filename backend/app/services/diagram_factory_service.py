@@ -502,6 +502,14 @@ class DiagramFactoryService:
                 )
                 return
 
+            # If we're waiting for the user to select a diagram type, pause as well.
+            if not result.get("user_selected_diagram_type", True):
+                logger.info(
+                    "LangGraph awaiting user diagram type selection before continuing",
+                    extra={"session_id": self.session.session_id},
+                )
+                return
+
             self.session.diagram_code = result.get("diagram_code", "")
             self.session.svg_output = result.get("svg_output", "")
 
