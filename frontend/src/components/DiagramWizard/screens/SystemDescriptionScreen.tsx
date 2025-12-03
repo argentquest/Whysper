@@ -119,6 +119,7 @@ interface SystemDescriptionScreenProps {
   onSubmitClarification: (clarification: string) => void
   onConfirmReady: () => void
   error?: { message: string }
+  onShowState?: () => void
 }
 
 /**
@@ -145,6 +146,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   onSubmitClarification,
   onConfirmReady,
   error,
+  onShowState,
 }) => {
   const promptEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   // Show input field during clarification phase (includes initial analysis and follow-up questions)
@@ -218,6 +220,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
         phases={phases}
         canConfirmReady={canConfirmReady}
         onConfirmReady={onConfirmReady}
+        {...(onShowState && { onShowState })}
       />
 
       <Layout.Content className={styles.content}>

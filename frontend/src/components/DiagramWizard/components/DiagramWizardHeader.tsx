@@ -46,6 +46,9 @@ interface DiagramWizardHeaderProps {
   // Confirm Ready button
   canConfirmReady?: boolean
   onConfirmReady?: () => void
+
+  // Debug/inspection
+  onShowState?: () => void
 }
 
 /**
@@ -65,6 +68,7 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   phases,
   canConfirmReady = false,
   onConfirmReady,
+  onShowState,
 }) => {
   // Get model display name
   const getModelDisplayName = (model: ModelId): string => {
@@ -170,6 +174,11 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
 
           {/* Right: Confirm Button + Model + Session + Status */}
           <Space size="middle" className={styles.headerMeta}>
+            {onShowState && (
+              <Button size="small" onClick={onShowState}>
+                View State
+              </Button>
+            )}
             {/* Confirm Ready Button - Prominent placement */}
             {canConfirmReady && onConfirmReady && (
               <Button

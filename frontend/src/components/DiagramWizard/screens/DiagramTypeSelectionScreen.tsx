@@ -68,6 +68,7 @@ interface DiagramTypeSelectionScreenProps {
   analysisText?: string
   jsonGenerationOutput?: string
   onSelectDiagramType: (diagramType: string) => void
+  onShowState?: () => void
 }
 
 /**
@@ -121,6 +122,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
   analysisText,
   jsonGenerationOutput,
   onSelectDiagramType,
+  onShowState,
 }) => {
   return (
     <Layout className={styles.diagramWizard}>
@@ -134,6 +136,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
         scoreTarget={scoreTarget}
         currentPhase={currentPhase}
         phases={phases}
+        onShowState={onShowState}
       />
 
       <Layout.Content className={styles.content}>

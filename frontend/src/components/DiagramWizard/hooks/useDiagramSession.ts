@@ -128,6 +128,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     error: sseError, // Error object if SSE connection fails
     messages: sseMessages, // Array of received SSE messages (for debugging)
     clearMessages: clearSSEMessages, // Function to clear message history
+    disconnect: disconnectSSE, // Function to manually disconnect SSE
   } = useSSE<DiagramUpdate>({
     // Construct SSE endpoint URL using session ID
     url: sessionId ? `${API_BASE}/diagram/stream/${sessionId}` : '',
@@ -189,6 +190,11 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     // Handle SSE connection errors
     onError: (err) => {
       logEvent('SSE error', err)
+
+      // Note: EventSource API doesn't provide HTTP status codes in error events,
+      // so we can't directly detect "session not found" (404) errors here.
+      // Stale session prevention is handled by session validation on DiagramWizard mount.
+
       setError(err)
       options.onError?.(err)
     },
@@ -204,9 +210,9 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
     },
 
     // Reconnection configuration
-    maxReconnectAttempts: 5, // Try reconnecting 5 times before giving up
+    maxReconnectAttempts: Number.POSITIVE_INFINITY, // Keep trying indefinitely
     reconnectInterval: 2000, // Wait 2 seconds before first retry (exponential backoff applied)
-    keepAliveTimeout: 30000, // Consider connection dead if no message for 30 seconds
+    keepAliveTimeout: 300000, // Consider connection dead if no message for 5 minutes
     autoClose: true, // Automatically close connection when component unmounts
   })
 

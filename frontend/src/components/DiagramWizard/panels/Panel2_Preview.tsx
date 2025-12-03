@@ -141,6 +141,15 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
 
   // Render the preview content with various states
   const renderPreview = () => {
+    // Debug logging for SVG rendering
+    console.log('🎨 PreviewPanel render:', {
+      hasSvgOutput: !!svgOutput,
+      svgLength: svgOutput?.length || 0,
+      isLoading,
+      hasError: !!(error || validationError),
+      diagramType,
+    })
+
     // Determine if there are any errors to display
     const hasError = error || validationError
 
@@ -223,6 +232,9 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       return <Empty description="No diagram generated yet" />
     }
 
+    // Log first 200 chars of SVG to verify it's valid
+    console.log('🖼️ Rendering SVG (first 200 chars):', svgOutput.substring(0, 200))
+
     // Render SVG with interactive zoom and pan capabilities
     return (
       <div
@@ -236,20 +248,26 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
           // Styling for container with dynamic cursor and overflow handling
           overflow: 'auto',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: 'flex-start',
+          justifyContent: 'flex-start',
           height: '100%',
+          width: '100%',
           cursor: isDragging ? 'grabbing' : scale !== 1 ? 'grab' : 'default',
           position: 'relative',
+          backgroundColor: '#f5f5f5',
+          padding: '20px',
         }}
       >
         <div
           style={{
             // Apply zoom and pan transformations dynamically
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            transformOrigin: 'center',
+            transformOrigin: '0 0',
             transition: isDragging ? 'none' : 'transform 0.2s ease',
             userSelect: 'none',
+            display: 'inline-block',
+            minWidth: 'fit-content',
+            minHeight: 'fit-content',
           }}
           dangerouslySetInnerHTML={{ __html: svgOutput }}
         />
@@ -302,8 +320,9 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
         )
       }
       style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      bodyStyle={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex' }}
     >
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', width: '100%', height: '100%' }}>
         {/* Show loading spinner while diagram is generating */}
         {isLoading ? (
           <div

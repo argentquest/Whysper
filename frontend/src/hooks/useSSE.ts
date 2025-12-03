@@ -61,9 +61,9 @@ export function useSSE<T = unknown>({
   onError,
   onConnect,
   onDisconnect,
-  maxReconnectAttempts = 5,
+  maxReconnectAttempts = Number.POSITIVE_INFINITY,
   reconnectInterval = 2000,
-  keepAliveTimeout = 30000,
+  keepAliveTimeout = 300000,
   autoClose = true,
 }: UseSSEOptions<T>): UseSSEReturn<T> {
   const [isConnected, setIsConnected] = useState(false)
@@ -74,6 +74,31 @@ export function useSSE<T = unknown>({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const connectRef = useRef<() => void>(() => {})
+
+  const scheduleReconnect = useCallback(() => {
+    const hasAttemptsLeft =
+      !Number.isFinite(maxReconnectAttempts) || reconnectAttempts.current < maxReconnectAttempts
+
+    if (!hasAttemptsLeft) {
+      console.error('[useSSE] Max reconnection attempts reached')
+      const maxAttemptsError = new Error(
+        'Failed to connect after ' + reconnectAttempts.current + ' attempts'
+      )
+      setError(maxAttemptsError)
+      onError?.(maxAttemptsError)
+      return
+    }
+
+    reconnectAttempts.current++
+    const delay = reconnectInterval * Math.pow(2, reconnectAttempts.current - 1)
+    console.log(
+      `[useSSE] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`
+    )
+    reconnectTimeoutRef.current = setTimeout(() => {
+      connectRef.current()
+    }, delay)
+  }, [maxReconnectAttempts, onError, reconnectInterval])
 
   // ============================================================================
   // Connection Management
@@ -116,10 +141,13 @@ export function useSSE<T = unknown>({
     keepAliveTimerRef.current = setTimeout(() => {
       console.warn('[useSSE] Keep-alive timeout - no messages received in', keepAliveTimeout, 'ms')
       disconnect()
+      scheduleReconnect()
     }, keepAliveTimeout)
-  }, [keepAliveTimeout, clearKeepAliveTimer, disconnect])
+  }, [keepAliveTimeout, clearKeepAliveTimer, disconnect, scheduleReconnect])
 
   const connect = useCallback(() => {
+    connectRef.current = connect
+
     if (!enabled || !url) {
       console.log('[useSSE] Connection skipped - enabled:', enabled, 'url:', url)
       return
@@ -205,24 +233,7 @@ export function useSSE<T = unknown>({
           onError?.(err)
 
           // Attempt reconnection with exponential backoff
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            reconnectAttempts.current++
-            const delay = reconnectInterval * Math.pow(2, reconnectAttempts.current - 1)
-            console.log(
-              `[useSSE] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`
-            )
-
-            reconnectTimeoutRef.current = setTimeout(() => {
-              connect()
-            }, delay)
-          } else {
-            console.error('[useSSE] Max reconnection attempts reached')
-            const maxAttemptsError = new Error(
-              'Failed to connect after ' + maxReconnectAttempts + ' attempts'
-            )
-            setError(maxAttemptsError)
-            onError?.(maxAttemptsError)
-          }
+          scheduleReconnect()
         }
       })
     } catch (err) {
@@ -242,6 +253,7 @@ export function useSSE<T = unknown>({
     reconnectInterval,
     resetKeepAliveTimer,
     disconnect,
+    scheduleReconnect,
     autoClose,
   ])
 

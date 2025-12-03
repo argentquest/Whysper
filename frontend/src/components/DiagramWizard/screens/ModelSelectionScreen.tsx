@@ -9,6 +9,7 @@ import { ApiOutlined,BulbOutlined, FileTextOutlined, ThunderboltOutlined } from 
 import { Card, Col, Row, Space, Typography } from 'antd'
 import React from 'react'
 
+import DiagramWizardHeader from '../components/DiagramWizardHeader'
 import styles from '../diagram-wizard.module.css'
 
 export type ModelId = 'gpt5' | 'grok' | 'claude' | 'gemini'
@@ -90,6 +91,13 @@ const MODELS: ModelOption[] = [
 interface ModelSelectionScreenProps {
   onSelect: (modelId: ModelId) => void
   loading?: boolean
+  currentPhase: number
+  phases: Array<{ title: string; description: string; icon: React.ReactNode }>
+  sessionId: string | null
+  sseConnected: boolean
+  score: number
+  scoreTarget: number
+  onShowState?: () => void
 }
 
 /**
@@ -98,6 +106,13 @@ interface ModelSelectionScreenProps {
 export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
   onSelect,
   loading = false,
+  currentPhase,
+  phases,
+  sessionId,
+  sseConnected,
+  score,
+  scoreTarget,
+  onShowState,
 }) => {
   return (
     <div
@@ -111,6 +126,17 @@ export const ModelSelectionScreen: React.FC<ModelSelectionScreenProps> = ({
         alignItems: 'center',
       }}
     >
+      <DiagramWizardHeader
+        selectedModel={'gpt5'}
+        sessionId={sessionId}
+        sseConnected={sseConnected}
+        loading={loading}
+        score={score}
+        scoreTarget={scoreTarget}
+        currentPhase={currentPhase}
+        phases={phases}
+        onShowState={onShowState}
+      />
       <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: '1200px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', color: 'white', marginBottom: '20px' }}>

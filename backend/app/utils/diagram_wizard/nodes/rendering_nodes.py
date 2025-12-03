@@ -102,16 +102,27 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
         )
 
         if result.success:
-            # Send rendered status update with SVG to frontend
+            # Prepare the corrected code if provider fixed it
+            corrected_code = getattr(result.validation, "fixed_code", None)
+            final_diagram_code = corrected_code if (corrected_code and corrected_code != diagram_code) else diagram_code
+
+            # Send rendered status update to frontend with SVG output
+            # Include svgOutput here to avoid timing issues with REST API polling
             if update_callback:
                 await update_callback(
                     {
                         "status": "rendered",
                         "message": "✅ Diagram rendered successfully",
+                        "svgOutput": result.content,  # Include SVG for immediate display
+                        "diagramCode": final_diagram_code,  # Include corrected code
                     }
                 )
 
-            return {"svg_output": result.content, "current_state": SessionState.READY}
+            # Update diagram_code if provider corrected it
+            return_value = {"svg_output": result.content, "current_state": SessionState.READY}
+            if corrected_code and corrected_code != diagram_code:
+                return_value["diagram_code"] = corrected_code  # Update state with corrected code
+            return return_value
         else:
             # Send error status update
             if update_callback:

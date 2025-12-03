@@ -340,6 +340,33 @@ async def get_diagram_status(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get(
+    "/validate/{session_id}",
+    summary="Validate session exists",
+    description="Check if a diagram generation session exists without loading full state.",
+)
+@log_method_call
+async def validate_session(session_id: str):
+    """
+    Validate that a diagram generation session exists.
+
+    Lightweight endpoint for checking session existence without
+    loading full session state. Useful for stale session detection
+    on frontend reconnection.
+
+    Args:
+        session_id (str): The session ID to validate.
+
+    Returns:
+        dict: {"exists": bool, "session_id": str}
+
+    Raises:
+        None: Always returns a response, never raises errors.
+    """
+    session = DiagramSessionStore.get_session(session_id)
+    return {"exists": session is not None, "session_id": session_id}
+
+
 @router.delete("/{session_id}", summary="Delete session", description="Delete a diagram generation session.")
 @log_method_call
 async def delete_session(session_id: str):

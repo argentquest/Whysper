@@ -52,6 +52,7 @@ interface GenerationScreenProps {
   onExportModalClose: () => void
   onExportSubmit: (filename: string, format: string) => void
   onCodeChange?: (code: string) => void
+  onShowState?: () => void
   error?: { message: string }
 }
 
@@ -78,6 +79,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   jsonRepresentation,
   onExportModalClose,
   onCodeChange,
+  onShowState,
   error,
 }) => {
   const isComplete = status?.status === 'completed'
@@ -103,6 +105,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         scoreTarget={scoreTarget}
         currentPhase={currentPhase}
         phases={phases}
+        onShowState={onShowState}
       />
 
       <Layout.Content className={styles.content}>
@@ -137,8 +140,12 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
         >
           <Tabs
             defaultActiveKey="preview"
-            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
             destroyOnHidden={false}
+            tabBarStyle={{
+              marginBottom: 0,
+            }}
+            className="full-height-tabs"
             items={[
               {
                 key: 'conversation',
@@ -177,8 +184,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 children: (
                   <div
                     style={{
-                      height: 'calc(100vh - 280px)',
-                      minHeight: 360,
+                      height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
                     }}
@@ -205,12 +211,11 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
               },
               {
                 key: 'code',
-                label: 'Diagram Code',
+                label: <span style={{ color: '#000000' }}>Diagram Code</span>,
                 children: (
                   <div
                     style={{
-                      height: 'calc(100vh - 280px)',
-                      minHeight: 360,
+                      height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
                     }}
@@ -244,112 +249,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                         <CodeEditorPanel
                           code={diagramCode}
                           onChange={async (code: string) => onCodeChange?.(code)}
-                          diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
-                          isLoading={loading}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'workspace',
-                label: 'Workspace',
-                children: (
-                  <div
-                    style={{
-                      height: 'calc(100vh - 280px)',
-                      minHeight: 360,
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div
-                      className={styles.panel}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          marginBottom: 8,
-                          gap: 8,
-                        }}
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() =>
-                            structurizrWorkspace &&
-                            navigator.clipboard.writeText(structurizrWorkspace)
-                          }
-                          title="Copy workspace"
-                          disabled={!structurizrWorkspace}
-                        />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <CodeEditorPanel
-                          code={structurizrWorkspace || ''}
-                          onChange={async (_code: string) => {}}
-                          diagramType="Structurizr"
-                          isLoading={loading}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'cleanWorkspace',
-                label: 'Clean Workspace',
-                children: (
-                  <div
-                    style={{
-                      height: 'calc(100vh - 280px)',
-                      minHeight: 360,
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div
-                      className={styles.panel}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          marginBottom: 8,
-                          gap: 8,
-                        }}
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() =>
-                            cleanStructurizr && navigator.clipboard.writeText(cleanStructurizr)
-                          }
-                          title="Copy clean workspace"
-                          disabled={!cleanStructurizr}
-                        />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <CodeEditorPanel
-                          code={cleanStructurizr || ''}
-                          onChange={async (_code: string) => {}}
-                          diagramType="Structurizr"
+                          diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}
                         />
                       </div>
@@ -359,12 +259,11 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
               },
               {
                 key: 'fullJson',
-                label: 'Full JSON',
+                label: <span style={{ color: '#000000' }}>Full JSON</span>,
                 children: (
                   <div
                     style={{
-                      height: 'calc(100vh - 280px)',
-                      minHeight: 360,
+                      height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
                     }}

@@ -125,7 +125,8 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
                 {
                     "status": "json_generated",
                     "message": "Successfully validated and finalized architecture representation.",
-                    "json_generation_output": ai_response_str,
+                    # Note: structurizr_workspace, clean_structurizr, json_generation_output
+                    # are in LangGraph state and included via get_status() in _push_update
                 }
             )
 
@@ -396,13 +397,15 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         extra={"session_id": session_id} if session_id else {},
     )
 
-    # Send success update to frontend
+    # Send success update to frontend with diagram code
+    # Include diagramCode here to avoid timing issues with REST API polling
     if update_callback:
         await update_callback(
             {
                 "status": "code_generated",
                 "message": f"✅ Generated {diagram_type_str} diagram code ({len(diagram_code)} chars)",
                 "message_type": "success",
+                "diagramCode": diagram_code,  # Include code for immediate display
             }
         )
 

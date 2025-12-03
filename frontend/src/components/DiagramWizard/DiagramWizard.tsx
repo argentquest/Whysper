@@ -48,6 +48,7 @@
  * - App context: Tab management and session binding
  */
 
+import Editor from '@monaco-editor/react'
 import { message, Modal } from 'antd'
 import React, { useCallback,useEffect, useState } from 'react'
 
@@ -164,6 +165,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [errorModalVisible, setErrorModalVisible] = useState(false) // Critical error modal (closes tab)
   const [errorDetails, setErrorDetails] = useState({ title: '', message: '' }) // Error content for modal
 
+  // Session state viewer
+  const [stateModalVisible, setStateModalVisible] = useState(false)
+  const [stateJson, setStateJson] = useState('{}')
+  const [stateLoading, setStateLoading] = useState(false)
+
   // ============ Diagram Session Hook ============
 
   // Custom hook that manages the entire diagram session lifecycle
@@ -183,6 +189,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     onUpdate: (update) => {
       // Callback triggered whenever SSE sends status update from backend
       const statusValue = update.status
+
+      // If backend tells us the chosen diagram type, mark it as selected to avoid navigation back
+      if (update.diagram_type || update.diagramType) {
+        setDiagramTypeSelected(true)
+      }
 
       // ============ Toast Command Processing ============
       // Check if the message contains a toast command (TOASTINFO, TOASTERROR, etc.)
@@ -251,6 +262,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // JSON representations produced
           message.success('Architecture JSON generated!')
           setIsInAnalysisPhase(false)
+          // Note: Workspace data (structurizr_workspace, clean_structurizr) is included
+          // in SSE get_status() for display purposes, but can also be fetched via REST
+          // if needed for mutations. For now, we keep SSE data for read-only display.
           break
         case 'awaiting_diagram_type_selection':
           // AI has analyzed diagram options and is waiting for user to select preferred type
@@ -294,6 +308,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // Diagram code has been successfully generated
           message.success('Code generated!')
           setIsInAnalysisPhase(false)
+          // Get diagram code directly from SSE update (included to avoid timing issues)
+          if (update.diagramCode) {
+            console.log('✅ Setting diagram code from SSE update:', update.diagramCode.length, 'characters')
+            setLocalDiagramCode(update.diagramCode)
+          }
           break
         case 'refining':
           // Diagram code had validation errors, AI attempting to fix them
@@ -310,19 +329,54 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           message.success('Code fixed!')
           setIsInAnalysisPhase(false)
           break
+        case 'validating':
+          // Provider validating diagram code syntax (Step 1/4)
+          message.loading(update.message || 'Validating diagram code...')
+          setIsInAnalysisPhase(false)
+          break
+        case 'auto_fixing':
+          // Provider attempting pattern-based auto-fix (Step 2/4)
+          message.loading(update.message || 'Applying automatic fixes...')
+          setIsInAnalysisPhase(false)
+          break
+        case 'auto_fixed':
+          // Pattern-based auto-fix successful
+          message.success(update.message || 'Code fixed automatically!')
+          setIsInAnalysisPhase(false)
+          break
+        case 'llm_correcting':
+          // Provider using LLM for intelligent correction (Step 3/4)
+          message.loading(update.message || 'AI is correcting diagram code...')
+          setIsInAnalysisPhase(false)
+          break
+        case 'llm_corrected':
+          // LLM correction successful
+          message.success(update.message || 'AI correction successful!')
+          setIsInAnalysisPhase(false)
+          break
         case 'rendering':
-          // Backend rendering diagram code to SVG using appropriate renderer
-          message.loading('Rendering SVG...')
+          // Backend rendering diagram code to SVG using appropriate renderer (Step 4/4)
+          message.loading(update.message || 'Rendering SVG...')
+          setIsInAnalysisPhase(false)
+          break
+        case 'render_complete':
+          // Provider completed rendering successfully
+          message.success(update.message || 'Rendering complete!')
           setIsInAnalysisPhase(false)
           break
         case 'rendered':
           // SVG successfully generated and ready for display
           message.success('Preview ready!')
           setIsInAnalysisPhase(false)
-          if (!diagramTypeSelected) {
-            // If user hasn't picked a type yet, stay on selection screen
-            setCurrentScreen('diagramTypeSelection')
-            break
+          setCurrentScreen('generation')
+          // Get SVG and code directly from SSE update (included to avoid timing issues)
+          if (update.svgOutput) {
+            console.log('✅ Setting SVG from SSE update:', update.svgOutput.length, 'characters')
+            setLocalSvgOutput(update.svgOutput)
+          }
+          if (update.diagramCode) {
+            console.log('✅ Setting diagram code from SSE update:', update.diagramCode.length, 'characters')
+            setLocalDiagramCode(update.diagramCode)
           }
           break
         case 'completed':
@@ -718,7 +772,79 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     localStorage.removeItem('diagramWizard.selectedModel')
   }
 
+  // Handle showing session state viewer
+  const handleShowState = useCallback(async () => {
+    if (!sessionId) {
+      message.warning('No session to inspect')
+      return
+    }
+
+    setStateModalVisible(true)
+    setStateLoading(true)
+    try {
+      const latest = await DiagramApi.getDiagramStatus(sessionId)
+      setStateJson(JSON.stringify(latest, null, 2))
+    } catch (err) {
+      console.error('Failed to load session state', err)
+      message.error('Failed to load session state')
+      setStateJson('{}')
+    } finally {
+      setStateLoading(false)
+    }
+  }, [sessionId])
+
+  // Keep state viewer in sync with live status when open
+  useEffect(() => {
+    if (stateModalVisible && status) {
+      try {
+        setStateJson(JSON.stringify(status, null, 2))
+      } catch (err) {
+        console.error('Failed to stringify status', err)
+      }
+    }
+  }, [stateModalVisible, status])
+
   // ============ Effects ============
+
+  // Effect: Validate session exists on backend when component mounts
+  // This prevents stale session reconnection attempts after backend restarts
+  useEffect(() => {
+    // Only validate if we have an initialSessionId from the tab
+    if (!initialSessionId) {
+      return
+    }
+
+    // Validate that the session exists on backend
+    const validateBackendSession = async () => {
+      try {
+        console.log(`🔍 Validating session exists on backend: ${initialSessionId}`)
+        const validation = await DiagramApi.validateSession(initialSessionId)
+
+        if (!validation.exists) {
+          console.warn(
+            `⚠️ Session ${initialSessionId} not found on backend (likely stale from localStorage after restart). ` +
+              `User will need to start a new session.`
+          )
+
+          // Clean up stale session from localStorage session history
+          setPersistedState((prev) => ({
+            ...prev,
+            sessionHistory: prev.sessionHistory.filter((s) => s.sessionId !== initialSessionId),
+            lastSession:
+              prev.lastSession?.sessionId === initialSessionId ? undefined : prev.lastSession,
+          }))
+        } else {
+          console.log(`✅ Session ${initialSessionId} validated successfully on backend`)
+        }
+      } catch (error) {
+        console.error(`❌ Error validating session ${initialSessionId}:`, error)
+      }
+    }
+
+    validateBackendSession()
+    // Only run once on mount - initialSessionId never changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Effect: Populate input field with initialPrompt prop if provided
   useEffect(() => {
@@ -778,11 +904,31 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Determine which screen to render based on current state
   let screenContent
 
+  // Debug logging for screen rendering
+  console.log('🖥️ Screen render:', {
+    currentScreen,
+    selectedModel,
+    sessionId,
+    diagramTypeSelected,
+    svgOutput: !!svgOutput,
+    svgLength: svgOutput?.length || 0,
+  })
+
   // Screen 1: Model Selection
   // Show if no model selected OR user explicitly navigated back
   if (!selectedModel || currentScreen === 'model') {
     screenContent = (
-      <ModelSelectionScreen onSelect={handleModelSelect} loading={loading || isInitializing} />
+      <ModelSelectionScreen
+        onSelect={handleModelSelect}
+        loading={loading || isInitializing}
+        currentPhase={currentPhase}
+        phases={phases}
+        sessionId={sessionId}
+        sseConnected={sseConnected}
+        score={score}
+        scoreTarget={scoreTarget}
+        onShowState={handleShowState}
+      />
     )
   }
   // Screen 2: System Description + Analysis + Clarification
@@ -810,6 +956,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onSubmitClarification={handleSubmitClarification}
         onConfirmReady={handleConfirmReady}
         error={error ? { message: error.message } : undefined}
+        onShowState={handleShowState}
       />
     )
   }
@@ -829,7 +976,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         recommendedDiagramType={recommendedDiagramType}
         keywordScores={keywordScores}
         analysisText={diagramAnalysisText}
+        jsonGenerationOutput={jsonGenerationOutput}
         onSelectDiagramType={handleSelectDiagramType}
+        onShowState={handleShowState}
       />
     )
   }
@@ -860,6 +1009,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}
         onCodeChange={handleCodeChange}
+        onShowState={handleShowState}
         onExportSubmit={async (filename, format) => {
           // TODO: Implement export logic (download diagram as file)
           console.log('Export:', { filename, format, diagramCode, svgOutput })
@@ -872,6 +1022,33 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   return (
     <>
       {screenContent}
+
+      <Modal
+        title="Session State"
+        open={stateModalVisible}
+        onCancel={() => setStateModalVisible(false)}
+        footer={null}
+        width="80vw"
+        style={{ top: 40 }}
+        destroyOnClose
+      >
+        <div style={{ height: '70vh' }}>
+          <Editor
+            height="100%"
+            defaultLanguage="json"
+            value={stateJson}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              lineNumbers: 'on',
+              folding: true,
+              wordWrap: 'on',
+              renderWhitespace: 'none',
+            }}
+            loading={stateLoading ? 'Loading state...' : undefined}
+          />
+        </div>
+      </Modal>
 
       {/* Error Modal - Shows when diagram generation fails */}
       <Modal

@@ -39,6 +39,7 @@ export interface DiagramStatus {
   structurizr_workspace?: string
   clean_structurizr?: string
   json_generation_output?: string
+  graphState?: Record<string, unknown>
   score?: number
   score_info?: ScoreInfo
   clarity_score?: number
@@ -260,6 +261,32 @@ export class DiagramApi {
     }
 
     return resp.json()
+  }
+
+  /**
+   * Validate if a session exists on the backend
+   *
+   * Lightweight endpoint for checking session existence without loading full state.
+   * Useful for detecting stale sessions after backend restart or localStorage recovery.
+   *
+   * @param sessionId - The session ID to validate
+   * @returns Promise resolving to { exists: boolean, session_id: string }
+   */
+  static async validateSession(sessionId: string): Promise<{ exists: boolean; session_id: string }> {
+    try {
+      const resp = await fetch(`${API_BASE}/diagram/validate/${sessionId}`)
+
+      if (!resp.ok) {
+        // If endpoint fails, assume session doesn't exist
+        return { exists: false, session_id: sessionId }
+      }
+
+      return resp.json()
+    } catch (error) {
+      // Network error or other failure - assume session doesn't exist
+      console.warn(`Failed to validate session ${sessionId}:`, error)
+      return { exists: false, session_id: sessionId }
+    }
   }
 
   /**

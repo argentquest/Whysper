@@ -639,6 +639,8 @@ class DiagramFactoryService:
                 # Set the user's selected diagram type
                 self.session.graph_state["diagram_type"] = diagram_type_map[diagram_type]
                 self.session.graph_state["user_selected_diagram_type"] = True
+                # Keep session-level diagram type in sync for status responses
+                self.session.diagram_type = diagram_type
                 logger.info(
                     f"[select_diagram_type] graph_state updated with type {
                         diagram_type_map[diagram_type]} for session {
@@ -781,4 +783,23 @@ class DiagramFactoryService:
             "json_generation_output": (
                 self.session.graph_state.get("json_generation_output") if self.session.graph_state else None
             ),
+            # Expose graph state for debugging/inspection; remove runtime-only fields
+            "graphState": self._get_serializable_graph_state(),
         }
+
+    def _get_serializable_graph_state(self) -> Optional[Dict[str, Any]]:
+        """
+        Return a JSON-serializable copy of the LangGraph state without runtime-only fields.
+        """
+        if not self.session.graph_state:
+            return None
+
+        try:
+            state_copy: Dict[str, Any] = dict(self.session.graph_state)
+            # Drop runtime helpers that are not serializable or useful for display
+            state_copy.pop("_update_callback", None)
+            state_copy.pop("_session_id", None)
+            return state_copy
+        except Exception as exc:
+            logger.info(f"Failed to serialize graph state: {exc}")
+            return None
