@@ -551,7 +551,11 @@ class DiagramFactoryService:
                 )
                 return
 
-            self.session.diagram_code = result.get("diagram_code", "")
+            diagram_code = result.get("diagram_code", "")
+            if diagram_code and "original_diagram_code" not in result:
+                result["original_diagram_code"] = diagram_code
+
+            self.session.diagram_code = diagram_code
             self.session.svg_output = result.get("svg_output", "")
 
             # Check for AI responses from nodes and display them
@@ -808,6 +812,9 @@ class DiagramFactoryService:
             "currentState": self.session.current_state,
             "clarifications": self.session.clarifications,
             "diagramCode": self.session.diagram_code,
+            "originalDiagramCode": (
+                self.session.graph_state.get("original_diagram_code", "") if self.session.graph_state else ""
+            ),
             "svgOutput": self.session.svg_output,
             "errors": self.session.errors,
             "diagramType": self.session.diagram_type,

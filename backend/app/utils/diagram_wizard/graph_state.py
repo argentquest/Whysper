@@ -74,6 +74,7 @@ class GraphState(TypedDict, total=False):
 
     # Output tracking
     svg_output: str  # Final rendered diagram
+    original_diagram_code: Optional[str]  # Original generated diagram code before edits/refinements
 
     # State and error management
     current_state: SessionState  # Current workflow state

@@ -502,6 +502,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // ============ Hybrid State: SSE + Local Edits ============
   // Extract SSE-provided values (server state)
   const sseProvidedDiagramCode = status?.diagramCode ?? (status as any)?.diagram_code ?? ''
+  const sseProvidedOriginalDiagramCode = status?.originalDiagramCode ?? ''
   const sseProvidedSvgOutput = status?.svgOutput ?? (status as any)?.svg_output ?? ''
   const sseProvidedStructurizrWorkspace = (status as any)?.structurizr_workspace || ''
   const sseProvidedCleanStructurizr = (status as any)?.clean_structurizr || ''
@@ -509,6 +510,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // Local editable state (overrides SSE when user makes changes)
   const [localDiagramCode, setLocalDiagramCode] = useState<string | null>(null)
+  const [localOriginalDiagramCode, setLocalOriginalDiagramCode] = useState<string>('')
   const [localSvgOutput, setLocalSvgOutput] = useState<string | null>(null)
 
   // Sync local state with SSE updates (when server provides new values)
@@ -519,6 +521,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   }, [sseProvidedDiagramCode, localDiagramCode])
 
   React.useEffect(() => {
+    if (sseProvidedOriginalDiagramCode && !localOriginalDiagramCode) {
+      setLocalOriginalDiagramCode(sseProvidedOriginalDiagramCode)
+    }
+  }, [sseProvidedOriginalDiagramCode, localOriginalDiagramCode])
+
+  React.useEffect(() => {
     if (sseProvidedSvgOutput && !localSvgOutput) {
       setLocalSvgOutput(sseProvidedSvgOutput)
     }
@@ -526,6 +534,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // Use local state if available, otherwise fall back to SSE state
   const diagramCode = localDiagramCode ?? sseProvidedDiagramCode
+  const originalDiagramCode = localOriginalDiagramCode || sseProvidedOriginalDiagramCode
   const svgOutput = localSvgOutput ?? sseProvidedSvgOutput
   const structurizrWorkspace = sseProvidedStructurizrWorkspace
   const cleanStructurizr = sseProvidedCleanStructurizr
@@ -743,26 +752,35 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Handle user editing diagram code in the Code Editor tab
   const handleCodeChange = useCallback(
     async (newCode: string) => {
+      // Update local state immediately for responsive UI (don't auto-render on change)
+      setLocalDiagramCode(newCode)
+    },
+    []
+  )
+
+  // Handle user clicking "Render" button to render the current code
+  const handleRenderClick = useCallback(
+    async (code: string) => {
       try {
-        // Update local state immediately for responsive UI
-        setLocalDiagramCode(newCode)
-
-        // Re-render diagram with updated code
+        // Render diagram with current code
         if (sessionId) {
-          console.log('[DiagramWizard] Re-rendering diagram with edited code')
+          console.log('[DiagramWizard] Rendering diagram with code:', code.substring(0, 100) + '...')
 
-          // Call backend to render the edited code
-          const response = await DiagramApi.renderDiagram(sessionId, newCode)
+          // Call backend to render the code (bypasses validation)
+          const response = await DiagramApi.renderDiagram(sessionId, code)
 
           // Update local SVG output with new rendering
-          if (response.svgOutput) {
-            setLocalSvgOutput(response.svgOutput)
-            message.success('Diagram updated successfully')
+          if (response.svgOutput || (response as any).svg_output) {
+            const newSvg = response.svgOutput || (response as any).svg_output
+            setLocalSvgOutput(newSvg)
+            message.success('Diagram rendered successfully!')
+          } else {
+            message.warning('Rendering completed but no SVG was returned')
           }
         }
       } catch (error) {
-        console.error('[DiagramWizard] Failed to re-render diagram:', error)
-        message.error('Failed to update diagram. Please try again.')
+        console.error('[DiagramWizard] Failed to render diagram:', error)
+        message.error('Failed to render diagram. Please check the code and try again.')
       }
     },
     [sessionId]
@@ -1022,6 +1040,14 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}
         onCodeChange={handleCodeChange}
+        onRenderClick={handleRenderClick}
+        onRevertToOriginal={() => {
+          if (originalDiagramCode) {
+            setLocalDiagramCode(originalDiagramCode)
+            message.success('Reverted to original diagram code')
+          }
+        }}
+        originalDiagramCode={originalDiagramCode}
         onShowState={handleShowState}
         onExportSubmit={async (filename, format) => {
           // TODO: Implement export logic (download diagram as file)

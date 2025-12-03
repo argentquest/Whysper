@@ -30,6 +30,7 @@ export interface DiagramStatus {
   currentState: Record<string, unknown>
   clarifications: string[]
   diagramCode: string
+  originalDiagramCode?: string
   svgOutput: string
   errors: string[]
   diagramType: string

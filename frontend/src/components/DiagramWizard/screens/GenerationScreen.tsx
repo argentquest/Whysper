@@ -38,6 +38,7 @@ interface GenerationScreenProps {
   score: number
   scoreTarget: number
   diagramCode: string
+  originalDiagramCode: string
   svgOutput: string
   chatHistory: Message[]
   clarifications: Array<{ question: string; answer?: string }>
@@ -52,6 +53,8 @@ interface GenerationScreenProps {
   onExportModalClose: () => void
   onExportSubmit: (filename: string, format: string) => void
   onCodeChange?: (code: string) => void
+  onRenderClick?: (code: string) => void
+  onRevertToOriginal?: () => void
   onShowState?: () => void
   error?: { message: string }
 }
@@ -69,6 +72,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   score,
   scoreTarget,
   diagramCode,
+  originalDiagramCode,
   svgOutput,
   chatHistory,
   clarifications,
@@ -79,6 +83,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   jsonRepresentation,
   onExportModalClose,
   onCodeChange,
+  onRenderClick,
+  onRevertToOriginal,
   onShowState,
   error,
 }) => {
@@ -238,6 +244,25 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                         }}
                       >
                         <Button
+                          type="primary"
+                          size="small"
+                          onClick={() => onRenderClick?.(diagramCode)}
+                          disabled={!diagramCode || !sessionId || loading}
+                          title="Render diagram with current code (skips validation)"
+                        >
+                          Render
+                        </Button>
+                        {originalDiagramCode && diagramCode !== originalDiagramCode && (
+                          <Button
+                            type="default"
+                            size="small"
+                            onClick={onRevertToOriginal}
+                            title="Revert to original generated code"
+                          >
+                            Revert
+                          </Button>
+                        )}
+                        <Button
                           type="text"
                           size="small"
                           icon={<CopyOutlined />}
@@ -248,6 +273,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <CodeEditorPanel
                           code={diagramCode}
+                          originalCode={originalDiagramCode}
                           onChange={async (code: string) => onCodeChange?.(code)}
                           diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}

@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Button, Space, Input, Spin, message, Tooltip } from 'antd';
+import { Card, Button, Space, Spin, message, Tooltip, Badge } from 'antd';
 import {
   CopyOutlined,
   CheckOutlined,
@@ -21,14 +21,15 @@ import {
   WarningOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
+import Editor from '@monaco-editor/react';
 import { validateDiagramCode, debounce } from '../../../services/diagram/validationService';
 import type { ValidationResult } from '../../../services/diagram/validationService';
 import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
 
-// Define props interface for strongly typed component props
 interface Panel3CodeEditorProps {
   code: string;
+  originalCode?: string;
   diagramType: string;
   onChange: (code: string) => Promise<void>;
   isLoading: boolean;
@@ -36,6 +37,7 @@ interface Panel3CodeEditorProps {
 
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
+  originalCode,
   diagramType,
   onChange,
   isLoading,
@@ -246,23 +248,20 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
           </div>
         ) : (
           <>
-            <Input.TextArea
+            <Editor
+              height="800px"
+              defaultLanguage="plaintext"
               value={isEditing ? editedCode : code}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              disabled={!isEditing || isLoading}
-              readOnly={!isEditing}
-              style={{
-                fontFamily: 'monospace',
-                fontSize: 12,
-                height: '800px',
-                border: 'none',
-                backgroundColor: '#ffffff',
-                color: '#000000',
-              }}
-              styles={{
-                textarea: {
-                  color: '#000000 !important',
-                }
+              onChange={(value) => handleCodeChange(value || '')}
+              theme="vs-light"
+              options={{
+                readOnly: !isEditing,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                automaticLayout: true,
               }}
             />
             {isEditing && (

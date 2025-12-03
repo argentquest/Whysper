@@ -754,6 +754,7 @@ def create_standalone_html(diagram_code: str, diagram_type: str) -> str:
                     options: {{
                         layout: 'dagre',
                         sketch: false,
+                        bundle: false,
                     }}
                 }});
                 console.log('✅ D2 code compiled');
