@@ -156,6 +156,15 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
       if (update.json_representation) {
         transformedUpdate.jsonRepresentation = update.json_representation
       }
+      if ((update as any).svg_output && !update.svgOutput) {
+        transformedUpdate.svgOutput = (update as any).svg_output
+      }
+      if ((update as any).diagram_code && !update.diagramCode) {
+        transformedUpdate.diagramCode = (update as any).diagram_code
+      }
+      if ((update as any).diagram_type && !update.diagramType) {
+        transformedUpdate.diagramType = (update as any).diagram_type
+      }
 
       // Merge new update with existing status (preserves fields not in current update)
       setStatus((prev) => ({ ...(prev ?? {}), ...transformedUpdate }))

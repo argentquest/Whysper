@@ -101,7 +101,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading 
       style={{
         padding: '40px',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #e8f4f8 0%, #d4e9f0 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -110,11 +110,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading 
     >
       <Space direction="vertical" size="large" style={{ width: '100%', maxWidth: '1200px' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', color: 'white', marginBottom: '20px' }}>
-          <Typography.Title level={2} style={{ color: 'white', marginBottom: '8px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <Typography.Title level={2} style={{ color: '#1a1a1a', marginBottom: '8px' }}>
             Choose Your AI Model
           </Typography.Title>
-          <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>
+          <Typography.Paragraph style={{ color: '#595959', fontSize: '16px' }}>
             Select the AI model that best fits your architecture needs. You can use a different
             model for each diagram.
           </Typography.Paragraph>
@@ -195,12 +195,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading 
         <div
           style={{
             textAlign: 'center',
-            color: 'rgba(255,255,255,0.7)',
             marginTop: '40px',
             fontSize: '12px',
           }}
         >
-          <Typography.Text style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <Typography.Text style={{ color: '#595959' }}>
             💡 Tip: Different models handle architectures differently. Feel free to experiment!
           </Typography.Text>
         </div>

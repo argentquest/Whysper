@@ -66,9 +66,9 @@ def strip_d2_icons(code: str) -> str:
     cleaned_code = re.sub(r"\n\s*\n\s*\n", "\n\n", cleaned_code)
 
     if icon_lines:
-        logger.info(f"Removed {len(icon_lines)} icon attribute(s) from D2 code")
+        logger.info(f"TOASTINFO: Removed {len(icon_lines)} icon attribute(s) from D2 code")
     else:
-        logger.info("No icon attributes found to remove")
+        logger.info("TOASTINFO: No icon attributes found to remove")
 
     logger.info("Completed strip_d2_icons process")
     return cleaned_code.strip()
@@ -135,7 +135,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     corrections: List[str] = []
     corrected_code = code
 
-    logger.info("Starting fix_d2_syntax")
+    logger.info("TOASTINFO: Starting fix_d2_syntax")
 
     # ===== Fix 1: Ensure proper brace matching =====
     # D2 uses braces {} to define containers (nested scopes).
@@ -161,7 +161,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     if re.search(r"\s*-\s*>\s*", corrected_code):
         corrected_code = re.sub(r"\s*-\s*>\s*", " -> ", corrected_code)
         corrections.append("Fixed arrow syntax (normalized spacing)")
-        logger.info("fix_d2_syntax: normalized arrow syntax")
+        logger.info("TOASTINFO: fix_d2_syntax: normalized arrow syntax")
 
     # ===== Fix 3: Ensure proper label syntax for connections =====
     # D2 connection labels with spaces MUST be quoted: A -> B: "my label"
@@ -189,7 +189,7 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     if "direction:" not in corrected_code and "->" in corrected_code:
         corrected_code = "direction: right\n\n" + corrected_code
         corrections.append("Added default direction: right")
-        logger.info("fix_d2_syntax: added default direction: right")
+        logger.info("TOASTINFO: fix_d2_syntax: added default direction: right")
 
     # ===== Final validation =====
     # Run structural validation to catch any remaining errors
@@ -234,7 +234,7 @@ def _validate_d2_structure(code: str) -> List[str]:
     if brace_stack > 0:
         errors.append(f"Unmatched opening braces: {brace_stack} braces not closed")
 
-    logger.info("Completed _validate_d2_structure", extra={"error_count": len(errors)})
+    logger.info("TOASTINFO: Completed _validate_d2_structure", extra={"error_count": len(errors)})
     return errors
 
 
@@ -315,13 +315,13 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         # Exit code != 0 means syntax error
         # D2 CLI writes errors to stderr
         error_message = e.stderr.strip() or e.stdout.strip() or "Unknown D2 syntax error"
-        logger.info("Completed validate_d2_with_cli with syntax error")
+        logger.info("TOASTINFO: Completed validate_d2_with_cli with syntax error")
         return (False, f"D2 Syntax Error:\n{error_message}")
 
     except subprocess.TimeoutExpired:
         # Process didn't complete within 10 seconds
         logger.info("validate_d2_with_cli timed out")
-        return (False, "D2 validation timed out")
+        return (False, "TOASTINFO: D2 validation timed out")
 
     except FileNotFoundError:
         # d2 executable not found in PATH or at specified path
@@ -379,7 +379,7 @@ def validate_d2_and_render(
             rendered_output is the file content (string for SVG, base64 string for PNG).
     """
     logger.info("TOASTINFO: Starting validate_d2_and_render", extra={"format": output_format})
-    logger.info("d2code: {d2_code}", extra={"format": output_format})
+    logger.info("TOASTINFO d2code: {d2_code}", extra={"format": output_format})
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".d2", delete=False) as temp_input:
         temp_input_name = temp_input.name
@@ -412,11 +412,11 @@ def validate_d2_and_render(
 
     except subprocess.CalledProcessError as e:
         error_message = e.stderr.strip() or e.stdout.strip() or "Unknown D2 error"
-        logger.info("validate_d2_and_render failed with CLI error")
+        logger.info("TOASTINFO: validate_d2_and_render failed with CLI error")
         return (False, f"D2 Rendering Error:\n{error_message}", None)
 
     except Exception as e:
-        logger.info("validate_d2_and_render failed with unexpected error")
+        logger.info("TOASTINFO: validate_d2_and_render failed with unexpected error")
         return (False, f"Unexpected error during rendering: {str(e)}", None)
 
     finally:
@@ -607,11 +607,11 @@ class D2V1Provider(BaseDiagramProvider):
         Returns:
             ValidationResult: Result of validation.
         """
-        self.logger.info("Starting validate_code", extra={"length": len(code)})
+        self.logger.info("TOASTINFO: Starting validate_code", extra={"length": len(code)})
         if not self.is_available():
             return ValidationResult(is_valid=False, error="D2 CLI not available", code_length=len(code))
 
-        self.logger.info(f"Validating D2 code ({len(code)} chars)")
+        self.logger.info(f"TOASTINFO: Validating D2 code ({len(code)} chars)")
 
         # Strip icon attributes to avoid 403 errors from terrastruct.com
         cleaned_code = strip_d2_icons(code)
@@ -640,7 +640,7 @@ class D2V1Provider(BaseDiagramProvider):
         Returns:
             ValidationResult: Result of the auto-fix attempt.
         """
-        self.logger.info("Starting pattern-based auto-fix")
+        self.logger.info("TOASTINFO: Starting pattern-based auto-fix")
 
         # Strip icon attributes first to avoid 403 errors
         cleaned_code = strip_d2_icons(code)
@@ -731,10 +731,10 @@ class D2V1Provider(BaseDiagramProvider):
             if is_valid and rendered_output:
                 output_size = len(rendered_output)
                 self.logger.info(
-                    f"Rendered to {output_format.upper()} " f"({output_size} bytes, {output_size / 1024:.1f} KB)"
+                    f"TOASTINFO: Rendered to {output_format.upper()} " f"({output_size} bytes, {output_size / 1024:.1f} KB)"
                 )
                 if output_format.lower() == "svg":
-                    self.logger.info("SVG output", extra={"svg": rendered_output})
+                    self.logger.info("TOASTINFO: SVG output", extra={"svg": rendered_output})
 
                 return RenderResult(
                     success=True,
@@ -798,7 +798,7 @@ class D2V1Provider(BaseDiagramProvider):
             self.logger.warning(f"Failed to load correction_rules.md: {e}")
 
         # Fallback to hardcoded rules
-        self.logger.debug("Using hardcoded D2 correction rules")
+        self.logger.debug("TOASTINFO: Using hardcoded D2 correction rules")
         return """
 D2-SPECIFIC RULES:
 - Use proper connection syntax: A -> B or A -- B

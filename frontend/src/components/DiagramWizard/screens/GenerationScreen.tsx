@@ -9,7 +9,7 @@
  */
 
 import { CopyOutlined } from '@ant-design/icons'
-import { Alert, Button, Layout, message, Tabs } from 'antd'
+import { Alert, Button, Input, Layout, message, Tabs } from 'antd'
 import React from 'react'
 
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
@@ -252,6 +252,72 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}
                         />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'svg',
+                label: <span style={{ color: '#000000' }}>SVG</span>,
+                children: (
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
+                        <Button
+                          type='text'
+                          size='small'
+                          icon={<CopyOutlined />}
+                          onClick={() => svgOutput && navigator.clipboard.writeText(svgOutput)}
+                          title="Copy SVG"
+                          disabled={!svgOutput}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'auto' }}>
+                        {svgOutput ? (
+                          <Input.TextArea
+                            value={svgOutput}
+                            readOnly
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                              height: '100%',
+                              color: '#000000',
+                            }}
+                            autoSize={{ minRows: 12, maxRows: 30 }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              color: '#999',
+                              textAlign: 'center',
+                              paddingTop: '20px',
+                            }}
+                          >
+                            No SVG generated yet
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -28,6 +28,39 @@ from common.logging_decorator import log_method_call
 logger = logging.getLogger(__name__)
 
 
+class ToastToSSEHandler(logging.Handler):
+    """Logging handler that forwards TOAST* messages to the session SSE queue."""
+
+    def __init__(self, session: "DiagramSession"):
+        super().__init__(level=logging.INFO)
+        self.session = session
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            message = self.format(record)
+            if "TOAST" not in message:
+                return
+
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                return
+
+            async def push_to_queue():
+                await self.session.update_queue.put(
+                    {
+                        "status": record.levelname.lower(),
+                        "message": message,
+                        "session_id": self.session.session_id,
+                    }
+                )
+
+            loop.create_task(push_to_queue())
+        except Exception:
+            # Avoid breaking logging pipeline on handler errors
+            pass
+
+
 class DiagramSession:
     """Represents a single diagram generation session.
 
@@ -63,6 +96,7 @@ class DiagramSession:
         self.graph_state: Optional[GraphState] = None  # LangGraph state
         self.graph_task: Optional[asyncio.Task] = None  # Generation task
         self.is_running: bool = False  # Processing status
+        self.toast_handler: Optional[logging.Handler] = None
 
 
 class DiagramSessionStore:
@@ -200,6 +234,13 @@ class DiagramFactoryService:
         self.session = session
         self.graph = get_diagram_factory_graph(self)  # LangGraph workflow
         self._load_keywords()
+
+        # Attach logging handler to forward TOAST* log lines to SSE queue
+        if not self.session.toast_handler:
+            handler = ToastToSSEHandler(self.session)
+            handler.setLevel(logging.INFO)
+            logging.getLogger().addHandler(handler)
+            self.session.toast_handler = handler
 
     def _load_keywords(self):
         """Load keywords from JSON file for runtime configuration.

@@ -304,16 +304,18 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           message.loading('Generating diagram code...')
           setIsInAnalysisPhase(false)
           break
-        case 'code_generated':
+        case 'code_generated': {
           // Diagram code has been successfully generated
           message.success('Code generated!')
           setIsInAnalysisPhase(false)
           // Get diagram code directly from SSE update (included to avoid timing issues)
-          if (update.diagramCode) {
-            console.log('✅ Setting diagram code from SSE update:', update.diagramCode.length, 'characters')
-            setLocalDiagramCode(update.diagramCode)
+          const codeFromUpdate = update.diagramCode || (update as any)?.diagram_code
+          if (codeFromUpdate) {
+            console.log('✅ Setting diagram code from SSE update:', codeFromUpdate.length, 'characters')
+            setLocalDiagramCode(codeFromUpdate)
           }
           break
+        }
         case 'refining':
           // Diagram code had validation errors, AI attempting to fix them
           message.warning('Refining code...')
@@ -364,21 +366,24 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           message.success(update.message || 'Rendering complete!')
           setIsInAnalysisPhase(false)
           break
-        case 'rendered':
+        case 'rendered': {
           // SVG successfully generated and ready for display
           message.success('Preview ready!')
           setIsInAnalysisPhase(false)
           setCurrentScreen('generation')
           // Get SVG and code directly from SSE update (included to avoid timing issues)
-          if (update.svgOutput) {
-            console.log('✅ Setting SVG from SSE update:', update.svgOutput.length, 'characters')
-            setLocalSvgOutput(update.svgOutput)
+          const svgFromUpdate = update.svgOutput || (update as any)?.svg_output
+          if (svgFromUpdate) {
+            console.log('✅ Setting SVG from SSE update:', svgFromUpdate.length, 'characters')
+            setLocalSvgOutput(svgFromUpdate)
           }
-          if (update.diagramCode) {
-            console.log('✅ Setting diagram code from SSE update:', update.diagramCode.length, 'characters')
-            setLocalDiagramCode(update.diagramCode)
+          const codeFromUpdate = update.diagramCode || (update as any)?.diagram_code
+          if (codeFromUpdate) {
+            console.log('✅ Setting diagram code from SSE update:', codeFromUpdate.length, 'characters')
+            setLocalDiagramCode(codeFromUpdate)
           }
           break
+        }
         case 'completed':
           // Entire workflow complete: analysis -> clarification -> generation -> rendering
           setCurrentPhase(4) // Move to final "Rendering" phase
@@ -488,8 +493,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
   // ============ Hybrid State: SSE + Local Edits ============
   // Extract SSE-provided values (server state)
-  const sseProvidedDiagramCode = status?.diagramCode ?? ''
-  const sseProvidedSvgOutput = status?.svgOutput ?? ''
+  const sseProvidedDiagramCode = status?.diagramCode ?? (status as any)?.diagram_code ?? ''
+  const sseProvidedSvgOutput = status?.svgOutput ?? (status as any)?.svg_output ?? ''
   const sseProvidedStructurizrWorkspace = (status as any)?.structurizr_workspace || ''
   const sseProvidedCleanStructurizr = (status as any)?.clean_structurizr || ''
   const sseProvidedJsonRepresentation = status?.jsonRepresentation ?? null

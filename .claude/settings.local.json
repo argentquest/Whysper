@@ -31,7 +31,8 @@
       "Bash(timeout:*)",
       "Bash(.venv/Scripts/python.exe:*)",
       "Bash(curl:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

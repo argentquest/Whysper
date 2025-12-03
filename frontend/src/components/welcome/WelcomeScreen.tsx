@@ -65,7 +65,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
   const brandTagline = Brand.tagline || Brand.name || 'AI Assistant';
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'linear-gradient(135deg, #e8f4f8 0%, #d4e9f0 100%)' }}>
       <div style={{ width: 800, padding: 40, background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)', display: 'flex' }}>
         {/* Access key input section */}
         <div style={{ flex: 1, paddingRight: 40 }}>

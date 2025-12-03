@@ -19,9 +19,28 @@ import {
   ZoomOutOutlined,
 } from '@ant-design/icons'
 import { Alert,Button, Card, Empty, Space, Spin } from 'antd'
-import React, { useCallback,useEffect, useRef, useState } from 'react'
+import React, { useCallback,useEffect, useMemo, useRef, useState } from 'react'
 
 import styles from '../diagram-wizard.module.css'
+
+// Remove the outer D2 wrapper <svg> to avoid nested SVG issues in preview.
+const stripOuterSvgWrapper = (svg: string): string => {
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(svg, 'image/svg+xml')
+    const root = doc.documentElement
+    const firstChild = root?.firstElementChild
+    if (
+      root?.tagName?.toLowerCase() === 'svg' &&
+      firstChild?.tagName?.toLowerCase() === 'svg'
+    ) {
+      return firstChild.outerHTML
+    }
+    return svg
+  } catch {
+    return svg
+  }
+}
 
 // Define the props structure for the preview component
 interface Panel2PreviewProps {
@@ -45,6 +64,8 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const sanitizedSvg = useMemo(() => (svgOutput ? stripOuterSvgWrapper(svgOutput) : ''), [svgOutput])
 
   // Zoom in function with controlled maximum scale limit
   const handleZoomIn = useCallback(() => {
@@ -145,6 +166,7 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
     console.log('🎨 PreviewPanel render:', {
       hasSvgOutput: !!svgOutput,
       svgLength: svgOutput?.length || 0,
+      sanitizedLength: sanitizedSvg?.length || 0,
       isLoading,
       hasError: !!(error || validationError),
       diagramType,
@@ -268,8 +290,8 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
             display: 'inline-block',
             minWidth: 'fit-content',
             minHeight: 'fit-content',
-          }}
-          dangerouslySetInnerHTML={{ __html: svgOutput }}
+        }}
+          dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
         />
       </div>
     )
