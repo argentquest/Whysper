@@ -174,42 +174,62 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
 
           {/* Right: Confirm Button + Model + Session + Status */}
           <Space size="middle" className={styles.headerMeta}>
-            {onShowState && (
-              <Button size="small" onClick={onShowState}>
-                View State
-              </Button>
-            )}
             {/* Confirm Ready Button - Prominent placement */}
             {canConfirmReady && onConfirmReady && (
-              <Button
-                type="primary"
-                size="large"
-                onClick={onConfirmReady}
-                loading={loading}
-                style={{
-                  backgroundColor: '#52c41a',
-                  borderColor: '#52c41a',
-                  fontWeight: 'bold',
-                  boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)',
-                }}
-              >
-                ✓ Confirm Ready
-              </Button>
+              <Tooltip title="Confirm that you're ready to proceed to diagram generation">
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={onConfirmReady}
+                  loading={loading}
+                  style={{
+                    backgroundColor: '#52c41a',
+                    borderColor: '#52c41a',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)',
+                  }}
+                >
+                  ✓ Confirm Ready
+                </Button>
+              </Tooltip>
+            )}
+            {onShowState && (
+              <Tooltip title="View current session state and debug information">
+                <Button size="large" onClick={onShowState}>
+                  View State
+                </Button>
+              </Tooltip>
             )}
 
             {selectedModel && (
-              <Tag color="blue" style={{ fontSize: '12px', padding: '4px 8px' }}>
-                🤖 {getModelDisplayName(selectedModel)}
-              </Tag>
+              <Tooltip title={`AI Model: ${getModelDisplayName(selectedModel)}`}>
+                <Button size="large" type="default" style={{ cursor: 'default' }}>
+                  🤖 {getModelDisplayName(selectedModel)}
+                </Button>
+              </Tooltip>
             )}
             {sessionId && (
               <>
-                <span className={styles.sessionId}>{sessionId.substring(0, 8)}...</span>
-                <Badge
-                  status={sseConnected ? 'success' : 'error'}
-                  text={sseConnected ? 'Connected' : 'Disconnected'}
-                  style={{ fontSize: '11px' }}
-                />
+                <Tooltip title={`Session ID: ${sessionId}`}>
+                  <Button size="large" type="default" style={{ cursor: 'default' }}>
+                    {sessionId.substring(0, 8)}...
+                  </Button>
+                </Tooltip>
+                <Tooltip title={sseConnected ? 'Real-time connection active' : 'Connection lost'}>
+                  <Button
+                    size="large"
+                    type="default"
+                    style={{ cursor: 'default' }}
+                    icon={
+                      <Badge
+                        status={sseConnected ? 'success' : 'error'}
+                        style={{ marginRight: 4 }}
+                      />
+                    }
+                  >
+                    {sseConnected ? 'Connected' : 'Disconnected'}
+                  </Button>
+                </Tooltip>
                 {loading && <Spin size="small" />}
               </>
             )}

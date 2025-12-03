@@ -2,11 +2,11 @@
 
 .landing-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f0 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px 20px 40px;
   position: relative;
   overflow-y: auto;
 }
@@ -19,20 +19,21 @@
 
 .landing-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 32px;
+  margin-top: 20px;
   animation: fadeInDown 0.6s ease-out;
 }
 
 .landing-title {
-  color: white !important;
+  color: #1a1a1a !important;
   font-size: 48px !important;
   font-weight: 700 !important;
   margin-bottom: 16px !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: none;
 }
 
 .landing-subtitle {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: #595959 !important;
   font-size: 18px !important;
   max-width: 800px;
   margin: 0 auto !important;
@@ -98,7 +99,7 @@
 .feature-card-title {
   text-align: center;
   margin-bottom: 12px !important;
-  font-size: 16px !important;
+  font-size: 32px !important;
   font-weight: 600 !important;
   color: #1f2937;
 }
@@ -107,7 +108,7 @@
   text-align: center;
   color: #6b7280;
   margin-bottom: 24px !important;
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.6;
 }
 
@@ -117,7 +118,7 @@
 }
 
 .benefits-label {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
@@ -132,7 +133,7 @@
 }
 
 .benefits-list li {
-  font-size: 11px;
+  font-size: 14px;
   color: #4b5563;
   padding: 4px 0;
   padding-left: 18px;
@@ -164,10 +165,10 @@
 /* Footer Tip */
 .landing-footer {
   text-align: center;
-  color: rgba(255, 255, 255, 0.95);
+  color: #595959;
   font-size: 15px;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   backdrop-filter: blur(10px);
   animation: fadeIn 1s ease-out 0.8s both;

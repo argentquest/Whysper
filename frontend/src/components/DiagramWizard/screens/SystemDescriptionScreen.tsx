@@ -195,10 +195,10 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
 
   const handleClearAndChangeModel = () => {
     Modal.confirm({
-      title: 'Change AI Model?',
+      title: 'Changge System Prompt?',
       content:
-        'Are you sure you want to select a different model? Your current session will be reset.',
-      okText: 'Yes, Change Model',
+        'Are you sure you want to select a different prompt? Your current session will be reset.',
+      okText: 'Yes, Change Prompt',
       cancelText: 'Cancel',
       onOk() {
         onChangeModel()
@@ -267,15 +267,15 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               }}
             >
               <div>
-                <h3>Describe Your System</h3>
-                <p style={{ marginBottom: 0, color: '#666' }}>
+                <h3 style={{ fontSize: '42px', fontWeight: 600 }}>Describe Your System</h3>
+                <p style={{ marginBottom: 0, color: '#666', fontSize: '18px' }}>
                   Tell us about the system or process you want to visualize. We'll have a
                   conversation to gather all the details needed.
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Using:</div>
-                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                <div style={{ fontSize: '16px', color: '#999', marginBottom: '4px' }}>Using:</div>
+                <Tag color="blue" style={{ fontSize: '18px', padding: '4px 12px' }}>
                   {selectedModel.toUpperCase()}
                 </Tag>
                 <Button
@@ -300,7 +300,7 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               }}
             >
               <Editor
-                height="200px"
+                height="400px"
                 defaultLanguage="plaintext"
                 value={userInput}
                 onChange={(value) => onInputChange(value || '')}
@@ -312,8 +312,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
                 options={{
                   minimap: { enabled: false },
                   scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  lineNumbers: 'on',
+                  fontSize: 17,
+                  lineNumbers: 'off',
                   wordWrap: 'on',
                   wrappingStrategy: 'advanced',
                   automaticLayout: true,

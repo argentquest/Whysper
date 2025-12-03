@@ -232,30 +232,33 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'started':
           // Session has been created, AI beginning analysis of user's description
-          setCurrentPhase(1) // Move to "Analysis" phase in UI
+          setCurrentPhase(0) // Move to "Analysis" phase in UI (index 0)
           setIsInAnalysisPhase(true) // Enable analysis UI indicators
           message.info('AI received your request and is starting the analysis...')
           break
         case 'analyzing':
           // AI actively analyzing system description for clarity and completeness
-          setCurrentPhase(1) // Stay in "Analysis" phase
+          setCurrentPhase(0) // Stay in "Analysis" phase (index 0)
           message.info('Analyzing your system description...')
           break
         case 'analysis_complete':
           // AI has finished initial analysis, may proceed to clarification or generation
+          setCurrentPhase(1) // Move to "Clarification" phase (index 1) - conversation begins
           message.success('Analysis complete!')
           break
         case 'clarifying':
           // AI is formulating clarification questions based on gaps in description
-          setCurrentPhase(2) // Move to "Clarification" phase in UI
+          setCurrentPhase(1) // Stay in "Clarification" phase (index 1)
           message.info('AI is asking clarifying questions...')
           break
         case 'clarification_ready':
           // User submitted clarification response, AI processing it
+          setCurrentPhase(1) // Stay in "Clarification" phase (index 1)
           message.success('Clarification received. Processing...')
           break
         case 'can_proceed':
           // AI determined it has sufficient information to generate diagram
+          setCurrentPhase(1) // Stay in "Clarification" phase (index 1) - waiting for user to confirm ready
           message.success('Ready to proceed with diagram generation!')
           break
         case 'json_generated':
@@ -268,6 +271,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'awaiting_diagram_type_selection':
           // AI has analyzed diagram options and is waiting for user to select preferred type
+          setCurrentPhase(2) // Move to "Generation" phase (index 2) - user confirmed ready
           message.info('Analyzing content to recommend the best diagram type...')
           setIsInAnalysisPhase(false)
           // Extract diagram type options and scores from update
@@ -286,6 +290,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'diagram_type_selected':
           // User selected diagram type, AI proceeding to code generation
+          setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.success('Diagram type selected')
           setDiagramTypeSelected(true)
           setIsInAnalysisPhase(false)
@@ -294,13 +299,13 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'generating_json':
           // AI creating structured JSON representation of system architecture
-          setCurrentPhase(2) // Stay in preparation phase
+          setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.loading('Preparing structured data...')
           setIsInAnalysisPhase(false)
           break
         case 'generating':
           // AI actively generating diagram code from structured data
-          setCurrentPhase(3) // Move to "Generation" phase in UI
+          setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.loading('Generating diagram code...')
           setIsInAnalysisPhase(false)
           break
@@ -358,16 +363,19 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'rendering':
           // Backend rendering diagram code to SVG using appropriate renderer (Step 4/4)
+          setCurrentPhase(3) // Move to "Rendering" phase (index 3)
           message.loading(update.message || 'Rendering SVG...')
           setIsInAnalysisPhase(false)
           break
         case 'render_complete':
           // Provider completed rendering successfully
+          setCurrentPhase(3) // Stay in "Rendering" phase (index 3)
           message.success(update.message || 'Rendering complete!')
           setIsInAnalysisPhase(false)
           break
         case 'rendered': {
           // SVG successfully generated and ready for display
+          setCurrentPhase(3) // Stay in "Rendering" phase (index 3)
           message.success('Preview ready!')
           setIsInAnalysisPhase(false)
           setCurrentScreen('generation')
@@ -710,7 +718,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
 
       // Immediately move to generation screen while backend continues workflow
       setCurrentScreen('generation')
-      setCurrentPhase(3) // Generation phase indicator
+      setCurrentPhase(2) // Generation phase indicator (index 2)
 
       // Note: Navigation to generation screen happens via SSE update
       // Backend sends 'diagram_type_selected' status which triggers navigation
@@ -936,6 +944,28 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       />
     )
   }
+  // Screen 3: Diagram Type Selection (check before description screen to prioritize)
+  // Show after clarification phase when user confirms ready
+  else if (currentScreen === 'diagramTypeSelection') {
+    screenContent = (
+      <DiagramTypeSelectionScreen
+        selectedModel={selectedModel}
+        currentPhase={currentPhase}
+        phases={phases}
+        sessionId={sessionId}
+        score={score}
+        scoreTarget={scoreTarget}
+        sseConnected={sseConnected}
+        loading={loading}
+        recommendedDiagramType={recommendedDiagramType}
+        keywordScores={keywordScores}
+        analysisText={diagramAnalysisText}
+        jsonGenerationOutput={jsonGenerationOutput}
+        onSelectDiagramType={handleSelectDiagramType}
+        onShowState={handleShowState}
+      />
+    )
+  }
   // Screen 2: System Description + Analysis + Clarification
   // Show if model selected but no session started OR explicit description screen navigation
   else if (currentScreen === 'description' || (!sessionId && selectedModel)) {
@@ -961,28 +991,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onSubmitClarification={handleSubmitClarification}
         onConfirmReady={handleConfirmReady}
         error={error ? { message: error.message } : undefined}
-        onShowState={handleShowState}
-      />
-    )
-  }
-  // Screen 3: Diagram Type Selection
-  // Show after clarification phase when user confirms ready
-  else if (currentScreen === 'diagramTypeSelection') {
-    screenContent = (
-      <DiagramTypeSelectionScreen
-        selectedModel={selectedModel}
-        currentPhase={currentPhase}
-        phases={phases}
-        sessionId={sessionId}
-        score={score}
-        scoreTarget={scoreTarget}
-        sseConnected={sseConnected}
-        loading={loading}
-        recommendedDiagramType={recommendedDiagramType}
-        keywordScores={keywordScores}
-        analysisText={diagramAnalysisText}
-        jsonGenerationOutput={jsonGenerationOutput}
-        onSelectDiagramType={handleSelectDiagramType}
         onShowState={handleShowState}
       />
     )

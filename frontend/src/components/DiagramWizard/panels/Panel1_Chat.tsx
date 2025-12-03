@@ -267,7 +267,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                               style={{
                                 width: '100%',
                                 borderCollapse: 'collapse',
-                                fontSize: 14,
+                                fontSize: 18,
                               }}
                             >
                               <thead>
@@ -321,7 +321,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                           <p
                             style={{
                               margin: 0,
-                              fontSize: 14,
+                              fontSize: 18,
                               textAlign: msg.role === 'user' ? 'right' : 'left',
                             }}
                           >
@@ -401,7 +401,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     options={{
                       minimap: { enabled: false },
                       scrollBeyondLastLine: false,
-                      fontSize: 14,
+                      fontSize: 18,
                       lineNumbers: 'off',
                       wordWrap: 'on',
                       wrappingStrategy: 'advanced',
@@ -420,7 +420,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                  <span style={{ fontSize: '12px', color: '#999' }}>Press Ctrl+Enter to send</span>
+                  <span style={{ fontSize: '16px', color: '#999' }}>Press Ctrl+Enter to send</span>
                   <Button
                     type="primary"
                     icon={<SendOutlined />}
@@ -451,7 +451,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
             maxHeight: '100%',
           }}
         >
-          <h4 style={{ marginTop: 0, marginBottom: 12, flexShrink: 0 }}>AI Response</h4>
+          <h4 style={{ marginTop: 0, marginBottom: 12, flexShrink: 0, fontSize: '20px' }}>AI Response</h4>
 
           {latestAssistantMessage ? (
             <div
@@ -531,7 +531,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                             readOnly: true,
                             minimap: { enabled: false },
                             scrollBeyondLastLine: false,
-                            fontSize: 12,
+                            fontSize: 16,
                             lineNumbers: 'on',
                             wordWrap: 'on',
                             automaticLayout: true,
@@ -567,7 +567,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                             readOnly: true,
                             minimap: { enabled: false },
                             scrollBeyondLastLine: false,
-                            fontSize: 12,
+                            fontSize: 16,
                             lineNumbers: 'on',
                             wordWrap: 'on',
                             automaticLayout: true,

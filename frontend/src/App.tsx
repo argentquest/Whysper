@@ -1367,30 +1367,32 @@ function App() {
   return (
     <AntdApp>
       <Layout className="flex h-screen flex-col" style={getThemeBackgroundStyles()}>
-        {/* Header */}
-        <Header
-          onSetContext={() => setContextModalOpen(true)}
-          onNewConversation={handleNewTab}
-          onNewSession={handleNewSession}
-          onEditFile={() => setFileSelectionModalOpen(true)}
-          onOpenSettings={() => setSettingsModalOpen(true)}
-          onToggleTheme={toggleTheme}
-          onOpenThemePicker={() => setThemePickerModalOpen(true)}
-          onSystemMessage={() => setSystemMessageModalOpen(true)}
-          onAbout={() => setAboutModalOpen(true)}
-          onCodeFragments={() => setCodeFragmentsModalOpen(true)}
-          onGenerateDocumentation={handleGenerateDocumentation}
-          onHelp={handleToggleHelpModal}
-          onMermaidTester={() => setMermaidTesterModalOpen(true)}
-          onD2Tester={() => setD2TesterModalOpen(true)}
-          onDiagramWizard={handleNewDiagramWizardTab}
-          onArchStudio={handleNewArchStudioTab}
-          onHome={handleHome}
-          currentSystem={activeAgentName}
-          onSystemChange={handleSystemChange}
-          onRunSystemPrompt={handleRunSystemPrompt}
-          agentPrompts={agentPrompts}
-        />
+        {/* Header - Hide when Diagram Wizard is active */}
+        {activeTab?.type !== 'diagramWizard' && (
+          <Header
+            onSetContext={() => setContextModalOpen(true)}
+            onNewConversation={handleNewTab}
+            onNewSession={handleNewSession}
+            onEditFile={() => setFileSelectionModalOpen(true)}
+            onOpenSettings={() => setSettingsModalOpen(true)}
+            onToggleTheme={toggleTheme}
+            onOpenThemePicker={() => setThemePickerModalOpen(true)}
+            onSystemMessage={() => setSystemMessageModalOpen(true)}
+            onAbout={() => setAboutModalOpen(true)}
+            onCodeFragments={() => setCodeFragmentsModalOpen(true)}
+            onGenerateDocumentation={handleGenerateDocumentation}
+            onHelp={handleToggleHelpModal}
+            onMermaidTester={() => setMermaidTesterModalOpen(true)}
+            onD2Tester={() => setD2TesterModalOpen(true)}
+            onDiagramWizard={handleNewDiagramWizardTab}
+            onArchStudio={handleNewArchStudioTab}
+            onHome={handleHome}
+            currentSystem={activeAgentName}
+            onSystemChange={handleSystemChange}
+            onRunSystemPrompt={handleRunSystemPrompt}
+            agentPrompts={agentPrompts}
+          />
+        )}
 
         {/* Tab Manager */}
         <TabManager

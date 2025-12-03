@@ -112,11 +112,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({ onSelect, loading 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <Typography.Title level={2} style={{ color: '#1a1a1a', marginBottom: '8px' }}>
-            Choose Your AI Model
+            Choose Your Starting System Prompt
           </Typography.Title>
           <Typography.Paragraph style={{ color: '#595959', fontSize: '16px' }}>
-            Select the AI model that best fits your architecture needs. You can use a different
-            model for each diagram.
+            Select the prompt that best fits your architecture needs. You can use a different
+            system prompt for each diagram.
           </Typography.Paragraph>
         </div>
 

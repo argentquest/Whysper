@@ -254,7 +254,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
               style={{
                 fontFamily: 'monospace',
                 fontSize: 12,
-                height: '400px',
+                height: '800px',
                 border: 'none',
                 backgroundColor: '#ffffff',
                 color: '#000000',

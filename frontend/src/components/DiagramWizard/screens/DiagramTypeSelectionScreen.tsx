@@ -151,50 +151,6 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
             </Paragraph>
           </div>
 
-          {analysisText && (
-            <Card
-              title="AI Response"
-              size="small"
-              style={{ marginBottom: 24, borderRadius: 8 }}
-              bodyStyle={{ background: '#fafafa' }}
-            >
-              <pre
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  margin: 0,
-                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                {analysisText}
-              </pre>
-            </Card>
-          )}
-
-          {jsonGenerationOutput && (
-            <Card
-              title="JSON Generation Output"
-              size="small"
-              style={{ marginBottom: 24, borderRadius: 8 }}
-              bodyStyle={{ background: '#fafafa' }}
-            >
-              <pre
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  margin: 0,
-                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                }}
-              >
-                {jsonGenerationOutput}
-              </pre>
-            </Card>
-          )}
-
           {/* Summary Table of Diagram Type Scores */}
           <div style={{ marginBottom: 32 }}>
             <Table
@@ -255,7 +211,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
             />
           </div>
 
-          <Row gutter={[24, 24]}>
+          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
             {DIAGRAM_TYPES.map((diagramType) => {
               const isRecommended = diagramType.type === recommendedDiagramType
               const scoreValue = keywordScores[diagramType.type] || 0
@@ -326,6 +282,50 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
               )
             })}
           </Row>
+
+          {analysisText && (
+            <Card
+              title="AI Response"
+              size="small"
+              style={{ marginBottom: 24, borderRadius: 8 }}
+              bodyStyle={{ background: '#fafafa' }}
+            >
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                {analysisText}
+              </pre>
+            </Card>
+          )}
+
+          {jsonGenerationOutput && (
+            <Card
+              title="JSON Generation Output"
+              size="small"
+              style={{ marginBottom: 24, borderRadius: 8 }}
+              bodyStyle={{ background: '#fafafa' }}
+            >
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                  fontFamily: 'Consolas, Menlo, Monaco, "Courier New", monospace',
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                {jsonGenerationOutput}
+              </pre>
+            </Card>
+          )}
         </div>
       </Layout.Content>
     </Layout>

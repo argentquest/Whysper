@@ -41,9 +41,6 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 }) => {
   return (
     <Card className="feature-card" hoverable>
-      <div className="feature-card-icon" style={{ color }}>
-        {icon}
-      </div>
       <Title level={4} className="feature-card-title">
         {title}
       </Title>
@@ -91,6 +88,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const features = [
     {
+      title: 'Diagram Wizard',
+      description: 'AI-powered diagram generation from natural language',
+      icon: <DeploymentUnitOutlined style={{ fontSize: '30px' }} />,
+      color: '#52c41a',
+      bestFor: [
+        'System architecture diagrams',
+        'Workflow visualizations',
+        'Mermaid & D2 diagrams',
+        'Interactive clarification',
+      ],
+      onSelect: onDiagramWizard,
+      buttonText: 'Create Diagram',
+    },
+    {
       title: 'AI Chat',
       description: 'Interactive conversations with multiple AI providers',
       icon: <MessageOutlined style={{ fontSize: '30px' }} />,
@@ -117,20 +128,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       ],
       onSelect: onSetContext,
       buttonText: 'Select Files',
-    },
-    {
-      title: 'Diagram Wizard',
-      description: 'AI-powered diagram generation from natural language',
-      icon: <DeploymentUnitOutlined style={{ fontSize: '30px' }} />,
-      color: '#52c41a',
-      bestFor: [
-        'System architecture diagrams',
-        'Workflow visualizations',
-        'Mermaid & D2 diagrams',
-        'Interactive clarification',
-      ],
-      onSelect: onDiagramWizard,
-      buttonText: 'Create Diagram',
     },
     {
       title: 'File Editor',

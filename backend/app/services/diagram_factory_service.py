@@ -397,7 +397,7 @@ class DiagramFactoryService:
         Args:
             initial_prompt: User's system description
             diagram_type: Requested diagram type or "auto" for analysis
-            model_id: Optional AI model to use (gpt5, grok, claude, gemini)
+            model_id: Prompt System to use (gpt5, grok, claude, gemini)
         """
         try:
             self.session.history.append(("user", initial_prompt))
