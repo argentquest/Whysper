@@ -9,7 +9,7 @@
   "overrides": {
     "llm_correction": {
       "max_retries": 8,
-      "max_tokens": 6000,
+      "max_tokens": 16000,
       "model_override": null
     },
 

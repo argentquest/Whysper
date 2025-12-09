@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Any
 from app.services.documentation_service import documentation_service, DocumentationRequest
 from common.logging_decorator import log_method_call
 from fastapi.responses import StreamingResponse
@@ -24,7 +24,7 @@ class GenerateDocumentationRequest(BaseModel):
 
 class GenerateDocumentationResponse(BaseModel):
     session_guid: str
-    documentation_results: Dict[str, str]
+    documentation_results: Dict[str, Any]
 
 
 @router.post(
@@ -59,7 +59,13 @@ async def generate_documentation(request: GenerateDocumentationRequest):
         # Generate documentation and return the result
         # Uses a service method that caches the results with a GUID
         result = documentation_service.generate_documentation_with_guid(doc_request)
-        return result
+
+        # Map the service result to the API response format
+        session_guid = result.metadata.get("session_guid", result.id)
+        return GenerateDocumentationResponse(
+            session_guid=session_guid,
+            documentation_results={"content": result.content, "metadata": result.metadata}
+        )
     except Exception as e:
         # Catch and convert any errors to an HTTP 500 server error
         raise HTTPException(status_code=500, detail=str(e))

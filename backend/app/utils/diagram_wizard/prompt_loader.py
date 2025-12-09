@@ -37,16 +37,26 @@ def load_prompts() -> Dict[str, str]:
     # Load unified analyse/clarify prompt if it exists, otherwise load legacy separate prompts
     unified_path = prompt_dir / "ANALYSE_CLARIFY.md"
     if unified_path.exists():
-        # Use a single prompt for both analyze and clarify stages
+        # Use unified prompt for initial analysis
         unified_content = _load_full_file(unified_path)
         _prompt_cache["analyze_request"] = unified_content
-        _prompt_cache["clarify_universal"] = unified_content
-    else:
-        # Fallback to separate prompt files for backward compatibility
+
+    # Load clarify-only prompt for subsequent clarification turns
+    clarify_only_path = prompt_dir / "CLARIFY_ONLY.md"
+    if clarify_only_path.exists():
+        # Use simplified clarify prompt for iterative questioning
+        _prompt_cache["clarify_universal"] = _load_full_file(clarify_only_path)
+    elif unified_path.exists():
+        # Fallback to unified prompt if CLARIFY_ONLY doesn't exist
+        _prompt_cache["clarify_universal"] = _load_full_file(unified_path)
+
+    # Legacy fallback for backward compatibility
+    if "analyze_request" not in _prompt_cache:
         analyze_path = prompt_dir / "ANALYZE_PROMPT.md"
         if analyze_path.exists():
             _prompt_cache["analyze_request"] = _load_full_file(analyze_path)
 
+    if "clarify_universal" not in _prompt_cache:
         clarify_path = prompt_dir / "CLARIFY_PROMPTS.md"
         if clarify_path.exists():
             # Extract specific section for universal clarification

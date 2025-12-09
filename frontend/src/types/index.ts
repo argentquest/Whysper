@@ -89,13 +89,12 @@ export interface Tab {
   title: string
   isActive: boolean
   isDirty: boolean
-  type: 'chat' | 'file' | 'documentation' | 'diagramWizard' | 'archStudio'
+  type: 'chat' | 'file' | 'documentation' | 'diagramWizard'
   filePath?: string
   fileContent?: string
   originalContent?: string
   // Additional properties for new tab types
   sessionId?: string // For diagram wizard sessions
-  projectId?: string // For architecture studio projects
 }
 
 /**
@@ -143,6 +142,50 @@ export interface ApiResponse<T = unknown> {
   data?: T
   error?: string
   message?: string
+}
+
+/**
+ * Response from the GitHub repository import API endpoint.
+ *
+ * This interface defines the structure returned by POST /api/v1/github/import
+ * after successfully fetching and scanning a public GitHub repository. The data
+ * is compatible with the existing Set Context UI (ContextModal, FileTreeModal).
+ *
+ * @interface GitHubImportResponse
+ * @property {string} repository - Repository identifier in "owner/name" format (e.g., "facebook/react")
+ * @property {string} ref - Git reference that was fetched (branch, tag, or commit SHA)
+ * @property {string} rootPath - Local filesystem path to the cached repository root
+ * @property {string} scanPath - Local filesystem path that was scanned (may be a subdirectory)
+ * @property {FileItem[]} files - Array of file metadata compatible with file selection UI
+ * @property {Record<string, unknown>} tree - Hierarchical directory tree for tree view navigation
+ * @property {string} message - User-friendly success message (e.g., "Loaded python/cpython@main from GitHub")
+ *
+ * @example
+ * const response: GitHubImportResponse = {
+ *   repository: "python/cpython",
+ *   ref: "3.11",
+ *   rootPath: "/cache/python/cpython/3.11",
+ *   scanPath: "/cache/python/cpython/3.11/Lib",
+ *   files: [
+ *     { path: "Lib/os.py", name: "os.py", size: 12345, isSelected: false },
+ *     { path: "Lib/sys.py", name: "sys.py", size: 6789, isSelected: false }
+ *   ],
+ *   tree: {
+ *     name: "Lib",
+ *     type: "directory",
+ *     children: [...]
+ *   },
+ *   message: "Loaded python/cpython@3.11 from GitHub"
+ * }
+ */
+export interface GitHubImportResponse {
+  repository: string
+  ref: string
+  rootPath: string
+  scanPath: string
+  files: FileItem[]
+  tree: Record<string, unknown>
+  message: string
 }
 
 /**

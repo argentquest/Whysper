@@ -121,7 +121,7 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
 
   // Configure SSE connection for real-time backend updates
   // Automatically connects when sessionId is set, disconnects when cleared
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'
 
   const {
     isConnected: sseConnected, // Boolean: true when connection is active

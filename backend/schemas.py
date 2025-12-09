@@ -154,6 +154,120 @@ class DirectoryScanResponse(BaseModel):
     tree: dict
 
 
+class GitHubImportRequest(BaseModel):
+    """
+    Request schema for importing a public GitHub repository.
+
+    This model validates and normalizes the user's request to import a GitHub
+    repository for Set Context usage. It supports multiple repository identifier
+    formats and allows specifying a git reference and optional subpath.
+
+    Attributes:
+        repository: Repository identifier in one of these formats:
+            - Short form: "owner/repo" (e.g., "facebook/react")
+            - HTTPS URL: "https://github.com/owner/repo"
+            - HTTPS URL with .git: "https://github.com/owner/repo.git"
+        ref: Git reference to fetch. Can be:
+            - Branch name (e.g., "main", "develop")
+            - Tag (e.g., "v1.0.0", "2023.12")
+            - Commit SHA (full or abbreviated)
+            Defaults to "main" if not specified.
+        subpath: Optional subdirectory path within the repository to limit
+            the scan scope. For example, "packages/react" or "src/components".
+            Must exist within the repository and cannot escape the repo root.
+
+    Example:
+        >>> request = GitHubImportRequest(
+        ...     repository="python/cpython",
+        ...     ref="3.11",
+        ...     subpath="Lib/collections"
+        ... )
+    """
+    repository: str = Field(
+        ...,
+        description="Repository in owner/repo form or a GitHub URL",
+        examples=["facebook/react", "https://github.com/python/cpython"]
+    )
+    ref: Optional[str] = Field(
+        default="main",
+        description="Branch, tag, or commit SHA to fetch (default: main)",
+        examples=["main", "v18.2.0", "3.11.0"]
+    )
+    subpath: Optional[str] = Field(
+        default=None,
+        description="Optional subdirectory within the repo to limit scan scope",
+        examples=["packages/react", "src/lib", "Lib/collections"]
+    )
+
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
+
+
+class GitHubImportResponse(BaseModel):
+    """
+    Response schema for a successful GitHub repository import.
+
+    This model provides all the information needed for the Set Context UI
+    to display and select files from the imported repository. The structure
+    mirrors the response from local directory scanning for consistency.
+
+    Attributes:
+        repository: Normalized repository identifier in "owner/name" format.
+        ref: Git reference (branch/tag/commit) that was actually fetched.
+        rootPath: Absolute local filesystem path to the repository root.
+            This is the cached location where the tarball was extracted.
+        scanPath: Absolute local filesystem path that was scanned.
+            May be the same as rootPath, or a subdirectory if subpath was specified.
+        files: List of file metadata dictionaries, each containing:
+            - path: File path (relative or absolute)
+            - name: File name
+            - size: File size in bytes
+            - Additional fields from FileService.scan_directory
+        tree: Hierarchical directory tree structure with:
+            - name: Node name
+            - type: "file" or "directory"
+            - children: List of child nodes (for directories)
+            - Additional fields from FileService.build_directory_tree
+        message: User-friendly success message describing what was loaded.
+
+    Example:
+        >>> response = GitHubImportResponse(
+        ...     repository="python/cpython",
+        ...     ref="3.11",
+        ...     rootPath="/cache/python/cpython/3.11",
+        ...     scanPath="/cache/python/cpython/3.11/Lib",
+        ...     files=[...],
+        ...     tree={...},
+        ...     message="Loaded python/cpython@3.11 from GitHub"
+        ... )
+
+    Frontend Usage:
+        The frontend can consume this response directly:
+        - Display files in FileTreeModal for selection
+        - Show the tree structure for hierarchical navigation
+        - Use scanPath to indicate the context source
+        - Display message to confirm successful import
+    """
+    repository: str = Field(description="Repository in owner/name format")
+    ref: str = Field(description="Git reference that was fetched")
+    rootPath: str = Field(
+        alias="rootPath",
+        description="Local filesystem path to repository root"
+    )
+    scanPath: str = Field(
+        alias="scanPath",
+        description="Local filesystem path that was scanned"
+    )
+    files: List[dict] = Field(
+        description="List of file metadata dictionaries compatible with FileTreeModal"
+    )
+    tree: dict = Field(
+        description="Hierarchical directory tree compatible with FileTreeModal"
+    )
+    message: str = Field(description="Success message for user display")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class ThemeToggleResponse(BaseModel):
     theme: str
     message: str

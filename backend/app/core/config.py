@@ -250,6 +250,14 @@ class Settings(BaseSettings):
     mermaid_timeout: int = Field(default=30, description="Timeout for Mermaid rendering operations in seconds")
     mermaid_max_nodes: int = Field(default=100, description="Maximum number of nodes allowed in a Mermaid diagram")
 
+    # ==================== Kroki Configuration ====================
+    # Settings for Kroki diagram service
+    kroki: str = Field(
+        default="https://kroki.io",
+        validation_alias="KROKI",
+        description="Kroki service URL for diagram generation (default: https://kroki.io)"
+    )
+
     # ==================== File Operations Configuration ====================
     # Limits for file upload and management operations
     max_file_size: int = Field(

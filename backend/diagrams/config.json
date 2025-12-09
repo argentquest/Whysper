@@ -50,6 +50,6 @@
     "mermaid": "mermaidv1",
     "d2": "d2v1",
     "plantuml": "krokiplantuml",
-    "structurizr": "krokistructurizr"
+    "Structurizr": "krokistructurizr"
   }
 }

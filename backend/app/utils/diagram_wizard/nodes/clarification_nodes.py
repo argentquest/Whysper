@@ -121,7 +121,10 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
             await update_callback(
                 {
                     "status": "clarification_ready",
-                    "message": "Maximum clarification attempts reached. Please confirm to proceed with diagram generation.",
+                    "message": (
+                        "Maximum clarification attempts reached. "
+                        "Please confirm to proceed with diagram generation."
+                    ),
                     "clarity_score": state.get("clarity_score", 50),
                     "awaiting_user_confirmation": True,
                     "clarification_timeout": True,
@@ -131,31 +134,22 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
         # Wait for user confirmation instead of auto-proceeding
         return {
             "llm_ready": False,
-            "final_design_summary": "TIMEOUT: Maximum clarification attempts reached. Awaiting user confirmation to proceed.",
+            "final_design_summary": (
+                "TIMEOUT: Maximum clarification attempts reached. "
+                "Awaiting user confirmation to proceed."
+            ),
             "awaiting_user_confirmation": True,
             "clarification_timeout": True,
             "current_state": SessionState.CLARIFYING,
         }
 
-    # Get both ANALYZE and CLARIFY prompts for persistent schema context
+    # Get the CLARIFY-ONLY prompt for iterative questioning
+    # NOTE: First turn analysis already used ANALYSE_CLARIFY.md with full schema context
+    # Subsequent turns use CLARIFY_ONLY.md which focuses on iterative refinement
     model_id = state.get("model_id")  # Get selected model from state
-    analyze_prompt = get_prompt("analyze_request", model_id=model_id)
     clarify_prompt_template = get_prompt("clarify_universal", model_id=model_id)
 
-    # Combine prompts: ANALYZE provides schema context, CLARIFY guides the clarification loop
-    # This ensures the LLM has full schema reference throughout all turns
-    if analyze_prompt and clarify_prompt_template:
-        prompt_template = f"""{analyze_prompt}
-
----
-
-## Clarification Loop Phase
-
-{clarify_prompt_template}
-
-### Current Clarification Turn
-Continue refining the JSON representation based on the user's responses."""
-    elif clarify_prompt_template:
+    if clarify_prompt_template:
         prompt_template = clarify_prompt_template
     else:
         # Fallback prompt if specific prompt not found
@@ -178,9 +172,8 @@ Determine if you have enough information or need to ask more questions."""
         for msg in clarification_history[-10:]  # Look at more messages but filter
         if msg.get("role") == "user"  # Only include actual user input
     ]
-    user_content = "\n".join(
-        [f"User: {msg['content']}" for msg in user_messages[-5:]]  # Last 5 USER messages for context
-    )
+    # Last 5 USER messages for context
+    user_content = "\n".join([f"User: {msg['content']}" for msg in user_messages[-5:]])
 
     if not user_content:
         user_content = "User wants to create a diagram. Please start the clarification process."

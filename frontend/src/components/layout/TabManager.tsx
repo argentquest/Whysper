@@ -4,7 +4,6 @@ import {
   MoreOutlined,
   PartitionOutlined,
   PlusOutlined,
-  ProjectOutlined,
   SaveOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -27,7 +26,6 @@ const { Link } = Typography
  * @property {Function} onTabSave - Callback when a tab is saved
  * @property {Function} onNewTab - Callback to create a new default tab
  * @property {Function} [onNewDiagramWizardTab] - Callback to create a new diagram wizard tab
- * @property {Function} [onNewArchStudioTab] - Callback to create a new architecture studio tab
  * @property {Function} [onTabsAction] - Callback for bulk tab actions (close all, etc.)
  */
 interface TabManagerProps {
@@ -38,7 +36,6 @@ interface TabManagerProps {
   onTabSave: (tabId: string) => void
   onNewTab: () => void
   onNewDiagramWizardTab?: () => void
-  onNewArchStudioTab?: () => void
   onTabsAction?: (action: string, tabId?: string) => void
 }
 
@@ -46,7 +43,7 @@ interface TabManagerProps {
  * TabManager component
  *
  * Manages application tabs, allowing users to switch between different views
- * (Chat, Diagram Wizard, Architecture Studio).
+ * (Chat, Diagram Wizard, File Editor, Documentation).
  * Provides controls for creating, closing, and managing tabs.
  *
  * @param {TabManagerProps} props - Component props
@@ -60,7 +57,6 @@ export const TabManager: React.FC<TabManagerProps> = ({
   onTabSave,
   onNewTab,
   onNewDiagramWizardTab,
-  onNewArchStudioTab,
   onTabsAction,
 }) => {
   // Use Ant Design theme tokens for consistent styling across the application
@@ -136,13 +132,6 @@ export const TabManager: React.FC<TabManagerProps> = ({
       icon: <PartitionOutlined />,
       onClick: () => onNewDiagramWizardTab?.(),
       disabled: !onNewDiagramWizardTab,
-    },
-    {
-      key: 'archStudio',
-      label: 'Architecture Studio',
-      icon: <ProjectOutlined />,
-      onClick: () => onNewArchStudioTab?.(),
-      disabled: !onNewArchStudioTab,
     },
   ]
 

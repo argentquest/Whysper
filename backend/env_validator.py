@@ -199,7 +199,7 @@ class EnvValidator:
         self.add_rule(
             "API_PORT",
             lambda v: self._validate_int_range(v, 1, 65535),
-            "Port number for FastAPI server (1-65535, default: 8000)",
+            "Port number for FastAPI server (1-65535, default: 8003)",
             "server",
         )
 
@@ -212,7 +212,7 @@ class EnvValidator:
 
         # Web Application Configuration
         self.add_rule(
-            "FASTAPI_URL", self._validate_fastapi_url, "Backend URL for frontend (e.g., http://localhost:8000)", "web"
+            "FASTAPI_URL", self._validate_fastapi_url, "Backend URL for frontend (e.g., http://localhost:8003)", "web"
         )
 
         self.add_rule(
@@ -710,7 +710,7 @@ class EnvValidator:
         )  # path
 
         if not url_pattern.match(value):
-            return False, f"Invalid URL format: {value}. Use format like 'http://localhost:8000'"
+            return False, f"Invalid URL format: {value}. Use format like 'http://localhost:8003'"
 
         # Parse URL to validate components
         try:
@@ -747,9 +747,9 @@ class EnvValidator:
             "LOG_LEVEL": "Use DEBUG for development, INFO for normal operation, WARNING/ERROR for production",
             "LOG_DIR": "Use a relative path like 'logs' or absolute path like '/var/log/whysper'",
             "DIR_SAVE": "Use a relative path like 'results' or 'output' for saving analysis results",
-            "API_PORT": "Use port 8000 for development, or any available port between 1024-65535 for production",
+            "API_PORT": "Use port 8003 for development, or any available port between 1024-65535 for production",
             "API_HOST": "Use '0.0.0.0' to accept connections from all interfaces, or '127.0.0.1' for localhost only",
-            "FASTAPI_URL": "Use format 'http://localhost:8000' or 'https://your-domain.com:8000' for production",
+            "FASTAPI_URL": "Use format 'http://localhost:8003' or 'https://your-domain.com:8003' for production",
             "WEB_PORT": "Use port 8080 for development, or any available port between 1024-65535 for production",
         }
 

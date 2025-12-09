@@ -34,6 +34,7 @@ from .endpoints import (
     diagram_provider,
     diagram_events,
     diagram as diagram_wizard,
+    github_context,
 )
 from mvp_diagram_generator import rendering_api as diagram_generator_api
 
@@ -103,4 +104,11 @@ api_router.include_router(
     auth.router,
     prefix="/auth",
     tags=["auth"],
+)
+
+# Include GitHub context import endpoints for Set Context
+api_router.include_router(
+    github_context.router,
+    prefix="/github",
+    tags=["github-context"],
 )

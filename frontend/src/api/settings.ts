@@ -1,5 +1,5 @@
 // Define backend connection details using environment variables or default port
-const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000'
+const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
 const BACKEND_URL = `http://localhost:${BACKEND_PORT}/api/v1`
 
 // Define interface for backend settings to ensure type safety

@@ -102,13 +102,17 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     Validates and corrects D2 syntax issues using pattern-based rules.
 
     This function implements fast, deterministic syntax corrections without requiring AI.
-    It applies a series of common fixes that resolve 80%+ of D2 syntax errors.
+    It applies a comprehensive series of common fixes that resolve 80%+ of D2 syntax errors.
 
-    Pattern Correction Strategy:
-    - Brace matching: Auto-closes unclosed containers.
-    - Arrow normalization: Fixes spacing in connection arrows (e.g., "A - > B" -> "A -> B").
-    - Label quoting: Adds quotes to connection labels with spaces.
-    - Direction declaration: Adds default "direction: right" if missing.
+    Pattern Correction Strategy (8 comprehensive fixes):
+    1. JSON-style object syntax → D2 syntax conversion
+    2. Nested style objects → dot notation conversion
+    3. Brace matching: Auto-closes unclosed containers
+    4. Arrow normalization: Fixes spacing in connection arrows (e.g., "A - > B" -> "A -> B")
+    5. Connection label quoting: Adds quotes to labels with spaces
+    6. Unterminated connection labels: Handles multi-line label issues
+    7. Invalid property removal: Comments out invalid property syntax
+    8. Direction declaration: Adds default "direction: right" if missing
 
     Why pattern-based first?
     - Fast: No network calls, instant results.
@@ -136,8 +140,50 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
     corrected_code = code
 
     logger.info("TOASTINFO: Starting fix_d2_syntax")
+    logger.info(f"[D2 FIXER] Original code: {code}")
 
-    # ===== Fix 1: Ensure proper brace matching =====
+    # ===== Fix 1: Convert JSON-style object syntax to proper D2 syntax =====
+    # Pattern: name: { shape: circle, label: "text" } -> name: "text" { shape: circle }
+    object_pattern = re.compile(r'(\w+):\s*\{\s*shape:\s*(\w+)[^}]*label:\s*"([^"]+)"[^}]*\}', re.MULTILINE)
+    matches = object_pattern.findall(corrected_code)
+    if matches:
+        for name, shape, label in matches:
+            corrections.append(f"Fixed object syntax for {name}: converted JSON-style to D2 syntax")
+            logger.info(f"fix_d2_syntax: converted JSON-style to D2 syntax for {name}")
+
+        def replace_object(match):
+            name, shape, label = match.groups()
+            return f'{name}: "{label}" {{\n  shape: {shape}'
+
+        corrected_code = object_pattern.sub(replace_object, corrected_code)
+        logger.info(f"[FIX1] code: {corrected_code}")
+
+    # ===== Fix 2: Convert nested style objects to dot notation =====
+    # Pattern: style: { fill: "#color" } -> style.fill: "#color"
+    style_pattern = re.compile(r"style:\s*\{([^}]+)\}", re.MULTILINE | re.DOTALL)
+    matches = style_pattern.findall(corrected_code)
+    if matches:
+        for style_content in matches:
+            style_lines = [line.strip() for line in style_content.split(",")]
+            fixed_styles = []
+            for line in style_lines:
+                if ":" in line:
+                    prop, value = line.split(":", 1)
+                    prop = prop.strip()
+                    value = value.strip()
+                    if prop and value:
+                        fixed_styles.append(f"  style.{prop}: {value}")
+
+            corrections.append("Fixed nested style object to dot notation")
+            logger.info("fix_d2_syntax: converted nested style object to dot notation")
+
+            def replace_style(match):
+                return "\n".join(fixed_styles)
+
+            corrected_code = style_pattern.sub(replace_style, corrected_code)
+            logger.info(f"[FIX2] code: {corrected_code}")
+
+    # ===== Fix 3: Ensure proper brace matching =====
     # D2 uses braces {} to define containers (nested scopes).
     # Common error: Users forget to close containers, leading to syntax errors.
     # Solution: Count opening/closing braces and auto-add missing ones.
@@ -149,12 +195,13 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         missing_braces = open_braces - close_braces
         corrected_code += "\n}" * missing_braces
         corrections.append(f"Added {missing_braces} missing closing brace(s)")
-        logger.info(f"fix_d2_syntax: added {missing_braces} missing closing brace(s)")
+        logger.info(f"[FIX3] code: {corrected_code}")
+        logger.info(f"fix_d3_syntax: added {missing_braces} missing closing brace(s)")
     elif close_braces > open_braces:
         # Cannot auto-fix: Too many closing braces means user error
         errors.append(f"Too many closing braces: {close_braces - open_braces} extra brace(s)")
 
-    # ===== Fix 2: Convert invalid arrow syntax (spaces in arrows) =====
+    # ===== Fix 4: Convert invalid arrow syntax (spaces in arrows) =====
     # D2 requires arrows without internal spaces: "->" or "<->" not "- >"
     # Common error: Users type "A - > B" which is invalid
     # Solution: Normalize all arrow spacing to " -> " (space before/after, not inside)
@@ -162,8 +209,9 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         corrected_code = re.sub(r"\s*-\s*>\s*", " -> ", corrected_code)
         corrections.append("Fixed arrow syntax (normalized spacing)")
         logger.info("TOASTINFO: fix_d2_syntax: normalized arrow syntax")
+        logger.info(f"[FIX4] code: {corrected_code}")
 
-    # ===== Fix 3: Ensure proper label syntax for connections =====
+    # ===== Fix 5: Ensure proper label syntax for connections =====
     # D2 connection labels with spaces MUST be quoted: A -> B: "my label"
     # Common error: A -> B: my label (missing quotes)
     # Solution: Detect unquoted labels and add quotes
@@ -180,16 +228,125 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         return match.group(0)
 
     corrected_code = connection_pattern.sub(fix_connection, corrected_code)
+    logger.info(f"[FIX6] code: {corrected_code}")
 
-    # ===== Fix 4: Add default direction if missing =====
+    # ===== Fix 6: Handle unterminated connection labels (multi-line handling) =====
+    # Pattern: A -> B: "text without closing quote
+    lines = corrected_code.split("\n")
+    fixed_lines = []
+    in_connection_label = False
+    current_connection = ""
+
+    for i, line in enumerate(lines):
+        line = line.rstrip()
+
+        # Check if this line starts a connection label
+        connection_match = re.match(r'^(\w+)\s*->\s*(\w+):\s*"([^"]*)$', line)
+        if connection_match:
+            in_connection_label = True
+            current_connection = line
+            continue
+
+        # Check if this line continues an unterminated label
+        if in_connection_label:
+            # Check if this line ends a connection
+            end_connection_match = re.match(r'^([^"]+)"\s*$', line)
+            if end_connection_match:
+                # Complete the connection with this line
+                parts = current_connection.split("->")
+                if len(parts) >= 2:
+                    from_part = parts[0].strip()
+                    to_parts = " -> ".join(parts[1:]).split(":")
+                    if len(to_parts) >= 2:
+                        to_part = to_parts[0].strip()
+                        label_part = ":".join(to_parts[1:]).strip().strip('"')
+                        label = (label_part + " " + end_connection_match.group(1)).strip()
+                        fixed_lines.append(f'{from_part} -> {to_part}: "{label}"')
+                        corrections.append("Fixed multi-line connection label")
+                        logger.info("fix_d2_syntax: fixed multi-line connection label")
+                        in_connection_label = False
+                        current_connection = ""
+                        continue
+
+            # Check if this line is a new connection (missing closing quote on previous)
+            new_connection_match = re.match(r"^(\w+)\s*->\s*(\w+):\s*(.+)$", line)
+            if new_connection_match:
+                # Close the previous connection and start a new one
+                parts = current_connection.split("->")
+                if len(parts) >= 2:
+                    from_part = parts[0].strip()
+                    to_parts = " -> ".join(parts[1:]).split(":")
+                    if len(to_parts) >= 2:
+                        to_part = to_parts[0].strip()
+                        label_part = ":".join(to_parts[1:]).strip().strip('"')
+                        label = label_part.strip()
+                        fixed_lines.append(f'{from_part} -> {to_part}: "{label}"')
+                        corrections.append("Fixed unterminated connection label before new connection")
+                        logger.info("fix_d2_syntax: fixed unterminated connection label before new connection")
+
+                # Handle the new connection
+                if '"' in new_connection_match.group(3):
+                    fixed_lines.append(line)
+                else:
+                    from_node = new_connection_match.group(1)
+                    to_node = new_connection_match.group(2)
+                    label = new_connection_match.group(3)
+                    fixed_lines.append(f'{from_node} -> {to_node}: "{label}"')
+                    corrections.append("Added quotes to connection label")
+                in_connection_label = False
+                current_connection = ""
+                continue
+
+            # This is part of the label, add it to current connection
+            current_connection += " " + line
+            continue
+
+        # Regular line, just add it
+        fixed_lines.append(line)
+
+    # Handle any remaining unterminated connection
+    if in_connection_label and current_connection:
+        parts = current_connection.split("->")
+        if len(parts) >= 2:
+            from_part = parts[0].strip()
+            to_parts = " -> ".join(parts[1:]).split(":")
+            if len(to_parts) >= 2:
+                to_part = to_parts[0].strip()
+                label_part = ":".join(to_parts[1:]).strip().strip('"')
+                label = label_part.strip()
+                fixed_lines.append(f'{from_part} -> {to_part}: "{label}"')
+                corrections.append("Fixed unterminated connection label at end of file")
+                logger.info("fix_d2_syntax: fixed unterminated connection label at end of file")
+
+    corrected_code = "\n".join(fixed_lines)
+    logger.info(f"[FIX6] code: {corrected_code}")
+
+    # ===== Fix 7: Remove invalid property syntax =====
+    # Pattern: property: value without proper context
+    invalid_property_pattern = re.compile(r"^\s*(\w+):\s*([^{}\n]+)\s*$", re.MULTILINE)
+
+    def remove_invalid_property(match):
+        prop, value = match.groups()
+        # Skip if this looks like a valid connection or object definition
+        if "->" in value or '"' in value or prop == "direction":
+            return match.group(0)
+
+        corrections.append(f"Removed invalid property: {prop}: {value}")
+        logger.info(f"fix_d2_syntax: removed invalid property: {prop}: {value}")
+        return f"# Invalid property removed: {prop}: {value}"
+
+    corrected_code = invalid_property_pattern.sub(remove_invalid_property, corrected_code)
+    logger.info(f"[FIX7] code: {corrected_code}")
+
+    # ===== Fix 8: Add default direction if missing =====
     # D2 diagrams with arrows should declare direction (right, down, left, up)
     # Common error: Users omit "direction: right" line
     # Solution: If arrows exist but no direction, add "direction: right" at top
-    # This was the BUG that was fixed - executable_path: null wasn't falling back!
     if "direction:" not in corrected_code and "->" in corrected_code:
         corrected_code = "direction: right\n\n" + corrected_code
         corrections.append("Added default direction: right")
         logger.info("TOASTINFO: fix_d2_syntax: added default direction: right")
+        logger.info(f"[FIX8] code: {corrected_code}")
 
     # ===== Final validation =====
     # Run structural validation to catch any remaining errors
@@ -201,13 +358,21 @@ def fix_d2_syntax(code: str) -> D2SyntaxFixResult:
         "TOASTINFO: Completed fix_d2_syntax",
         extra={"is_valid": is_valid, "corrections": len(corrections), "errors": len(errors)},
     )
+    logger.debug(f"[D2 FIXER] Corrections made: {corrections}")
+    logger.debug(f"[D2 FIXER] Errors found: {errors}")
+    logger.debug(f"[D2 FIXER] Corrected code: {corrected_code}")
 
     return D2SyntaxFixResult(is_valid, corrected_code, errors, corrections)
 
 
 def _validate_d2_structure(code: str) -> List[str]:
     """
-    Basic structural validation for D2 code.
+    Comprehensive structural validation for D2 code.
+
+    Performs deeper validation than basic brace counting, including:
+    - Brace matching and nesting validation
+    - Invalid object definition detection
+    - Property syntax validation
 
     Args:
         code (str): The D2 code to validate.
@@ -219,7 +384,7 @@ def _validate_d2_structure(code: str) -> List[str]:
     errors: List[str] = []
     lines = code.split("\n")
 
-    # Check for unmatched braces
+    # Check for unmatched braces (final verification)
     brace_stack = 0
     for i, line in enumerate(lines):
         open_count = line.count("{")
@@ -234,8 +399,67 @@ def _validate_d2_structure(code: str) -> List[str]:
     if brace_stack > 0:
         errors.append(f"Unmatched opening braces: {brace_stack} braces not closed")
 
+    # Check for invalid object definitions
+    object_def_pattern = re.compile(r'^(\w+):\s*"([^"]*)"\s*\{')
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        if (
+            ":" in line_stripped
+            and not object_def_pattern.match(line_stripped)
+            and "->" not in line_stripped
+            and not line_stripped.startswith("#")
+            and not line_stripped.startswith("direction:")
+            and "." not in line_stripped
+        ):
+            # This might be an invalid object definition
+            if "{" not in line_stripped and not line_stripped.startswith("style."):
+                errors.append(f"Line {i + 1}: Invalid object definition: {line_stripped}")
+
     logger.info("TOASTINFO: Completed _validate_d2_structure", extra={"error_count": len(errors)})
     return errors
+
+
+def looks_like_valid_d2(code: str) -> bool:
+    """
+    Quick validation to check if D2 code looks reasonable.
+
+    This performs a fast pattern-based check to determine if code appears to be valid D2
+    without running the full CLI validator. Useful for pre-flight checks.
+
+    Checks for D2-specific patterns:
+    - Connections (A -> B)
+    - Direction declarations
+    - Object definitions
+    - Style properties
+
+    Args:
+        code (str): The D2 code to check.
+
+    Returns:
+        bool: True if the code looks like valid D2, False otherwise.
+
+    Example:
+        >>> looks_like_valid_d2("A -> B")
+        True
+        >>> looks_like_valid_d2("")
+        False
+    """
+    if not code or not isinstance(code, str):
+        return False
+
+    trimmed = code.strip()
+    if not trimmed:
+        return False
+
+    # Look for D2-specific patterns
+    d2_patterns = [
+        re.compile(r"\w+\s*->\s*\w+"),  # Connections
+        re.compile(r"direction:\s*\w+"),  # Direction
+        re.compile(r'\w+:\s*"[^"]+"\s*\{'),  # Object definitions
+        re.compile(r"style\.\w+:"),  # Style properties
+    ]
+
+    return any(pattern.search(trimmed) for pattern in d2_patterns)
 
 
 # =====================================================================
@@ -299,7 +523,7 @@ def validate_d2_with_cli(d2_code: str, d2_executable: str = "d2") -> Tuple[bool,
         # -t 1: Use text layout engine (fastest for validation, no rendering)
         # check=True: Raise CalledProcessError if exit code != 0
         # timeout=10: Kill process if it takes longer than 10 seconds
-        result = subprocess.run(
+        subprocess.run(
             [d2_executable, temp_file_name, "-t", "1"],
             capture_output=True,  # Capture stdout and stderr
             text=True,  # Return strings not bytes
@@ -355,12 +579,73 @@ def is_d2_cli_available(d2_executable: str = "d2") -> bool:
     """
     logger.info("Checking D2 CLI availability")
     try:
-        result = subprocess.run([d2_executable, "--version"], capture_output=True, text=True, check=True, timeout=10)
+        subprocess.run([d2_executable, "--version"], capture_output=True, text=True, check=True, timeout=10)
         logger.info("D2 CLI availability check succeeded")
         return True
     except Exception:
         logger.info("D2 CLI availability check failed")
         return False
+
+
+def validate_and_fix_d2_with_cli(d2_code: str, d2_executable: str = "d2", max_attempts: int = 3) -> Tuple[bool, str, str]:
+    """
+    Validate D2 code and attempt to automatically fix syntax errors.
+
+    This function combines validation and pattern-based fixing in a retry loop.
+    It attempts to fix common syntax issues and re-validate up to max_attempts times.
+
+    Args:
+        d2_code (str): The D2 diagram code.
+        d2_executable (str): Path to the d2 executable (default: "d2").
+        max_attempts (int): Maximum number of fix attempts (default: 3).
+
+    Returns:
+        Tuple[bool, str, str]: A tuple containing:
+            - is_valid (bool): Whether the final code is valid.
+            - code (str): The (potentially fixed) D2 code.
+            - message (str): Validation/fix status message.
+
+    Example:
+        >>> is_valid, fixed_code, msg = validate_and_fix_d2_with_cli("x -> y")
+        >>> print(is_valid)
+        True
+        >>> print(fixed_code)
+        direction: right
+
+        x -> y
+    """
+    logger.info("TOASTINFO: Starting validate_and_fix_d2_with_cli", extra={"max_attempts": max_attempts})
+    current_code = d2_code
+
+    for attempt in range(max_attempts):
+        # Validate the current iteration of the code
+        is_valid, message = validate_d2_with_cli(current_code, d2_executable)
+
+        # Return successful validation with optional fix information
+        if is_valid:
+            if attempt > 0:
+                message = f"D2 syntax fixed after {attempt} attempt(s). {message}"
+                logger.info(f"TOASTINFO: D2 syntax fixed after {attempt} attempt(s)")
+            return (True, current_code, message)
+
+        # Stop attempts if at maximum retries
+        if attempt == max_attempts - 1:
+            logger.info(f"TOASTINFO: Failed to fix D2 syntax after {max_attempts} attempts")
+            return (False, current_code, message)
+
+        # Log and attempt to fix syntax issues
+        logger.debug(f"D2 validation failed on attempt {attempt + 1}, applying fixes...")
+        fix_result = fix_d2_syntax(current_code)
+        current_code = fix_result.corrected_code
+
+        # Stop if no corrections were possible
+        if not fix_result.corrections:
+            logger.debug("No corrections applied, stopping fix attempts")
+            return (False, current_code, message)
+
+    # Final fallback if all attempts fail
+    logger.info("TOASTINFO: Failed to validate D2 syntax after multiple attempts")
+    return (False, current_code, "Failed to validate D2 syntax after multiple attempts")
 
 
 def validate_d2_and_render(
@@ -391,7 +676,7 @@ def validate_d2_and_render(
 
     try:
         # Render to the specified format
-        result = subprocess.run(
+        subprocess.run(
             [d2_executable, temp_input_name, temp_output_name], capture_output=True, text=True, check=True, timeout=30
         )
 

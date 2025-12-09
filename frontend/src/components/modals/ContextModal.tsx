@@ -12,8 +12,8 @@ import {
   UnorderedListOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Checkbox, Input, message, Segmented,Select, Space, Spin, Typography } from 'antd'
-import React, { useEffect, useRef,useState } from 'react'
+import { Button, Checkbox, Input, message, Segmented, Select, Space, Spin, Typography } from 'antd'
+import React, { useEffect, useRef, useState } from 'react'
 
 import ApiService from '../../services/api'
 import type { FileItem, UploadedFile } from '../../types'
@@ -83,6 +83,11 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   const [currentDirectory, setCurrentDirectory] = useState('Root (All Files)')
   const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([])
   const [uploadLoading, setUploadLoading] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [githubRepo, setGithubRepo] = useState('')
+  const [githubRef, setGithubRef] = useState('main')
+  const [githubSubpath, setGithubSubpath] = useState('')
+  const [lastImportedPath, setLastImportedPath] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   /**
@@ -124,12 +129,24 @@ export const ContextModal: React.FC<ContextModalProps> = ({
    * @async
    * @returns {Promise<void>}
    */
+  // Normalize backend items (including GitHub import results) into the UI FileItem shape
+  const normalizeFileItems = (items: any[]): FileItem[] =>
+    items.map((item) => ({
+      path: item.path,
+      name: item.name || item.relativePath || item.path?.split(/[\\/]/).pop() || item.path,
+      size: item.size ?? 0,
+      isSelected: Boolean(item.isSelected),
+      type: item.type === 'directory' ? 'directory' : 'file',
+      is_uploaded: item.is_uploaded,
+      content: item.content,
+    }))
+
   const loadFiles = async () => {
     setLoading(true)
     try {
       const response = await ApiService.getFiles()
       if (response.success && response.data) {
-        setFiles(response.data)
+        setFiles(normalizeFileItems(response.data))
       } else {
         message.error(response.error || 'Failed to load files')
       }
@@ -152,7 +169,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     try {
       const response = await ApiService.getUploadedFiles()
       if (response.success && response.data) {
-        setUploadedFiles(response.data)
+        setUploadedFiles(normalizeFileItems(response.data))
       }
     } catch (error) {
       console.error('Error loading uploaded files:', error)
@@ -172,7 +189,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     try {
       const response = await ApiService.getFiles(path === 'Root (All Files)' ? undefined : path)
       if (response.success && response.data) {
-        setFiles(response.data)
+        setFiles(normalizeFileItems(response.data))
         setCurrentDirectory(path || 'Root (All Files)')
         message.success('Directory loaded successfully')
       } else {
@@ -369,6 +386,44 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   }
 
   /**
+   * Handles importing a public GitHub repository
+   * Fetches repository tarball, caches it locally, and loads files into the picker
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
+  const handleGitHubImport = async () => {
+    if (!githubRepo.trim()) {
+      message.warning('Enter a repository in owner/repo or GitHub URL form')
+      return
+    }
+    setImportLoading(true)
+    try {
+      const response = await ApiService.importGitHubRepo({
+        repository: githubRepo.trim(),
+        ref: githubRef.trim() || 'main',
+        subpath: githubSubpath.trim() || undefined,
+      })
+
+      if (response.success && response.data) {
+        const normalized = normalizeFileItems(response.data.files || [])
+        setFiles(normalized)
+        setCurrentDirectory(response.data.scanPath || 'GitHub import')
+        setLastImportedPath(response.data.scanPath || response.data.rootPath || null)
+        setSelectedFiles(new Set())
+        message.success(response.data.message || 'Repository imported')
+      } else {
+        message.error(response.error || 'Failed to import repository')
+      }
+    } catch (error) {
+      console.error('Error importing GitHub repo:', error)
+      message.error('Error importing GitHub repository')
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
+  /**
    * Predefined directory options for quick navigation
    * Common project directories for easy access
    */
@@ -398,6 +453,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         onCancel={onCancel}
         onApply={onApply}
         initialFiles={initialFiles}
+        externalFiles={files}
       />
     )
   }
@@ -442,45 +498,87 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           />
         </div>
 
-        {/* File Upload Button - Show in all views except tree */}
+        {/* GitHub import & Upload controls */}
         {String(viewMode) !== 'tree' && (
-          <div className="flex items-center gap-4">
-            <Button
-              type="primary"
-              icon={<UploadOutlined />}
-              onClick={handleUploadButtonClick}
-              loading={uploadLoading}
-              className="mb-4"
-            >
-              Upload Files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".txt,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,.yml,.yaml,.xml,.csv,.sql,.sh,.bat,.ps1,.go,.rs,.java,.cpp,.c,.h,.hpp,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.dart,.lua,.r,.m,.nim,.v,.zig,.cr,.ex,.exs,.elm,.purs,.tsv,.ini,.cfg,.conf,.toml,.env,.gitignore,.dockerfile,.makefile,.cmake"
-              style={{ display: 'none' }}
-              aria-label="Upload files for context"
-              title="Upload files to use as context in conversations"
-              onChange={(e) => {
-                const files = e.target.files
-                if (files) {
-                  handleFileUpload(Array.from(files))
-                }
-                // Reset input value to allow uploading the same file again
-                e.target.value = ''
-              }}
-            />
-            {viewMode === 'uploaded' && (
+          <div className="space-y-3">
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <Text className="mb-2 block text-sm font-medium">Import public GitHub repository</Text>
+              <div className="grid grid-cols-12 gap-2">
+                <Input
+                  className="col-span-6"
+                  placeholder="owner/repo or GitHub URL"
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  aria-label="GitHub repository"
+                />
+                <Input
+                  className="col-span-2"
+                  placeholder="ref (main)"
+                  value={githubRef}
+                  onChange={(e) => setGithubRef(e.target.value)}
+                  aria-label="Git reference"
+                />
+                <Input
+                  className="col-span-3"
+                  placeholder="subpath (optional)"
+                  value={githubSubpath}
+                  onChange={(e) => setGithubSubpath(e.target.value)}
+                  aria-label="GitHub subpath"
+                />
+                <Button
+                  type="primary"
+                  loading={importLoading}
+                  onClick={handleGitHubImport}
+                  className="col-span-1"
+                >
+                  Fetch
+                </Button>
+              </div>
+              {lastImportedPath && (
+                <Text className="mt-2 block text-xs text-gray-500">
+                  Loaded: {lastImportedPath}
+                </Text>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4">
               <Button
-                icon={<ReloadOutlined />}
-                onClick={loadUploadedFiles}
-                loading={loading}
+                type="primary"
+                icon={<UploadOutlined />}
+                onClick={handleUploadButtonClick}
+                loading={uploadLoading}
                 className="mb-4"
               >
-                Refresh
+                Upload Files
               </Button>
-            )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".txt,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,.yml,.yaml,.xml,.csv,.sql,.sh,.bat,.ps1,.go,.rs,.java,.cpp,.c,.h,.hpp,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.dart,.lua,.r,.m,.nim,.v,.zig,.cr,.ex,.exs,.elm,.purs,.tsv,.ini,.cfg,.conf,.toml,.env,.gitignore,.dockerfile,.makefile,.cmake"
+                style={{ display: 'none' }}
+                aria-label="Upload files for context"
+                title="Upload files to use as context in conversations"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (files) {
+                    handleFileUpload(Array.from(files))
+                  }
+                  // Reset input value to allow uploading the same file again
+                  e.target.value = ''
+                }}
+              />
+              {viewMode === 'uploaded' && (
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={loadUploadedFiles}
+                  loading={loading}
+                  className="mb-4"
+                >
+                  Refresh
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

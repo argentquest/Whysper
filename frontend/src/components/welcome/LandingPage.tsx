@@ -86,73 +86,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
   const brandTagline = Brand.tagline || Brand.name || 'Our AI Assistant'
 
-  const features = [
-    {
-      title: 'Diagram Wizard',
-      description: 'AI-powered diagram generation from natural language',
-      icon: <DeploymentUnitOutlined style={{ fontSize: '30px' }} />,
-      color: '#52c41a',
-      bestFor: [
-        'System architecture diagrams',
-        'Workflow visualizations',
-        'Mermaid & D2 diagrams',
-        'Interactive clarification',
-      ],
-      onSelect: onDiagramWizard,
-      buttonText: 'Create Diagram',
-    },
-    {
-      title: 'AI Chat',
-      description: 'Interactive conversations with multiple AI providers',
-      icon: <MessageOutlined style={{ fontSize: '30px' }} />,
-      color: '#1890ff',
-      bestFor: [
-        'Code analysis and review',
-        'Technical questions',
-        'Multi-file context support',
-        'Real-time streaming responses',
-      ],
-      onSelect: onNewChat,
-      buttonText: 'New Chat',
-    },
-    {
-      title: 'Set Context',
-      description: 'Select files and folders to ground AI responses',
-      icon: <FileTextOutlined style={{ fontSize: '30px' }} />,
-      color: '#13c2c2',
-      bestFor: [
-        'Attaching repo snippets',
-        'Grounded chat responses',
-        'Sharing logs and specs',
-        'Quickly updating context files',
-      ],
-      onSelect: onSetContext,
-      buttonText: 'Select Files',
-    },
-    {
-      title: 'File Editor',
-      description: 'Monaco-powered code editor with AI assistance',
-      icon: <CodeOutlined style={{ fontSize: '30px' }} />,
-      color: '#722ed1',
-      bestFor: [
-        'Direct file editing',
-        'Syntax highlighting',
-        'Multiple language support',
-        'Real-time validation',
-      ],
-      onSelect: onOpenFile,
-      buttonText: 'Open File',
-    },
-    {
-      title: 'Documentation',
-      description: 'Browse and search project documentation',
-      icon: <BookOutlined style={{ fontSize: '30px' }} />,
-      color: '#fa8c16',
-      bestFor: ['API documentation', 'Code examples', 'Architecture guides', 'Best practices'],
-      onSelect: onDocumentation,
-      buttonText: 'Browse Docs',
-    },
-  ]
+  const diagramWizardFeature = {
+    title: 'Diagram Wizard',
+    description: 'AI-powered diagram generation from natural language',
+    icon: <DeploymentUnitOutlined style={{ fontSize: '30px' }} />,
+    color: '#52c41a',
+    bestFor: [
+      'System architecture diagrams',
+      'Workflow visualizations',
+      'Mermaid & D2 diagrams',
+      'Interactive clarification',
+    ],
+    onSelect: onDiagramWizard,
+    buttonText: 'Create Diagram',
+  }
 
   return (
     <div className="landing-page">
@@ -162,23 +109,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             Welcome to {brandTagline}
           </Title>
           <Paragraph className="landing-subtitle">
-            Choose a feature to get started. Each tool is designed to enhance your development
-            workflow with AI-powered assistance.
+            Create beautiful system architecture diagrams with AI-powered assistance. Describe your
+            system in natural language and let the wizard guide you through clarification and
+            generation.
           </Paragraph>
         </div>
 
-        <Row gutter={[24, 24]} className="features-grid">
-          {features.map((feature, index) => (
-            <Col key={index} xs={24} sm={12} lg={6}>
-              <FeatureCard {...feature} />
-            </Col>
-          ))}
-        </Row>
+        <div className="features-sections">
+          <div className="feature-section">
+            <Row gutter={[24, 24]} className="features-grid" justify="center">
+              <Col key="diagram-wizard" xs={24} sm={20} md={16} lg={12} xl={10}>
+                <FeatureCard {...diagramWizardFeature} />
+              </Col>
+            </Row>
+          </div>
+        </div>
 
         <div className="landing-footer">
           <ThunderboltOutlined style={{ marginRight: '8px', color: '#faad14' }} />
           <span>
-            Tip: You can open multiple tabs and switch between different features seamlessly!
+            Tip: Access other tools like AI Chat, File Editor, and Documentation from the Tools menu
+            in the header!
           </span>
         </div>
       </div>

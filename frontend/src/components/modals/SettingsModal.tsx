@@ -217,9 +217,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onCancel, on
           ),
 
           // Server Configuration
-          apiPort: parseInt(settings.values?.API_PORT || '8000'),
+          apiPort: parseInt(settings.values?.API_PORT || '8003'),
           apiHost: settings.values?.API_HOST || '0.0.0.0',
-          fastapiUrl: settings.values?.FASTAPI_URL || 'http://localhost:8000',
+          fastapiUrl: settings.values?.FASTAPI_URL || 'http://localhost:8003',
 
           // CLI Memory
           lastUsedFolder: settings.values?.LAST_USED_FOLDER || '',
@@ -355,9 +355,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onCancel, on
         CUSTOM_PROVIDER_REQUEST_TIMEOUT: (values.customProviderRequestTimeout ?? 30).toString(),
 
         // Server Configuration
-        API_PORT: (values.apiPort ?? 8000).toString(),
+        API_PORT: (values.apiPort ?? 8003).toString(),
         API_HOST: values.apiHost || '0.0.0.0',
-        FASTAPI_URL: values.fastapiUrl || 'http://localhost:8000',
+        FASTAPI_URL: values.fastapiUrl || 'http://localhost:8003',
 
         // CLI Memory
         LAST_USED_FOLDER: values.lastUsedFolder || '',
@@ -489,9 +489,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onCancel, on
           aiReadTimeout: 120,
           openrouterTemperature: 0.1,
           customProviderRequestTimeout: 30,
-          apiPort: 8000,
+          apiPort: 8003,
           apiHost: '0.0.0.0',
-          fastapiUrl: 'http://localhost:8000',
+          fastapiUrl: 'http://localhost:8003',
           lastOutputFormat: 'markdown',
         }}
       >
@@ -887,7 +887,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onCancel, on
                     name="fastapiUrl"
                     tooltip="Backend URL for frontend to connect to"
                   >
-                    <Input placeholder="http://localhost:8000" />
+                    <Input placeholder="http://localhost:8003" />
                   </Form.Item>
 
                   <Form.Item

@@ -33,11 +33,12 @@ import type {
   FileItem, // File attachment structure
   FileUploadRequest, // File upload request structure
   FileUploadResponse, // File upload response structure
+  GitHubImportResponse, // GitHub import response structure
 } from '../types'
 
 // Backend API base URL - development mode uses separate ports
 // You can override the backend port by setting VITE_BACKEND_PORT in frontend/.env
-const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000'
+const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
 const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
 
 /**
@@ -501,6 +502,26 @@ export class ApiService {
     }
   }
 
+  // GitHub context import (public repos)
+  static async importGitHubRepo(payload: {
+    repository: string
+    ref?: string
+    subpath?: string
+  }): Promise<ApiResponse<GitHubImportResponse>> {
+    try {
+      const response = await api.post('/github/import', payload)
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to import GitHub repository',
+      }
+    }
+  }
+
   // Documentation endpoints
   static async generateDocumentation(request: {
     file_paths: string[]
@@ -512,15 +533,11 @@ export class ApiService {
     language?: string
   }): Promise<
     ApiResponse<{
-      id: string
-      content: string
-      metadata: Record<string, unknown>
-      diagrams: Array<Record<string, unknown>>
-      examples: Array<Record<string, unknown>>
-      references: string[]
-      generated_at: string
-      processing_time: number
-      token_usage: Record<string, number>
+      session_guid: string
+      documentation_results: {
+        content: string
+        metadata: Record<string, unknown>
+      }
     }>
   > {
     try {
@@ -534,6 +551,19 @@ export class ApiService {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to generate documentation',
       }
+    }
+  }
+
+  static async downloadDocumentation(session_guid: string): Promise<Blob> {
+    try {
+      const response = await api.get(`/documentation/download/${session_guid}`, {
+        responseType: 'blob',
+      })
+      return response.data
+    } catch (error: unknown) {
+      throw new Error(
+        error instanceof Error ? error.message : 'Failed to download documentation'
+      )
     }
   }
 

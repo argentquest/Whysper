@@ -96,3 +96,139 @@ the architecture described in the natural language input and enhence it as neede
 - Use appropriate constructs such as system, component, databse and platform
 - Maitain the original intent and structure without introducing any new compnnents and assumptions
 - All Text connecting the boxes should only have Invest, Migrate and Eliminate
+
+
+
+workspace {
+
+    model {
+        softwareSystem = softwareSystem "Internet Banking System" {
+            spa = container "Single-Page Application"
+            api = container "API Application"
+            db = container "Database"
+        }
+
+        # Define the Deployment Environment
+        live = deploymentEnvironment "Live" {
+            
+            deploymentNode "User's Computer" {
+                deploymentNode "Web Browser" {
+                    containerInstance spa
+                }
+            }
+
+            deploymentNode "Big Bank Data Center" {
+                deploymentNode "Ubuntu 16.04 LTS" {
+                    deploymentNode "Apache Tomcat" {
+                        containerInstance api
+                    }
+                }
+                
+                deploymentNode "Oracle Linux" {
+                    deploymentNode "Oracle 12c" {
+                        containerInstance db
+                    }
+                }
+            }
+        }
+    }
+
+    views {
+        deployment softwareSystem "Live" "Deployment" {
+            include *
+            autoLayout
+        }
+    }
+}
+
+workspace {
+
+    model {
+        user = person "User"
+        softwareSystem = softwareSystem "Internet Banking System" {
+            spa = container "Single-Page Application"
+            api = container "API Application" {
+                signin = component "Sign In Controller"
+                security = component "Security Component"
+                dbAccess = component "User Repository"
+            }
+            database = container "Database"
+        }
+        
+        # Relationships must exist in the model to be used in a dynamic view
+        user -> spa "Types credentials"
+        spa -> signin "Submits credentials"
+        signin -> security "Validates credentials"
+        security -> dbAccess "Retrieves user data"
+        dbAccess -> database "Select * from users..."
+    }
+
+    views {
+        dynamic api "SignInRequest" "Summarizes how the sign-in feature works" {
+            user -> spa "Types credentials"
+            spa -> signin "Submits credentials to"
+            signin -> security "Calls"
+            security -> dbAccess "Uses"
+            dbAccess -> database "Reads from"
+            autoLayout
+        }
+    }
+}
+
+workspace {
+
+    model {
+        softwareSystem = softwareSystem "Internet Banking System" {
+            database = container "Database"
+            
+            api = container "API Application" {
+                signinController = component "Sign In Controller" "Allows users to sign in to the Internet Banking System." "Spring MVC Rest Controller"
+                securityComponent = component "Security Component" "Provides functionality related to signing in, changing passwords, etc." "Spring Bean"
+                userRepository = component "User Repository" "Provides access to user information stored in the database." "Spring Data"
+            }
+        }
+
+        # Wiring components together
+        signinController -> securityComponent "Uses"
+        securityComponent -> userRepository "Uses"
+        userRepository -> database "Reads from and writes to" "JDBC"
+    }
+
+    views {
+        component api "Components" {
+            include *
+            autoLayout
+        }
+    }
+}
+
+workspace {
+
+    model {
+        user = person "User"
+        
+        softwareSystem = softwareSystem "Internet Banking System" {
+            webApp = container "Web Application" "Delivers the static content and the Internet banking single page application." "Java and Spring MVC"
+            spa = container "Single-Page Application" "Provides all of the Internet banking functionality to customers via their web browser." "JavaScript and Angular"
+            mobileApp = container "Mobile App" "Provides a limited subset of the Internet banking functionality." "Xamarin"
+            database = container "Database" "Stores user registration information, hashed credentials, access logs, etc." "Oracle Database Schema"
+            api = container "API Application" "Provides Internet banking functionality via a JSON/HTTPS API." "Java and Spring MVC"
+        }
+
+        user -> webApp "Visits bigbank.com/ib using" "HTTPS"
+        user -> spa "Views account dashboard using"
+        user -> mobileApp "Views account dashboard using"
+        
+        webApp -> spa "Delivers to the customer's web browser"
+        spa -> api "Make API calls to" "JSON/HTTPS"
+        mobileApp -> api "Make API calls to" "JSON/HTTPS"
+        api -> database "Reads from and writes to" "JDBC"
+    }
+
+    views {
+        container softwareSystem "Containers" {
+            include *
+            autoLayout
+        }
+    }
+}

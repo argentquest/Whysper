@@ -63,18 +63,6 @@ import ThemePickerModal from './components/modals/ThemePickerModal'
 import { LandingPage } from './components/welcome/LandingPage'
 import { WelcomeScreen } from './components/welcome/WelcomeScreen'
 
-// Placeholder Architecture Studio component (to be implemented)
-const ArchitectureGenStudio = () => {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div className="text-center">
-        <h2 className="mb-4 text-2xl font-bold text-gray-600">Architecture Studio</h2>
-        <p className="text-gray-500">Coming soon...</p>
-      </div>
-    </div>
-  )
-}
-
 // Terminal components
 
 // Theme management
@@ -925,25 +913,6 @@ function App() {
     message.success('New Diagram Wizard tab created')
   }
 
-  const handleNewArchStudioTab = () => {
-    const newTabId = `arch-tab-${Date.now()}`
-    const newProjectId = `arch-project-${Date.now()}`
-
-    const newTab: Tab = {
-      id: newTabId,
-      conversationId: '', // Not needed for arch studio
-      title: `Architecture Studio ${tabs.filter((t) => t.type === 'archStudio').length + 1}`,
-      isActive: true,
-      isDirty: false,
-      type: 'archStudio',
-      projectId: newProjectId,
-    }
-
-    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
-    setActiveTabId(newTabId)
-    message.success('New Architecture Studio tab created')
-  }
-
   const handleTabClose = (tabId: string) => {
     if (tabs.length <= 1) return
 
@@ -1304,8 +1273,9 @@ function App() {
       })
 
       if (response.success && response.data) {
-        const { content, metadata } = response.data
-        setDocumentationData({ content, metadata })
+        const { session_guid, documentation_results } = response.data
+        const { content, metadata } = documentation_results
+        setDocumentationData({ content, metadata: { ...metadata, session_guid } })
 
         const newTabId = `doc-tab-${Date.now()}`
         const newDocTab: Tab = {
@@ -1334,8 +1304,7 @@ function App() {
 
   const handleDownloadDocumentation = async (session_guid: string) => {
     try {
-      const response = await ApiService.get(`/documentation/download/${session_guid}`)
-      const blob = new Blob([response.data], { type: 'application/zip' })
+      const blob = await ApiService.downloadDocumentation(session_guid)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -1367,32 +1336,30 @@ function App() {
   return (
     <AntdApp>
       <Layout className="flex h-screen flex-col" style={getThemeBackgroundStyles()}>
-        {/* Header - Hide when Diagram Wizard is active */}
-        {activeTab?.type !== 'diagramWizard' && (
-          <Header
-            onSetContext={() => setContextModalOpen(true)}
-            onNewConversation={handleNewTab}
-            onNewSession={handleNewSession}
-            onEditFile={() => setFileSelectionModalOpen(true)}
-            onOpenSettings={() => setSettingsModalOpen(true)}
-            onToggleTheme={toggleTheme}
-            onOpenThemePicker={() => setThemePickerModalOpen(true)}
-            onSystemMessage={() => setSystemMessageModalOpen(true)}
-            onAbout={() => setAboutModalOpen(true)}
-            onCodeFragments={() => setCodeFragmentsModalOpen(true)}
-            onGenerateDocumentation={handleGenerateDocumentation}
-            onHelp={handleToggleHelpModal}
-            onMermaidTester={() => setMermaidTesterModalOpen(true)}
-            onD2Tester={() => setD2TesterModalOpen(true)}
-            onDiagramWizard={handleNewDiagramWizardTab}
-            onArchStudio={handleNewArchStudioTab}
-            onHome={handleHome}
-            currentSystem={activeAgentName}
-            onSystemChange={handleSystemChange}
-            onRunSystemPrompt={handleRunSystemPrompt}
-            agentPrompts={agentPrompts}
-          />
-        )}
+        {/* Header */}
+        <Header
+          onSetContext={() => setContextModalOpen(true)}
+          onNewConversation={handleNewTab}
+          onNewSession={handleNewSession}
+          onEditFile={() => setFileSelectionModalOpen(true)}
+          onOpenSettings={() => setSettingsModalOpen(true)}
+          onToggleTheme={toggleTheme}
+          onOpenThemePicker={() => setThemePickerModalOpen(true)}
+          onSystemMessage={() => setSystemMessageModalOpen(true)}
+          onAbout={() => setAboutModalOpen(true)}
+          onCodeFragments={() => setCodeFragmentsModalOpen(true)}
+          onGenerateDocumentation={handleGenerateDocumentation}
+          onHelp={handleToggleHelpModal}
+          onMermaidTester={() => setMermaidTesterModalOpen(true)}
+          onD2Tester={() => setD2TesterModalOpen(true)}
+          onDiagramWizard={handleNewDiagramWizardTab}
+          onHome={handleHome}
+          currentSystem={activeAgentName}
+          onSystemChange={handleSystemChange}
+          onRunSystemPrompt={handleRunSystemPrompt}
+          agentPrompts={agentPrompts}
+          activeTabType={activeTab?.type}
+        />
 
         {/* Tab Manager */}
         <TabManager
@@ -1403,7 +1370,6 @@ function App() {
           onTabSave={handleTabSave}
           onNewTab={handleNewTab}
           onNewDiagramWizardTab={handleNewDiagramWizardTab}
-          onNewArchStudioTab={handleNewArchStudioTab}
           onTabsAction={handleTabsAction}
         />
 
@@ -1457,9 +1423,6 @@ function App() {
               initialPrompt=""
               onClose={() => handleTabClose(activeTabId)}
             />
-          ) : activeTab?.type === 'archStudio' ? (
-            // Architecture Studio View
-            <ArchitectureGenStudio />
           ) : (
             // Chat View (default)
             <>
@@ -1568,10 +1531,6 @@ function App() {
           onCancel={() => setAboutModalOpen(false)}
           onCreateChatTab={() => {
             handleNewTab()
-            setAboutModalOpen(false)
-          }}
-          onCreateArchStudioTab={() => {
-            handleNewArchStudioTab()
             setAboutModalOpen(false)
           }}
         />

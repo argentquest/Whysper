@@ -32,6 +32,7 @@ interface FileTreeModalProps {
   onCancel: () => void
   onApply: (selectedFiles: FileItem[]) => void
   initialFiles?: FileItem[]
+  externalFiles?: FileItem[]
 }
 
 /**
@@ -57,6 +58,7 @@ export const FileTreeModal: React.FC<FileTreeModalProps> = ({
   onCancel,
   onApply,
   initialFiles = [],
+  externalFiles,
 }) => {
   const [loading, setLoading] = useState(false)
   const [treeData, setTreeData] = useState<TreeNode[]>([])
@@ -75,9 +77,18 @@ export const FileTreeModal: React.FC<FileTreeModalProps> = ({
     }
   }, [initialFiles])
 
+  // Prefer externally provided file listings (e.g., GitHub import) before calling backend scan
   const loadFiles = React.useCallback(async () => {
     setLoading(true)
     try {
+      if (externalFiles && externalFiles.length > 0) {
+        setAllFiles(externalFiles)
+        const tree = buildTreeFromFiles(externalFiles)
+        setTreeData(tree)
+        setExpandedKeys(tree.map((node) => node.key))
+        return
+      }
+
       const response = await ApiService.getFiles()
       if (response.success && response.data) {
         setAllFiles(response.data)
@@ -103,7 +114,7 @@ export const FileTreeModal: React.FC<FileTreeModalProps> = ({
     if (open) {
       loadFiles()
     }
-  }, [open, loadFiles])
+  }, [open, loadFiles, externalFiles])
 
   const buildTreeFromFiles = (files: FileItem[]): TreeNode[] => {
     const tree: { [key: string]: TreeNode } = {}

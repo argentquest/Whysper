@@ -19,6 +19,7 @@ import logging
 
 from diagrams.base_diagram import BaseDiagramProvider
 from diagrams.models import ProviderCapability, ValidationResult, RenderResult
+from app.core.config import settings
 
 from common.logging_decorator import log_method_call
 
@@ -57,8 +58,9 @@ class KrokiBaseProvider(BaseDiagramProvider):
         super().__init__(provider_folder)
 
         # Extract custom server configuration with sensible defaults
+        # Use environment variable KROKI as the default server URL
         custom_settings = self.config.custom or {}
-        self.server_url = custom_settings.get("server_url", "http://localhost:8000")
+        self.server_url = custom_settings.get("server_url", settings.kroki)
         self.timeout = custom_settings.get("timeout_seconds", 30)
         self.max_retries = custom_settings.get("max_retries", 3)
 

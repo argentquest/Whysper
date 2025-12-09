@@ -3,8 +3,17 @@
  *
  * This module exports the Header component for the application.
  */
-import { MenuOutlined, PlayCircleOutlined } from '@ant-design/icons'
-import { Button, Layout, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
+import {
+  BookOutlined,
+  CodeOutlined,
+  DeploymentUnitOutlined,
+  DownOutlined,
+  FileTextOutlined,
+  MenuOutlined,
+  MessageOutlined,
+  PlayCircleOutlined,
+} from '@ant-design/icons'
+import { Button, Dropdown, Layout, Menu, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
 import { Brand, BrandColors } from 'branding'
 import React from 'react'
 
@@ -35,7 +44,6 @@ const { Option } = Select
  * @property {Function} onMermaidTester - Callback to open Mermaid tester
  * @property {Function} onD2Tester - Callback to open D2 tester
  * @property {Function} onDiagramWizard - Callback to open Diagram Wizard
- * @property {Function} onArchStudio - Callback to open Architecture Studio
  * @property {Function} onHome - Callback to return to landing page
  * @property {string} [currentSystem] - Currently selected system prompt
  * @property {Function} onSystemChange - Callback when system prompt changes
@@ -58,12 +66,12 @@ interface HeaderProps {
   onMermaidTester: () => void
   onD2Tester: () => void
   onDiagramWizard: () => void
-  onArchStudio: () => void
   onHome: () => void
   currentSystem?: string
   onSystemChange: (system: string) => void
   onRunSystemPrompt: (systemName: string) => void
   agentPrompts?: AgentPrompt[]
+  activeTabType?: 'chat' | 'file' | 'documentation' | 'diagramWizard'
 }
 
 /**
@@ -81,10 +89,16 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onHome,
+  onNewConversation,
+  onSetContext,
+  onEditFile,
+  onGenerateDocumentation,
+  onDiagramWizard,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
   agentPrompts = [],
+  activeTabType,
 }) => {
   useTheme()
   const { token } = antdTheme.useToken()
@@ -100,6 +114,59 @@ export const Header: React.FC<HeaderProps> = ({
   const headerBorder =
     brandTokens.colorBrandHeaderBorder ?? BrandColors.secondary ?? BrandColors.primary
   const headerText = brandTokens.colorBrandHeaderText ?? '#ffffff'
+
+  // Tools dropdown menu items
+  const handleToolsMenuClick = ({ key }: { key: string }) => {
+    switch (key) {
+      case 'ai-chat':
+        onNewConversation()
+        break
+      case 'set-context':
+        onSetContext()
+        break
+      case 'file-editor':
+        onEditFile()
+        break
+      case 'documentation':
+        onGenerateDocumentation()
+        break
+      case 'diagram-wizard':
+        onDiagramWizard()
+        break
+    }
+  }
+
+  const toolsMenu = {
+    items: [
+      {
+        key: 'ai-chat',
+        label: 'AI Chat',
+        icon: <MessageOutlined />,
+      },
+      {
+        key: 'set-context',
+        label: 'Set Context',
+        icon: <FileTextOutlined />,
+      },
+      {
+        key: 'file-editor',
+        label: 'File Editor',
+        icon: <CodeOutlined />,
+      },
+      {
+        key: 'documentation',
+        label: 'Documentation',
+        icon: <BookOutlined />,
+      },
+      {
+        key: 'diagram-wizard',
+        label: 'Diagram Wizard',
+        icon: <DeploymentUnitOutlined />,
+      },
+    ],
+    onClick: handleToolsMenuClick,
+  }
+
   const mastheadActions = [
     { label: 'Home', handler: onHome, tooltip: 'Return to landing page' },
     { label: 'Settings', handler: onOpenSettings, tooltip: 'Configure application settings' },
@@ -300,9 +367,12 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          <div className="hidden max-w-3xl flex-1 px-6 lg:flex">
-            {renderAgentSelector(headerText)}
-          </div>
+          {/* Agent selector - only show for chat tabs */}
+          {activeTabType === 'chat' && (
+            <div className="hidden max-w-3xl flex-1 px-6 lg:flex">
+              {renderAgentSelector(headerText)}
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <nav
@@ -329,6 +399,30 @@ export const Header: React.FC<HeaderProps> = ({
                   alignItems: 'center',
                 }}
               >
+                <li key="tools">
+                  <Dropdown menu={toolsMenu} trigger={['click']}>
+                    <button
+                      type="button"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: headerText,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Tools <DownOutlined style={{ fontSize: 10 }} />
+                    </button>
+                  </Dropdown>
+                </li>
                 {mastheadActions.map((item) => (
                   <li key={item.label}>
                     <Tooltip title={item.tooltip}>
@@ -395,10 +489,12 @@ export const Header: React.FC<HeaderProps> = ({
             </Text>
           </div>
 
-          {/* Center Section - System Selection (mobile / tablet) */}
-          <div className="flex min-w-[280px] max-w-2xl flex-1 flex-col lg:hidden">
-            {renderAgentSelector(actionSubtleText, 0.8)}
-          </div>
+          {/* Center Section - System Selection (mobile / tablet) - only show for chat tabs */}
+          {activeTabType === 'chat' && (
+            <div className="flex min-w-[280px] max-w-2xl flex-1 flex-col lg:hidden">
+              {renderAgentSelector(actionSubtleText, 0.8)}
+            </div>
+          )}
 
           {/* Right Section placeholder to maintain spacing */}
           <div className="flex min-w-[160px] flex-1 items-center justify-end" />

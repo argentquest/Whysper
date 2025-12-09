@@ -6,7 +6,6 @@
 import {
   BookOutlined,
   BugOutlined,
-  DesktopOutlined,
   GithubOutlined,
   HeartOutlined,
   HomeOutlined,
@@ -26,7 +25,6 @@ const { Title, Text, Paragraph } = Typography
  * @property {boolean} open - Controls modal visibility state
  * @property {() => void} onCancel - Callback triggered when modal is cancelled
  * @property {() => void} onCreateChatTab - Callback to create a new chat tab
- * @property {() => void} onCreateArchStudioTab - Callback to create a new Architecture Studio tab
  */
 /**
  * AboutModalProps type definition
@@ -37,7 +35,6 @@ interface AboutModalProps {
   open: boolean
   onCancel: () => void
   onCreateChatTab?: () => void
-  onCreateArchStudioTab?: () => void
 }
 
 /**
@@ -67,7 +64,6 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   open,
   onCancel,
   onCreateChatTab,
-  onCreateArchStudioTab,
 }) => {
   const version = '2.0.0'
   const buildDate = new Date().toLocaleDateString()
@@ -80,15 +76,6 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const handleCreateChatTab = () => {
     onCancel()
     onCreateChatTab?.()
-  }
-
-  /**
-   * Handles creating a new Architecture Studio tab
-   * Closes modal and creates a new Architecture Studio tab
-   */
-  const handleCreateArchStudioTab = () => {
-    onCancel()
-    onCreateArchStudioTab?.()
   }
 
   return (
@@ -205,14 +192,6 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               disabled={!onCreateChatTab}
             >
               New Chat Tab
-            </Button>
-            <Button
-              type="default"
-              icon={<DesktopOutlined />}
-              onClick={handleCreateArchStudioTab}
-              disabled={!onCreateArchStudioTab}
-            >
-              New Studio Tab
             </Button>
           </div>
         </Space>

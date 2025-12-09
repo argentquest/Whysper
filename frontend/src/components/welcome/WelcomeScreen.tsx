@@ -25,7 +25,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
   // Fetch quick guide content on component mount, using different URL based on environment
   useEffect(() => {
     // Determine backend port from environment variables
-    const backendPort = import.meta.env.VITE_BACKEND_PORT || '8000';
+    const backendPort = import.meta.env.VITE_BACKEND_PORT || '8003';
     // Select appropriate URL based on development/production environment
     const guideUrl = import.meta.env.DEV ? `http://localhost:${backendPort}/static/QUICKGUIDE.MD` : '/static/QUICKGUIDE.MD';
     fetch(guideUrl)

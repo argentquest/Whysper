@@ -11,6 +11,7 @@ import { MonacoEditor } from '../editor/MonacoEditor';
 import { useTheme } from '../../themes';
 
 const { Title, Text } = Typography;
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
 
 /**
  * D2TesterModalProps type definition
@@ -259,7 +260,7 @@ export const D2TesterModal: React.FC<D2TesterModalProps> = ({
 
   const checkServerStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/diagrams/v2/health');
+      const response = await fetch(`${API_BASE}/diagrams/v2/health`);
       const data = await response.json();
       setServerStatus({ status: data.status, available: data.available_providers > 0 });
     } catch (error) {
@@ -285,7 +286,7 @@ export const D2TesterModal: React.FC<D2TesterModalProps> = ({
     setValidationResult(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/diagrams/v2/validate', {
+      const response = await fetch(`${API_BASE}/diagrams/v2/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -322,7 +323,7 @@ export const D2TesterModal: React.FC<D2TesterModalProps> = ({
     setRenderResult(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/diagrams/v2/render', {
+      const response = await fetch(`${API_BASE}/diagrams/v2/render`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
