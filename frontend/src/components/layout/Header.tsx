@@ -367,12 +367,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Agent selector - only show for chat tabs */}
-          {activeTabType === 'chat' && (
-            <div className="hidden max-w-3xl flex-1 px-6 lg:flex">
-              {renderAgentSelector(headerText)}
-            </div>
-          )}
+          {/* Agent selector - moved to chat tab (top fixed row) */}
 
           <div className="flex items-center gap-3">
             <nav
@@ -489,12 +484,7 @@ export const Header: React.FC<HeaderProps> = ({
             </Text>
           </div>
 
-          {/* Center Section - System Selection (mobile / tablet) - only show for chat tabs */}
-          {activeTabType === 'chat' && (
-            <div className="flex min-w-[280px] max-w-2xl flex-1 flex-col lg:hidden">
-              {renderAgentSelector(actionSubtleText, 0.8)}
-            </div>
-          )}
+          {/* Agent selector moved to chat tab (top fixed row) */}
 
           {/* Right Section placeholder to maintain spacing */}
           <div className="flex min-w-[160px] flex-1 items-center justify-end" />

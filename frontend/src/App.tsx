@@ -23,9 +23,9 @@
  */
 
 // React core and hooks
-import { CloseOutlined,CopyOutlined, SaveOutlined } from '@ant-design/icons'
+import { CloseOutlined,CopyOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons'
 // Ant Design UI components
-import { App as AntdApp,Button, Layout, Modal } from 'antd'
+import { App as AntdApp,Button, Layout, Modal, Select, Tooltip } from 'antd'
 import { useCallback,useEffect, useState } from 'react'
 
 import { ChatView } from './components/chat/ChatView'
@@ -1426,6 +1426,67 @@ function App() {
           ) : (
             // Chat View (default)
             <>
+              {/* Agent Selector Row - Fixed at top of chat */}
+              <div
+                style={{
+                  background: 'rgba(255, 255, 255, 0.98)',
+                  borderBottom: '1px solid #e8e8e8',
+                  padding: '12px 24px',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 10,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="text-xs font-semibold tracking-wide"
+                    style={{
+                      color: '#666',
+                      letterSpacing: '0.5px',
+                      minWidth: '100px',
+                    }}
+                  >
+                    ACTIVE AGENT
+                  </span>
+                  <Select
+                    value={activeAgentName}
+                    onChange={handleSystemChange}
+                    className="flex-1"
+                    size="large"
+                    placeholder="Select agent prompt"
+                    style={{
+                      maxWidth: '600px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {agentPrompts.map((prompt) => (
+                      <Select.Option key={prompt.name} value={prompt.name}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{prompt.title}</span>
+                          <span className="ml-2 text-xs text-gray-500">{prompt.name}</span>
+                        </div>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                  <Tooltip title={`Run ${agentPrompts.find(p => p.name === activeAgentName)?.title || activeAgentName} system prompt`}>
+                    <Button
+                      type="primary"
+                      size="middle"
+                      icon={<PlayCircleOutlined />}
+                      onClick={() => handleRunSystemPrompt(activeAgentName)}
+                      style={{
+                        background: '#52c41a',
+                        borderColor: '#52c41a',
+                      }}
+                    >
+                      Run
+                    </Button>
+                  </Tooltip>
+                </div>
+              </div>
+
               <ChatView
                 messages={currentMessages}
                 loading={loading}
