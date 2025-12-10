@@ -1,6 +1,0 @@
-Test ID: 4
-Test Name: External Entity Representation
-Description: Generate a **Mermaid flowchart** modeling a system where 'User' interacts with the main 'App', and the 'App' needs to access a 'Storage' cloud service. Use appropriate shapes to differentiate.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 23
-Test Name: C4: External System Boundary
-Description: Generate a **D2 diagram** (C4 Context Level) focusing on the boundary of the 'Customer CRM'. Show the 'Sales Team' interacting with it, and the CRM connecting to an external 'Legacy Database' (external system).
-
-Validation Error:
-OpenRouter API key is invalid or expired

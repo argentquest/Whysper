@@ -1,6 +1,0 @@
-Test ID: 12
-Test Name: System Context: Load Balancing
-Description: Generate a **C4 System Context diagram** showing User (person) -> Load Balancer System -> multiple Application Server Systems, connected to Database System.
-
-Validation Error:
-OpenRouter API key is invalid or expired

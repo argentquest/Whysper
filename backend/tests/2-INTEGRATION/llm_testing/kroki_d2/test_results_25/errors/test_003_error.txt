@@ -1,6 +1,0 @@
-Test ID: 3
-Test Name: Complex Attributes and Styling
-Description: Generate a **D2 diagram**. Define three components: 'Frontend', 'Backend', and 'Auth Service'. Make 'Auth Service' a circle shape with a blue fill. Show 'Frontend' connecting to 'Backend' and 'Backend' connecting to 'Auth Service' with a label 'Token Check'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

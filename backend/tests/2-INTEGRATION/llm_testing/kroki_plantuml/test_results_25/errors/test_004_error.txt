@@ -1,6 +1,0 @@
-Test ID: 4
-Test Name: Use Case Diagram: System Scope
-Description: Generate a **PlantUML use case diagram** with User actor interacting with App system, and App system using Storage external system.
-
-Validation Error:
-OpenRouter API key is invalid or expired

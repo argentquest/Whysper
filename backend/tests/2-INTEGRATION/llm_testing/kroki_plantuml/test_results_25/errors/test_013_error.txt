@@ -1,6 +1,0 @@
-Test ID: 13
-Test Name: Sequence Diagram: Message Queue Pattern
-Description: Generate a **PlantUML sequence diagram** with MicroserviceA, MessageQueue, and MicroserviceB showing publish and consume messages.
-
-Validation Error:
-OpenRouter API key is invalid or expired

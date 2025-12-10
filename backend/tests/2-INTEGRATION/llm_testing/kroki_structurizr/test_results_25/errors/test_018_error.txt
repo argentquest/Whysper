@@ -1,6 +1,0 @@
-Test ID: 18
-Test Name: Queue and Processor
-Description: Generate a **Structurizr system context diagram** with 'Message Queue' system and 'Message Processor' system, showing the processor consuming from the queue.
-
-Validation Error:
-OpenRouter API key is invalid or expired

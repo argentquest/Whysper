@@ -1,6 +1,0 @@
-Test ID: 14
-Test Name: System with Database
-Description: Generate a **Structurizr container diagram** for an application with 'Web App' (React), 'API Server' (Node.js), 'Cache' (Redis), and 'Database' (PostgreSQL) containers.
-
-Validation Error:
-OpenRouter API key is invalid or expired

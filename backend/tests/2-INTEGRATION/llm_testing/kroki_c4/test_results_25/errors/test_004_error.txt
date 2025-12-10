@@ -1,6 +1,0 @@
-Test ID: 4
-Test Name: System Context: External Integration
-Description: Generate a **C4 System Context diagram** showing Customer (person) interacting with App System, which accesses Cloud Storage external System.
-
-Validation Error:
-OpenRouter API key is invalid or expired

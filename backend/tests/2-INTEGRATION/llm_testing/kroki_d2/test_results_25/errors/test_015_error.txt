@@ -1,6 +1,0 @@
-Test ID: 15
-Test Name: Directional Layout Change
-Description: Generate a **D2 diagram** showing data flowing from 'Source' to 'Transform' to 'Target'. Set the diagram direction to flow vertically (down).
-
-Validation Error:
-OpenRouter API key is invalid or expired

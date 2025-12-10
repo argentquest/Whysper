@@ -1,6 +1,0 @@
-Test ID: 16
-Test Name: Bi-directional Communication
-Description: Generate a **Mermaid sequence diagram** showing an 'Internal System' communicating with a separate 'External API'. Show bidirectional interactions with labels.
-
-Validation Error:
-OpenRouter API key is invalid or expired

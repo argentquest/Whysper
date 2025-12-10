@@ -1,6 +1,0 @@
-Test ID: 16
-Test Name: Cross-System Labeled Edge
-Description: Generate a **D2 diagram** showing an 'Internal System' interacting with a separate 'External API'. Label the relationship 'Retrieves User Data'. Use an arrow in both directions.
-
-Validation Error:
-OpenRouter API key is invalid or expired

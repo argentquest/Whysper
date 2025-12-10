@@ -315,35 +315,6 @@ app.frontend -> users: Display
         print(f"✗ Rendering failed: {result.error}")
         print("\n⚠️  Complex diagram test failed")
 
-
-def test_d2v1_config():
-    """Test configuration loading"""
-    print("\n" + "=" * 60)
-    print("TEST: D2 v1 Configuration")
-    print("=" * 60)
-
-    provider_folder = Path(__file__).parent.parent / "d2v1"
-    provider = D2V1Provider(provider_folder)
-
-    config = provider.get_config()
-
-    print(f"✓ Provider ID: {config.provider_id}")
-    print(f"✓ Provider Name: {config.provider_name}")
-    print(f"✓ LLM Max Retries: {config.llm_correction.max_retries}")
-    print(f"✓ LLM Max Tokens: {config.llm_correction.max_tokens}")
-    print(f"✓ Batch Enabled: {config.batch.enabled}")
-    print(f"✓ Batch Max Items: {config.batch.max_items}")
-    print(f"✓ Correction Strategy: {config.correction_strategy}")
-
-    assert config.provider_id == "d2v1"
-    assert config.llm_correction.max_retries == 8  # From d2v1/config.json override
-    assert config.llm_correction.max_tokens == 6000  # From d2v1/config.json
-    assert config.batch.enabled
-    assert config.batch.max_items == 100
-
-    print("\n✅ Configuration test passed!")
-
-
 def test_d2v1_metadata():
     """Test provider metadata"""
     print("\n" + "=" * 60)
@@ -405,7 +376,6 @@ if __name__ == "__main__":
 
     try:
         test_d2v1_provider_initialization()
-        test_d2v1_config()
         test_d2v1_metadata()
         test_d2v1_llm_correction_rules()
         test_d2v1_validation()

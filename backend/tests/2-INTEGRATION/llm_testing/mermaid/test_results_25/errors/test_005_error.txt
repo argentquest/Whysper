@@ -1,6 +1,0 @@
-Test ID: 5
-Test Name: ER Diagram
-Description: Generate a **Mermaid ER diagram** with two main entities: 'User' and 'Product'. Show the relationship between them (User purchases Product).
-
-Validation Error:
-OpenRouter API key is invalid or expired

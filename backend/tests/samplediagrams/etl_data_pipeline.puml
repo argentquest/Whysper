@@ -1,7 +1,0 @@
-@startuml
-start
-:Extract Data;
-:Transform Data;
-:Load Data into Warehouse;
-stop
-@enduml

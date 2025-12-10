@@ -1,6 +1,0 @@
-Test ID: 24
-Test Name: Data Service Components
-Description: Generate a **Structurizr component diagram** for 'Data Service' container with 'Read Handler', 'Write Handler', and 'Database Repository' components.
-
-Validation Error:
-OpenRouter API key is invalid or expired

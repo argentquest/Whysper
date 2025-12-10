@@ -1,8 +1,0 @@
-@startuml
-database "Operational DB"
-database "Staging Area"
-database "Data Warehouse"
-[ETL Process] --> "Operational DB"
-[ETL Process] --> "Staging Area"
-"Staging Area" --> "Data Warehouse"
-@enduml

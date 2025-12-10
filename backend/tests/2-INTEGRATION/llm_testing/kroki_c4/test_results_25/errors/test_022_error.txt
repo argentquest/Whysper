@@ -1,6 +1,0 @@
-Test ID: 22
-Test Name: Container Level: Frontend Deployment
-Description: Generate a **C4 Container diagram** for Frontend System with React Application Container and NGINX Proxy Container.
-
-Validation Error:
-OpenRouter API key is invalid or expired

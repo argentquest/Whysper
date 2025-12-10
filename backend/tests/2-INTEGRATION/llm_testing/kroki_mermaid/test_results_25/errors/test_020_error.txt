@@ -1,6 +1,0 @@
-Test ID: 20
-Test Name: Named Workflow
-Description: Generate a **Mermaid flowchart** modeling two components, 'data-service' and 'auth-module'. Show 'data-service' requesting authentication from 'auth-module'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

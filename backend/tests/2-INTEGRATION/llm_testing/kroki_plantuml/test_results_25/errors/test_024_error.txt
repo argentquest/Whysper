@@ -1,6 +1,0 @@
-Test ID: 24
-Test Name: Component Diagram: Data Service
-Description: Generate a **PlantUML component diagram** with DataService containing ReadHandler, WriteHandler, and DatabaseRepository components.
-
-Validation Error:
-OpenRouter API key is invalid or expired

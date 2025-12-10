@@ -1,6 +1,0 @@
-Test ID: 10
-Test Name: Container Level: Customer Portal
-Description: Generate a **C4 Container diagram** for Customer Portal System with Web Application Container (React), Mobile App Container (Flutter), and Database Container (PostgreSQL).
-
-Validation Error:
-OpenRouter API key is invalid or expired

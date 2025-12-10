@@ -1,6 +1,0 @@
-Test ID: 4
-Test Name: External Entity and Scope
-Description: Generate a **D2 diagram** modeling a high-level system where 'User' interacts with the main 'App', and the 'App' needs to access a 'Storage'. Represent 'Storage' as an external cloud icon.
-
-Validation Error:
-OpenRouter API key is invalid or expired

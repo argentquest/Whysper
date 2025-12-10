@@ -1,6 +1,0 @@
-Test ID: 5
-Test Name: Multi-System with Containers
-Description: Generate a **Structurizr diagram** with 'Development' environment and 'Production' environment. Inside each, define appropriate containers. Show relationships between them.
-
-Validation Error:
-OpenRouter API key is invalid or expired

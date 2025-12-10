@@ -1,6 +1,0 @@
-Test ID: 11
-Test Name: Component Level: Microservice Internal Structure
-Description: Generate a **C4 Component diagram** for Microservice API Container with Request Handler Component, Business Logic Component, and Data Access Component.
-
-Validation Error:
-OpenRouter API key is invalid or expired

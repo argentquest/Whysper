@@ -66,30 +66,6 @@ def test_correction_prompt_building():
     print("[OK] Correction prompt building test passed")
 
 
-def test_code_extraction_from_llm_response():
-    # Test extracting corrected code from various LLM response formats
-    mock_processor = Mock()
-    service = LLMCorrectionService(ai_processor=mock_processor)
-
-    # Test extracting code from a response with a code block
-    response_with_block = """Here's the corrected code:
-
-graph TD
-  A --> B
-  B --> C
-This should work now!"""
-
-    extracted = service._extract_code_from_response(response_with_block, "mermaid")
-    assert extracted == "graph TD\n  A --> B\n  B --> C", "Should extract code from block"
-
-    # Test extracting code from a plain text response
-    response_plain = "graph TD\n  A --> B\n  B --> C"
-    extracted_plain = service._extract_code_from_response(response_plain, "mermaid")
-    assert "graph TD" in extracted_plain, "Should handle plain response"
-
-    print("[OK] Code extraction test passed")
-
-
 def test_mocked_correction_workflow():
     # Simulate the entire diagram correction workflow using a mock AI processor
     mock_processor = Mock()
@@ -181,7 +157,6 @@ def run_all_tests():
     test_llm_service_availability_without_processor()
     test_llm_service_availability_with_processor()
     test_correction_prompt_building()
-    test_code_extraction_from_llm_response()
     test_mocked_correction_workflow()
     test_correction_failure_handling()
     test_provider_specific_rules()

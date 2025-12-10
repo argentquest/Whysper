@@ -1,6 +1,0 @@
-Test ID: 17
-Test Name: Grouped Components
-Description: Generate a **Mermaid flowchart**. Create a subgraph labeled 'Database Cluster'. Inside, define 'Primary DB' and 'Replica DB'. Show a connection from 'Primary DB' to 'Replica DB' labeled 'Replication'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

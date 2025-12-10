@@ -1,6 +1,0 @@
-Test ID: 3
-Test Name: Container Level: Frontend Decomposition
-Description: Generate a **C4 Container diagram** for a system with Frontend Container (React), Backend Container (Node.js), and Auth Service Container (Python).
-
-Validation Error:
-OpenRouter API key is invalid or expired

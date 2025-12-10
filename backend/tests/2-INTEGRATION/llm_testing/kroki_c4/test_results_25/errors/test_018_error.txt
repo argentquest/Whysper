@@ -1,6 +1,0 @@
-Test ID: 18
-Test Name: System Context: Queue and Processor
-Description: Generate a **C4 System Context diagram** with Message Queue System and Message Processor System, showing processor consuming from queue.
-
-Validation Error:
-OpenRouter API key is invalid or expired

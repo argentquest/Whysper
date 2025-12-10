@@ -1,8 +1,0 @@
-@startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-Container(api, "API") {
-  Component(auth, "Authentication")
-  Component(data, "Data Service")
-}
-Rel(auth, data, "Validates and forwards")
-@enduml

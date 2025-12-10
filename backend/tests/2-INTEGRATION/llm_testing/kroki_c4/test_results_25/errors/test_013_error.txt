@@ -1,6 +1,0 @@
-Test ID: 13
-Test Name: System Context: Event-Driven
-Description: Generate a **C4 System Context diagram** with Service A System and Service B System connected through Message Queue System with publish/subscribe pattern.
-
-Validation Error:
-OpenRouter API key is invalid or expired

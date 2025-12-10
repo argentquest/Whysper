@@ -1,6 +1,0 @@
-Test ID: 9
-Test Name: System Context: Payment System
-Description: Generate a **C4 System Context diagram** for payment processing: Customer (person) -> Payment Portal System -> Banking System (external).
-
-Validation Error:
-OpenRouter API key is invalid or expired

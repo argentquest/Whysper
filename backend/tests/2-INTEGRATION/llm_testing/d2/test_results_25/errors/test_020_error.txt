@@ -1,6 +1,0 @@
-Test ID: 20
-Test Name: Testing Simple Naming Conventions
-Description: Generate a **D2 diagram** modeling two components, 'data-service' and 'auth-module'. Show 'data-service' requesting data from 'auth-module'. Ensure the IDs use kebab-case.
-
-Validation Error:
-OpenRouter API key is invalid or expired

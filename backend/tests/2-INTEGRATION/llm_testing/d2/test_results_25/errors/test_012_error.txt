@@ -1,6 +1,0 @@
-Test ID: 12
-Test Name: C4: Flow and Technology (C2)
-Description: Generate a **D2 diagram** (C4 Container Level). Show a 'User' accessing a 'Load Balancer' over HTTPS. The 'Load Balancer' distributes traffic to three 'Application Servers'. These read from 'Redis Cache' and write to a 'SQL Database'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

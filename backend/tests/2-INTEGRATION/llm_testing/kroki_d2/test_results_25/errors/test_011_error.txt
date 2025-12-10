@@ -1,6 +1,0 @@
-Test ID: 11
-Test Name: C4: Component Diagram (C3) Focus
-Description: Generate a **D2 diagram** (C4 Component Level) showing the internal components of a 'Web Application'. Include 'Authentication Service', 'Payment Gateway Adapter', and 'API Controller'. Show the 'API Controller' using the other two services.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 7
-Test Name: Decision Point in Architecture
-Description: Generate a **Structurizr system context diagram** with a 'Start' system, a decision point through 'Router' system, leading to either 'Path A System' or 'Path B System'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

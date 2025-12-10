@@ -1,9 +1,0 @@
-@startuml
-start
-:Receive Raw Materials;
-:Assemble Components;
-:Quality Check;
-:Packaging;
-:Dispatch;
-stop
-@enduml

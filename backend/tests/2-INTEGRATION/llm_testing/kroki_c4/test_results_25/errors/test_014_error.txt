@@ -1,6 +1,0 @@
-Test ID: 14
-Test Name: Container Level: Full Stack
-Description: Generate a **C4 Container diagram** for application with Web App Container (React), API Server Container (Node.js), Cache Container (Redis), and Database Container (PostgreSQL).
-
-Validation Error:
-OpenRouter API key is invalid or expired

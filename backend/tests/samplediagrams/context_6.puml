@@ -1,6 +1,0 @@
-@startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-Person(employee, "Employee")
-System(hrSystem, "HR System")
-Rel(employee, hrSystem, "Updates profile")
-@enduml

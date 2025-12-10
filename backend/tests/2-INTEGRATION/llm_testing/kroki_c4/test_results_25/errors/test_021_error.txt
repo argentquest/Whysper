@@ -1,6 +1,0 @@
-Test ID: 21
-Test Name: System Context: Complex Service Mesh
-Description: Generate a **C4 System Context diagram** where Order Service System interacts with Inventory Service, Shipping Service, and Monitoring System.
-
-Validation Error:
-OpenRouter API key is invalid or expired

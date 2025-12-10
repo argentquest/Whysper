@@ -1,6 +1,0 @@
-Test ID: 9
-Test Name: Use Case Diagram: Payment System
-Description: Generate a **PlantUML use case diagram** with Customer actor, Payment Portal system use case, and Bank API external system.
-
-Validation Error:
-OpenRouter API key is invalid or expired

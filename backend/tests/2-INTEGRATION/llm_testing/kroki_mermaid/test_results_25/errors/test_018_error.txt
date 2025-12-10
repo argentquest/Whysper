@@ -1,6 +1,0 @@
-Test ID: 18
-Test Name: Different Node Types
-Description: Generate a **Mermaid flowchart** defining a 'Queue' (rectangle) and a 'Listener' (circle). Show the 'Listener' reading from 'Queue'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

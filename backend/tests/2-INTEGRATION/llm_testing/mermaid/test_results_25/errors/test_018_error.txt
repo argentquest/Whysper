@@ -1,6 +1,0 @@
-Test ID: 18
-Test Name: Authentication Flow
-Description: Generate a **Mermaid flowchart** showing an authentication process: Login → Verify Credentials → Issue Token → Access Protected Resource.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 2
-Test Name: Flowchart with Multiple Paths
-Description: Generate a **Mermaid flowchart** where 'API Gateway' forwards requests to 'Microservice A' or 'Microservice B'. Show a relationship between Microservice B and a 'Shared Cache'. The flow should display left to right.
-
-Validation Error:
-OpenRouter API key is invalid or expired

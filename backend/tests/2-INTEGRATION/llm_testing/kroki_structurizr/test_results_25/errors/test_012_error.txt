@@ -1,6 +1,0 @@
-Test ID: 12
-Test Name: Load Balancing Architecture
-Description: Generate a **Structurizr system context diagram** showing 'User' accessing 'Load Balancer' system which connects to multiple 'Application Server' instances and a 'Database' system.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,9 +1,0 @@
-@startuml
-start
-:Initiate Transaction;
-:Validate Credentials;
-:Check Balance;
-:Transfer Funds;
-:Notify Parties;
-stop
-@enduml

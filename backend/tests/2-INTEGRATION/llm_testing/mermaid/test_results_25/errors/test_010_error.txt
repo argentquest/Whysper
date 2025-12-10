@@ -1,6 +1,0 @@
-Test ID: 10
-Test Name: User Journey
-Description: Generate a **Mermaid user journey** showing a customer's experience: 'Homepage' → 'Product Search' → 'Add to Cart' → 'Checkout'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

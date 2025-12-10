@@ -1,6 +1,0 @@
-Test ID: 23
-Test Name: CRM System Boundary
-Description: Generate a **Structurizr system context diagram** for 'Customer CRM' system with 'Sales Team' (person) interacting with it and 'Legacy Database' external system connection.
-
-Validation Error:
-OpenRouter API key is invalid or expired

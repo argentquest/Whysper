@@ -1,6 +1,0 @@
-Test ID: 16
-Test Name: Sequence Diagram: Bidirectional
-Description: Generate a **PlantUML sequence diagram** with InternalSystem and ExternalAPI as participants with bidirectional message exchange labeled 'Retrieve User Data'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 9
-Test Name: Sequence Diagram: System Context
-Description: Generate a **Mermaid sequence diagram** showing the 'Payment Processing System' that interacts with the 'Customer' and an external 'Bank API'. Show the 'Customer' sending a payment request.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 10
-Test Name: Sequence Diagram: Multi-Step Flow
-Description: Generate a **Mermaid sequence diagram** showing the 'Customer Portal'. Show interactions between 'Customer', 'Web Application' (Node.js), and 'PostgreSQL Database'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

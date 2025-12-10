@@ -1,6 +1,0 @@
-Test ID: 16
-Test Name: System Context: Bidirectional System Integration
-Description: Generate a **C4 System Context diagram** showing Internal System and External API System with bidirectional relationship for data sync.
-
-Validation Error:
-OpenRouter API key is invalid or expired

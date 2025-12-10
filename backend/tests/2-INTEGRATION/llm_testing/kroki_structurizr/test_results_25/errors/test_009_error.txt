@@ -1,6 +1,0 @@
-Test ID: 9
-Test Name: Payment Processing System
-Description: Generate a **Structurizr system context diagram** for a payment system showing 'Customer' (person), 'Payment Portal' system, and 'Banking System' external system interactions.
-
-Validation Error:
-OpenRouter API key is invalid or expired

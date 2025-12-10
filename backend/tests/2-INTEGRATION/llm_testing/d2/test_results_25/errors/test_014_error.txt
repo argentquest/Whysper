@@ -1,6 +1,0 @@
-Test ID: 14
-Test Name: Object Styling (Background Color)
-Description: Generate a **D2 diagram** showing three processes: 'Process Init', 'Process Run', and 'Process End'. Make 'Process Run' have a green background fill.
-
-Validation Error:
-OpenRouter API key is invalid or expired

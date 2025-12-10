@@ -1,6 +1,0 @@
-Test ID: 21
-Test Name: System Interactions
-Description: Model a workflow where 'Order Service' system interacts with 'Inventory' system and 'Shipping' system. It also sends alerts to a monitoring system.
-
-Validation Error:
-OpenRouter API key is invalid or expired

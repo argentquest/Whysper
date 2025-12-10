@@ -1,6 +1,0 @@
-Test ID: 6
-Test Name: Sequence-like Flow
-Description: Generate a **D2 sequence-like flow** for a user logging in: User -> Browser -> API Gateway -> Authentication Service.
-
-Validation Error:
-OpenRouter API key is invalid or expired

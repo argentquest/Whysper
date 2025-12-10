@@ -1,6 +1,0 @@
-Test ID: 19
-Test Name: Sub-Object Naming (Dots)
-Description: Generate a **D2 diagram** showing how a 'User.Profile' connects to 'User.Preferences'. Both should be contained within a parent object labeled 'Customer Data'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

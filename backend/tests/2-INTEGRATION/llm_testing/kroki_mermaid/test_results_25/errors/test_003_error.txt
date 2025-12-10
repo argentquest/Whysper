@@ -1,6 +1,0 @@
-Test ID: 3
-Test Name: Flowchart with Different Shapes
-Description: Generate a **Mermaid flowchart**. Define three components: 'Frontend', 'Backend', and 'Auth Service'. Use a diamond shape for 'Auth Service'. Show 'Frontend' connecting to 'Backend' and 'Backend' connecting to 'Auth Service' with a label 'Token Check'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 2
-Test Name: System Context: Multi-path Routing
-Description: Generate a **C4 System Context diagram** where an API Gateway System forwards requests to Microservice A System or Microservice B System. Show relationship with Shared Cache System.
-
-Validation Error:
-OpenRouter API key is invalid or expired

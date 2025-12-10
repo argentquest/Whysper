@@ -1,6 +1,0 @@
-Test ID: 6
-Test Name: System Context: User Login Flow
-Description: Generate a **C4 System Context diagram** for user authentication: User (person) -> Web Browser System -> API Gateway System -> Authentication Service System.
-
-Validation Error:
-OpenRouter API key is invalid or expired

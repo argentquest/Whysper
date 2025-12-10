@@ -1,6 +1,0 @@
-Test ID: 20
-Test Name: System Context: Named Services
-Description: Generate a **C4 System Context diagram** with data-service System and auth-module System showing authentication relationship.
-
-Validation Error:
-OpenRouter API key is invalid or expired

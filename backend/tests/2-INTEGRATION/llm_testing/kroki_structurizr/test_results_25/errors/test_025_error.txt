@@ -1,6 +1,0 @@
-Test ID: 25
-Test Name: Nested Infrastructure
-Description: Generate a **Structurizr system context diagram** showing 'AWS Region' system containing 'VPC' system containing 'Web Server' and 'App Server' systems with relationships.
-
-Validation Error:
-OpenRouter API key is invalid or expired

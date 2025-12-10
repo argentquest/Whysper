@@ -1,6 +1,0 @@
-Test ID: 11
-Test Name: Component Diagram: Service Components
-Description: Generate a **PlantUML component diagram** with AuthenticationService, PaymentGatewayAdapter, and APIController components with dependencies.
-
-Validation Error:
-OpenRouter API key is invalid or expired

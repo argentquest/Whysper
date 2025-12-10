@@ -1,6 +1,0 @@
-Test ID: 12
-Test Name: Sequence Diagram: Load Balancer
-Description: Generate a **PlantUML sequence diagram** with User, LoadBalancer, multiple ApplicationServers, RedisCache, and SQLDatabase participants.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 8
-Test Name: Bar Chart
-Description: Generate a **Mermaid bar chart** displaying API response times for different endpoints: 'GET Users' (100ms), 'POST Create' (200ms), 'PUT Update' (150ms).
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 8
-Test Name: Class-based Components
-Description: Generate a **Structurizr component diagram** for a 'Backend' container showing 'Authentication Handler', 'Payment Handler', and 'Logger' components with relationships.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 10
-Test Name: Customer Portal Architecture
-Description: Generate a **Structurizr container diagram** for a 'Customer Portal' system with 'Web Application' (React), 'Mobile App' (Flutter), and 'PostgreSQL Database' containers.
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 15
-Test Name: Quadrant Chart
-Description: Generate a **Mermaid quadrant chart** showing product features on Impact vs Effort axes with 'Quick Wins', 'Major Projects', 'Fill-ins', and 'Time Sinks'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

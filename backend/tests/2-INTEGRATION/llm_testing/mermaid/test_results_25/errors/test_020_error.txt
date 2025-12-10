@@ -1,6 +1,0 @@
-Test ID: 20
-Test Name: Multi-level Class Hierarchy
-Description: Generate a **Mermaid class diagram** showing inheritance: Animal (base) → Dog and Cat (derived) with methods and properties.
-
-Validation Error:
-OpenRouter API key is invalid or expired

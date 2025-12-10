@@ -1,6 +1,0 @@
-Test ID: 23
-Test Name: System Context: Legacy Integration
-Description: Generate a **C4 System Context diagram** for Customer CRM System with Sales Team (person) and Legacy Database external System connection.
-
-Validation Error:
-OpenRouter API key is invalid or expired

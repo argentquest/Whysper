@@ -1,6 +1,0 @@
-Test ID: 19
-Test Name: Multi-Layer Architecture
-Description: Generate a **Structurizr container diagram** with 'Presentation' layer (Web UI), 'Business Logic' layer (API), and 'Data Access' layer (Database) containers.
-
-Validation Error:
-OpenRouter API key is invalid or expired

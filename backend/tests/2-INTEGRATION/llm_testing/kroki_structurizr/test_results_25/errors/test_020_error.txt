@@ -1,6 +1,0 @@
-Test ID: 20
-Test Name: Named Service Components
-Description: Generate a **Structurizr system context diagram** with 'data-service' system and 'auth-module' system showing authentication flow.
-
-Validation Error:
-OpenRouter API key is invalid or expired

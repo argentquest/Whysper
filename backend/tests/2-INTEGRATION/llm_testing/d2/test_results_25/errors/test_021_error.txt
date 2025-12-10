@@ -1,6 +1,0 @@
-Test ID: 21
-Test Name: C4: Ambiguous C4 Level
-Description: Model the 'Order Service' system. It interacts with an 'Inventory' system and a 'Shipping' system. It also sends 'Alerts'. (Testing Rule 2 Veto: What C4 level do you want to model: Context, Container, or Component?)
-
-Validation Error:
-OpenRouter API key is invalid or expired

@@ -1,6 +1,0 @@
-Test ID: 12
-Test Name: Complex Flow with Subgraphs
-Description: Generate a **Mermaid flowchart**. Show a 'User' accessing a 'Load Balancer' over HTTPS. The 'Load Balancer' distributes traffic to three 'Application Servers'. These read from 'Redis Cache' and write to 'SQL Database'.
-
-Validation Error:
-OpenRouter API key is invalid or expired

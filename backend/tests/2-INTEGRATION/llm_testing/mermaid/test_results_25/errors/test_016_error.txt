@@ -1,6 +1,0 @@
-Test ID: 16
-Test Name: Architecture Flowchart
-Description: Generate a **Mermaid flowchart** showing system architecture: Frontend → API Gateway → Microservices → Database with proper styling.
-
-Validation Error:
-OpenRouter API key is invalid or expired
