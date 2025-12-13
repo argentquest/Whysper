@@ -25,6 +25,8 @@ from mcp_server.fastmcp_server import get_mcp_router
 from common.logger import get_logger
 
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi import HTTPException
 
 # Initialize logger for centralized logging and tracking
 logger = get_logger(__name__)
@@ -97,7 +99,43 @@ def resolve_static_dir() -> str:
 static_dir = resolve_static_dir()
 
 logger.info(f"Static files directory: {static_dir}")
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Mount /assets if it exists (Vite build output)
+assets_dir = os.path.join(static_dir, "assets")
+if os.path.exists(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+# Mount /static for backward compatibility or direct access
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# SPA Fallback Route
+# This must be defined last to allow API routes to take precedence
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Check if file exists in static root (e.g., vite.svg, favicon.ico)
+    # Prevent directory traversal is handled by os.path.join usually, but be careful
+    # secure_filename checks might be needed in strict envs, but here we trust local static dir.
+
+    # Simple check to avoid serving hidden files
+    if full_path.startswith("."):
+         raise HTTPException(status_code=404)
+
+    # Do not serve SPA fallback for API routes
+    if full_path.startswith("api"):
+        raise HTTPException(status_code=404)
+
+    file_path = os.path.join(static_dir, full_path)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # Fallback to index.html for SPA routing
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+
+    # If index.html doesn't exist (backend only mode), return 404
+    raise HTTPException(status_code=404, detail="Not Found")
 
 # Enable direct execution for development server
 if __name__ == "__main__":
