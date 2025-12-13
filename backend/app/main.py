@@ -83,16 +83,18 @@ app.include_router(mcp_router)
 
 # Mount static files with flexible directory configuration
 
-# Determine static file directory with fallback mechanism
-env_vars = env_manager.load_env_file()
-static_dir = env_vars.get("STATIC_DIR", "").strip()
-if not static_dir:
-    # Use default static directory if no environment config
-    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
-else:
-    # Support absolute and relative paths for static directory
+def resolve_static_dir() -> str:
+    env_vars = env_manager.load_env_file()
+    env_override = os.environ.get("STATIC_DIR", "").strip()
+    static_dir = (env_override or env_vars.get("STATIC_DIR", "").strip())
+    if not static_dir:
+        return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
     if not os.path.isabs(static_dir):
         static_dir = os.path.abspath(static_dir)
+    return static_dir
+
+
+static_dir = resolve_static_dir()
 
 logger.info(f"Static files directory: {static_dir}")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")

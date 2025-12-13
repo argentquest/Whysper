@@ -87,6 +87,15 @@ The frontend requires Node.js dependencies.
     ```
     The frontend will start at **http://localhost:5173**.
 
+### Verify static build (no Node.js at runtime)
+- From the project root run: `python scripts/verify_static_bundle.py`.
+- The script installs frontend deps if needed, builds the Vite bundle, copies it to `backend/static`, and hits `/static/index.html` through the FastAPI app to confirm the backend can serve the UI without Node.js running.
+- Override the target directory by setting `STATIC_DIR` before running if you want to serve from a different path.
+
+### Quick start scripts (PowerShell)
+- `scripts/start-dev.ps1`: launches backend on 8003 and frontend dev server on 5173 in separate windows.
+- `scripts/start-static.ps1`: builds the frontend, copies it to `backend/static`, and starts the backend serving the static bundle on 8003 (no Node.js needed at runtime).
+
 ---
 
 ## 💻 Frontend Details
