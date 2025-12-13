@@ -65,6 +65,8 @@ gcloud artifacts repositories create whysper-repo \
 ### 3. Build the "One Image"
 You can build the image using Cloud Build (recommended) or locally.
 
+> **Note**: The Dockerfile automatically installs the **D2 CLI**, which is required for generating D2 diagrams. It is bundled directly into the image, so no separate installation is required.
+
 **Option A: Cloud Build (Easiest)**
 This builds the image directly in the cloud, so you don't need to worry about local Docker setup or uploading large layers.
 ```bash

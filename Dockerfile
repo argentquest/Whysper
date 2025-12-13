@@ -19,8 +19,13 @@ FROM registry.access.redhat.com/ubi8/python-39
 USER root
 
 # Install system libraries required for graphical libraries (like cairosvg)
-# and clean up to keep image size down
-RUN dnf install -y cairo cairo-gobject pango && dnf clean all
+# and clean up to keep image size down.
+# Also install 'curl' to download D2.
+RUN dnf install -y cairo cairo-gobject pango curl && dnf clean all
+
+# Install D2 CLI (Diagramming Tool)
+# This installs the latest version of d2 to /usr/local/bin
+RUN curl -fsSL https://d2lang.com/install.sh | sh -s --
 
 WORKDIR /app
 
