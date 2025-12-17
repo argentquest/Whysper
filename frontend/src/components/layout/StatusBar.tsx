@@ -13,6 +13,7 @@ import {
 import { Badge, Popover, Typography } from 'antd'
 import { BrandColors } from 'branding'
 import React, { useEffect, useRef,useState } from 'react'
+import { getApiBaseUrl } from '../../utils/apiBase'
 
 const { Text } = Typography
 
@@ -131,8 +132,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   // Connect to SSE log stream on mount (reconnect when conversationId changes)
   useEffect(() => {
-    const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
-    const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
+    const API_BASE_URL = getApiBaseUrl()
 
     // Add session_id parameter for session-specific log filtering
     const url = conversationId

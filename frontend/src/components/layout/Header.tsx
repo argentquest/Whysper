@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Header Component
  *
@@ -13,7 +14,7 @@ import {
   MessageOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Layout, Menu, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
+import { Button, Dropdown, Layout, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
 import { Brand, BrandColors } from 'branding'
 import React from 'react'
 

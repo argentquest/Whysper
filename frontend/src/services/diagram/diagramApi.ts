@@ -5,6 +5,8 @@
  * Handles session management, SSE streaming, and all diagram operations.
  */
 
+import { getApiBaseUrl } from '../../utils/apiBase'
+
 export interface ScoreInfo {
   entities: boolean
   actions: boolean
@@ -66,7 +68,7 @@ export interface DiagramUpdate extends DiagramStatus {
   awaiting_user_confirmation?: boolean
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'
+const API_BASE = getApiBaseUrl()
 
 export class DiagramApi {
   /**

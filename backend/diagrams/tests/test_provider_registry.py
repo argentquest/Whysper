@@ -2,12 +2,14 @@
 Integration tests for Provider Registry
 """
 
-from diagrams.models import ProviderCapability, ValidationResult, RenderResult, ProviderMetadata
-from diagrams.base_diagram import BaseDiagramProvider
-from diagrams.provider_registry import ProviderRegistry, get_provider_registry, set_provider_registry
 import sys
+import importlib
 from pathlib import Path
 from typing import List, Optional
+
+from diagrams.base_diagram import BaseDiagramProvider
+from diagrams.models import ProviderCapability, ValidationResult, RenderResult, ProviderMetadata
+from diagrams.provider_registry import ProviderRegistry, get_provider_registry, set_provider_registry
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent.parent
@@ -186,6 +188,22 @@ def test_registry_get_provider():
     print("[OK] Registry get provider test passed")
 
 
+def test_registry_case_insensitive_lookup():
+    """Provider lookup should be case-insensitive"""
+    registry = ProviderRegistry(auto_discover=False)
+    mock_folder = Path(__file__).parent.parent / "mermaidv1"
+
+    provider = MockMermaidProvider(mock_folder)
+    registry.register(provider)
+
+    assert registry.get("MOCK_MERMAID") is provider
+
+    registry.unregister("mock_MERMAID")
+    assert registry.get("mock_mermaid") is None
+
+    print("[OK] Registry case-insensitive lookup test passed")
+
+
 def test_registry_find_by_diagram_type():
     """Test finding providers by diagram type"""
     registry = ProviderRegistry(auto_discover=False)
@@ -346,6 +364,32 @@ def test_registry_get_all_metadata():
     assert "mock_d2" in provider_ids
 
     print("[OK] Registry get all metadata test passed")
+
+
+def test_discover_respects_enabled_providers(tmp_path, monkeypatch):
+    """Auto-discovery should skip providers not enabled in config"""
+    registry = ProviderRegistry(diagrams_root=tmp_path, auto_discover=False)
+    registry.enabled_providers = {"allowed"}
+
+    for name in ["allowed", "blocked"]:
+        folder = tmp_path / name
+        folder.mkdir()
+        (folder / "config.json").write_text("{}")
+
+    imported = []
+
+    monkeypatch.setattr(registry, "_find_provider_class", lambda module: None)
+
+    def fake_import(module_path):
+        imported.append(module_path)
+        return object()
+
+    monkeypatch.setattr(importlib, "import_module", fake_import)
+
+    registry._discover_providers()
+
+    assert imported == ["diagrams.allowed.renderer"]
+    print("[OK] Registry enabled_providers filter respected")
 
 
 def test_registry_singleton():

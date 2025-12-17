@@ -50,6 +50,16 @@
     "mermaid": "mermaidv1",
     "d2": "d2v1",
     "plantuml": "krokiplantuml",
-    "Structurizr": "krokistructurizr"
-  }
+    "structurizr": "krokistructurizr",
+    "c4": "krokic4"
+  },
+  "enabled_providers": [
+    "mermaidv1",
+    "d2v1",
+    "krokimermaid",
+    "krokid2",
+    "krokiplantuml",
+    "krokistructurizr",
+    "krokic4"
+  ]
 }

@@ -102,6 +102,8 @@ class RootConfig(BaseModel):
     description: str = "Default configuration for all diagram providers"
     defaults: DefaultConfig = Field(default_factory=DefaultConfig)
     global_settings: GlobalSettings = Field(default_factory=GlobalSettings)
+    provider_preferences: Dict[str, str] = Field(default_factory=dict)
+    enabled_providers: Optional[List[str]] = None
 
 
 class ProviderConfig(BaseModel):

@@ -21,6 +21,7 @@
 
 // HTTP client library
 import axios, { type AxiosResponse, isAxiosError } from 'axios'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 // TypeScript type definitions for API communication
 import type {
@@ -37,9 +38,7 @@ import type {
 } from '../types'
 
 // Backend API base URL - development mode uses separate ports
-// You can override the backend port by setting VITE_BACKEND_PORT in frontend/.env
-const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
-const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
+const API_BASE_URL = getApiBaseUrl()
 
 /**
  * Axios HTTP client configuration

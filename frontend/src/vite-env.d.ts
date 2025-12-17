@@ -4,6 +4,7 @@
 // Allows accessing environment variables with readonly protection
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string // Optional API URL from .env file
+  readonly VITE_BACKEND_PROTOCOL?: string // Optional protocol override for backend (http/https)
   // Add other environment variables here as needed
 }
 

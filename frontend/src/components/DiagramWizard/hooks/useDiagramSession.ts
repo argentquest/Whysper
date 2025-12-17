@@ -63,6 +63,7 @@ import { useCallback, useRef,useState } from 'react'
 import { useSSE } from '../../../hooks/useSSE'
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
 import DiagramApi from '../../../services/diagram/diagramApi'
+import { getApiBaseUrl } from '../../../utils/apiBase'
 
 /**
  * Configuration options for the useDiagramSession hook
@@ -121,14 +122,13 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
 
   // Configure SSE connection for real-time backend updates
   // Automatically connects when sessionId is set, disconnects when cleared
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'
+  const API_BASE = getApiBaseUrl()
 
   const {
     isConnected: sseConnected, // Boolean: true when connection is active
     error: sseError, // Error object if SSE connection fails
     messages: sseMessages, // Array of received SSE messages (for debugging)
     clearMessages: clearSSEMessages, // Function to clear message history
-    disconnect: disconnectSSE, // Function to manually disconnect SSE
   } = useSSE<DiagramUpdate>({
     // Construct SSE endpoint URL using session ID
     url: sessionId ? `${API_BASE}/diagram/stream/${sessionId}` : '',

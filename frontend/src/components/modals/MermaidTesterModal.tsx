@@ -9,9 +9,10 @@ import { PlayCircleOutlined, CheckCircleOutlined, EditOutlined, ReloadOutlined }
 import { Modal } from '../common/Modal';
 import { MonacoEditor } from '../editor/MonacoEditor';
 import { useTheme } from '../../themes';
+import { getApiBaseUrl } from '../../utils/apiBase';
 
 const { Title, Text } = Typography;
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1';
+const API_BASE = getApiBaseUrl();
 
 /**
  * MermaidTesterModalProps type definition

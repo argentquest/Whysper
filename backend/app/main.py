@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
 from mcp_server.fastmcp_server import get_mcp_router
+from app.utils.ssl_utils import build_ssl_kwargs
 from common.logger import get_logger
 
 from fastapi.staticfiles import StaticFiles
@@ -142,6 +143,10 @@ if __name__ == "__main__":
     # Import uvicorn dynamically to optimize module loading
     import uvicorn
 
+    ssl_kwargs = build_ssl_kwargs(settings)
+    protocol = "https" if ssl_kwargs else "http"
+    logger.info("Starting Whysper Backend on %s://%s:%s", protocol, settings.host, settings.port)
+
     # Launch development server with configurable parameters
     uvicorn.run(
         "app.main:app",  # Application module and instance
@@ -149,4 +154,5 @@ if __name__ == "__main__":
         port=settings.port,  # Server port (default: 8001)
         reload=settings.reload,  # Auto-reload on code changes (development)
         log_level="info",  # Logging level for uvicorn
+        **ssl_kwargs,
     )

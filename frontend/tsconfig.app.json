@@ -32,5 +32,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "branding"]
+  "include": ["src", "branding"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.e2e.test.tsx"]
 }

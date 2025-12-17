@@ -188,7 +188,7 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
         </Title>
         <List
           dataSource={connections}
-          renderItem={(connection: any, index: number) => (
+          renderItem={(connection: any, _index: number) => (
             <List.Item style={{ padding: '8px 0' }}>
               <Card
                 size="small"
@@ -345,7 +345,7 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data }) => {
                 size="small"
                 bordered
                 dataSource={value}
-                renderItem={(item: any, index: number) => (
+                renderItem={(item: any, _index: number) => (
                   <List.Item style={{ fontSize: '12px' }}>
                     {typeof item === 'object' ? JSON.stringify(item) : String(item)}
                   </List.Item>

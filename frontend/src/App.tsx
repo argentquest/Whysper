@@ -211,9 +211,6 @@ function App() {
   // Subagent commands loaded from backend
   const [subagentCommands, setSubagentCommands] = useState<any[]>([])
 
-  // CODE_PATH from backend settings
-  const [codePath, setCodePath] = useState<string>('')
-
   // ==================== Application Initialization ====================
 
   const loadSettings = useCallback(async () => {
@@ -253,12 +250,6 @@ function App() {
         if (configuredAgentName && typeof configuredAgentName === 'string') {
           setActiveAgentName(configuredAgentName)
         }
-
-        // Store CODE_PATH for display in footer
-        const codePathValue = backendSettings.values?.CODE_PATH
-        if (codePathValue && typeof codePathValue === 'string') {
-          setCodePath(codePathValue)
-        }
       }
     } catch (error) {
       console.error('❌ Failed to load settings:', error)
@@ -277,16 +268,18 @@ function App() {
     try {
       const response = await ApiService.getAgents()
       if (response.success && response.data) {
-        setAgentPrompts(response.data)
+        setAgentPrompts(response.data as AgentPrompt[])
         // Assuming the first agent in the list is the default
         if (response.data.length > 0) {
-          return response.data[0].title // Return the title of the default agent
+          const firstAgent = response.data[0] as AgentPrompt
+          return firstAgent.title // Return the title of the default agent
         }
       } else {
         console.warn('Could not load agent prompts:', response.error)
       }
     } catch (error) {
-      console.warn('Could not load agent prompts:', error)
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.warn('Could not load agent prompts:', errMsg)
     }
     return undefined
   }, [])

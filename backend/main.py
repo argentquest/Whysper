@@ -20,7 +20,20 @@ if platform.system() == "Windows":
 if __name__ == "__main__":
     import uvicorn
     from app.core.config import settings
+    from app.utils.ssl_utils import build_ssl_kwargs
+
+    ssl_kwargs = build_ssl_kwargs(settings)
+    protocol = "https" if ssl_kwargs else "http"
+
+    print(f"Starting Whysper Backend on {protocol}://{settings.host}:{settings.port}...")
 
     # Launch the FastAPI application using Uvicorn ASGI server
     # Uses configuration settings for host, port, and reload behavior
-    uvicorn.run("app.main:app", host=settings.host, port=settings.port, reload=settings.reload, log_level="info")
+    uvicorn.run(
+        "app.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.reload,
+        log_level="info",
+        **ssl_kwargs,
+    )

@@ -150,6 +150,11 @@ class Settings(BaseSettings):
     # Server port (8003 to avoid conflicts with other services)
     port: int = Field(default=8003, validation_alias="API_PORT")
     reload: bool = True  # Auto-reload on code changes (development only)
+    ssl_enabled: bool = Field(default=False, validation_alias="SSL_ENABLED")
+    ssl_certfile: Optional[str] = Field(default=None, validation_alias="SSL_CERTFILE")
+    ssl_keyfile: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE")
+    ssl_keyfile_password: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE_PASSWORD")
+    ssl_self_signed: bool = Field(default=False, validation_alias="SSL_SELF_SIGNED")
 
     # ==================== CORS Configuration ====================
     # Cross-Origin Resource Sharing (CORS) allowed origins
@@ -157,19 +162,32 @@ class Settings(BaseSettings):
     cors_origins: List[str] = [
         # React development servers (default ports)
         "http://localhost:3000",  # Create React App default
+        "https://localhost:3000",
         "http://localhost:5173",  # Vite default
+        "https://localhost:5173",
         "http://localhost:5174",  # Vite alternate ports
+        "https://localhost:5174",
         "http://localhost:5175",
+        "https://localhost:5175",
         "http://localhost:5176",
+        "https://localhost:5176",
         "http://localhost:5177",
+        "https://localhost:5177",
         "http://localhost:5178",
+        "https://localhost:5178",
         # 127.0.0.1 equivalents (some browsers/tools prefer this)
         "http://127.0.0.1:3000",
+        "https://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "https://127.0.0.1:5173",
         "http://127.0.0.1:5174",
+        "https://127.0.0.1:5174",
         "http://127.0.0.1:5175",
+        "https://127.0.0.1:5175",
         "http://127.0.0.1:5176",
+        "https://127.0.0.1:5176",
         "http://127.0.0.1:5177",
+        "https://127.0.0.1:5177",
     ]
     frontend_url: Optional[str] = Field(default=None, validation_alias="FRONTEND_URL")
 

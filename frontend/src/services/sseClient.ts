@@ -15,6 +15,7 @@
  *
  * Example: Backend sends "TOASTINFO: Analyzing diagram..." → Shows info toast
  */
+import { getApiBaseUrl } from '../utils/apiBase'
 
 /**
  * ProgressEvent type definition
@@ -74,8 +75,7 @@ export function streamChatMessage(
   contextFiles: string[] = [],
   callbacks: SSECallbacks = {}
 ): () => void {
-  const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
-  const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${BACKEND_PORT}/api/v1` : '/api/v1'
+  const API_BASE_URL = getApiBaseUrl()
 
   const url = `${API_BASE_URL}/stream`
 

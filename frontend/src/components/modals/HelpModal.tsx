@@ -6,6 +6,7 @@
 import { Modal } from 'antd'
 import React, { useEffect,useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { getBackendBaseUrl } from '../../utils/apiBase'
 
 /**
  * HelpModalProps type definition
@@ -27,13 +28,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ open, onCancel }) => {
   useEffect(() => {
     // Fetch guide content only when modal is opened
     if (open) {
-      // Determine backend port from environment, default to 8003
-      const backendPort = import.meta.env.VITE_BACKEND_PORT || '8003'
-
-      // Set guide URL based on development or production environment
-      const guideUrl = import.meta.env.DEV
-        ? `http://localhost:${backendPort}/static/QUICKGUIDE.MD`
-        : '/static/QUICKGUIDE.MD'
+      const guideUrl = `${getBackendBaseUrl()}/static/QUICKGUIDE.MD`
 
       // Fetch markdown guide content from server
       fetch(guideUrl)

@@ -8,6 +8,7 @@ import { Form, Input, Button, message, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import ApiService from '../../services/api';
 import { Brand } from 'branding';
+import { getBackendBaseUrl } from '../../utils/apiBase';
 
 const { Title, Paragraph } = Typography;
 
@@ -24,10 +25,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuccess }) => {
 
   // Fetch quick guide content on component mount, using different URL based on environment
   useEffect(() => {
-    // Determine backend port from environment variables
-    const backendPort = import.meta.env.VITE_BACKEND_PORT || '8003';
-    // Select appropriate URL based on development/production environment
-    const guideUrl = import.meta.env.DEV ? `http://localhost:${backendPort}/static/QUICKGUIDE.MD` : '/static/QUICKGUIDE.MD';
+    const backendBaseUrl = getBackendBaseUrl();
+    const guideUrl = `${backendBaseUrl}/static/QUICKGUIDE.MD`;
     fetch(guideUrl)
       .then(response => response.text())
       .then(text => setGuideContent(text));

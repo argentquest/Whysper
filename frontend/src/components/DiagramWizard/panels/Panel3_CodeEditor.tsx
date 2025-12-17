@@ -37,7 +37,7 @@ interface Panel3CodeEditorProps {
 
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
-  originalCode,
+  originalCode: _originalCode,
   diagramType,
   onChange,
   isLoading,

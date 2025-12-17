@@ -6,8 +6,9 @@
  */
 
 import axios from 'axios'
+import { getApiBaseUrl } from '../../utils/apiBase'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8003/api/v1'
+const API_BASE = getApiBaseUrl()
 
 export interface ValidationError {
   line?: number

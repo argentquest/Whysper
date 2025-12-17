@@ -6,14 +6,14 @@ Scans diagrams folder for provider subfolders and registers them.
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Set, Type
 import importlib
 import logging
-import json
 
 from .base_diagram import BaseDiagramProvider
 from .models import ProviderMetadata
 from .llm_correction_service import get_llm_correction_service
+from .provider_config import get_config_loader
 
 from common.logging_decorator import log_method_call
 
@@ -40,9 +40,33 @@ class ProviderRegistry:
 
         self.diagrams_root = diagrams_root
         self._providers: Dict[str, BaseDiagramProvider] = {}
+        self._providers_lower: Dict[str, BaseDiagramProvider] = {}
+
+        self.config_loader = get_config_loader()
+        self.root_config = self.config_loader.get_root_config()
+        self.provider_preferences = {
+            key.lower(): value.lower()
+            for key, value in getattr(self.root_config, "provider_preferences", {}).items()
+            if value
+        }
+        self.enabled_providers: Optional[Set[str]] = self._build_enabled_provider_set()
 
         if auto_discover:
             self._discover_providers()
+
+    @log_method_call
+    def _build_enabled_provider_set(self) -> Optional[Set[str]]:
+        """Normalize enabled providers from root config (case-insensitive)."""
+        enabled = getattr(self.root_config, "enabled_providers", None)
+        if enabled is None:
+            return None
+
+        enabled_set = {p.lower() for p in enabled}
+        if enabled_set:
+            logger.info(f"Enabled providers restricted to: {sorted(enabled_set)}")
+        else:
+            logger.info("Root config enabled_providers is empty - no providers will be loaded")
+        return enabled_set
 
     @log_method_call
     def _discover_providers(self):
@@ -59,6 +83,10 @@ class ProviderRegistry:
                 continue
 
             provider_id = folder.name
+
+            if self.enabled_providers is not None and provider_id.lower() not in self.enabled_providers:
+                logger.info(f"Skipping {provider_id} (not enabled in root config)")
+                continue
 
             # Check if config.json exists
             config_file = folder / "config.json"
@@ -164,7 +192,14 @@ class ProviderRegistry:
         Args:
             provider: Provider instance to register
         """
+        provider_id_lower = provider.provider_id.lower()
+
+        existing = self._providers_lower.get(provider_id_lower)
+        if existing and existing.provider_id != provider.provider_id:
+            self._providers.pop(existing.provider_id, None)
+
         self._providers[provider.provider_id] = provider
+        self._providers_lower[provider_id_lower] = provider
         logger.debug(f"Provider {provider.provider_id} registered successfully")
 
     @log_method_call
@@ -175,9 +210,17 @@ class ProviderRegistry:
         Args:
             provider_id: ID of provider to unregister
         """
+        provider_id_lower = provider_id.lower()
         if provider_id in self._providers:
             del self._providers[provider_id]
+            self._providers_lower.pop(provider_id_lower, None)
             logger.info(f"Provider {provider_id} unregistered")
+        elif provider_id_lower in self._providers_lower:
+            existing = self._providers_lower.pop(provider_id_lower)
+            self._providers.pop(existing.provider_id, None)
+            logger.info(f"Provider {provider_id} unregistered")
+        else:
+            self._providers_lower.pop(provider_id_lower, None)
 
     @log_method_call
     def get(self, provider_id: str) -> Optional[BaseDiagramProvider]:
@@ -190,7 +233,14 @@ class ProviderRegistry:
         Returns:
             Provider instance or None if not found
         """
-        return self._providers.get(provider_id)
+        if not provider_id:
+            return None
+
+        provider = self._providers.get(provider_id)
+        if provider:
+            return provider
+
+        return self._providers_lower.get(provider_id.lower())
 
     @log_method_call
     def list_all(self) -> List[ProviderMetadata]:
@@ -261,23 +311,15 @@ class ProviderRegistry:
             return None
 
         # STEP 1: Check root config for provider preferences
-        try:
-            config_file = self.diagrams_root / "config.json"
-            if config_file.exists():
-                with open(config_file, "r") as f:
-                    root_config = json.load(f)
-                    preferences = root_config.get("provider_preferences", {})
-                    preferred_provider_id = preferences.get(diagram_type.lower())
+        preferred_provider_id = self.provider_preferences.get(diagram_type.lower())
 
-                    if preferred_provider_id:
-                        for p in providers:
-                            if p.provider_id == preferred_provider_id:
-                                logger.debug(f"Using configured preference for {diagram_type}: {preferred_provider_id}")
-                                return p
-                        logger.info(
-                            f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
-        except Exception as e:
-            logger.debug(f"Could not load provider preferences from config: {e}")
+        if preferred_provider_id:
+            preferred_lower = preferred_provider_id.lower()
+            for p in providers:
+                if p.provider_id.lower() == preferred_lower:
+                    logger.debug(f"Using configured preference for {diagram_type}: {preferred_provider_id}")
+                    return p
+            logger.info(f"Configured provider '{preferred_provider_id}' for '{diagram_type}' not found or unavailable")
 
         # STEP 2: Prefer v1 providers (fallback)
         for p in providers:

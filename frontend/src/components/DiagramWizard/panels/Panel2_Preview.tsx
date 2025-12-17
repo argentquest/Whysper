@@ -172,9 +172,6 @@ const Panel2_Preview: React.FC<Panel2PreviewProps> = ({
       diagramType,
     })
 
-    // Determine if there are any errors to display
-    const hasError = error || validationError
-
     // Show validation error if present (code is invalid)
     if (validationError) {
       return (

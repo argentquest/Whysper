@@ -1,6 +1,7 @@
 // Define backend connection details using environment variables or default port
-const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8003'
-const BACKEND_URL = `http://localhost:${BACKEND_PORT}/api/v1`
+import { getApiBaseUrl } from '../utils/apiBase'
+
+const BACKEND_URL = getApiBaseUrl()
 
 // Define interface for backend settings to ensure type safety
 export interface BackendSettings {
