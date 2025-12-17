@@ -12,6 +12,7 @@
  * static message API, so no message instance needs to be passed.
  */
 
+import React from 'react'
 import { message as antdMessage } from 'antd'
 import type { MessageInstance } from 'antd/es/message/interface'
 
@@ -25,27 +26,10 @@ const TOAST_KEYWORDS = {
 
 /**
  * Parse message for toast commands and display if found (using static API)
- *
- * @param messageText - The message text to parse
- * @returns true if a toast command was found and displayed, false otherwise
- *
- * @example
- * parseAndShowToast("TOASTINFO: Analyzing diagram...")
- * // Shows info toast: "Analyzing diagram..."
- *
- * parseAndShowToast("TOASTERROR: Validation failed!")
- * // Shows error toast: "Validation failed!"
- *
- * parseAndShowToast("Regular message without toast")
- * // Returns false, no toast shown
  */
 export function parseAndShowToast(messageText: string): boolean
 /**
  * Parse message for toast commands and display if found (with message instance)
- *
- * @param messageText - The message text to parse
- * @param messageApi - Ant Design message API instance (optional)
- * @returns true if a toast command was found and displayed, false otherwise
  */
 export function parseAndShowToast(messageText: string, messageApi?: MessageInstance): boolean
 export function parseAndShowToast(messageText: string, messageApi?: MessageInstance): boolean {
@@ -66,9 +50,13 @@ export function parseAndShowToast(messageText: string, messageApi?: MessageInsta
         const toastMessage = parts[1].replace(/^[:\s]+/, '').trim()
 
         if (toastMessage) {
-          // Show the appropriate toast type
-          messageInstance[type](toastMessage)
-          console.log(`🍞 [Toast] ${type.toUpperCase()}: ${toastMessage}`)
+          // Show the appropriate toast type with larger styling and longer duration
+          messageInstance[type]({
+            content: React.createElement('div', { style: { fontSize: 16, minWidth: 480 } }, toastMessage),
+            duration: 6,
+            style: { minWidth: 480 },
+          })
+          console.log(`[Toast] ${type.toUpperCase()}: ${toastMessage}`)
           return true
         }
       }
@@ -80,10 +68,6 @@ export function parseAndShowToast(messageText: string, messageApi?: MessageInsta
 
 /**
  * Extract toast command from message without displaying
- * Useful for logging or conditional display
- *
- * @param message - The message text to parse
- * @returns Object with toast type and message, or null if no toast command found
  */
 export function extractToastCommand(message: string): { type: string; message: string } | null {
   if (!message || typeof message !== 'string') {
@@ -107,9 +91,6 @@ export function extractToastCommand(message: string): { type: string; message: s
 
 /**
  * Check if a message contains a toast command
- *
- * @param message - The message text to check
- * @returns true if message contains a toast keyword
  */
 export function hasToastCommand(message: string): boolean {
   if (!message || typeof message !== 'string') {

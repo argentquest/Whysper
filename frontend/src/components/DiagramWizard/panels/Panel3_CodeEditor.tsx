@@ -11,13 +11,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Button, Space, Spin, message, Tooltip, Badge } from 'antd';
+import { Card, Space, Spin, Tooltip, Badge } from 'antd';
 import {
-  CopyOutlined,
-  CheckOutlined,
-  EditOutlined,
-  SaveOutlined,
-  CloseOutlined,
   WarningOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
@@ -31,24 +26,27 @@ interface Panel3CodeEditorProps {
   code: string;
   originalCode?: string;
   diagramType: string;
-  onChange: (code: string) => Promise<void>;
   isLoading: boolean;
+  defaultEditing?: boolean;
+  showTitle?: boolean;
 }
 
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
-  originalCode: _originalCode,
   diagramType,
-  onChange,
   isLoading,
+  defaultEditing = false,
+  showTitle = true,
 }) => {
   // Manage component state for editing, validation, and code manipulation
   const [editedCode, setEditedCode] = useState(code);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(defaultEditing);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+
+  useEffect(() => {
+    setIsEditing(defaultEditing);
+  }, [defaultEditing]);
 
   // Sync code and trigger validation when input code changes
   useEffect(() => {
@@ -98,46 +96,6 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     }
   };
 
-  // Copy code to clipboard with feedback
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(editedCode || code);
-      setCopied(true);
-      message.success('Code copied to clipboard');
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      message.error('Failed to copy code');
-    }
-  };
-
-  // Save edited code and handle success/error states
-  const handleSave = async () => {
-    // Prevent saving if no changes detected
-    if (editedCode === code) {
-      message.info('No changes to save');
-      setIsEditing(false);
-      return;
-    }
-
-    // Attempt to save changes with loading and error handling
-    try {
-      setIsSaving(true);
-      await onChange(editedCode);
-      message.success('Diagram updated successfully');
-      setIsEditing(false);
-    } catch (err) {
-      message.error(`Failed to update diagram: ${err}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Cancel editing and revert to original code
-  const handleCancel = () => {
-    setEditedCode(code);
-    setIsEditing(false);
-  };
-
   // Render validation status icon based on current validation state
   const getValidationStatus = () => {
     if (isValidating) {
@@ -166,65 +124,19 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   return (
     <Card
       title={
-        <Space>
-          Diagram Code
-          {getValidationStatus()}
-        </Space>
+        showTitle ? (
+          <Space>
+            Diagram Code
+            {getValidationStatus()}
+          </Space>
+        ) : null
       }
+      headStyle={showTitle ? undefined : { display: 'none' }}
       className={styles.codePanel}
-      extra={
-        <Space>
-          {/* Render different action buttons based on editing state */}
-          {!isEditing ? (
-            <>
-              {/* Copy and Edit buttons when not editing */}
-              <Tooltip title="Copy code">
-                <Button
-                  size="small"
-                  icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-                  onClick={handleCopy}
-                  disabled={!code}
-                />
-              </Tooltip>
-
-              <Tooltip title="Edit code">
-                <Button
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => setIsEditing(true)}
-                  disabled={!code}
-                />
-              </Tooltip>
-            </>
-          ) : (
-            <>
-              {/* Save and Cancel buttons when editing */}
-              <Button
-                size="small"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                loading={isSaving}
-                type="primary"
-              >
-                Save
-              </Button>
-
-              <Button
-                size="small"
-                icon={<CloseOutlined />}
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-            </>
-          )}
-        </Space>
-      }
       style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {/* Render code editor with optional inline validation feedback */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {isLoading ? (
           <div
             style={{
@@ -249,7 +161,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
         ) : (
           <>
             <Editor
-              height="800px"
+              height="100%"
               defaultLanguage="plaintext"
               value={isEditing ? editedCode : code}
               onChange={(value) => handleCodeChange(value || '')}
@@ -275,7 +187,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
                   color: '#666',
                 }}
               >
-                Edit the code above and click Save to update the diagram.
+                Edit mode enabled. Updates are kept locally in this editor.
               </div>
             )}
             {validationResult && (validationResult.errors.length > 0 || validationResult.warnings.length > 0) && (

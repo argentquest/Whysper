@@ -102,6 +102,7 @@ def load_env_defaults() -> Dict[str, Any]:
         # Frontend configuration
         "frontend_timeout": int(env_data.get("FRONT_END_TIMEOUT", "120")),
         "active_brand": env_data.get("ACTIVE_BRAND", "WF"),
+        "history_dir": env_data.get("HISTORY_DIR", "history"),
         # Provider-specific configuration
         "openrouter_api_url": env_data.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions"),
         "openrouter_http_referer": env_data.get(
@@ -155,6 +156,7 @@ class Settings(BaseSettings):
     ssl_keyfile: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE")
     ssl_keyfile_password: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE_PASSWORD")
     ssl_self_signed: bool = Field(default=False, validation_alias="SSL_SELF_SIGNED")
+    history_dir: str = Field(default="history", validation_alias="HISTORY_DIR")
 
     # ==================== CORS Configuration ====================
     # Cross-Origin Resource Sharing (CORS) allowed origins

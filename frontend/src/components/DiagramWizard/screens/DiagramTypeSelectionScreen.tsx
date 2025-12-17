@@ -69,6 +69,7 @@ interface DiagramTypeSelectionScreenProps {
   jsonGenerationOutput?: string
   onSelectDiagramType: (diagramType: string) => void
   onShowState?: () => void
+  diagramTypeLoading?: boolean
 }
 
 /**
@@ -123,6 +124,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
   jsonGenerationOutput,
   onSelectDiagramType,
   onShowState,
+  diagramTypeLoading = false,
 }) => {
   return (
     <Layout className={styles.diagramWizard}>
@@ -140,6 +142,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
       />
 
       <Layout.Content className={styles.content}>
+        <Spin spinning={diagramTypeLoading} tip="Analyzing diagram options...">
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px' }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <Title level={2} style={{ marginBottom: 8 }}>
@@ -327,6 +330,7 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
             </Card>
           )}
         </div>
+        </Spin>
       </Layout.Content>
     </Layout>
   )

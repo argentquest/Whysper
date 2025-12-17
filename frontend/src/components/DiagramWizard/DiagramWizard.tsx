@@ -159,6 +159,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [diagramAnalysisText, setDiagramAnalysisText] = useState<string>('') // Text shown on diagram type selection screen
   const [diagramTypeSelected, setDiagramTypeSelected] = useState<boolean>(false) // Whether user picked a type yet
   const [jsonGenerationOutput, setJsonGenerationOutput] = useState<string>('') // Raw AI output from JSON generation
+  const [diagramTypeLoading, setDiagramTypeLoading] = useState<boolean>(false) // Show spinner while awaiting scores/options
 
   // UI state - controls modal visibility and error display
   const [exportModalVisible, setExportModalVisible] = useState(false) // Export options modal
@@ -213,6 +214,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       if (typeof latestScore === 'number') {
         // Update UI score display (0-100 scale)
         setScore(latestScore)
+        setDiagramTypeLoading(false)
       }
 
       // Extract and update score target from backend if provided
@@ -221,6 +223,16 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       }
       if (update.json_generation_output) {
         setJsonGenerationOutput(update.json_generation_output)
+      }
+      if (update.keyword_scores) {
+        setKeywordScores(update.keyword_scores)
+        setDiagramTypeLoading(false)
+      }
+      if (update.recommended_diagram_type) {
+        setRecommendedDiagramType(update.recommended_diagram_type)
+      }
+      if (update.analysis_text) {
+        setDiagramAnalysisText(update.analysis_text)
       }
 
       // Handle different session status values and update UI accordingly
@@ -269,34 +281,44 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // in SSE get_status() for display purposes, but can also be fetched via REST
           // if needed for mutations. For now, we keep SSE data for read-only display.
           break
-        case 'awaiting_diagram_type_selection':
+        case 'awaiting_diagram_type_selection': {
           // AI has analyzed diagram options and is waiting for user to select preferred type
           setCurrentPhase(2) // Move to "Generation" phase (index 2) - user confirmed ready
           message.info('Analyzing content to recommend the best diagram type...')
           setIsInAnalysisPhase(false)
-          // Extract diagram type options and scores from update
-          if (update.recommended_diagram_type) {
-            setRecommendedDiagramType(update.recommended_diagram_type)
-          }
-          if (update.keyword_scores) {
-            setKeywordScores(update.keyword_scores)
-          }
-          if (update.analysis_text) {
-            setDiagramAnalysisText(update.analysis_text)
-          }
+          const hasScoreData =
+            !!update.keyword_scores ||
+            typeof update.score === 'number' ||
+            typeof (update as any).assessment_score === 'number'
+          setDiagramTypeLoading(!hasScoreData)
 
           // Only navigate to diagram type selection if user hasn't already chosen
           if (!diagramTypeSelected) {
             setDiagramTypeSelected(false)
             setCurrentScreen('diagramTypeSelection')
           }
+
+          // Refresh score from update so UI shows latest before type selection
+          if (typeof update.score === 'number') {
+            setScore(update.score)
+          } else if (typeof (update as any).assessment_score === 'number') {
+            setScore((update as any).assessment_score)
+          }
+          if (typeof update.score_target === 'number') {
+            setScoreTarget(update.score_target)
+          }
+          if (typeof update.score === 'number' || typeof (update as any).assessment_score === 'number') {
+            setDiagramTypeLoading(false)
+          }
           break
+        }
         case 'diagram_type_selected':
           // User selected diagram type, AI proceeding to code generation
           setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.success('Diagram type selected')
           setDiagramTypeSelected(true)
           setIsInAnalysisPhase(false)
+          setDiagramTypeLoading(false)
           // Navigate to generation screen
           setCurrentScreen('generation')
           break
@@ -363,24 +385,28 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // LLM correction successful
           message.success(update.message || 'AI correction successful!')
           setIsInAnalysisPhase(false)
+          setDiagramTypeLoading(false)
           break
         case 'rendering':
           // Backend rendering diagram code to SVG using appropriate renderer (Step 4/4)
           setCurrentPhase(3) // Move to "Rendering" phase (index 3)
           message.loading(update.message || 'Rendering SVG...')
           setIsInAnalysisPhase(false)
+          setDiagramTypeLoading(false)
           break
         case 'render_complete':
           // Provider completed rendering successfully
           setCurrentPhase(3) // Stay in "Rendering" phase (index 3)
           message.success(update.message || 'Rendering complete!')
           setIsInAnalysisPhase(false)
+          setDiagramTypeLoading(false)
           break
         case 'rendered': {
           // SVG successfully generated and ready for display
           setCurrentPhase(3) // Stay in "Rendering" phase (index 3)
           message.success('Preview ready!')
           setIsInAnalysisPhase(false)
+          setDiagramTypeLoading(false)
           setCurrentScreen('generation')
           // Get SVG and code directly from SSE update (included to avoid timing issues)
           const svgFromUpdate = update.svgOutput || (update as any)?.svg_output
@@ -405,6 +431,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           if (currentScreen === 'description' && diagramTypeSelected) {
             setCurrentScreen('generation')
           }
+          setDiagramTypeLoading(false)
 
           // Persist completed session to localStorage for history/replay
           if (sessionId && diagramCode && svgOutput) {
@@ -426,6 +453,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         case 'error':
           // Recoverable error occurred during processing
           message.error(`Error: ${update.message || 'Unknown error occurred'}`)
+          setDiagramTypeLoading(false)
           break
         case 'failed':
           // Critical failure - show error modal and allow user to close tab
@@ -437,6 +465,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
               'An unexpected error occurred during diagram generation. Please check your configuration and try again.',
           })
           setErrorModalVisible(true)
+          setDiagramTypeLoading(false)
           break
       }
     },
@@ -707,15 +736,15 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setDiagramTypeSelected(false)
     setCurrentPhase(2)
     setCurrentScreen('diagramTypeSelection')
+    setDiagramTypeLoading(true)
 
     try {
       // Signal backend that user is satisfied with clarification
       await confirmReady()
-
-      // Wait for backend to send 'awaiting_diagram_type_selection' before navigating
     } catch (err) {
       console.error('Confirm ready failed:', err)
       message.error('Failed to confirm ready')
+      setDiagramTypeLoading(false)
     }
   }
 
@@ -989,6 +1018,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         jsonGenerationOutput={jsonGenerationOutput}
         onSelectDiagramType={handleSelectDiagramType}
         onShowState={handleShowState}
+        diagramTypeLoading={diagramTypeLoading}
       />
     )
   }
@@ -1062,6 +1092,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           console.log('Export:', { filename, format, diagramCode, svgOutput })
         }}
         error={error ? { message: error.message } : undefined}
+        diagramTypeLoading={diagramTypeLoading}
       />
     )
   }

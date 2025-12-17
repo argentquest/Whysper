@@ -9,7 +9,7 @@
  */
 
 import { CopyOutlined } from '@ant-design/icons'
-import { Alert, Button, Input, Layout, message, Tabs } from 'antd'
+import { Alert, Button, Card, Input, Layout, message, Spin, Tabs } from 'antd'
 import React from 'react'
 
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
@@ -57,6 +57,7 @@ interface GenerationScreenProps {
   onRevertToOriginal?: () => void
   onShowState?: () => void
   error?: { message: string }
+  diagramTypeLoading?: boolean
 }
 
 /**
@@ -87,6 +88,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   onRevertToOriginal,
   onShowState,
   error,
+  diagramTypeLoading = false,
 }) => {
   const isComplete = status?.status === 'completed'
   const isError = status?.status === 'error' || status?.status === 'failed'
@@ -142,6 +144,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
             flexDirection: 'column',
             padding: '0 24px',
             minHeight: 0,
+            position: 'relative',
           }}
         >
           <Tabs
@@ -223,22 +226,26 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                     style={{
                       height: '100%',
                       display: 'flex',
-                      flexDirection: 'column',
+                      gap: 16,
+                      paddingTop: 8,
+                      minHeight: 0,
                     }}
                   >
+                    {/* Column 1: Editor (40%) */}
                     <div
-                      className={styles.panel}
                       style={{
-                        flex: 1,
+                        flex: '0 0 40%',
+                        maxWidth: '40%',
                         display: 'flex',
                         flexDirection: 'column',
-                        overflow: 'hidden',
+                        minHeight: 0,
                       }}
                     >
                       <div
                         style={{
                           display: 'flex',
-                          justifyContent: 'flex-end',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                           marginBottom: 8,
                           gap: 8,
                         }}
@@ -250,35 +257,57 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           disabled={!diagramCode || !sessionId || loading}
                           title="Render diagram with current code (skips validation)"
                         >
-                          Render
+                          Refresh Diagram
                         </Button>
-                        {originalDiagramCode && diagramCode !== originalDiagramCode && (
+                        <div style={{ display: 'flex', gap: 8 }}>
                           <Button
-                            type="default"
+                            type="text"
                             size="small"
-                            onClick={onRevertToOriginal}
-                            title="Revert to original generated code"
-                          >
-                            Revert
-                          </Button>
-                        )}
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={handleCopyCode}
-                          title="Copy code"
-                        />
+                            icon={<CopyOutlined />}
+                            onClick={handleCopyCode}
+                            title="Copy code"
+                          />
+                        </div>
                       </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ flex: 1, minHeight: 0 }}>
                         <CodeEditorPanel
                           code={diagramCode}
                           originalCode={originalDiagramCode}
                           onChange={async (code: string) => onCodeChange?.(code)}
                           diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}
+                          defaultEditing
+                          showTitle={false}
                         />
                       </div>
+                    </div>
+
+                    {/* Column 2: Rendered diagram preview (60%) */}
+                    <div
+                      style={{
+                        flex: '0 0 60%',
+                        maxWidth: '60%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
+                      }}
+                    >
+                      <Card
+                        title="Rendered Diagram"
+                        size="small"
+                        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+                        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+                      >
+                        <div style={{ flex: 1, minHeight: 0 }}>
+                          <PreviewPanel
+                            svgOutput={svgOutput}
+                            isLoading={loading && !svgOutput}
+                            diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
+                            error={status?.error_message || status?.error || error?.message || null}
+                            validationError={status?.validation_error || null}
+                          />
+                        </div>
+                      </Card>
                     </div>
                   </div>
                 ),
@@ -407,6 +436,32 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
               },
             ]}
           />
+          {diagramTypeLoading && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(255,255,255,0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 5,
+                padding: 24,
+              }}
+            >
+              <Card
+                size="small"
+                style={{ width: 360, textAlign: 'center', boxShadow: '0 12px 30px rgba(0,0,0,0.12)' }}
+                bodyStyle={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}
+              >
+                <Spin size="large" />
+                <div style={{ fontWeight: 600, marginTop: 4 }}>Calculating diagram options...</div>
+                <div style={{ color: '#555', fontSize: 13 }}>
+                  Please hold while we finish scoring. We will continue automatically.
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Footer with Actions */}
