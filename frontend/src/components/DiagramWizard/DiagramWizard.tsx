@@ -284,9 +284,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           if (update.analysis_text) {
             setDiagramAnalysisText(update.analysis_text)
           }
-          setDiagramTypeSelected(false)
-          // Navigate to diagram type selection screen
-          setCurrentScreen('diagramTypeSelection')
+
+          // Only navigate to diagram type selection if user hasn't already chosen
+          if (!diagramTypeSelected) {
+            setDiagramTypeSelected(false)
+            setCurrentScreen('diagramTypeSelection')
+          }
           break
         case 'diagram_type_selected':
           // User selected diagram type, AI proceeding to code generation
@@ -699,6 +702,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       message.error('No active session')
       return
     }
+
+    // Optimistically move user forward while backend processes readiness
+    setDiagramTypeSelected(false)
+    setCurrentPhase(2)
+    setCurrentScreen('diagramTypeSelection')
 
     try {
       // Signal backend that user is satisfied with clarification
