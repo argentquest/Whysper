@@ -74,13 +74,13 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     if not provider:
         raise ValueError(f"No provider available for {diagram_type.value}")
 
-    # Send rendering status update to frontend
+    # Send rendering status update to frontend with "Working" message
     update_callback = state.get("_update_callback")
     if update_callback:
         await update_callback(
             {
                 "status": "rendering",
-                "message": f"Rendering {diagram_type.value} diagram to SVG...",
+                "message": f"Working: Rendering {diagram_type.value} diagram...",
             }
         )
 
@@ -106,13 +106,13 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
             corrected_code = getattr(result.validation, "fixed_code", None)
             final_diagram_code = corrected_code if (corrected_code and corrected_code != diagram_code) else diagram_code
 
-            # Send rendered status update to frontend with SVG output
+            # Send rendered status update to frontend with SVG output and "Working Done"
             # Include svgOutput here to avoid timing issues with REST API polling
             if update_callback:
                 await update_callback(
                     {
                         "status": "rendered",
-                        "message": "✅ Diagram rendered successfully",
+                        "message": "Working Done",
                         "svgOutput": result.content,  # Include SVG for immediate display
                         "diagramCode": final_diagram_code,  # Include corrected code
                     }

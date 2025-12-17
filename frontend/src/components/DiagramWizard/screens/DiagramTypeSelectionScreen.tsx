@@ -35,7 +35,7 @@ import {
   FileTextOutlined,
   TrophyOutlined,
 } from '@ant-design/icons'
-import { Card, Col, Layout, Row, Table, Tag, Typography } from 'antd'
+import { Card, Col, Layout, Row, Spin, Table, Tag, Typography } from 'antd'
 import React from 'react'
 
 import DiagramWizardHeader from '../components/DiagramWizardHeader'

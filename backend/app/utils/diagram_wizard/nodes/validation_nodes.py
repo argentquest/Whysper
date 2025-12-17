@@ -156,7 +156,7 @@ Attempt: {refinement_attempt}"""
         await update_callback(
             {
                 "status": "refining",
-                "message": ("AI is fixing diagram code " f"(attempt {refinement_attempt})..."),
+                "message": f"Working: Fixing validation errors (attempt {refinement_attempt})...",
                 "message_type": "progress",
             }
         )
@@ -206,7 +206,7 @@ Attempt: {refinement_attempt}"""
         await update_callback(
             {
                 "status": "code_refined",
-                "message": ("✅ AI fixed diagram code " f"(attempt {refinement_attempt})"),
+                "message": "Working Done",
                 "message_type": "success",
             }
         )

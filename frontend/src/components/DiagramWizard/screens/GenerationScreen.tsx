@@ -52,9 +52,7 @@ interface GenerationScreenProps {
   onExportClick: () => void
   onExportModalClose: () => void
   onExportSubmit: (filename: string, format: string) => void
-  onCodeChange?: (code: string) => void
   onRenderClick?: (code: string) => void
-  onRevertToOriginal?: () => void
   onShowState?: () => void
   error?: { message: string }
   diagramTypeLoading?: boolean
@@ -83,9 +81,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   cleanStructurizr: _cleanStructurizr,
   jsonRepresentation,
   onExportModalClose,
-  onCodeChange,
   onRenderClick,
-  onRevertToOriginal,
   onShowState,
   error,
   diagramTypeLoading = false,
@@ -225,10 +221,10 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                   <div
                     style={{
                       height: '100%',
+                      minHeight: 600,
                       display: 'flex',
                       gap: 16,
                       paddingTop: 8,
-                      minHeight: 0,
                     }}
                   >
                     {/* Column 1: Editor (40%) */}
@@ -273,10 +269,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                         <CodeEditorPanel
                           code={diagramCode}
                           originalCode={originalDiagramCode}
-                          onChange={async (code: string) => onCodeChange?.(code)}
                           diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}
-                          defaultEditing
                           showTitle={false}
                         />
                       </div>
@@ -425,7 +419,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           code={
                             jsonRepresentation ? JSON.stringify(jsonRepresentation, null, 2) : ''
                           }
-                          onChange={async (_code: string) => {}}
                           diagramType="JSON"
                           isLoading={loading}
                         />

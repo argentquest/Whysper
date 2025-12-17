@@ -46,7 +46,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
         await update_callback(
             {
                 "status": "generating_json",
-                "message": "AI is validating and finalizing architecture representation...",
+                "message": "Working: Generating architecture model...",
             }
         )
 
@@ -124,7 +124,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             await update_callback(
                 {
                     "status": "json_generated",
-                    "message": "Successfully validated and finalized architecture representation.",
+                    "message": "Working Done",
                     # Note: structurizr_workspace, clean_structurizr, json_generation_output
                     # are in LangGraph state and included via get_status() in _push_update
                 }
@@ -214,6 +214,15 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
         extra={"session_id": session_id} if session_id else {},
     )
 
+    # Send "Working" message to show spinner during score computation
+    update_callback = state.get("_update_callback")
+    if update_callback and callable(update_callback):
+        await update_callback(
+            {
+                "message": "Working: Computing diagram scores...",
+            }
+        )
+
     # Combine design summary and JSON metadata for better keyword analysis
     analysis_parts = []
     if final_design_summary:
@@ -265,12 +274,12 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     )
 
     # Send update to frontend with all diagram type options and scores for user selection
-    update_callback = state.get("_update_callback")
+    # Include "Working Done" to hide the spinner
     if update_callback and callable(update_callback):
         await update_callback(
             {
                 "status": "awaiting_diagram_type_selection",
-                "message": "Please select your preferred diagram type",
+                "message": "Working Done",
                 "recommended_diagram_type": recommended_type.value,
                 "keyword_scores": keyword_scores,
                 "analysis_text": analysis_text,
@@ -342,13 +351,13 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
     # Prefer the raw JSON generation output if available; otherwise use structured JSON
     llm_input_payload = json_generation_output if json_generation_output else json.dumps(json_representation, indent=2)
 
-    # Send progress update to frontend
+    # Send progress update to frontend with "Working" message
     update_callback = state.get("_update_callback")
     if update_callback and callable(update_callback):
         await update_callback(
             {
                 "status": "generating",
-                "message": f"AI is generating {diagram_type_str} diagram code...",
+                "message": f"Working: Generating {diagram_type_str} diagram code...",
                 "message_type": "progress",
                 "diagram_type": diagram_type_str,
                 "generation_payload_preview": llm_input_payload[:1000],  # truncate for safety
@@ -397,13 +406,13 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         extra={"session_id": session_id} if session_id else {},
     )
 
-    # Send success update to frontend with diagram code
+    # Send success update to frontend with diagram code and "Working Done" to hide spinner
     # Include diagramCode here to avoid timing issues with REST API polling
     if update_callback:
         await update_callback(
             {
                 "status": "code_generated",
-                "message": f"✅ Generated {diagram_type_str} diagram code ({len(diagram_code)} chars)",
+                "message": "Working Done",
                 "message_type": "success",
                 "diagramCode": diagram_code,  # Include code for immediate display
             }

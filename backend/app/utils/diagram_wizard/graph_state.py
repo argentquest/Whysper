@@ -4,7 +4,7 @@ Graph state schema for diagram factory LangGraph.
 Defines the central state object that flows through all graph nodes.
 """
 
-from typing import TypedDict, List, Dict, Optional, Any
+from typing import TypedDict, List, Dict, Optional, Any, Callable, Awaitable
 from enum import Enum
 
 
@@ -81,4 +81,4 @@ class GraphState(TypedDict, total=False):
     error_message: Optional[str]  # Descriptive error information
     clarification_start_time: Optional[float]  # Runtime: tracks clarification start time
     _session_id: Optional[str]  # Runtime: injected for logging/callbacks
-    _update_callback: Optional[Any]  # Runtime: injected for SSE updates
+    _update_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]]  # Runtime: injected for SSE updates

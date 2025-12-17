@@ -571,7 +571,7 @@ class BaseDiagramProvider(ABC):
                 progress_callback,
                 {
                     "status": "llm_correcting",
-                    "message": f"Attempting AI-powered correction for {self.diagram_type}...",
+                    "message": f"Working: AI is correcting {self.diagram_type} code...",
                     "step": "3/4",
                     "max_retries": max_retries,
                 },
@@ -594,7 +594,7 @@ class BaseDiagramProvider(ABC):
                 self.logger.info(f"[{self.provider_id}] ✅ LLM correction successful")
                 await self._send_progress(
                     progress_callback,
-                    {"status": "llm_corrected", "message": "✅ AI correction successful", "step": "3/4"},
+                    {"status": "llm_corrected", "message": "Working Done", "step": "3/4"},
                 )
 
         # If still invalid, try to render anyway as best attempt

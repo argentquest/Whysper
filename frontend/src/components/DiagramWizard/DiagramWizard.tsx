@@ -49,7 +49,7 @@
  */
 
 import Editor from '@monaco-editor/react'
-import { message, Modal } from 'antd'
+import { message, Modal, Spin } from 'antd'
 import React, { useCallback,useEffect, useState } from 'react'
 
 import { useLocalStorage } from '../../hooks/useLocalStorage'
@@ -161,6 +161,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [jsonGenerationOutput, setJsonGenerationOutput] = useState<string>('') // Raw AI output from JSON generation
   const [diagramTypeLoading, setDiagramTypeLoading] = useState<boolean>(false) // Show spinner while awaiting scores/options
 
+  // Generic working spinner state
+  const [isWorking, setIsWorking] = useState<boolean>(false) // Show spinner popup when backend is working
+  const [workingMessage, setWorkingMessage] = useState<string>('Working...') // Message to show in spinner popup
+
   // UI state - controls modal visibility and error display
   const [exportModalVisible, setExportModalVisible] = useState(false) // Export options modal
   const [errorModalVisible, setErrorModalVisible] = useState(false) // Critical error modal (closes tab)
@@ -203,6 +207,27 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         parseAndShowToast(update.message)
       }
 
+      // ============ Working Spinner Control ============
+      // Backend can control a blocking spinner modal by sending special messages:
+      //   "Working" or "Working: Custom message..." -> Shows spinner popup
+      //   "Working Done" or "Done" -> Hides spinner popup
+      //
+      // The spinner is useful for long-running backend operations where the user
+      // should wait without interacting with the UI (e.g., computing scores,
+      // generating code, rendering diagrams). See status-specific comments below
+      // for recommended usage at each workflow step.
+      if (update.message && typeof update.message === 'string') {
+        const msg = update.message.toLowerCase()
+        if (msg.includes('working done') || msg === 'done') {
+          setIsWorking(false)
+        } else if (msg.includes('working')) {
+          setIsWorking(true)
+          // Extract custom message if provided (e.g., "Working: Computing scores...")
+          const customMsg = update.message.replace(/working:?\s*/i, '').trim()
+          setWorkingMessage(customMsg || 'Working...')
+        }
+      }
+
       // Extract and update clarity score from multiple possible fields
       // Backend may send 'score' or 'assessment_score' depending on processing stage
       const latestScore =
@@ -214,7 +239,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       if (typeof latestScore === 'number') {
         // Update UI score display (0-100 scale)
         setScore(latestScore)
-        setDiagramTypeLoading(false)
+        // Loading state is managed in the status-specific handlers below
       }
 
       // Extract and update score target from backend if provided
@@ -226,7 +251,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       }
       if (update.keyword_scores) {
         setKeywordScores(update.keyword_scores)
-        setDiagramTypeLoading(false)
+        // Loading state is managed in the status-specific handlers below
       }
       if (update.recommended_diagram_type) {
         setRecommendedDiagramType(update.recommended_diagram_type)
@@ -283,6 +308,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'awaiting_diagram_type_selection': {
           // AI has analyzed diagram options and is waiting for user to select preferred type
+          // Backend should send: "Working: Computing diagram scores..." when starting score computation
+          // Backend should send: "Working Done" when scores are ready
           setCurrentPhase(2) // Move to "Generation" phase (index 2) - user confirmed ready
           message.info('Analyzing content to recommend the best diagram type...')
           setIsInAnalysisPhase(false)
@@ -324,12 +351,15 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'generating_json':
           // AI creating structured JSON representation of system architecture
+          // Backend should send: "Working: Generating architecture model..." when starting
           setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.loading('Preparing structured data...')
           setIsInAnalysisPhase(false)
           break
         case 'generating':
           // AI actively generating diagram code from structured data
+          // Backend should send: "Working: Generating diagram code..." when starting
+          // Backend should send: "Working Done" when code is generated
           setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.loading('Generating diagram code...')
           setIsInAnalysisPhase(false)
@@ -348,11 +378,13 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         }
         case 'refining':
           // Diagram code had validation errors, AI attempting to fix them
+          // Backend should send: "Working: Fixing validation errors..." when starting
           message.warning('Refining code...')
           setIsInAnalysisPhase(false)
           break
         case 'fallback_fix':
           // Primary refinement failed, attempting fallback fix strategy
+          // Backend should send: "Working: Attempting alternative fix..." when starting
           message.warning('Attempting fallback fix...')
           setIsInAnalysisPhase(false)
           break
@@ -378,6 +410,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'llm_correcting':
           // Provider using LLM for intelligent correction (Step 3/4)
+          // Backend should send: "Working: AI is correcting code..." when starting
+          // Backend should send: "Working Done" when correction is complete
           message.loading(update.message || 'AI is correcting diagram code...')
           setIsInAnalysisPhase(false)
           break
@@ -389,6 +423,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'rendering':
           // Backend rendering diagram code to SVG using appropriate renderer (Step 4/4)
+          // Backend should send: "Working: Rendering diagram..." when starting
+          // Backend should send: "Working Done" when rendering is complete
           setCurrentPhase(3) // Move to "Rendering" phase (index 3)
           message.loading(update.message || 'Rendering SVG...')
           setIsInAnalysisPhase(false)
@@ -786,15 +822,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setExportModalVisible(false)
   }
 
-  // Handle user editing diagram code in the Code Editor tab
-  const handleCodeChange = useCallback(
-    async (newCode: string) => {
-      // Update local state immediately for responsive UI (don't auto-render on change)
-      setLocalDiagramCode(newCode)
-    },
-    []
-  )
-
   // Handle user clicking "Render" button to render the current code
   const handleRenderClick = useCallback(
     async (code: string) => {
@@ -1077,14 +1104,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onNewDiagram={handleNewDiagram}
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}
-        onCodeChange={handleCodeChange}
         onRenderClick={handleRenderClick}
-        onRevertToOriginal={() => {
-          if (originalDiagramCode) {
-            setLocalDiagramCode(originalDiagramCode)
-            message.success('Reverted to original diagram code')
-          }
-        }}
         originalDiagramCode={originalDiagramCode}
         onShowState={handleShowState}
         onExportSubmit={async (filename, format) => {
@@ -1143,6 +1163,27 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         <div style={{ padding: '20px 0' }}>
           <p style={{ fontSize: '14px', marginBottom: '16px' }}>{errorDetails.message}</p>
           <p style={{ fontSize: '12px', color: '#999' }}>Click OK to close this tab.</p>
+        </div>
+      </Modal>
+
+      {/* Working Spinner Modal - Shows when backend is processing */}
+      <Modal
+        open={isWorking}
+        footer={null}
+        closable={false}
+        maskClosable={false}
+        centered
+        width={400}
+        styles={{
+          body: { textAlign: 'center', padding: '40px 24px' }
+        }}
+      >
+        <Spin size="large" />
+        <div style={{ marginTop: 24, fontSize: 16, fontWeight: 600, color: '#1890ff' }}>
+          {workingMessage}
+        </div>
+        <div style={{ marginTop: 12, fontSize: 13, color: '#666' }}>
+          Please wait while we process your request...
         </div>
       </Modal>
     </>

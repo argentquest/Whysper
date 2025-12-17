@@ -2,7 +2,7 @@
  * Panel3_CodeEditor Component
  *
  * Provides a code editor for viewing and editing diagram source code.
- * Supports syntax highlighting, manual re-rendering, and real-time validation.
+ * Supports syntax highlighting and real-time validation.
  *
  * Enhanced with:
  * - Real-time code validation
@@ -21,13 +21,13 @@ import { validateDiagramCode, debounce } from '../../../services/diagram/validat
 import type { ValidationResult } from '../../../services/diagram/validationService';
 import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
+import type { CSSProperties } from 'react';
 
 interface Panel3CodeEditorProps {
   code: string;
   originalCode?: string;
   diagramType: string;
   isLoading: boolean;
-  defaultEditing?: boolean;
   showTitle?: boolean;
 }
 
@@ -35,20 +35,14 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   code,
   diagramType,
   isLoading,
-  defaultEditing = false,
   showTitle = true,
 }) => {
-  // Manage component state for editing, validation, and code manipulation
+  // Manage component state for validation
   const [editedCode, setEditedCode] = useState(code);
-  const [isEditing, setIsEditing] = useState(defaultEditing);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
-  useEffect(() => {
-    setIsEditing(defaultEditing);
-  }, [defaultEditing]);
-
-  // Sync code and trigger validation when input code changes
+  // Sync code when input code changes
   useEffect(() => {
     setEditedCode(code);
     // Validate when code changes
@@ -88,12 +82,10 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     [diagramType]
   );
 
-  // Handle code changes during editing and trigger validation
+  // Handle code changes and trigger validation
   const handleCodeChange = (value: string) => {
     setEditedCode(value);
-    if (isEditing) {
-      performValidation(value);
-    }
+    performValidation(value);
   };
 
   // Render validation status icon based on current validation state
@@ -120,7 +112,7 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     );
   };
 
-  // Render the code editor with dynamic actions and validation
+  // Render the code editor with validation
   return (
     <Card
       title={
@@ -133,10 +125,31 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
       }
       headStyle={showTitle ? undefined : { display: 'none' }}
       className={styles.codePanel}
-      style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      style={{
+        height: '100%',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: 0,
+      }}
+      bodyStyle={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        padding: showTitle ? undefined : 8,
+      } as CSSProperties}
     >
-      {/* Render code editor with optional inline validation feedback */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      {/* Render code editor with validation feedback */}
+      <div style={{
+        flex: 1,
+        minHeight: 0,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
         {isLoading ? (
           <div
             style={{
@@ -160,38 +173,27 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
           </div>
         ) : (
           <>
-            <Editor
-              height="100%"
-              defaultLanguage="plaintext"
-              value={isEditing ? editedCode : code}
-              onChange={(value) => handleCodeChange(value || '')}
-              theme="vs-light"
-              options={{
-                readOnly: !isEditing,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                fontSize: 14,
-                lineNumbers: 'on',
-                wordWrap: 'on',
-                automaticLayout: true,
-              }}
-            />
-            {isEditing && (
-              <div
-                style={{
-                  marginTop: 8,
-                  padding: 8,
-                  backgroundColor: '#fff7e6',
-                  borderRadius: 4,
-                  fontSize: 12,
-                  color: '#666',
+            <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
+              <Editor
+                height="100%"
+                width="100%"
+                defaultLanguage="plaintext"
+                value={editedCode}
+                onChange={(value) => handleCodeChange(value || '')}
+                theme="vs-light"
+                options={{
+                  readOnly: false,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  wordWrap: 'on',
+                  automaticLayout: true,
                 }}
-              >
-                Edit mode enabled. Updates are kept locally in this editor.
-              </div>
-            )}
+              />
+            </div>
             {validationResult && (validationResult.errors.length > 0 || validationResult.warnings.length > 0) && (
-              <div style={{ marginTop: 12 }}>
+              <div style={{ marginTop: 12, flexShrink: 0 }}>
                 <ErrorPanel
                   errors={validationResult.errors}
                   warnings={validationResult.warnings}
