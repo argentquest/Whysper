@@ -53,13 +53,13 @@ def strip_d2_icons(code: str) -> str:
     """
     logger.info("TOASTINFO: Starting strip_d2_icons process")
 
-    # Pattern to find icon URLs (matches entire line with icon attribute)
-    icon_pattern = re.compile(r'^\s*(?:[\w\-]+\.)*icon:\s*["\'].*?["\'].*?$', re.MULTILINE | re.IGNORECASE)
+    # Drop any line that references icons.terrastruct.com (common source of 403s)
+    icon_pattern = re.compile(r"^.*icons\.terrastruct\.com.*$", re.MULTILINE | re.IGNORECASE)
 
     # Count removals for logging
     icon_lines = icon_pattern.findall(code)
 
-    # Remove icon attribute lines
+    # Remove icon-related lines
     cleaned_code = icon_pattern.sub("", code)
 
     # Remove multiple consecutive blank lines (keep max 1)

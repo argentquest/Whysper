@@ -19,5 +19,18 @@ export default defineConfig(({ mode }) => {
       host: true, // listen on 0.0.0.0 for external access
       port: devPort,
     },
+    build: {
+      rollupOptions: {
+        output: {
+          assetFileNames: (assetInfo) => {
+            const ext = path.extname(assetInfo.name ?? '').toLowerCase();
+            if (['.woff', '.woff2', '.ttf', '.otf', '.eot'].includes(ext)) {
+              return 'fonts/[name]-[hash][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
+        },
+      },
+    },
   }
 })

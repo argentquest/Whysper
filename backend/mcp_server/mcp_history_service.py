@@ -6,12 +6,14 @@ for persistent storage and debugging purposes. Each MCP session gets
 a unique GUID-based filename following the same pattern as the frontend.
 """
 
+import os
 import json
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List
 from pathlib import Path
 
+from common.env_manager import env_manager
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -31,12 +33,7 @@ class MCPHistoryService:
 
     def __init__(self, history_dir: str = None):
         """Initialize the MCP history service with a target directory."""
-        if history_dir is None:
-            # Default to history/mcp folder in project root
-            project_root = Path(__file__).parent.parent.parent
-            history_dir = project_root / "history" / "mcp"
-
-        self.history_dir = Path(history_dir)
+        self.history_dir = self._resolve_history_dir(history_dir)
         self.history_dir.mkdir(parents=True, exist_ok=True)
 
         # Track session GUIDs and start timestamps
@@ -44,6 +41,28 @@ class MCPHistoryService:
         self._session_start_times: Dict[str, str] = {}
 
         logger.info(f"MCP history service initialized with directory: {self.history_dir}")
+
+    def _resolve_history_dir(self, override_dir: Optional[str]) -> Path:
+        """
+        Resolve MCP history directory using override, HISTORY_DIR env/.env, or default project root /history/mcp.
+        """
+        project_root = Path(__file__).parent.parent.parent
+
+        if override_dir:
+            return Path(override_dir).expanduser().resolve()
+
+        env_override = os.environ.get("HISTORY_DIR", "").strip()
+        env_vars = env_manager.load_env_file()
+        configured_dir = env_override or env_vars.get("HISTORY_DIR", "").strip()
+
+        if configured_dir:
+            base_dir = Path(configured_dir)
+            if not base_dir.is_absolute():
+                base_dir = (project_root / base_dir).resolve()
+        else:
+            base_dir = project_root / "history"
+
+        return base_dir / "mcp"
 
     def _ensure_session_record(self, session_id: str) -> Tuple[str, str]:
         """

@@ -232,3 +232,49 @@ workspace {
         }
     }
 }
+
+
+
+
+
+1. Workspace Definition A new workspace is created with the name "Reuse Models" and the description "Demonstrate Model Reuse."
+
+2. The Model (Defining the building blocks) This section defines the static elements of the architecture and their relationships.
+
+Global Elements: Two primary elements are defined that will be reused:
+
+A Person named "Customer".
+
+A Software System named "Website".
+
+Scoped Systems and Relationships: Two separate software system "containers" are defined to establish different contexts (scopes) for relationships:
+
+Context 1 (system1): A software system named "system1" is defined. Inside this system's scope, a specific relationship exists:
+
+The Customer uses the Website. This relationship is labeled: "Relationship scoped to system1".
+
+Context 2 (system2): Another software system named "system2" is defined. Inside this system's scope, a different relationship exists:
+
+The Website interacts with the Customer. This relationship is labeled: "Relationship scoped to system2".
+
+3. The Views (Defining the diagrams) This section defines how the model is visualized. It creates two distinct diagrams to illustrate the different scopes defined above.
+
+Diagram 1: systemContext system1
+
+This diagram focuses on the context of "system1".
+
+It explicitly includes the Customer and the Website.
+
+Crucially, it explicitly excludes the relationship belonging to the other system (rel2, where the Website calls the Customer). By default, it will only show the relationship scoped to system1.
+
+The layout is generated automatically.
+
+Diagram 2: systemContext system2
+
+This diagram focuses on the context of "system2".
+
+It also explicitly includes the Customer and the Website.
+
+Crucially, it explicitly excludes the relationship belonging to the first system (rel1, where the Customer calls the Website). It will only show the relationship scoped to system2.
+
+The layout is generated automatically.

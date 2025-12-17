@@ -219,6 +219,10 @@ WEB_PORT="8080"
 # This directory will be created if it doesn't exist
 DIR_SAVE="results"
 
+# Conversation history directory (absolute or relative path from project root)
+# Default: backend/history (relative). Set to an absolute path to centralize logs.
+HISTORY_DIR="history"
+
 # Static files directory (absolute or relative path from project root)
 # Project structure: backend/static/ contains static files served by FastAPI
 # Default: Empty = auto-detects backend/static relative to backend/app/main.py

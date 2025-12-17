@@ -5,15 +5,20 @@ Abstract base class for all diagram providers.
 Provides common functionality and enforces provider interface.
 """
 
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Optional, List, Dict, Any, Callable, Awaitable
-from datetime import datetime
+import base64
+import json
 import logging
+import os
+import uuid
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from .provider_config import ProviderConfig, load_provider_config
 from .models import ProviderCapability, ValidationResult, RenderResult, ProviderMetadata
 from common.logging_decorator import log_method_call
+from common.env_manager import env_manager
 
 
 class BaseDiagramProvider(ABC):
@@ -473,6 +478,18 @@ class BaseDiagramProvider(ABC):
             ...         print("Code was auto-fixed")
         """
         start_time = datetime.now()
+        history_dir = self._resolve_history_dir()
+        history_base = self._make_history_base(start_time)
+        history_paths: Dict[str, str] = {}
+        self._persist_history_version(
+            history_dir=history_dir,
+            base_name=history_base,
+            label="original",
+            content=code,
+            ext=self.diagram_type if self.diagram_type else "txt",
+            history_paths=history_paths,
+            extra_meta={"note": "original input"},
+        )
 
         # ===== Configuration Resolution =====
         # Use runtime parameters if provided, otherwise fall back to config
@@ -533,6 +550,15 @@ class BaseDiagramProvider(ABC):
                     progress_callback,
                     {"status": "auto_fixed", "message": "✅ Pattern-based fix successful", "step": "2/4"},
                 )
+                self._persist_history_version(
+                    history_dir=history_dir,
+                    base_name=history_base,
+                    label="pattern_fixed",
+                    content=current_code,
+                    ext=self.diagram_type if self.diagram_type else "txt",
+                    history_paths=history_paths,
+                    extra_meta={"note": "pattern-based auto-fix"},
+                )
 
         # Step 3: LLM-based correction
         if (
@@ -552,7 +578,15 @@ class BaseDiagramProvider(ABC):
             )
 
             validation_result = await self._attempt_llm_correction(
-                current_code, validation_result.error, max_retries, model, progress_callback, **options
+                current_code,
+                validation_result.error,
+                max_retries,
+                model,
+                progress_callback,
+                history_dir=history_dir,
+                history_base=history_base,
+                history_paths=history_paths,
+                **options,
             )
 
             if validation_result.llm_corrected and validation_result.fixed_code:
@@ -581,6 +615,20 @@ class BaseDiagramProvider(ABC):
                 # failed
                 render_result.success = False
                 render_result.error = f"Validation failed: {validation_result.error}. " "Rendered best attempt."
+                try:
+                    self._persist_render_history(
+                        code=current_code,
+                        render_result=render_result,
+                        start_time=start_time,
+                        history_dir=history_dir,
+                        base_name=history_base,
+                        history_paths=history_paths,
+                    )
+                except Exception as persist_err:
+                    self.logger.info(
+                        "Failed to persist diagram history for invalid render",
+                        extra={"provider_id": self.provider_id, "error": str(persist_err)},
+                    )
                 return render_result
             except Exception as e:
                 self.logger.info(f"[{self.provider_id}] Render of invalid code " f"also failed: {e}")
@@ -620,9 +668,25 @@ class BaseDiagramProvider(ABC):
         render_result.validation = validation_result
 
         if render_result.success:
-            self.logger.info(f"[{self.provider_id}] ? Render successful ({duration:.2f}s)")
+            self.logger.info(f"[{self.provider_id}] ✅ Render successful ({duration:.2f}s)")
         else:
-            self.logger.info(f"[{self.provider_id}] ? Render failed ({duration:.2f}s)")
+            self.logger.info(f"[{self.provider_id}] ⚠️ Render failed ({duration:.2f}s)")
+
+        # Persist artifacts for this render to HISTORY_DIR
+        try:
+            self._persist_render_history(
+                code=current_code,
+                render_result=render_result,
+                start_time=start_time,
+                history_dir=history_dir,
+                base_name=history_base,
+                history_paths=history_paths,
+            )
+        except Exception as e:
+            self.logger.info(
+                "Failed to persist diagram history",
+                extra={"provider_id": self.provider_id, "error": str(e)},
+            )
 
         self.logger.info(
             "Completed render_with_validation",
@@ -638,6 +702,9 @@ class BaseDiagramProvider(ABC):
         max_retries: int,
         model: Optional[str] = None,
         progress_callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None,
+        history_dir: Optional[Path] = None,
+        history_base: Optional[str] = None,
+        history_paths: Optional[Dict[str, str]] = None,
         **options,
     ) -> ValidationResult:
         """Attempt LLM-based correction with retries"""
@@ -684,6 +751,21 @@ class BaseDiagramProvider(ABC):
                 self.logger.info(f"[{self.provider_id}] LLM correction failed: {message}")
                 continue
 
+            if history_dir and history_base:
+                self._persist_history_version(
+                    history_dir=history_dir,
+                    base_name=history_base,
+                    label=f"llm_attempt_{attempt}",
+                    content=corrected_code,
+                    ext=self.diagram_type if self.diagram_type else "txt",
+                    history_paths=history_paths,
+                    extra_meta={
+                        "note": "llm correction attempt",
+                        "attempt": attempt,
+                        "error": current_error,
+                    },
+                )
+
             # Validate corrected code
             validation_result = self.validate_code(corrected_code, **options)
 
@@ -727,6 +809,122 @@ class BaseDiagramProvider(ABC):
             "render_time": (datetime.now() - start_time).total_seconds(),
             "timestamp": datetime.now().isoformat(),
         }
+
+    def _resolve_history_dir(self) -> Path:
+        """
+        Resolve the diagram history directory using HISTORY_DIR (env/.env) or default /history.
+        Mirrors the history naming/location strategy used elsewhere in the app.
+        """
+        project_root = Path(__file__).resolve().parent.parent.parent
+        env_override = os.environ.get("HISTORY_DIR", "").strip()
+        env_vars = env_manager.load_env_file()
+        configured_dir = env_override or env_vars.get("HISTORY_DIR", "").strip()
+
+        if configured_dir:
+            history_dir = Path(configured_dir)
+            if not history_dir.is_absolute():
+                history_dir = (project_root / history_dir).resolve()
+        else:
+            history_dir = project_root / "history"
+
+        history_dir.mkdir(parents=True, exist_ok=True)
+        return history_dir
+
+    def _make_history_base(self, start_time: datetime) -> str:
+        """Create a timestamp_guid base name for grouping history artifacts."""
+        timestamp_prefix = start_time.strftime("%Y%m%d-%H%M%S")
+        return f"{timestamp_prefix}_{uuid.uuid4()}"
+
+    def _persist_history_version(
+        self,
+        history_dir: Path,
+        base_name: str,
+        label: str,
+        content: str,
+        ext: str,
+        history_paths: Optional[Dict[str, str]] = None,
+        extra_meta: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """
+        Persist a single version of diagram code with a descriptive label.
+        """
+        file_path = history_dir / f"{base_name}.{label}.{ext}"
+        file_path.write_text(content, encoding="utf-8")
+
+        meta_path = history_dir / f"{base_name}.{label}.meta.json"
+        meta_payload = {
+            "label": label,
+            "timestamp": datetime.now().isoformat(),
+            "path": str(file_path),
+            "note": extra_meta.get("note") if extra_meta else None,
+        }
+        if extra_meta:
+            meta_payload.update({k: v for k, v in extra_meta.items() if k != "note"})
+        meta_path.write_text(json.dumps(meta_payload, indent=2), encoding="utf-8")
+
+        if history_paths is not None:
+            history_paths[label] = str(file_path)
+            history_paths[f"{label}_meta"] = str(meta_path)
+        return str(file_path)
+
+    def _persist_render_history(
+        self,
+        code: str,
+        render_result: RenderResult,
+        start_time: datetime,
+        history_dir: Path,
+        base_name: str,
+        history_paths: Dict[str, str],
+    ) -> None:
+        """
+        Save generated diagrams, source code, and metadata to history using the timestamp_guid pattern.
+        Uses the provided history base so all versions for this render stay grouped.
+        """
+        # Save final code snapshot
+        final_code_path = self._persist_history_version(
+            history_dir=history_dir,
+            base_name=base_name,
+            label="final",
+            content=code,
+            ext=self.diagram_type if self.diagram_type else "txt",
+            history_paths=history_paths,
+            extra_meta={"note": "final code after corrections"},
+        )
+
+        # Save rendered output when available
+        if render_result.content:
+            output_format = render_result.output_format.lower()
+            output_path = history_dir / f"{base_name}.output.{output_format}"
+            if output_format == "png":
+                output_bytes = base64.b64decode(render_result.content)
+                output_path.write_bytes(output_bytes)
+            else:
+                output_path.write_text(render_result.content, encoding="utf-8")
+            history_paths["output"] = str(output_path)
+            render_result.file_path = str(output_path)
+
+        # Save metadata for traceability
+        meta_path = history_dir / f"{base_name}.meta.json"
+        history_paths["meta"] = str(meta_path)
+        meta_payload = {
+            "provider": self.provider_id,
+            "provider_name": self.provider_name,
+            "diagram_type": self.diagram_type,
+            "output_format": render_result.output_format,
+            "success": render_result.success,
+            "error": render_result.error,
+            "timestamp": datetime.now().isoformat(),
+            "start_time": start_time.isoformat(),
+            "history_paths": history_paths,
+            "metadata": render_result.metadata,
+            "history_base": base_name,
+        }
+        meta_path.write_text(json.dumps(meta_payload, indent=2), encoding="utf-8")
+
+        render_result.metadata["history_paths"] = history_paths
+        render_result.metadata["history_base"] = base_name
+        if final_code_path:
+            render_result.metadata["history_final_code"] = final_code_path
 
     # =====================================================================
     # BATCH RENDERING - Optional override

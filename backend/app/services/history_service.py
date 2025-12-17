@@ -5,12 +5,14 @@ This service handles saving conversation messages to files for persistent storag
 and debugging purposes. Each conversation gets a unique GUID-based filename.
 """
 
+import os
 import json
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
+from common.env_manager import env_manager
 from common.logger import get_logger
 from common.logging_decorator import log_method_call
 
@@ -37,19 +39,36 @@ class HistoryService:
             history_dir: Optional path to the history directory.
                         Defaults to 'history' in the project root.
         """
-        if history_dir is None:
-            # Default to history folder in project root
-            project_root = Path(__file__).parent.parent.parent.parent
-            history_dir = project_root / "history"
-
-        self.history_dir = Path(history_dir)
-        self.history_dir.mkdir(exist_ok=True)
+        self.history_dir = self._resolve_history_dir(history_dir)
+        self.history_dir.mkdir(parents=True, exist_ok=True)
 
         # Track conversation GUIDs and start timestamps
         self._conversation_guids: Dict[str, str] = {}
         self._conversation_start_times: Dict[str, str] = {}
 
         logger.info(f"History service initialized with directory: {self.history_dir}")
+
+    def _resolve_history_dir(self, override_dir: Optional[str]) -> Path:
+        """
+        Resolve the directory to store history files using an explicit override,
+        HISTORY_DIR from environment/.env, or the default project root /history.
+        """
+        project_root = Path(__file__).parent.parent.parent.parent
+
+        if override_dir:
+            return Path(override_dir).expanduser().resolve()
+
+        env_override = os.environ.get("HISTORY_DIR", "").strip()
+        env_vars = env_manager.load_env_file()
+        configured_dir = env_override or env_vars.get("HISTORY_DIR", "").strip()
+
+        if configured_dir:
+            path = Path(configured_dir)
+            if not path.is_absolute():
+                path = (project_root / path).resolve()
+            return path
+
+        return project_root / "history"
 
     @log_method_call
     def _ensure_conversation_record(self, conversation_id: str) -> Tuple[str, str]:
