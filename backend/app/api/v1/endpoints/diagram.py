@@ -300,8 +300,7 @@ async def render_diagram(request: DiagramRenderWizardRequest):
         # Create service to manage rendering process
         service = DiagramFactoryService(session)
         # Render diagram with optional custom code
-        await service.render_diagram(request.code)
-        return service.get_status()
+        return await service.render_diagram(request.code)
     except Exception as e:
         # Log and handle any rendering errors
         logger.info(f"Error rendering diagram: {e}")

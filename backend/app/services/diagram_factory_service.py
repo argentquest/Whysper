@@ -19,11 +19,15 @@ import logging
 import json
 import os
 import time
+from datetime import datetime
+from enum import Enum
 from typing import Dict, Any, List, Tuple, Optional
 
 from app.utils.diagram_wizard.langgraph_builder import get_diagram_factory_graph
 from app.utils.diagram_wizard.graph_state import GraphState, DiagramType
 from common.logging_decorator import log_method_call
+from diagrams.models import ValidationResult
+from diagrams.provider_registry import get_registry
 
 logger = logging.getLogger(__name__)
 
@@ -774,21 +778,95 @@ class DiagramFactoryService:
         try:
             code_to_render = diagram_code if diagram_code is not None else self.session.diagram_code
 
-            if not code_to_render:
-                raise ValueError("No diagram code available")
+            if not code_to_render or not code_to_render.strip():
+                raise ValueError("No diagram code available to render")
 
-            if diagram_code:
-                self.session.diagram_code = diagram_code
+            # Keep session code in sync with the manual edit
+            self.session.diagram_code = code_to_render
 
-            self.session.current_state = {"status": "completed"}
-            await self._push_update(
-                {"status": "rendered", "message": "Rendered successfully", "message_role": "assistant"}
+            # Resolve diagram type/provider from state
+            diagram_type: str = self.session.diagram_type or "Mermaid"
+            provider_id: Optional[str] = None
+            if self.session.graph_state:
+                graph_type = self.session.graph_state.get("diagram_type")
+                if isinstance(graph_type, Enum):
+                    diagram_type = graph_type.value
+                elif graph_type:
+                    diagram_type = str(graph_type)
+                provider_id = self.session.graph_state.get("provider_id")
+
+            registry = get_registry()
+            provider = None
+            if provider_id:
+                provider = registry.get(provider_id)
+            if not provider:
+                provider = registry.get_default_provider(diagram_type)
+
+            if not provider:
+                raise ValueError(f"No provider available for diagram type: {diagram_type}")
+
+            start_time = datetime.now()
+            history_dir = provider._resolve_history_dir()
+            history_base = provider._make_history_base(start_time)
+            history_paths: Dict[str, str] = {}
+
+            # Direct render: skip validation pipeline
+            render_result = provider.render(code_to_render, output_format="svg")
+            if render_result.validation is None:
+                render_result.validation = ValidationResult(is_valid=True, code_length=len(code_to_render))
+
+            # Mark manual trigger for traceability
+            render_result.metadata["manual_render"] = True
+
+            try:
+                provider._persist_render_history(
+                    code=code_to_render,
+                    render_result=render_result,
+                    start_time=start_time,
+                    history_dir=history_dir,
+                    base_name=history_base,
+                    history_paths=history_paths,
+                )
+            except Exception as persist_err:
+                logger.info(
+                    "Failed to persist diagram history",
+                    extra={"provider_id": getattr(provider, "provider_id", None), "error": str(persist_err)},
+                )
+
+            # Update session outputs
+            if render_result.success and render_result.content:
+                self.session.svg_output = render_result.content
+
+            # Build response/update payload
+            validation_error = (
+                render_result.validation.error
+                if render_result.validation and not render_result.validation.is_valid
+                else None
             )
+
+            update_payload = {
+                "status": "rendered" if render_result.success else "error",
+                "message": "Rendered successfully" if render_result.success else render_result.error or "Render failed",
+                "message_role": "assistant",
+                "diagramCode": self.session.diagram_code,
+                "svgOutput": self.session.svg_output if render_result.success else self.session.svg_output,
+                "error": render_result.error,
+                "error_message": render_result.error,
+                "validation_error": validation_error,
+                "diagram_type": diagram_type,
+                "history_paths": render_result.metadata.get("history_paths"),
+                "history_base": render_result.metadata.get("history_base"),
+            }
+
+            await self._push_update(update_payload)
+            return update_payload
 
         except Exception as e:
             logger.info(f"Error: {e}")
             self.session.errors.append(str(e))
-            await self._push_update({"status": "error", "message": str(e)})
+            error_payload = {"status": "error", "message": str(e), "error_message": str(e), "message_role": "assistant"}
+            await self._push_update(error_payload)
+            return error_payload
 
     @log_method_call
     def get_status(self) -> Dict[str, Any]:

@@ -42,6 +42,7 @@ interface GenerationScreenProps {
   svgOutput: string
   chatHistory: Message[]
   clarifications: Array<{ question: string; answer?: string }>
+  onCodeChange?: (code: string) => void
   sseConnected: boolean
   exportModalOpen: boolean
   structurizrWorkspace?: string
@@ -54,6 +55,8 @@ interface GenerationScreenProps {
   onExportSubmit: (filename: string, format: string) => void
   onRenderClick?: (code: string) => void
   onShowState?: () => void
+  renderErrorMessage?: string | null
+  renderValidationError?: string | null
   error?: { message: string }
   diagramTypeLoading?: boolean
 }
@@ -75,6 +78,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   svgOutput,
   chatHistory,
   clarifications,
+  onCodeChange,
   sseConnected,
   exportModalOpen,
   structurizrWorkspace: _structurizrWorkspace,
@@ -83,12 +87,17 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   onExportModalClose,
   onRenderClick,
   onShowState,
+  renderErrorMessage,
+  renderValidationError,
   error,
   diagramTypeLoading = false,
 }) => {
   const isComplete = status?.status === 'completed'
   const isError = status?.status === 'error' || status?.status === 'failed'
   const isValidationIssue = status?.status === 'refining' || status?.status === 'fallback_fix'
+  const renderErrorText =
+    renderErrorMessage || status?.error_message || status?.error || error?.message || null
+  const validationErrorText = renderValidationError || status?.validation_error || null
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(diagramCode)
@@ -113,10 +122,10 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
       />
 
       <Layout.Content className={styles.content}>
-        {error && (
+        {renderErrorText && (
           <Alert
             message="Error"
-            description={error.message}
+            description={renderErrorText}
             type="error"
             closable
             style={{ marginBottom: 16, margin: '0 24px 16px 24px' }}
@@ -203,13 +212,13 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                         overflow: 'hidden',
                       }}
                     >
-                      <PreviewPanel
-                        svgOutput={svgOutput}
-                        isLoading={loading && !svgOutput}
-                        diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
-                        error={status?.error_message || status?.error || error?.message || null}
-                        validationError={status?.validation_error || null}
-                      />
+                        <PreviewPanel
+                          svgOutput={svgOutput}
+                          isLoading={loading && !svgOutput}
+                          diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
+                          error={renderErrorText}
+                          validationError={validationErrorText}
+                        />
                     </div>
                   </div>
                 ),
@@ -272,6 +281,7 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           diagramType={status?.diagramType || status?.diagram_type || 'Diagram'}
                           isLoading={loading}
                           showTitle={false}
+                          onCodeChange={onCodeChange}
                         />
                       </div>
                     </div>
@@ -297,8 +307,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                             svgOutput={svgOutput}
                             isLoading={loading && !svgOutput}
                             diagramType={status?.diagramType || status?.diagram_type || 'Mermaid'}
-                            error={status?.error_message || status?.error || error?.message || null}
-                            validationError={status?.validation_error || null}
+                            error={renderErrorText}
+                            validationError={validationErrorText}
                           />
                         </div>
                       </Card>

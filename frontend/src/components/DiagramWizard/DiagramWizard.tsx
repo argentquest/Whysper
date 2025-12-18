@@ -580,6 +580,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   const [localDiagramCode, setLocalDiagramCode] = useState<string | null>(null)
   const [localOriginalDiagramCode, setLocalOriginalDiagramCode] = useState<string>('')
   const [localSvgOutput, setLocalSvgOutput] = useState<string | null>(null)
+  const [manualRenderError, setManualRenderError] = useState<string | null>(null)
+  const [manualValidationError, setManualValidationError] = useState<string | null>(null)
+  const [isManualRendering, setIsManualRendering] = useState(false)
 
   // Sync local state with SSE updates (when server provides new values)
   React.useEffect(() => {
@@ -656,6 +659,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   )
 
   // ============ Event Handlers ============
+
+  const handleCodeChange = useCallback((code: string) => {
+    setLocalDiagramCode(code)
+    setManualRenderError(null)
+    setManualValidationError(null)
+  }, [])
 
   // Handle AI model selection from ModelSelectionScreen
   const handleModelSelect = (modelId: ModelId) => {
@@ -825,26 +834,68 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Handle user clicking "Render" button to render the current code
   const handleRenderClick = useCallback(
     async (code: string) => {
+      if (!sessionId) {
+        message.error('No active session to render diagram.')
+        return
+      }
+
+      if (!code || !code.trim()) {
+        message.warning('No diagram code to render.')
+        return
+      }
+
       try {
-        // Render diagram with current code
-        if (sessionId) {
-          console.log('[DiagramWizard] Rendering diagram with code:', code.substring(0, 100) + '...')
+        setManualRenderError(null)
+        setManualValidationError(null)
+        setIsManualRendering(true)
 
-          // Call backend to render the code (bypasses validation)
-          const response = await DiagramApi.renderDiagram(sessionId, code)
+        console.log('[DiagramWizard] Rendering diagram with code:', code.substring(0, 100) + '...')
 
-          // Update local SVG output with new rendering
-          if (response.svgOutput || (response as any).svg_output) {
-            const newSvg = response.svgOutput || (response as any).svg_output
-            setLocalSvgOutput(newSvg)
+        // Call backend to render the code (skips validation pipeline)
+        const response = await DiagramApi.renderDiagram(sessionId, code)
+
+        const responseCode = response.diagramCode || (response as any)?.diagram_code || code
+        const newSvg = response.svgOutput || (response as any)?.svg_output || ''
+        const validationError =
+          (response as any)?.validation_error || (response as any)?.validationError || null
+        const renderError = (response as any)?.error_message || (response as any)?.error || null
+
+        // Keep local editor state in sync with rendered code
+        setLocalDiagramCode(responseCode)
+
+        if (validationError) {
+          setManualValidationError(validationError)
+        } else {
+          setManualValidationError(null)
+        }
+
+        if (renderError) {
+          setManualRenderError(renderError)
+          message.error(renderError)
+        } else {
+          setManualRenderError(null)
+        }
+
+        // Update local SVG output with new rendering
+        if (newSvg) {
+          setLocalSvgOutput(newSvg)
+          if (!renderError) {
             message.success('Diagram rendered successfully!')
-          } else {
-            message.warning('Rendering completed but no SVG was returned')
           }
+        } else if (!renderError) {
+          message.warning('Rendering completed but no SVG was returned')
         }
       } catch (error) {
         console.error('[DiagramWizard] Failed to render diagram:', error)
-        message.error('Failed to render diagram. Please check the code and try again.')
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Failed to render diagram. Please check the code and try again.'
+        setManualRenderError(errorMessage)
+        message.error(`Failed to render diagram: ${errorMessage}`)
+        setManualValidationError(null)
+      } finally {
+        setIsManualRendering(false)
       }
     },
     [sessionId]
@@ -1086,7 +1137,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         selectedModel={selectedModel}
         currentPhase={currentPhase}
         phases={phases}
-        loading={loading}
+        loading={loading || isManualRendering}
         sessionId={sessionId}
         status={status}
         score={score}
@@ -1095,6 +1146,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         svgOutput={svgOutput}
         chatHistory={chatHistory}
         clarifications={clarifications}
+        onCodeChange={handleCodeChange}
         sseConnected={sseConnected}
         exportModalOpen={exportModalVisible}
         structurizrWorkspace={structurizrWorkspace}
@@ -1107,6 +1159,8 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         onRenderClick={handleRenderClick}
         originalDiagramCode={originalDiagramCode}
         onShowState={handleShowState}
+        renderErrorMessage={manualRenderError}
+        renderValidationError={manualValidationError}
         onExportSubmit={async (filename, format) => {
           // TODO: Implement export logic (download diagram as file)
           console.log('Export:', { filename, format, diagramCode, svgOutput })

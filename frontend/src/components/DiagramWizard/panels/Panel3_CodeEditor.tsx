@@ -10,7 +10,7 @@
  * - Auto-fix suggestions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, Space, Spin, Tooltip, Badge } from 'antd';
 import {
   WarningOutlined,
@@ -29,6 +29,7 @@ interface Panel3CodeEditorProps {
   diagramType: string;
   isLoading: boolean;
   showTitle?: boolean;
+  onCodeChange?: (code: string) => void;
 }
 
 const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
@@ -36,20 +37,12 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
   diagramType,
   isLoading,
   showTitle = true,
+  onCodeChange,
 }) => {
   // Manage component state for validation
   const [editedCode, setEditedCode] = useState(code);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-
-  // Sync code when input code changes
-  useEffect(() => {
-    setEditedCode(code);
-    // Validate when code changes
-    if (code && code.trim()) {
-      performValidation(code);
-    }
-  }, [code]);
 
   // Debounced validation to prevent excessive API calls during typing
   const performValidation = useCallback(
@@ -82,9 +75,30 @@ const Panel3_CodeEditor: React.FC<Panel3CodeEditorProps> = ({
     [diagramType]
   );
 
+  // Sync code when input code changes
+  const isInitialSync = useRef(true);
+
+  useEffect(() => {
+    // Allow initial validation even if prop === local state, then guard duplicates
+    if (isInitialSync.current) {
+      isInitialSync.current = false;
+    } else if (code === editedCode) {
+      return;
+    }
+
+    setEditedCode(code);
+
+    if (code && code.trim()) {
+      performValidation(code);
+    } else {
+      setValidationResult(null);
+    }
+  }, [code, editedCode, performValidation]);
+
   // Handle code changes and trigger validation
   const handleCodeChange = (value: string) => {
     setEditedCode(value);
+    onCodeChange?.(value);
     performValidation(value);
   };
 

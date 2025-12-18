@@ -53,16 +53,18 @@ body {
   --gradient-yellow: linear-gradient(135deg, #ffcc02 0%, #e6b800 100%);
 }
 
-/* Centered, larger toast/message styling */
+/* Right-aligned toast/message styling */
 .ant-message {
-  top: 50% !important;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 24px !important;
+  right: 24px;
+  left: auto;
+  transform: none;
+  width: auto;
 }
 
 .ant-message-notice {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .ant-message-notice-content {

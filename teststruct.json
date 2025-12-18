@@ -278,3 +278,61 @@ It also explicitly includes the Customer and the Website.
 Crucially, it explicitly excludes the relationship belonging to the first system (rel1, where the Customer calls the Website). It will only show the relationship scoped to system2.
 
 The layout is generated automatically.
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================================================
+
+
+
+Overview
+This workspace describes the container-level architecture of an Internet Banking System. It illustrates how a user interacts with the system through web and mobile interfaces, and how those interfaces connect to backend services and data storage.
+
+Actors
+User: The person interacting with the Internet Banking System (e.g., a bank customer).
+
+System Containers
+The "Internet Banking System" is composed of five distinct containers:
+
+Web Application: A server-side application built using Java and Spring MVC. Its primary roles are delivering static content and serving the Single-Page Application to browsers.
+
+Single-Page Application (SPA): A client-side browser application built with JavaScript and Angular. It provides the primary Internet banking functionality to customers.
+
+Mobile App: A native mobile application built using Xamarin, providing a limited subset of the Internet banking functionality.
+
+API Application: A backend application built with Java and Spring MVC. It acts as the central logic hub, providing Internet banking functionality via a JSON/HTTPS API.
+
+Database: An Oracle Database schema responsible for storing persistent data, such as user registration information, hashed credentials, and access logs.
+
+System Flow and Interactions
+The diagram illustrates the following workflows:
+
+Web Interface Flow:
+
+The User visits the banking URL (bigbank.com/ib) via HTTPS, connecting to the Web Application.
+
+The Web Application delivers the Single-Page Application (SPA) to the user's web browser.
+
+The User views their account dashboard and interacts with the system using the SPA.
+
+To perform actions or retrieve data, the SPA makes JSON/HTTPS API calls to the backend API Application.
+
+Mobile Interface Flow:
+
+Alternatively, the User interacts directly with the Mobile App to view their account dashboard.
+
+Similar to the web interface, the Mobile App makes JSON/HTTPS API calls to the backend API Application to function.
+
+Backend Data Flow:
+
+The API Application handles requests from both the SPA and Mobile App. To fulfill these requests, it reads from and writes data to the Database using JDBC.
