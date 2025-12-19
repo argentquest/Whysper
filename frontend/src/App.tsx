@@ -23,10 +23,10 @@
  */
 
 // React core and hooks
-import { CloseOutlined,CopyOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons'
+import { CloseOutlined, CopyOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons'
 // Ant Design UI components
-import { App as AntdApp,Button, Layout, Modal, Select, Tooltip } from 'antd'
-import { useCallback,useEffect, useState } from 'react'
+import { App as AntdApp, Button, Layout, Modal, Select, Tooltip } from 'antd'
+import { useCallback, useEffect, useState } from 'react'
 
 import { ChatView } from './components/chat/ChatView'
 import { InputPanel } from './components/chat/InputPanel'
@@ -47,6 +47,7 @@ import { DiagramWizard } from './components/DiagramWizard/DiagramWizard'
 import { DocumentationView } from './components/documentation/DocumentationView'
 // File editor components
 import { FileEditorView } from './components/editor/FileEditorView'
+import { FormSystemView } from './components/FormSystem/FormSystemView'
 import {
   AboutModal, // Application information and version details
   CodeFragmentsModal, // Extracted code blocks management
@@ -184,7 +185,7 @@ function App() {
 
   // DEBUG: Expose selectedFiles to browser console for debugging
   useEffect(() => {
-    ;(window as any).getSelectedFiles = () => {
+    ; (window as any).getSelectedFiles = () => {
       console.log('📋 Current selectedFiles state:', selectedFiles)
       console.log('📋 Count:', selectedFiles.length)
       console.log(
@@ -683,12 +684,12 @@ function App() {
       prev.map((tab) =>
         tab.id === tabId
           ? {
-              ...tab,
-              fileContent: content,
-              isDirty,
-              // If this is the first load (not dirty), set originalContent to the content
-              originalContent: !isDirty && !tab.originalContent ? content : tab.originalContent,
-            }
+            ...tab,
+            fileContent: content,
+            isDirty,
+            // If this is the first load (not dirty), set originalContent to the content
+            originalContent: !isDirty && !tab.originalContent ? content : tab.originalContent,
+          }
           : tab
       )
     )
@@ -904,6 +905,23 @@ function App() {
     setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
     setActiveTabId(newTabId)
     message.success('New Diagram Wizard tab created')
+  }
+
+  const handleNewFormSystemTab = () => {
+    const newTabId = `form-tab-${Date.now()}`
+
+    const newTab: Tab = {
+      id: newTabId,
+      conversationId: '',
+      title: 'Form System',
+      isActive: true,
+      isDirty: false,
+      type: 'formSystem',
+    }
+
+    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab])
+    setActiveTabId(newTabId)
+    message.success('New Form System tab created')
   }
 
   const handleTabClose = (tabId: string) => {
@@ -1346,6 +1364,7 @@ function App() {
           onMermaidTester={() => setMermaidTesterModalOpen(true)}
           onD2Tester={() => setD2TesterModalOpen(true)}
           onDiagramWizard={handleNewDiagramWizardTab}
+          onNewFormSystemTab={handleNewFormSystemTab}
           onHome={handleHome}
           currentSystem={activeAgentName}
           onSystemChange={handleSystemChange}
@@ -1363,6 +1382,7 @@ function App() {
           onTabSave={handleTabSave}
           onNewTab={handleNewTab}
           onNewDiagramWizardTab={handleNewDiagramWizardTab}
+          onNewFormSystemTab={handleNewFormSystemTab}
           onTabsAction={handleTabsAction}
         />
 
@@ -1386,6 +1406,9 @@ function App() {
               onDocumentation={handleGenerateDocumentation}
               onSetContext={() => setContextModalOpen(true)}
             />
+          ) : activeTab?.type === 'formSystem' ? (
+            // Form System View
+            <FormSystemView />
           ) : activeTab?.type === 'file' ? (
             // File Editor View
             <FileEditorView

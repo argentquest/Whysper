@@ -1,5 +1,6 @@
 import {
   CloseOutlined,
+  FormOutlined,
   MessageOutlined,
   MoreOutlined,
   PartitionOutlined,
@@ -7,7 +8,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import { Button, Dropdown, Space, Tabs, theme as antdTheme,Tooltip, Typography } from 'antd'
+import { Button, Dropdown, Space, Tabs, theme as antdTheme, Tooltip, Typography } from 'antd'
 import { BrandColors } from 'branding'
 import React from 'react'
 
@@ -36,6 +37,7 @@ interface TabManagerProps {
   onTabSave: (tabId: string) => void
   onNewTab: () => void
   onNewDiagramWizardTab?: () => void
+  onNewFormSystemTab?: () => void
   onTabsAction?: (action: string, tabId?: string) => void
 }
 
@@ -57,6 +59,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
   onTabSave,
   onNewTab,
   onNewDiagramWizardTab,
+  onNewFormSystemTab,
   onTabsAction,
 }) => {
   // Use Ant Design theme tokens for consistent styling across the application
@@ -132,6 +135,13 @@ export const TabManager: React.FC<TabManagerProps> = ({
       icon: <PartitionOutlined />,
       onClick: () => onNewDiagramWizardTab?.(),
       disabled: !onNewDiagramWizardTab,
+    },
+    {
+      key: 'formSystem',
+      label: 'Form System',
+      icon: <FormOutlined />,
+      onClick: () => onNewFormSystemTab?.(),
+      disabled: !onNewFormSystemTab,
     },
   ]
 

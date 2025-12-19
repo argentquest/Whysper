@@ -9,7 +9,7 @@ function Get-EnvValue {
     if (-not (Test-Path $Path)) { return $Default }
     $line = Get-Content $Path | Where-Object { $_ -match "^$Key\s*=" } | Select-Object -First 1
     if (-not $line) { return $Default }
-    return ($line -split "=",2)[1].Trim("`"", "'")
+    return ($line -split "=", 2)[1].Trim("`"", "'")
 }
 
 function Set-Or-Replace-Line {
@@ -24,11 +24,11 @@ function Set-Or-Replace-Line {
 function Stop-Port {
     param([int]$Port)
     $pids = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
-    foreach ($pid in $pids) {
-        $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+    foreach ($processId in $pids) {
+        $proc = Get-Process -Id $processId -ErrorAction SilentlyContinue
         if ($proc) {
-            Write-Host "Stopping process $($proc.ProcessName) (PID $pid) on port $Port"
-            Stop-Process -Id $pid -Force
+            Write-Host "Stopping process $($proc.ProcessName) (PID $processId) on port $Port"
+            Stop-Process -Id $processId -Force
         }
     }
 }
@@ -74,5 +74,5 @@ Stop-Port -Port $apiPort
 
 Write-Host ("Starting backend on {0}://0.0.0.0:{1} ..." -f $protocol, $apiPort)
 Push-Location $backendDir
-python main.py
+py main.py
 Pop-Location
