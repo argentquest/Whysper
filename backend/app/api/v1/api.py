@@ -36,6 +36,7 @@ from .endpoints import (
     diagram as diagram_wizard,
     github_context,
 )
+from app.routers import forms, form_submissions
 from mvp_diagram_generator import rendering_api as diagram_generator_api
 
 # Create the main API router to aggregate all endpoint routers
@@ -111,4 +112,17 @@ api_router.include_router(
     github_context.router,
     prefix="/github",
     tags=["github-context"],
+)
+
+# Include Form System endpoints
+api_router.include_router(
+    forms.router,
+    prefix="/forms",
+    tags=["forms"],
+)
+
+api_router.include_router(
+    form_submissions.router,
+    prefix="/forms",
+    tags=["form_submissions"],
 )

@@ -47,7 +47,7 @@ import { DiagramWizard } from './components/DiagramWizard/DiagramWizard'
 import { DocumentationView } from './components/documentation/DocumentationView'
 // File editor components
 import { FileEditorView } from './components/editor/FileEditorView'
-
+import { FormSystemView } from './components/forms/FormSystemView'
 import {
   AboutModal, // Application information and version details
   CodeFragmentsModal, // Extracted code blocks management
@@ -63,9 +63,7 @@ import {
 import ThemePickerModal from './components/modals/ThemePickerModal'
 import { LandingPage } from './components/welcome/LandingPage'
 import { WelcomeScreen } from './components/welcome/WelcomeScreen'
-
 // Terminal components
-
 // Theme management
 // API service for backend communication
 import ApiService from './services/api'
@@ -907,6 +905,25 @@ function App() {
     message.success('New Diagram Wizard tab created')
   }
 
+  const handleNewFormSystemTab = () => {
+    const newTabId = `form-system-tab-${Date.now()}`;
+    const newSessionId = `form-session-${Date.now()}`;
+
+    const newTab: Tab = {
+      id: newTabId,
+      conversationId: '', // Not needed for form system
+      title: `Form System ${tabs.filter((t) => t.type === 'formSystem').length + 1}`,
+      isActive: true,
+      isDirty: false,
+      type: 'formSystem',
+      sessionId: newSessionId,
+    };
+
+    setTabs((prev) => [...prev.map((tab) => ({ ...tab, isActive: false })), newTab]);
+    setActiveTabId(newTabId);
+    message.success('New Form System tab created');
+  };
+
 
 
   const handleTabClose = (tabId: string) => {
@@ -1367,6 +1384,7 @@ function App() {
           onTabSave={handleTabSave}
           onNewTab={handleNewTab}
           onNewDiagramWizardTab={handleNewDiagramWizardTab}
+          onNewFormSystemTab={handleNewFormSystemTab}
           onTabsAction={handleTabsAction}
         />
 
@@ -1419,6 +1437,14 @@ function App() {
               }}
               initialPrompt=""
               onClose={() => handleTabClose(activeTabId)}
+            />
+          ) : activeTab?.type === 'formSystem' ? (
+            // Form System View
+            <FormSystemView
+              tab={activeTab}
+              onFormChange={(formData: any) => {
+                console.log("Form changed:", formData);
+              }}
             />
           ) : (
             // Chat View (default)

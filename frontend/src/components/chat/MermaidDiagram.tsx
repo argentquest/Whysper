@@ -3,12 +3,13 @@
  * 
  * This module contains component definitions and exports for MermaidDiagram.
  */
+import { CheckCircleOutlined,CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { Button, Card, message as antMessage, Space, Tag,Tooltip } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Button, Space, message as antMessage, Tooltip, Tag } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined, CheckCircleOutlined } from '@ant-design/icons';
+
 import { ApiService } from '../../services/api';
+import type { DiagramRenderResponse,ProviderInfo } from '../../services/diagramProviderService';
 import diagramProviderService from '../../services/diagramProviderService';
-import type { ProviderInfo, DiagramRenderResponse } from '../../services/diagramProviderService';
 
 /**
  * MermaidDiagramProps type definition
@@ -158,7 +159,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, title }) =
           });
         }
       } catch (err) {
-        let errorMessage = err instanceof Error ? err.message : 'Failed to render diagram';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to render diagram';
 
         setError(errorMessage);
         setIsValid(false);

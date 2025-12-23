@@ -10,18 +10,19 @@
  * - Auto-fix suggestions
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, Space, Spin, Tooltip, Badge } from 'antd';
 import {
-  WarningOutlined,
   CheckCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
-import { validateDiagramCode, debounce } from '../../../services/diagram/validationService';
+import { Badge,Card, Space, Spin, Tooltip } from 'antd';
+import type { CSSProperties } from 'react';
+import React, { useCallback, useEffect, useRef,useState } from 'react';
+
 import type { ValidationResult } from '../../../services/diagram/validationService';
+import { debounce,validateDiagramCode } from '../../../services/diagram/validationService';
 import ErrorPanel from '../components/ErrorPanel';
 import styles from '../diagram-wizard.module.css';
-import type { CSSProperties } from 'react';
 
 interface Panel3CodeEditorProps {
   code: string;

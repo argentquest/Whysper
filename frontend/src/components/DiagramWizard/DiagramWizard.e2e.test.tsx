@@ -11,11 +11,11 @@
 
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DiagramWizard } from './DiagramWizard'
 import type { DiagramUpdate } from '../../services/diagram/diagramApi'
+import { DiagramWizard } from './DiagramWizard'
 
 // Mock DiagramApi with realistic responses
 vi.mock('../../services/diagram/diagramApi', () => ({

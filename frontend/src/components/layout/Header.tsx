@@ -73,7 +73,7 @@ interface HeaderProps {
   onSystemChange: (system: string) => void
   onRunSystemPrompt: (systemName: string) => void
   agentPrompts?: AgentPrompt[]
-  activeTabType?: 'chat' | 'file' | 'documentation' | 'diagramWizard'
+  activeTabType?: 'chat' | 'file' | 'documentation' | 'diagramWizard' | 'formSystem'
 }
 
 /**

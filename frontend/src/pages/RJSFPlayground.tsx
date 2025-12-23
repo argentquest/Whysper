@@ -1,13 +1,17 @@
-import { Button, Col, Layout, Row, Space, Typography, Alert } from 'antd'
 import Editor from '@monaco-editor/react'
-import React, { useMemo, useState } from 'react'
-import type { RJSFSchema, UiSchema } from '@rjsf/utils'
-import { withTheme } from '@rjsf/core'
 import { Theme as AntDTheme } from '@rjsf/antd'
+import { withTheme } from '@rjsf/core'
+import type { RJSFSchema, UiSchema } from '@rjsf/utils'
 import validator from '@rjsf/validator-ajv8'
+import { Alert, Button, Col, Form, Input,Layout, Row, Space, Typography } from 'antd'
+import { message } from 'antd'
+import React, { useMemo, useState } from 'react'
+
+import ApiService from '../services/api'
 
 const { Header, Content } = Layout
 const { Title, Paragraph, Text } = Typography
+const { TextArea } = Input
 
 type FormData = Record<string, any>
 
@@ -61,6 +65,12 @@ export const RJSFPlayground: React.FC = () => {
   const [uiSchemaText, setUiSchemaText] = useState(JSON.stringify(defaultUiSchema, null, 2))
   const [formDataText, setFormDataText] = useState(JSON.stringify(defaultFormData, null, 2))
 
+  // Metadata state
+  const [formName, setFormName] = useState('Contact Form')
+  const [formDescription, setFormDescription] = useState('Basic contact details collection')
+  const [formType, setFormType] = useState('contact')
+  const [version, setVersion] = useState('1.0')
+
   const schemaResult = useMemo<ParseResult<RJSFSchema>>(
     () => parseJson<RJSFSchema>(schemaText, defaultSchema),
     [schemaText]
@@ -78,6 +88,40 @@ export const RJSFPlayground: React.FC = () => {
     setSchemaText(JSON.stringify(defaultSchema, null, 2))
     setUiSchemaText(JSON.stringify(defaultUiSchema, null, 2))
     setFormDataText(JSON.stringify(defaultFormData, null, 2))
+  }
+
+  const handlePublishForm = async () => {
+    try {
+      if (schemaResult.error || uiSchemaResult.error || formDataResult.error) {
+        message.error('Please fix JSON errors before publishing')
+        return
+      }
+
+      if (!formName || !formType) {
+        message.error('Form Name and Type are required')
+        return
+      }
+
+      const payload = {
+        form_name: formName,
+        form_description: formDescription,
+        form_type: formType,
+        version: version,
+        schema: schemaResult.data,
+        ui_schema: uiSchemaResult.data,
+        form_data: formDataResult.data
+      }
+
+      const response = await ApiService.post('/forms/publish', payload)
+      if (response.data && response.data.form_id) {
+        message.success('Form published successfully!')
+      } else {
+        message.error('Failed to publish form')
+      }
+    } catch (error: any) {
+      console.error('Publish error:', error)
+      message.error('Error publishing form: ' + (error.message || 'Unknown error'))
+    }
   }
 
   return (
@@ -109,6 +153,41 @@ export const RJSFPlayground: React.FC = () => {
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
+
+              {/* Metadata Section */}
+              <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                <Title level={4} style={{ marginBottom: 16 }}>Form Metadata</Title>
+                <Form layout="vertical">
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item label="Form Name" required>
+                        <Input value={formName} onChange={e => setFormName(e.target.value)} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                      <Form.Item label="Form Type" required>
+                        <Input value={formType} onChange={e => setFormType(e.target.value)} />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Form.Item label="Description">
+                    <TextArea rows={2} value={formDescription} onChange={e => setFormDescription(e.target.value)} />
+                  </Form.Item>
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item label="Version">
+                        <Input value={version} onChange={e => setVersion(e.target.value)} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={12} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <Button type="primary" size="large" onClick={handlePublishForm} block style={{ marginBottom: 24 }}>
+                        Publish Form
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              </div>
+
               <div>
                 <Title level={4} style={{ marginBottom: 8 }}>
                   JSON Schema
