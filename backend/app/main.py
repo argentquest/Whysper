@@ -106,6 +106,11 @@ assets_dir = os.path.join(static_dir, "assets")
 if os.path.exists(assets_dir):
     app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
+# Mount /fonts if it exists (Vite build output for fonts)
+fonts_dir = os.path.join(static_dir, "fonts")
+if os.path.exists(fonts_dir):
+    app.mount("/fonts", StaticFiles(directory=fonts_dir), name="fonts")
+
 # Mount /static for backward compatibility or direct access
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")

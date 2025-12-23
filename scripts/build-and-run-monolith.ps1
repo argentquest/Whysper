@@ -25,6 +25,7 @@ function Stop-Port {
     param([int]$Port)
     $pids = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
     foreach ($processId in $pids) {
+        if ($processId -eq 0) { continue }
         $proc = Get-Process -Id $processId -ErrorAction SilentlyContinue
         if ($proc) {
             Write-Host "Stopping process $($proc.ProcessName) (PID $processId) on port $Port"

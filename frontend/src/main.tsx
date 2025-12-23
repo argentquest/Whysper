@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route,Routes } from 'react-router-dom'
 
 import App from './App.tsx'
+import { RJSFPlayground } from './pages/RJSFPlayground'
 import { ThemeProvider } from './themes'
 
 // Create React root and render the entire application with multiple layers of providers
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
         <AntApp>
           {/* Ant Design app wrapper for consistent styling and components */}
           <Routes>
+            <Route path="/playground" element={<RJSFPlayground />} />
             {/* Single App with tab-based architecture */}
             <Route path="*" element={<App />} />
           </Routes>

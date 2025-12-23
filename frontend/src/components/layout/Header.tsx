@@ -13,7 +13,6 @@ import {
   MenuOutlined,
   MessageOutlined,
   PlayCircleOutlined,
-  FormOutlined,
 } from '@ant-design/icons'
 import { Button, Dropdown, Layout, Select, theme as antdTheme, Tooltip, Typography } from 'antd'
 import { Brand, BrandColors } from 'branding'
@@ -68,13 +67,13 @@ interface HeaderProps {
   onMermaidTester: () => void
   onD2Tester: () => void
   onDiagramWizard: () => void
-  onNewFormSystemTab?: () => void
+
   onHome: () => void
   currentSystem?: string
   onSystemChange: (system: string) => void
   onRunSystemPrompt: (systemName: string) => void
   agentPrompts?: AgentPrompt[]
-  activeTabType?: 'chat' | 'file' | 'documentation' | 'diagramWizard' | 'formSystem'
+  activeTabType?: 'chat' | 'file' | 'documentation' | 'diagramWizard'
 }
 
 /**
@@ -97,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
   onEditFile,
   onGenerateDocumentation,
   onDiagramWizard,
-  onNewFormSystemTab,
+
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -137,9 +136,6 @@ export const Header: React.FC<HeaderProps> = ({
       case 'diagram-wizard':
         onDiagramWizard()
         break
-      case 'form-system':
-        onNewFormSystemTab?.()
-        break
     }
   }
 
@@ -169,11 +165,6 @@ export const Header: React.FC<HeaderProps> = ({
         key: 'diagram-wizard',
         label: 'Diagram Wizard',
         icon: <DeploymentUnitOutlined />,
-      },
-      {
-        key: 'form-system',
-        label: 'Form System',
-        icon: <FormOutlined />,
       },
     ],
     onClick: handleToolsMenuClick,

@@ -89,7 +89,7 @@ export interface Tab {
   title: string
   isActive: boolean
   isDirty: boolean
-  type: 'chat' | 'file' | 'documentation' | 'diagramWizard' | 'formSystem'
+  type: 'chat' | 'file' | 'documentation' | 'diagramWizard'
   filePath?: string
   fileContent?: string
   originalContent?: string
