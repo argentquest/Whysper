@@ -12,9 +12,9 @@
  * static message API, so no message instance needs to be passed.
  */
 
-import React from 'react'
 import { message as antdMessage } from 'antd'
 import type { MessageInstance } from 'antd/es/message/interface'
+import React from 'react'
 
 const TOAST_KEYWORDS = {
   TOASTINFO: 'info',

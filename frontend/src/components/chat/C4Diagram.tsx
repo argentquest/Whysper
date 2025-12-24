@@ -4,12 +4,13 @@
  * This module contains component definitions and exports for C4Diagram.
  */
 // @ts-nocheck
+import { CodeOutlined,CopyOutlined, DownloadOutlined, ExpandOutlined } from '@ant-design/icons';
+import { Button, Card, message as antMessage, Space, Tag } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Button, Space, message as antMessage, Tag } from 'antd';
-import { CopyOutlined, DownloadOutlined, ExpandOutlined, CodeOutlined } from '@ant-design/icons';
+
 import { ApiService } from '../../services/api';
-import { convertC4ToD2, simpleC4ToD2, extractC4Level } from '../../utils/c4ToD2';
 import diagramProviderService from '../../services/diagramProviderService';
+import { convertC4ToD2, extractC4Level,simpleC4ToD2 } from '../../utils/c4ToD2';
 
 /**
  * C4 Diagram Component

@@ -9,8 +9,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DiagramWizard } from './DiagramWizard'
 import DiagramApi from '../../services/diagram/diagramApi'
+import { DiagramWizard } from './DiagramWizard'
 
 // Mock DiagramApi
 vi.mock('../../services/diagram/diagramApi', () => ({

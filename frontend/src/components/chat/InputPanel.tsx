@@ -350,7 +350,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
             {/* Collapsible Command Panel */}
             <div
-              className="absolute left-0 right-0 top-0"
+              className="absolute inset-x-0 top-0"
               style={{
                 background: 'rgba(255, 255, 255, 0.98)',
                 borderBottom: isPanelExpanded ? '1px solid rgba(226, 232, 240, 0.8)' : 'none',

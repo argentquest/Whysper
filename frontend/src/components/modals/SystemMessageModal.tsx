@@ -3,11 +3,12 @@
  * 
  * This module exports the SystemMessageModal component for the application.
  */
-import React, { useState, useEffect } from 'react';
-import { Input, Select, Button, Space, Typography, message, Tabs, Modal as AntModal } from 'antd';
-import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
-import { Modal } from '../common/Modal';
+import { CopyOutlined,ReloadOutlined } from '@ant-design/icons';
+import { Button, Input, message, Modal as AntModal,Select, Space, Tabs, Typography } from 'antd';
+import React, { useEffect,useState } from 'react';
+
 import ApiService from '../../services/api';
+import { Modal } from '../common/Modal';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -173,7 +174,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
             children: (
               <div className="space-y-4">
                 <div>
-                  <Text className="block mb-2 font-medium">Choose an Agent:</Text>
+                  <Text className="mb-2 block font-medium">Choose an Agent:</Text>
                   <Select
                     value={activeTemplate}
                     onChange={handleTemplateChange}
@@ -196,8 +197,8 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                 </div>
 
                 {activeTemplate && (
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                    <div className="mb-2 flex items-center justify-between">
                       <Text strong>Preview:</Text>
                       <Button
                         type="link"
@@ -208,7 +209,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                         Copy
                       </Button>
                     </div>
-                    <div className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    <div className="max-h-40 overflow-y-auto whitespace-pre-wrap text-sm">
                       {customMessage}
                     </div>
                   </div>
@@ -222,8 +223,8 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
             children: (
               <div className="space-y-4">
                 <div>
-                  <label className="block mb-2 font-medium">System Message</label>
-                  <p className="text-sm text-gray-500 mb-2">
+                  <label className="mb-2 block font-medium">System Message</label>
+                  <p className="mb-2 text-sm text-gray-500">
                     This message defines how the AI assistant should behave and respond.
                   </p>
                   <TextArea
@@ -235,7 +236,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                   />
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <Space>
                     <Button
                       icon={<ReloadOutlined />}
@@ -267,8 +268,8 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                 <Title level={5}>Available Agent Prompts</Title>
                 
                 {agents.map((agent) => (
-                  <div key={agent.name} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
+                  <div key={agent.name} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <div className="mb-2 flex items-center justify-between">
                       <div>
                         <Text strong>{agent.title}</Text>
                         <Text type="secondary" className="block text-sm">{agent.description}</Text>
@@ -303,7 +304,7 @@ export const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                         />
                       </Space>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                    <div className="rounded bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                       <Text type="secondary">File: {agent.filename}</Text>
                     </div>
                   </div>

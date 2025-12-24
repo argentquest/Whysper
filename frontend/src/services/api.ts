@@ -21,7 +21,6 @@
 
 // HTTP client library
 import axios, { type AxiosResponse, isAxiosError } from 'axios'
-import { getApiBaseUrl } from '../utils/apiBase'
 
 // TypeScript type definitions for API communication
 import type {
@@ -36,6 +35,7 @@ import type {
   FileUploadResponse, // File upload response structure
   GitHubImportResponse, // GitHub import response structure
 } from '../types'
+import { getApiBaseUrl } from '../utils/apiBase'
 
 // Backend API base URL - development mode uses separate ports
 const API_BASE_URL = getApiBaseUrl()
@@ -339,6 +339,19 @@ export class ApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to restart server',
+      }
+    }
+  }
+
+  static async put<T = any>(endpoint: string, data: any): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.put(endpoint, data)
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      console.error(`API Error (${endpoint}):`, error)
+      return {
+        success: false,
+        error: error.response?.data?.detail || error.message || 'Unknown error',
       }
     }
   }

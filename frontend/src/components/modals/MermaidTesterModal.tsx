@@ -3,13 +3,14 @@
  * 
  * This module exports the MermaidTesterModal component for the application.
  */
-import React, { useState, useEffect } from 'react';
+import { CheckCircleOutlined, EditOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, message, Typography } from 'antd';
-import { PlayCircleOutlined, CheckCircleOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Modal } from '../common/Modal';
-import { MonacoEditor } from '../editor/MonacoEditor';
+import React, { useEffect,useState } from 'react';
+
 import { useTheme } from '../../themes';
 import { getApiBaseUrl } from '../../utils/apiBase';
+import { Modal } from '../common/Modal';
+import { MonacoEditor } from '../editor/MonacoEditor';
 
 const { Title, Text } = Typography;
 const API_BASE = getApiBaseUrl();
@@ -259,7 +260,7 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
             {serverStatus && (
               <div className="flex items-center gap-2 text-sm">
                 <span
-                  className="inline-block w-2 h-2 rounded-full"
+                  className="inline-block size-2 rounded-full"
                   style={{
                     backgroundColor: serverStatus.status === 'healthy' ? '#52c41a' : '#ff4d4f',
                   }}
@@ -328,13 +329,13 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
           {/* Validation Result */}
           {validationResult && (
             <div
-              className="p-4 rounded"
+              className="rounded p-4"
               style={{
                 backgroundColor: validationResult.is_valid ? '#f6ffed' : '#fff2e8',
                 border: `1px solid ${validationResult.is_valid ? '#b7eb8f' : '#ffbb96'}`,
               }}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <strong style={{ color: validationResult.is_valid ? '#52c41a' : '#fa8c16' }}>
                   {validationResult.is_valid ? '✅ Valid Syntax' : '❌ Invalid Syntax'}
                 </strong>
@@ -396,7 +397,7 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
               {Object.entries(TEST_CASES).map(([key, testCase]) => (
                 <div
                   key={key}
-                  className="p-3 rounded cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer rounded p-3 hover:bg-gray-50"
                   style={{
                     border: '1px solid #d9d9d9',
                     borderLeftWidth: '4px',
@@ -415,7 +416,7 @@ export const MermaidTesterModal: React.FC<MermaidTesterModalProps> = ({
           <div>
             <Title level={5}>Rendered Diagram</Title>
             <div
-              className="p-4 rounded"
+              className="rounded p-4"
               style={{
                 backgroundColor: '#fff',
                 border: '1px solid #d9d9d9',

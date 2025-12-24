@@ -1,5 +1,6 @@
 import {
   CloseOutlined,
+  FormOutlined,
   MessageOutlined,
   MoreOutlined,
   PartitionOutlined,
@@ -36,6 +37,7 @@ interface TabManagerProps {
   onTabSave: (tabId: string) => void
   onNewTab: () => void
   onNewDiagramWizardTab?: () => void
+  onNewFormSystemTab?: () => void
   onTabsAction?: (action: string, tabId?: string) => void
 }
 
@@ -49,16 +51,17 @@ interface TabManagerProps {
  * @param {TabManagerProps} props - Component props
  * @returns {JSX.Element} Rendered tab manager
  */
-export const TabManager: React.FC<TabManagerProps> = ({
-  tabs,
-  activeTabId,
-  onTabChange,
-  onTabClose,
-  onTabSave,
-  onNewTab,
-  onNewDiagramWizardTab,
-  onTabsAction,
-}) => {
+export const TabManager: React.FC<TabManagerProps> = (props) => {
+  const {
+    tabs,
+    activeTabId,
+    onTabChange,
+    onTabClose,
+    onTabSave,
+    onNewTab,
+    onNewDiagramWizardTab,
+    onTabsAction,
+  } = props
   // Use Ant Design theme tokens for consistent styling across the application
   const { token } = antdTheme.useToken()
   const brandTokens = token as unknown as Record<string, string>
@@ -132,6 +135,12 @@ export const TabManager: React.FC<TabManagerProps> = ({
       icon: <PartitionOutlined />,
       onClick: () => onNewDiagramWizardTab?.(),
       disabled: !onNewDiagramWizardTab,
+    },
+    {
+      key: 'formSystem',
+      label: 'Form System',
+      icon: <FormOutlined />,
+      onClick: () => props.onNewFormSystemTab?.(),
     },
   ]
 
