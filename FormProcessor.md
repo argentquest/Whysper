@@ -104,7 +104,7 @@ class FormService:
     def __init__(self):
         self.forms_directory = "forms"
         os.makedirs(self.forms_directory, exist_ok=True)
-
+    
     def publish_form(self, form_data: Dict[str, Any]) -> str:
         """
         Publish a form and return the form_id
@@ -113,25 +113,25 @@ class FormService:
         form_id = f"{form_data['form_type']}-{uuid.uuid4().hex[:8]}"
         form_folder = os.path.join(self.forms_directory, form_id)
         os.makedirs(form_folder, exist_ok=True)
-
+        
         # Save all form files
         self._save_form_files(form_folder, form_id, form_data)
         return form_id
-
+    
     def _save_form_files(self, folder: str, form_id: str, data: Dict[str, Any]):
         """Save schema, ui_schema, form_data, and metadata files"""
         # Save schema.json
         with open(os.path.join(folder, "schema.json"), "w") as f:
             json.dump(data["schema"], f, indent=2)
-
+        
         # Save ui_schema.json
         with open(os.path.join(folder, "ui_schema.json"), "w") as f:
             json.dump(data["ui_schema"], f, indent=2)
-
+        
         # Save form_data.json (sample)
         with open(os.path.join(folder, "form_data.json"), "w") as f:
             json.dump(data["form_data"], f, indent=2)
-
+        
         # Save metadata.json
         metadata = {
             "form_id": form_id,
@@ -198,8 +198,8 @@ export const FormSystemView: React.FC<FormSystemViewProps> = ({ tab, onFormChang
               </Select>
             </Col>
             <Col span={6}>
-              <Button
-                type="primary"
+              <Button 
+                type="primary" 
                 size="large"
                 disabled={!selectedForm}
                 onClick={() => setMode('new')}
@@ -274,7 +274,7 @@ export const SubmittedFormsGrid: React.FC<SubmittedFormsGridProps> = ({ onEdit, 
       filterable: true
     },
     {
-      title: 'Form Type',
+      title: 'Form Type', 
       dataIndex: 'form_type',
       key: 'form_type',
       sorter: (a, b) => a.form_type.localeCompare(b.form_type),
@@ -297,16 +297,16 @@ export const SubmittedFormsGrid: React.FC<SubmittedFormsGridProps> = ({ onEdit, 
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button
-            icon={<EyeOutlined />}
+          <Button 
+            icon={<EyeOutlined />} 
             size="small"
             onClick={() => onView(record)}
           >
             View
           </Button>
-          <Button
-            icon={<EditOutlined />}
-            type="primary"
+          <Button 
+            icon={<EditOutlined />} 
+            type="primary" 
             size="small"
             onClick={() => onEdit(record)}
           >
@@ -385,12 +385,12 @@ interface FormEditorProps {
   onCancel: () => void;
 }
 
-export const FormEditor: React.FC<FormEditorProps> = ({
-  mode,
-  selectedForm,
-  editingSubmission,
-  onSave,
-  onCancel
+export const FormEditor: React.FC<FormEditorProps> = ({ 
+  mode, 
+  selectedForm, 
+  editingSubmission, 
+  onSave, 
+  onCancel 
 }) => {
   const [formData, setFormData] = useState({});
   const [formDataText, setFormDataText] = useState('{}');
@@ -453,15 +453,15 @@ export const FormEditor: React.FC<FormEditorProps> = ({
       )
     },
     {
-      key: 'metadata',
+      key: 'metadata', 
       label: 'Metadata',
       children: (
         <div style={{ padding: '16px' }}>
-          <pre style={{
-            background: '#f5f5f5',
-            padding: '16px',
+          <pre style={{ 
+            background: '#f5f5f5', 
+            padding: '16px', 
             borderRadius: '4px',
-            fontSize: '14px'
+            fontSize: '14px' 
           }}>
             {JSON.stringify(metadata, null, 2)}
           </pre>
@@ -474,12 +474,12 @@ export const FormEditor: React.FC<FormEditorProps> = ({
     try {
       // Validate JSON
       JSON.parse(formDataText);
-
+      
       // Call API to save/submit form
-      const apiCall = mode === 'edit'
+      const apiCall = mode === 'edit' 
         ? '/api/forms/edit/' + editingSubmission.submission_id
         : '/api/forms/submit';
-
+        
       // Implementation for save operation
       message.success('Form saved successfully');
       onSave();
@@ -491,9 +491,9 @@ export const FormEditor: React.FC<FormEditorProps> = ({
   return (
     <div>
       {/* Header with actions */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
         alignItems: 'center',
         marginBottom: '16px',
         padding: '16px',
@@ -503,15 +503,15 @@ export const FormEditor: React.FC<FormEditorProps> = ({
         <h3>{mode === 'new' ? 'Fill New Form' : mode === 'edit' ? 'Edit Form' : 'View Form'}</h3>
         <Space>
           {mode !== 'view' && (
-            <Button
-              type="primary"
+            <Button 
+              type="primary" 
               icon={<SaveOutlined />}
               onClick={handleSave}
             >
               Save
             </Button>
           )}
-          <Button
+          <Button 
             icon={<CloseOutlined />}
             onClick={onCancel}
           >
@@ -643,20 +643,20 @@ class FormSubmissionService:
         self.submissions_directory = "UserFormData"
         self.forms_directory = "forms"
         os.makedirs(self.submissions_directory, exist_ok=True)
-
+    
     def submit_form(self, submission_data: Dict[str, Any]) -> str:
         """Submit a new form and return submission_id"""
         submission_id = f"submission-{uuid.uuid4().hex[:8]}"
         submission_folder = os.path.join(self.submissions_directory, submission_id)
         os.makedirs(submission_folder, exist_ok=True)
-
+        
         # Get form metadata
         form_metadata = self._get_form_metadata(submission_data["form_id"])
-
+        
         # Save form data
         with open(os.path.join(submission_folder, "form_data.json"), "w") as f:
             json.dump(submission_data["form_data"], f, indent=2)
-
+        
         # Save submission metadata
         metadata = {
             "submission_id": submission_id,
@@ -670,26 +670,26 @@ class FormSubmissionService:
             "is_edited": False,
             "original_submission_id": None
         }
-
+        
         with open(os.path.join(submission_folder, "metadata.json"), "w") as f:
             json.dump(metadata, f, indent=2)
-
+        
         return submission_id
-
+    
     def edit_form_submission(self, original_submission_id: str, submission_data: Dict[str, Any]) -> str:
         """Edit existing form submission, creates new version"""
         # Create new submission
         new_submission_id = f"submission-{uuid.uuid4().hex[:8]}"
         submission_folder = os.path.join(self.submissions_directory, new_submission_id)
         os.makedirs(submission_folder, exist_ok=True)
-
+        
         # Get form metadata
         form_metadata = self._get_form_metadata(submission_data["form_id"])
-
+        
         # Save form data
         with open(os.path.join(submission_folder, "form_data.json"), "w") as f:
             json.dump(submission_data["form_data"], f, indent=2)
-
+        
         # Save submission metadata with edit reference
         metadata = {
             "submission_id": new_submission_id,
@@ -703,59 +703,59 @@ class FormSubmissionService:
             "is_edited": True,
             "original_submission_id": original_submission_id
         }
-
+        
         with open(os.path.join(submission_folder, "metadata.json"), "w") as f:
             json.dump(metadata, f, indent=2)
-
+        
         return new_submission_id
-
+    
     def get_all_submissions(self) -> List[Dict[str, Any]]:
         """Get all form submissions with metadata"""
         submissions = []
-
+        
         for submission_folder in os.listdir(self.submissions_directory):
             metadata_path = os.path.join(
-                self.submissions_directory,
-                submission_folder,
+                self.submissions_directory, 
+                submission_folder, 
                 "metadata.json"
             )
-
+            
             if os.path.exists(metadata_path):
                 with open(metadata_path, "r") as f:
                     metadata = json.load(f)
                     submissions.append(metadata)
-
+        
         # Sort by submission timestamp (newest first)
         submissions.sort(key=lambda x: x["submission_timestamp"], reverse=True)
         return submissions
-
+    
     def get_submission(self, submission_id: str) -> Dict[str, Any]:
         """Get specific form submission with data and metadata"""
         submission_folder = os.path.join(self.submissions_directory, submission_id)
-
+        
         if not os.path.exists(submission_folder):
             raise HTTPException(status_code=404, detail="Submission not found")
-
+        
         # Load metadata
         with open(os.path.join(submission_folder, "metadata.json"), "r") as f:
             metadata = json.load(f)
-
+        
         # Load form data
         with open(os.path.join(submission_folder, "form_data.json"), "r") as f:
             form_data = json.load(f)
-
+        
         return {
             "metadata": metadata,
             "form_data": form_data
         }
-
+    
     def _get_form_metadata(self, form_id: str) -> Dict[str, Any]:
         """Get metadata for a published form"""
         metadata_path = os.path.join(self.forms_directory, form_id, "metadata.json")
-
+        
         if not os.path.exists(metadata_path):
             raise HTTPException(status_code=404, detail=f"Form {form_id} not found")
-
+        
         with open(metadata_path, "r") as f:
             return json.load(f)
 ```
@@ -863,7 +863,7 @@ UserFormData/
       "title": "First Name"
     },
     "lastName": {
-      "type": "string",
+      "type": "string", 
       "title": "Last Name"
     },
     "email": {
@@ -990,10 +990,10 @@ UserFormData/
 
 ### Week 1
 - **Day 1**: Admin form publishing (Playground extension + backend APIs)
-- **Day 2**: FormSystemView component and grid implementation
+- **Day 2**: FormSystemView component and grid implementation  
 - **Day 3**: Three-tab FormEditor component (Form + JSON sync)
 
-### Week 2
+### Week 2  
 - **Day 4**: Metadata tab and form editing backend APIs
 - **Day 5**: Version control implementation and testing
 - **Day 6**: Integration testing and bug fixes
