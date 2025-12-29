@@ -12,8 +12,7 @@ backend/static/diagrams/
 backend/static/d2_diagrams/
 backend/static/assets/
 backend/certs/
-
-
+backend/UserFormData/
 # =============================================================================
 # PYTHON
 # =============================================================================

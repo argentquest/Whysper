@@ -1,0 +1,63 @@
+{
+  "title": "C4 Person / Actor Definition",
+  "description": "Define a user or actor that interacts with the software system.",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "boundary",
+    "actorType"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Actor Name",
+      "description": "e.g., 'Personal Banking Customer' or 'Call Center Staff'",
+      "minLength": 3
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "What is this user's primary goal or responsibility?"
+    },
+    "boundary": {
+      "type": "string",
+      "title": "System Boundary",
+      "enum": [
+        "Internal",
+        "External"
+      ],
+      "default": "External",
+      "description": "Internal: Employee/part of the org. External: Customer/Third-party."
+    },
+    "actorType": {
+      "type": "string",
+      "title": "Actor Type",
+      "enum": [
+        "Human User",
+        "Automated System / Bot"
+      ],
+      "default": "Human User"
+    },
+    "userCount": {
+      "type": "string",
+      "title": "Estimated User Base",
+      "enum": [
+        "1 - 10 (Admin/Dev)",
+        "10 - 100",
+        "100 - 1,000",
+        "1,000+"
+      ]
+    },
+    "authentication": {
+      "type": "string",
+      "title": "Primary Auth Method",
+      "enum": [
+        "Anonymous / Public",
+        "Username & Password",
+        "SSO / Enterprise ID",
+        "MFA Required"
+      ]
+    }
+  }
+}

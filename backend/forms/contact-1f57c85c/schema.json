@@ -1,0 +1,40 @@
+{
+  "title": "RJSF Playground",
+  "description": "Edit the schema, UI schema, and form data to see the form update live.",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "title": "First name"
+    },
+    "lastName": {
+      "type": "string",
+      "title": "Last nameddddde"
+    },
+    "age": {
+      "type": "integer",
+      "title": "Age",
+      "minimum": 0
+    },
+    "bio": {
+      "type": "string",
+      "title": "Bio"
+    },
+    "country": {
+      "type": "string",
+      "title": "Country",
+      "enum": [
+        "USA",
+        "Canada",
+        "UK",
+        "Germany",
+        "Other"
+      ]
+    },
+    "newsletter": {
+      "type": "boolean",
+      "title": "Subscribe to newsletter",
+      "default": true
+    }
+  }
+}

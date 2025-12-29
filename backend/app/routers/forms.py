@@ -19,7 +19,7 @@ async def publish_form(request: PublishFormRequest):
     """Publish a new form definition"""
     service = FormService()
     try:
-        form_id = service.publish_form(request.dict())
+        form_id = service.publish_form(request.model_dump())
         return {"form_id": form_id, "message": "Form published successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

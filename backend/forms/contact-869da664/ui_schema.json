@@ -1,0 +1,14 @@
+{
+  "age": {
+    "ui:widget": "updown"
+  },
+  "bio": {
+    "ui:widget": "textarea",
+    "ui:options": {
+      "rows": 4
+    }
+  },
+  "country": {
+    "ui:placeholder": "Select a country"
+  }
+}

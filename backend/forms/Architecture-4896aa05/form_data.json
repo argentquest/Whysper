@@ -1,0 +1,9 @@
+{
+  "componentType": "Back End",
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "age": 28,
+  "bio": "Mathematician and writer.",
+  "country": "UK",
+  "newsletter": true
+}

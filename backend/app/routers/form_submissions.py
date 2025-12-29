@@ -44,3 +44,12 @@ async def get_form_submission(submission_id: str):
     """Get specific form submission"""
     service = FormSubmissionService()
     return service.get_submission(submission_id)
+
+@router.get("/submissions/history/{root_submission_id}")
+async def get_submission_history(root_submission_id: str):
+    """Get version history of a submission (all edits)"""
+    service = FormSubmissionService()
+    try:
+        return service.get_version_history(root_submission_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

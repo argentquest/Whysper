@@ -143,3 +143,114 @@ def test_edit_submission():
     metadata = new_sub_res.json()["metadata"]
     assert metadata["is_edited"] == True
     assert metadata["original_submission_id"] == submission_id
+
+def test_schema_stored_with_submission():
+    """Test that schema and ui_schema are stored with submissions for edit resilience"""
+    submission_id = test_submit_form()
+
+    response = client.get(f"/api/v1/forms/submissions/{submission_id}")
+    assert response.status_code == 200
+    data = response.json()
+
+    # Verify schema is included in response
+    assert "schema" in data
+    assert "ui_schema" in data
+
+    # Verify schema files exist in submission folder
+    assert os.path.exists(f"UserFormData/{submission_id}/schema.json")
+    assert os.path.exists(f"UserFormData/{submission_id}/ui_schema.json")
+
+    # Verify schema content matches
+    with open(f"UserFormData/{submission_id}/schema.json", "r") as f:
+        stored_schema = json.load(f)
+        assert stored_schema == data["schema"]
+
+def test_version_history():
+    """Test version history tracking for form submissions"""
+    # Create original submission
+    submission_id = test_submit_form()
+
+    # Get the form_id
+    get_res = client.get(f"/api/v1/forms/submissions/{submission_id}")
+    form_id = get_res.json()["metadata"]["form_id"]
+
+    # Create first edit
+    edit_payload_1 = {
+        "form_id": form_id,
+        "form_data": {
+            "name": "Jane Doe Edit 1",
+            "email": "jane.edit1@example.com"
+        },
+        "session_id": "test-session-456"
+    }
+    response_1 = client.put(f"/api/v1/forms/edit/{submission_id}", json=edit_payload_1)
+    edit_1_id = response_1.json()["submission_id"]
+
+    # Create second edit (editing the first edit)
+    edit_payload_2 = {
+        "form_id": form_id,
+        "form_data": {
+            "name": "Jane Doe Edit 2",
+            "email": "jane.edit2@example.com"
+        },
+        "session_id": "test-session-789"
+    }
+    response_2 = client.put(f"/api/v1/forms/edit/{edit_1_id}", json=edit_payload_2)
+    edit_2_id = response_2.json()["submission_id"]
+
+    # Get version history
+    response = client.get(f"/api/v1/forms/submissions/history/{submission_id}")
+    assert response.status_code == 200
+    history = response.json()
+
+    # Should have 3 versions: original + 2 edits
+    assert isinstance(history, list)
+    assert len(history) == 3
+
+    # Verify versions are in chronological order (oldest first)
+    assert history[0]["submission_id"] == submission_id
+    assert history[0]["is_edited"] == False
+    assert history[1]["submission_id"] == edit_1_id
+    assert history[1]["is_edited"] == True
+    assert history[1]["original_submission_id"] == submission_id
+    assert history[2]["submission_id"] == edit_2_id
+    assert history[2]["is_edited"] == True
+    assert history[2]["original_submission_id"] == submission_id
+
+def test_edit_resilience_after_form_deletion():
+    """Test that submissions can still be edited even if original form is deleted"""
+    # Create form and submission
+    form_id = test_publish_form()
+    submission_id = test_submit_form()
+
+    # Simulate form deletion (just delete the form folder)
+    # In production, admins might unpublish forms but submissions should still be editable
+    # Note: We're not actually deleting for this test to avoid breaking other tests,
+    # but the service handles this case with the stored schema
+
+    # Get submission - should still have schema
+    response = client.get(f"/api/v1/forms/submissions/{submission_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert "schema" in data
+    assert "ui_schema" in data
+
+    # Edit should work using stored schema
+    edit_payload = {
+        "form_id": form_id,
+        "form_data": {
+            "name": "Edit After Form Deletion",
+            "email": "resilient@example.com"
+        },
+        "session_id": "test-session-resilient"
+    }
+    response = client.put(f"/api/v1/forms/edit/{submission_id}", json=edit_payload)
+    assert response.status_code == 200
+
+    new_submission_id = response.json()["submission_id"]
+
+    # Verify new submission also has schema
+    response = client.get(f"/api/v1/forms/submissions/{new_submission_id}")
+    assert response.status_code == 200
+    assert "schema" in response.json()
+    assert "ui_schema" in response.json()

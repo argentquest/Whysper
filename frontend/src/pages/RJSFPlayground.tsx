@@ -3,9 +3,9 @@ import { Theme as AntDTheme } from '@rjsf/antd'
 import { withTheme } from '@rjsf/core'
 import type { RJSFSchema, UiSchema } from '@rjsf/utils'
 import validator from '@rjsf/validator-ajv8'
-import { Alert, Button, Col, Form, Input,Layout, Row, Space, Typography } from 'antd'
+import { Alert, Button, Col, Form, Input, Layout, Row, Select, Space, Typography } from 'antd'
 import { message } from 'antd'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import ApiService from '../services/api'
 
@@ -71,6 +71,11 @@ export const RJSFPlayground: React.FC = () => {
   const [formType, setFormType] = useState('contact')
   const [version, setVersion] = useState('1.0')
 
+  // Published forms state
+  const [publishedForms, setPublishedForms] = useState<any[]>([])
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+
   const schemaResult = useMemo<ParseResult<RJSFSchema>>(
     () => parseJson<RJSFSchema>(schemaText, defaultSchema),
     [schemaText]
@@ -84,13 +89,69 @@ export const RJSFPlayground: React.FC = () => {
     [formDataText]
   )
 
+  // Load published forms on mount
+  useEffect(() => {
+    loadPublishedForms()
+  }, [])
+
+  const loadPublishedForms = async () => {
+    try {
+      const response = await ApiService.get('/forms/published')
+      if (response.data) {
+        setPublishedForms(response.data)
+      }
+    } catch (error) {
+      console.error('Failed to load published forms:', error)
+      message.error('Failed to load published forms')
+    }
+  }
+
+  const handleLoadForm = async (formId: string) => {
+    try {
+      const form = publishedForms.find(f => f.form_id === formId)
+      if (!form) {
+        message.error('Form not found')
+        return
+      }
+
+      // Load form data into editors
+      setFormName(form.form_name)
+      setFormDescription(form.form_description || '')
+      setFormType(form.form_type)
+      setVersion(form.version || '1.0')
+      setSchemaText(JSON.stringify(form.schema, null, 2))
+      setUiSchemaText(JSON.stringify(form.ui_schema || {}, null, 2))
+      setFormDataText(JSON.stringify(form.form_data || {}, null, 2))
+
+      setSelectedFormId(formId)
+      setIsEditMode(true)
+      message.success(`Loaded form: ${form.form_name}`)
+    } catch (error: any) {
+      console.error('Failed to load form:', error)
+      message.error('Failed to load form: ' + (error.message || 'Unknown error'))
+    }
+  }
+
+  const handleNewForm = () => {
+    setSchemaText(JSON.stringify(defaultSchema, null, 2))
+    setUiSchemaText(JSON.stringify(defaultUiSchema, null, 2))
+    setFormDataText(JSON.stringify(defaultFormData, null, 2))
+    setFormName('Contact Form')
+    setFormDescription('Basic contact details collection')
+    setFormType('contact')
+    setVersion('1.0')
+    setSelectedFormId(null)
+    setIsEditMode(false)
+    message.info('Cleared form - ready to create new')
+  }
+
   const handleReset = () => {
     setSchemaText(JSON.stringify(defaultSchema, null, 2))
     setUiSchemaText(JSON.stringify(defaultUiSchema, null, 2))
     setFormDataText(JSON.stringify(defaultFormData, null, 2))
   }
 
-  const handlePublishForm = async () => {
+  const handlePublishForm = async (asNew: boolean = false) => {
     try {
       if (schemaResult.error || uiSchemaResult.error || formDataResult.error) {
         message.error('Please fix JSON errors before publishing')
@@ -102,7 +163,7 @@ export const RJSFPlayground: React.FC = () => {
         return
       }
 
-      const payload = {
+      const payload: any = {
         form_name: formName,
         form_description: formDescription,
         form_type: formType,
@@ -112,9 +173,27 @@ export const RJSFPlayground: React.FC = () => {
         form_data: formDataResult.data
       }
 
+      // If editing an existing form and NOT publishing as new, include the form_id
+      if (isEditMode && selectedFormId && !asNew) {
+        payload.form_id = selectedFormId
+      }
+
       const response = await ApiService.post('/forms/publish', payload)
       if (response.data && response.data.form_id) {
-        message.success('Form published successfully!')
+        let action = 'published'
+        if (isEditMode && !asNew) {
+          action = 'updated'
+        } else if (asNew) {
+          action = 'published as new'
+        }
+        message.success(`Form ${action} successfully!`)
+
+        // Reload the published forms list
+        await loadPublishedForms()
+
+        // Set the newly created/updated form as selected
+        setSelectedFormId(response.data.form_id)
+        setIsEditMode(true)
       } else {
         message.error('Failed to publish form')
       }
@@ -144,9 +223,14 @@ export const RJSFPlayground: React.FC = () => {
           </Title>
           <Text style={{ color: '#d1fae5' }}>Interactive demo of react-jsonschema-form</Text>
         </Space>
-        <Button onClick={handleReset} type="primary">
-          Reset to defaults
-        </Button>
+        <Space>
+          <Button onClick={handleNewForm} type="default">
+            New Form
+          </Button>
+          <Button onClick={handleReset} type="primary">
+            Reset to defaults
+          </Button>
+        </Space>
       </Header>
 
       <Content style={{ padding: 24 }}>
@@ -154,9 +238,37 @@ export const RJSFPlayground: React.FC = () => {
           <Col xs={24} lg={12}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
 
+              {/* Load Existing Form Section */}
+              <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                <Title level={4} style={{ marginBottom: 16 }}>Load Existing Form</Title>
+                <Form layout="vertical">
+                  <Form.Item label="Select Published Form">
+                    <Select
+                      placeholder="Choose a form to edit"
+                      value={selectedFormId}
+                      onChange={handleLoadForm}
+                      allowClear
+                      onClear={() => {
+                        setSelectedFormId(null)
+                        setIsEditMode(false)
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      {publishedForms.map(form => (
+                        <Select.Option key={form.form_id} value={form.form_id}>
+                          {form.form_name} ({form.form_type}) - v{form.version}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Form>
+              </div>
+
               {/* Metadata Section */}
               <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e5e7eb' }}>
-                <Title level={4} style={{ marginBottom: 16 }}>Form Metadata</Title>
+                <Title level={4} style={{ marginBottom: 16 }}>
+                  Form Metadata {isEditMode && <Text type="warning">(Editing)</Text>}
+                </Title>
                 <Form layout="vertical">
                   <Row gutter={16}>
                     <Col span={12}>
@@ -179,10 +291,21 @@ export const RJSFPlayground: React.FC = () => {
                         <Input value={version} onChange={e => setVersion(e.target.value)} />
                       </Form.Item>
                     </Col>
-                    <Col span={12} style={{ display: 'flex', alignItems: 'flex-end' }}>
-                      <Button type="primary" size="large" onClick={handlePublishForm} block style={{ marginBottom: 24 }}>
-                        Publish Form
-                      </Button>
+                    <Col span={12} style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                      {isEditMode ? (
+                        <>
+                          <Button type="primary" size="large" onClick={() => handlePublishForm(false)} style={{ flex: 1, marginBottom: 24 }}>
+                            Update Form
+                          </Button>
+                          <Button type="default" size="large" onClick={() => handlePublishForm(true)} style={{ flex: 1, marginBottom: 24 }}>
+                            Publish as New
+                          </Button>
+                        </>
+                      ) : (
+                        <Button type="primary" size="large" onClick={() => handlePublishForm(false)} block style={{ marginBottom: 24 }}>
+                          Publish Form
+                        </Button>
+                      )}
                     </Col>
                   </Row>
                 </Form>

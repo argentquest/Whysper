@@ -9,7 +9,9 @@ import {
   CodeOutlined,
   DeploymentUnitOutlined,
   DownOutlined,
+  EditOutlined,
   FileTextOutlined,
+  FormOutlined,
   MenuOutlined,
   MessageOutlined,
   PlayCircleOutlined,
@@ -45,6 +47,7 @@ const { Option } = Select
  * @property {Function} onMermaidTester - Callback to open Mermaid tester
  * @property {Function} onD2Tester - Callback to open D2 tester
  * @property {Function} onDiagramWizard - Callback to open Diagram Wizard
+ * @property {Function} onFormSystem - Callback to open Form System
  * @property {Function} onHome - Callback to return to landing page
  * @property {string} [currentSystem] - Currently selected system prompt
  * @property {Function} onSystemChange - Callback when system prompt changes
@@ -67,7 +70,7 @@ interface HeaderProps {
   onMermaidTester: () => void
   onD2Tester: () => void
   onDiagramWizard: () => void
-
+  onFormSystem: () => void
   onHome: () => void
   currentSystem?: string
   onSystemChange: (system: string) => void
@@ -96,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
   onEditFile,
   onGenerateDocumentation,
   onDiagramWizard,
-
+  onFormSystem,
   currentSystem = 'default',
   onSystemChange,
   onRunSystemPrompt,
@@ -136,6 +139,12 @@ export const Header: React.FC<HeaderProps> = ({
       case 'diagram-wizard':
         onDiagramWizard()
         break
+      case 'form-system':
+        onFormSystem()
+        break
+      case 'form-builder':
+        window.location.href = '/playground'
+        break
     }
   }
 
@@ -165,6 +174,16 @@ export const Header: React.FC<HeaderProps> = ({
         key: 'diagram-wizard',
         label: 'Diagram Wizard',
         icon: <DeploymentUnitOutlined />,
+      },
+      {
+        key: 'form-system',
+        label: 'Form System',
+        icon: <FormOutlined />,
+      },
+      {
+        key: 'form-builder',
+        label: 'Form Builder',
+        icon: <EditOutlined />,
       },
     ],
     onClick: handleToolsMenuClick,

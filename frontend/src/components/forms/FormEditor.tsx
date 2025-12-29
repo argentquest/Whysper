@@ -31,10 +31,12 @@ const FormEditor: React.FC<FormEditorProps> = ({
   const [formDataText, setFormDataText] = useState('{}');
   const [metadata, setMetadata] = useState({});
   const [activeTab, setActiveTab] = useState('form');
+  const [formSchema, setFormSchema] = useState<any>(null);
+  const [formUiSchema, setFormUiSchema] = useState<any>(null);
 
   useEffect(() => {
     if (mode === 'edit' || mode === 'view') {
-        // Load submission data
+        // Load submission data (includes schema if stored)
         const loadSubmission = async () => {
             if (editingSubmission?.submission_id) {
                 try {
@@ -43,6 +45,14 @@ const FormEditor: React.FC<FormEditorProps> = ({
                         setFormData(response.data.form_data);
                         setFormDataText(JSON.stringify(response.data.form_data, null, 2));
                         setMetadata(response.data.metadata);
+
+                        // Use stored schema if available (for edit resilience)
+                        if (response.data.schema) {
+                            setFormSchema(response.data.schema);
+                        }
+                        if (response.data.ui_schema) {
+                            setFormUiSchema(response.data.ui_schema);
+                        }
                     }
                 } catch (e) {
                     message.error("Failed to load submission data");
@@ -55,6 +65,13 @@ const FormEditor: React.FC<FormEditorProps> = ({
         if (selectedForm?.form_data) {
              setFormData(selectedForm.form_data);
              setFormDataText(JSON.stringify(selectedForm.form_data, null, 2));
+        }
+        // Set schema from selected form
+        if (selectedForm?.schema) {
+            setFormSchema(selectedForm.schema);
+        }
+        if (selectedForm?.ui_schema) {
+            setFormUiSchema(selectedForm.ui_schema);
         }
     }
   }, [mode, editingSubmission, selectedForm]);
@@ -89,27 +106,24 @@ const FormEditor: React.FC<FormEditorProps> = ({
       key: 'form',
       label: 'Form',
       children: (
-        <div style={{ padding: '16px' }}>
-          {(selectedForm || editingSubmission) ? (
-             // If we are editing, we need to fetch the schema if it's not passed in selectedForm
-             // For simplicity, we assume selectedForm is populated or we fetched it.
-             // Ideally we should fetch form definition by ID if missing.
-             // But for 'new' mode selectedForm is present.
-             // For 'edit' mode, we might need to fetch the form definition.
-            <AntDForm
-              schema={selectedForm?.schema || {}}
-              uiSchema={selectedForm?.ui_schema || {}}
-              formData={formData}
-              validator={validator}
-              onChange={({ formData: newData }) => {
-                setFormData(newData || {});
-                setFormDataText(JSON.stringify(newData || {}, null, 2));
-              }}
-              disabled={mode === 'view'}
-              liveValidate
-            >
-              <div /> {/* Remove default submit button */}
-            </AntDForm>
+        <div style={{ padding: '16px', maxWidth: '100%', overflow: 'auto' }}>
+          {(formSchema || selectedForm) ? (
+            <div style={{ maxWidth: '100%' }}>
+              <AntDForm
+                schema={formSchema || selectedForm?.schema || {}}
+                uiSchema={formUiSchema || selectedForm?.ui_schema || {}}
+                formData={formData}
+                validator={validator}
+                onChange={({ formData: newData }) => {
+                  setFormData(newData || {});
+                  setFormDataText(JSON.stringify(newData || {}, null, 2));
+                }}
+                disabled={mode === 'view'}
+                liveValidate
+              >
+                <div /> {/* Remove default submit button */}
+              </AntDForm>
+            </div>
           ) : <div>Loading form definition...</div>}
         </div>
       )
@@ -162,7 +176,7 @@ const FormEditor: React.FC<FormEditorProps> = ({
   ];
 
   return (
-    <div>
+    <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
       {/* Header with actions */}
       <div style={{
         display: 'flex',
@@ -171,7 +185,9 @@ const FormEditor: React.FC<FormEditorProps> = ({
         marginBottom: '16px',
         padding: '16px',
         background: '#fafafa',
-        borderRadius: '4px'
+        borderRadius: '4px',
+        flexWrap: 'wrap',
+        gap: '8px'
       }}>
         <h3>{mode === 'new' ? 'Fill New Form' : mode === 'edit' ? 'Edit Form' : 'View Form'}</h3>
         <Space>

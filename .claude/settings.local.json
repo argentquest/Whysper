@@ -33,7 +33,8 @@
       "Bash(curl:*)",
       "Bash(npm run dev:*)",
       "Bash(git checkout:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(.venvScriptspython.exe -m pytest tests/forms/test_forms_flow.py -v)"
     ],
     "deny": [],
     "ask": []

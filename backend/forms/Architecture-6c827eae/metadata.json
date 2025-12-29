@@ -1,0 +1,10 @@
+{
+  "form_id": "Architecture-6c827eae",
+  "form_name": "Person",
+  "form_description": "This JSON object follows the JSON Schema Draft 7 standard. It tells RJSF what fields to collect, their data types, and validation rules.\n\ntype: \"object\": Defines the root of the form as a single object containing multiple fields.\n\nrequired: An array listing the fields that must be filled out before the form can be submitted (name, description, etc.). RJSF will automatically add asterisks (*) to these labels.\n\nproperties: This is the core dictionary where every form field is defined.\n\nboundary:\n\nUses enum: This tells RJSF to render a \"Select\" dropdown or \"Radio\" buttons instead of a free-text box.\n\nC4 Context: This is a critical architectural distinction. \"Internal\" actors sit inside the Enterprise Boundary (like employees), while \"External\" actors sit outside (like customers).\n\nactorType:\n\nPurpose: Distinguishes a human (Person) from an automated external system (Software System). In C4, a \"User\" is usually a human, but sometimes you need to model a \"Bot\" or \"External Cron Job\" that initiates actions.\n\nauthentication:\n\nPurpose: Adds security context to the actor. Knowing if a user is \"Anonymous\" vs \"SSO Authenticated\" changes the security boundary requirements in the diagram.",
+  "form_type": "Architecture",
+  "version": "1.0",
+  "created_timestamp": "2025-12-24T15:13:58.744553",
+  "created_by": "admin",
+  "status": "published"
+}

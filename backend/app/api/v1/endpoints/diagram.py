@@ -17,6 +17,7 @@ from schemas import (
     DiagramSelectTypeRequest,
     DiagramApproveRenderRequest,
     DiagramRenderWizardRequest,
+    DiagramAddFormDataRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -393,4 +394,97 @@ async def delete_session(session_id: str):
     except Exception as e:
         # Log and handle any session deletion errors
         logger.info(f"Error deleting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/add_form_data", summary="Add form data to session", description="Add form submission data to a diagram generation session.")
+@log_method_call
+async def add_form_data_to_session(request: DiagramAddFormDataRequest):
+    """
+    Add form submission data to a diagram generation session.
+
+    Combines all 4 files from a form submission (form_data.json, schema.json,
+    ui_schema.json, metadata.json) into a single JSON object and adds it to
+    the diagram session's FormsData array.
+
+    Args:
+        request (DiagramAddFormDataRequest): Request containing session_id and submission_id.
+
+    Returns:
+        dict: The updated session status with FormsData.
+
+    Raises:
+        HTTPException: If the session or submission is not found or an error occurs.
+    """
+    import os
+
+    # Get the session
+    session = DiagramSessionStore.get_session(request.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        # Load the 4 files from the submission folder
+        submissions_directory = "UserFormData"
+        submission_folder = os.path.join(submissions_directory, request.submission_id)
+
+        if not os.path.exists(submission_folder):
+            raise HTTPException(status_code=404, detail=f"Submission {request.submission_id} not found")
+
+        # Load each file
+        form_data_path = os.path.join(submission_folder, "form_data.json")
+        schema_path = os.path.join(submission_folder, "schema.json")
+        ui_schema_path = os.path.join(submission_folder, "ui_schema.json")
+        metadata_path = os.path.join(submission_folder, "metadata.json")
+
+        # Check if all files exist
+        if not os.path.exists(form_data_path):
+            raise HTTPException(status_code=404, detail="form_data.json not found")
+        if not os.path.exists(metadata_path):
+            raise HTTPException(status_code=404, detail="metadata.json not found")
+
+        # Load JSON from all files
+        with open(form_data_path, "r") as f:
+            form_data = json.load(f)
+
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+
+        # Load schema and ui_schema (may not exist for older submissions)
+        schema = {}
+        ui_schema = {}
+
+        if os.path.exists(schema_path):
+            with open(schema_path, "r") as f:
+                schema = json.load(f)
+
+        if os.path.exists(ui_schema_path):
+            with open(ui_schema_path, "r") as f:
+                ui_schema = json.load(f)
+
+        # Combine into single object
+        combined_form_entry = {
+            "form_data": form_data,
+            "schema": schema,
+            "ui_schema": ui_schema,
+            "metadata": metadata
+        }
+
+        # Initialize FormsData if it doesn't exist
+        if not hasattr(session, 'FormsData') or session.FormsData is None:
+            session.FormsData = []
+
+        # Add to FormsData array
+        session.FormsData.append(combined_form_entry)
+
+        logger.info(f"✅ Added form data from submission {request.submission_id} to session {request.session_id}")
+
+        # Get updated status
+        service = DiagramFactoryService(session)
+        return service.get_status()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.info(f"Error adding form data to session: {e}")
         raise HTTPException(status_code=500, detail=str(e))

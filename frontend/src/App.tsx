@@ -1366,7 +1366,7 @@ function App() {
           onMermaidTester={() => setMermaidTesterModalOpen(true)}
           onD2Tester={() => setD2TesterModalOpen(true)}
           onDiagramWizard={handleNewDiagramWizardTab}
-
+          onFormSystem={handleNewFormSystemTab}
           onHome={handleHome}
           currentSystem={activeAgentName}
           onSystemChange={handleSystemChange}

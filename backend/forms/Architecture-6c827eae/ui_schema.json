@@ -1,0 +1,25 @@
+{
+  "description": {
+    "ui:widget": "textarea",
+    "ui:options": {
+      "rows": 3
+    },
+    "ui:placeholder": "A customer of the bank, with a personal bank account."
+  },
+  "boundary": {
+    "ui:widget": "radio",
+    "ui:options": {
+      "inline": true
+    },
+    "ui:help": "Determines if this person appears inside or outside the enterprise boundary box."
+  },
+  "actorType": {
+    "ui:widget": "radio",
+    "ui:options": {
+      "inline": true
+    }
+  },
+  "authentication": {
+    "ui:placeholder": "Select how this user logs in..."
+  }
+}

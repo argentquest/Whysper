@@ -26,6 +26,24 @@ export interface DiagramSession {
   message?: string
 }
 
+export interface FormDataEntry {
+  form_data: Record<string, any>
+  schema: Record<string, any>
+  ui_schema: Record<string, any>
+  metadata: {
+    submission_id: string
+    form_id: string
+    form_name: string
+    form_type: string
+    version: string
+    session_id: string
+    submission_timestamp: string
+    submission_date: string
+    is_edited: boolean
+    original_submission_id: string | null
+  }
+}
+
 export interface DiagramStatus {
   session_id: string
   history: Array<[string, string]>
@@ -49,6 +67,7 @@ export interface DiagramStatus {
   assessment_score?: number
   score_target?: number
   full_ai_response?: string
+  FormsData?: FormDataEntry[]
 }
 
 export interface DiagramUpdate extends DiagramStatus {
@@ -303,6 +322,28 @@ export class DiagramApi {
     if (!resp.ok) {
       throw new Error(`Failed to delete session: ${resp.statusText}`)
     }
+  }
+
+  /**
+   * Add form data to diagram session
+   */
+  static async addFormDataToSession(sessionId: string, submissionId: string): Promise<DiagramStatus> {
+    const resp = await fetch(`${API_BASE}/diagram/add_form_data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        submission_id: submissionId,
+      }),
+    })
+
+    if (!resp.ok) {
+      throw new Error(`Failed to add form data to session: ${resp.statusText}`)
+    }
+
+    return resp.json()
   }
 }
 

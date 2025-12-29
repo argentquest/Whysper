@@ -1,0 +1,25 @@
+{
+  "description": {
+    "ui:widget": "textarea",
+    "ui:options": {
+      "rows": 3
+    }
+  },
+  "tags": {
+    "ui:options": {
+      "orderable": false
+    }
+  },
+  "componentType": {
+    "ui:widget": "radio",
+    "ui:options": {
+      "inline": true
+    }
+  },
+  "hostingUrl": {
+    "ui:placeholder": "https://app.example.com"
+  },
+  "dataClassification": {
+    "ui:help": "Select the highest level of data sensitivity stored here."
+  }
+}

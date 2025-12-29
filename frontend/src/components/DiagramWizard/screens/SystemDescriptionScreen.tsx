@@ -55,14 +55,17 @@
  * - Cleanup happens automatically when tab closes
  */
 
-import { ClearOutlined, LeftOutlined, SendOutlined } from '@ant-design/icons'
+import { ClearOutlined, FormOutlined, LeftOutlined, SendOutlined } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
-import { Alert, Button, Layout, message, Modal, Space, Tag } from 'antd'
+import { Alert, Button, Layout, message, Modal, Select, Space, Tag } from 'antd'
 import type * as Monaco from 'monaco-editor'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
+import ApiService from '../../../services/api'
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
 import type { Message } from '../../../types'
+import FormRenderer from '../../forms/FormRenderer'
+import { formatFormDataForPrompt } from '../../../utils/formDataFormatters'
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
 import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
@@ -149,6 +152,72 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   onShowState,
 }) => {
   const promptEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
+
+  // Form integration state
+  const [formModalVisible, setFormModalVisible] = useState(false)
+  const [publishedForms, setPublishedForms] = useState<any[]>([])
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
+
+  // Track submission IDs from forms filled before session starts
+  const [preSessionSubmissionIds, setPreSessionSubmissionIds] = useState<string[]>([])
+
+  // Load published forms on mount
+  useEffect(() => {
+    const loadForms = async () => {
+      try {
+        const response = await ApiService.get('/forms/published')
+        if (response.data) {
+          setPublishedForms(response.data)
+        }
+      } catch (error) {
+        console.error('Failed to load forms:', error)
+      }
+    }
+    loadForms()
+  }, [])
+
+  // Handle form submission
+  const handleFormSubmit = (formData: any, formMetadata: any, submissionId?: string) => {
+    const formattedData = formatFormDataForPrompt(formData, formMetadata)
+    onInputChange(formattedData)
+    setFormModalVisible(false)
+    setSelectedFormId(null)
+    message.success('Form data inserted into description')
+
+    // If session hasn't started yet and we have a submission ID, store it
+    if (!sessionId && submissionId) {
+      setPreSessionSubmissionIds(prev => [...prev, submissionId])
+      console.log('Stored pre-session submission ID:', submissionId)
+    }
+  }
+
+  // When session starts, add any pre-session forms to the session
+  useEffect(() => {
+    const addPreSessionForms = async () => {
+      if (sessionId && preSessionSubmissionIds.length > 0) {
+        console.log(`Adding ${preSessionSubmissionIds.length} pre-session forms to session ${sessionId}`)
+
+        for (const submissionId of preSessionSubmissionIds) {
+          try {
+            await ApiService.post('/diagram/add_form_data', {
+              session_id: sessionId,
+              submission_id: submissionId
+            })
+            console.log(`Added pre-session form ${submissionId} to session`)
+          } catch (err) {
+            console.error(`Failed to add pre-session form ${submissionId}:`, err)
+          }
+        }
+
+        // Clear the pre-session submission IDs after adding them
+        setPreSessionSubmissionIds([])
+        message.success(`Added ${preSessionSubmissionIds.length} form(s) to diagram session`)
+      }
+    }
+
+    addPreSessionForms()
+  }, [sessionId]) // Only run when sessionId changes
+
   // Show input field during clarification phase (includes initial analysis and follow-up questions)
   // Keep input visible as long as we're in analysis phase (hasn't moved to generation yet)
   const isClarifying = !!(
@@ -253,6 +322,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               isClarifying={isClarifying}
               sessionActive={!!sessionId}
               isLoading={loading}
+              sessionId={sessionId || undefined}
+              formsData={status?.FormsData || []}
             />
           </div>
         ) : (
@@ -288,6 +359,32 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
                   Change Model
                 </Button>
               </div>
+            </div>
+
+            {/* Form Selector Section */}
+            <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Select
+                placeholder="Select a form template"
+                style={{ width: 300 }}
+                value={selectedFormId}
+                onChange={setSelectedFormId}
+                allowClear
+                onClear={() => setSelectedFormId(null)}
+                disabled={loading}
+              >
+                {publishedForms.map(form => (
+                  <Select.Option key={form.form_id} value={form.form_id}>
+                    {form.form_name} ({form.form_type})
+                  </Select.Option>
+                ))}
+              </Select>
+              <Button
+                icon={<FormOutlined />}
+                onClick={() => setFormModalVisible(true)}
+                disabled={!selectedFormId || loading}
+              >
+                Use Form
+              </Button>
             </div>
 
             <div
@@ -356,6 +453,19 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
           </div>
         )}
       </Layout.Content>
+
+      {/* Form Renderer Modal */}
+      <FormRenderer
+        visible={formModalVisible}
+        onClose={() => {
+          setFormModalVisible(false)
+          setSelectedFormId(null)
+        }}
+        onSubmit={handleFormSubmit}
+        sessionId={sessionId || 'temp-session'}
+        title="Fill Form Template"
+        formId={selectedFormId}
+      />
     </Layout>
   )
 }

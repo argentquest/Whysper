@@ -1,0 +1,19 @@
+{
+  "sourceId": {
+    "ui:placeholder": "Select the source component..."
+  },
+  "targetId": {
+    "ui:placeholder": "Select the target component..."
+  },
+  "description": {
+    "ui:placeholder": "e.g., 'GET /api/v1/users'",
+    "ui:help": "Keep it short. This text appears on the arrow line."
+  },
+  "interactionType": {
+    "ui:widget": "radio",
+    "ui:options": {
+      "inline": true
+    },
+    "ui:help": "Synchronous = Solid Line. Asynchronous = Dashed Line."
+  }
+}

@@ -911,6 +911,8 @@ class DiagramFactoryService:
             ),
             # Expose graph state for debugging/inspection; remove runtime-only fields
             "graphState": self._get_serializable_graph_state(),
+            # Include form data submissions associated with this diagram session
+            "FormsData": getattr(self.session, 'FormsData', []),
         }
 
     def _get_serializable_graph_state(self) -> Optional[Dict[str, Any]]:

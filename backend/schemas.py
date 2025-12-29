@@ -378,6 +378,11 @@ class DiagramRenderWizardRequest(BaseModel):
     code: Optional[str] = None
 
 
+class DiagramAddFormDataRequest(BaseModel):
+    session_id: str
+    submission_id: str
+
+
 class FileSaveRequest(BaseModel):
     path: str = Field(..., description="Relative path to the file to save")
     content: str = Field(..., description="File content to save")

@@ -8,47 +8,58 @@ import type { ThemeConfig } from 'antd';
 
 import { WFColors } from './colors';
 
+// Import font files so Vite can process them
+import wfSansRgWoff2 from './assets/fonts/wellsfargosans-rg.woff2';
+import wfSansRgWoff from './assets/fonts/wellsfargosans-rg.woff';
+import wfSansLtWoff2 from './assets/fonts/wellsfargosans-lt.woff2';
+import wfSansLtWoff from './assets/fonts/wellsfargosans-lt.woff';
+import wfSansSbdWoff2 from './assets/fonts/wellsfargosans-sbd.woff2';
+import wfSansSbdWoff from './assets/fonts/wellsfargosans-sbd.woff';
+import wfSansBdWoff2 from './assets/fonts/wellsfargosans-bd.woff2';
+import wfSansBdWoff from './assets/fonts/wellsfargosans-bd.woff';
+import wfSourceSansItWoff2 from './assets/fonts/wellsfargosourcesans-it.woff2';
+import wfSourceSansItWoff from './assets/fonts/wellsfargosourcesans-it.woff';
+
 type BrandTokenOverrides = NonNullable<ThemeConfig['token']> & Record<string, string | number>;
 
 const BRAND_BODY_FONT = '"Wells Fargo Sans", "Wells Fargo Sans Regular", "Source Sans Pro", Arial, Helvetica, sans-serif';
 const BRAND_HEADING_FONT = '"Wells Fargo Sans SemiBold", "Wells Fargo Sans", "Source Sans Pro", Arial, Helvetica, sans-serif';
-const FONT_BASE_URL = '/static/fonts';
 
 const WF2_FONT_FACE_CSS = `
 @font-face {
   font-display: swap;
   font-family: "Wells Fargo Sans";
   font-weight: 400;
-  src: url(${FONT_BASE_URL}/wellsfargosans-rg-CkIpT86-.woff2) format("woff2"),
-       url(${FONT_BASE_URL}/wellsfargosans-rg-B_9ceS-2.woff) format("woff");
+  src: url(${wfSansRgWoff2}) format("woff2"),
+       url(${wfSansRgWoff}) format("woff");
 }
 @font-face {
   font-display: swap;
   font-family: "Wells Fargo Sans";
   font-weight: 300;
-  src: url(${FONT_BASE_URL}/wellsfargosans-lt-C-sbnzoH.woff2) format("woff2"),
-       url(${FONT_BASE_URL}/wellsfargosans-lt-UQY-_sJJ.woff) format("woff");
+  src: url(${wfSansLtWoff2}) format("woff2"),
+       url(${wfSansLtWoff}) format("woff");
 }
 @font-face {
   font-display: swap;
   font-family: "Wells Fargo Sans";
   font-weight: 600;
-  src: url(${FONT_BASE_URL}/wellsfargosans-sbd-DL2Ti2Mj.woff2) format("woff2"),
-       url(${FONT_BASE_URL}/wellsfargosans-sbd-B3t21HTn.woff) format("woff");
+  src: url(${wfSansSbdWoff2}) format("woff2"),
+       url(${wfSansSbdWoff}) format("woff");
 }
 @font-face {
   font-display: swap;
   font-family: "Wells Fargo Sans";
   font-weight: 700;
-  src: url(${FONT_BASE_URL}/wellsfargosans-bd-DmhblNWY.woff2) format("woff2"),
-       url(${FONT_BASE_URL}/wellsfargosans-bd-GHE67JSK.woff) format("woff");
+  src: url(${wfSansBdWoff2}) format("woff2"),
+       url(${wfSansBdWoff}) format("woff");
 }
 @font-face {
   font-display: swap;
   font-family: "Source Sans Pro";
   font-style: italic;
-  src: url(${FONT_BASE_URL}/wellsfargosourcesans-it-CKnmOrYX.woff2) format("woff2"),
-       url(${FONT_BASE_URL}/wellsfargosourcesans-it-8wLo7MLu.woff) format("woff");
+  src: url(${wfSourceSansItWoff2}) format("woff2"),
+       url(${wfSourceSansItWoff}) format("woff");
 }
 `;
 

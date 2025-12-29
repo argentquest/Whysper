@@ -1,0 +1,143 @@
+{
+  "title": "Component Definition",
+  "description": "Define a software component within the C4 architecture model.",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "technology",
+    "componentType"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Component Name",
+      "minLength": 3
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "A short summary of responsibilities (e.g., 'Allows users to sign in')."
+    },
+    "technology": {
+      "type": "string",
+      "title": "Technology / Stack",
+      "description": "e.g., React, Java Spring, PostgreSQL"
+    },
+    "tags": {
+      "type": "array",
+      "title": "C4 Tags",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "componentType": {
+      "type": "string",
+      "title": "Component Type",
+      "enum": [
+        "Front End",
+        "Back End",
+        "Database"
+      ],
+      "default": "Back End"
+    }
+  },
+  "dependencies": {
+    "componentType": {
+      "oneOf": [
+        {
+          "properties": {
+            "componentType": {
+              "const": "Front End"
+            },
+            "hostingUrl": {
+              "type": "string",
+              "format": "uri",
+              "title": "Public URL"
+            },
+            "clientType": {
+              "type": "string",
+              "enum": [
+                "Single Page App (SPA)",
+                "Server Side Rendered (SSR)",
+                "Mobile App (iOS/Android)",
+                "Desktop Client"
+              ]
+            },
+            "analyticsId": {
+              "type": "string",
+              "title": "Analytics / Tracking ID"
+            }
+          },
+          "required": [
+            "clientType"
+          ]
+        },
+        {
+          "properties": {
+            "componentType": {
+              "const": "Back End"
+            },
+            "apiType": {
+              "type": "string",
+              "enum": [
+                "REST API",
+                "GraphQL",
+                "gRPC",
+                "SOAP",
+                "Worker / Job Processor"
+              ]
+            },
+            "exposedPort": {
+              "type": "integer",
+              "title": "Container Port"
+            },
+            "swaggerUrl": {
+              "type": "string",
+              "title": "OpenAPI/Swagger Spec URL"
+            }
+          },
+          "required": [
+            "apiType"
+          ]
+        },
+        {
+          "properties": {
+            "componentType": {
+              "const": "Database"
+            },
+            "dbEngine": {
+              "type": "string",
+              "enum": [
+                "PostgreSQL",
+                "MySQL",
+                "MongoDB",
+                "Redis",
+                "Oracle",
+                "DynamoDB"
+              ]
+            },
+            "isClustered": {
+              "type": "boolean",
+              "title": "Is Clustered / High Availability?",
+              "default": false
+            },
+            "dataClassification": {
+              "type": "string",
+              "enum": [
+                "Public",
+                "Internal",
+                "PII / Sensitive",
+                "PCI / Financial"
+              ]
+            }
+          },
+          "required": [
+            "dbEngine"
+          ]
+        }
+      ]
+    }
+  }
+}

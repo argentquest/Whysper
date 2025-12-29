@@ -1,0 +1,50 @@
+{
+  "title": "C4 Relationship Definition",
+  "description": "Define a unidirectional connection between two architectural elements.",
+  "type": "object",
+  "required": [
+    "sourceId",
+    "targetId",
+    "description",
+    "technology"
+  ],
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "title": "Source Element",
+      "description": " The element initiating the action (e.g., 'Web App')."
+    },
+    "targetId": {
+      "type": "string",
+      "title": "Target Element",
+      "description": "The element receiving the action (e.g., 'Database')."
+    },
+    "description": {
+      "type": "string",
+      "title": "Description (The 'Verb')",
+      "description": "What happens? (e.g., 'Reads customer data from', 'Sends email via')."
+    },
+    "technology": {
+      "type": "string",
+      "title": "Protocol / Technology",
+      "description": "e.g., HTTPS/JSON, JDBC, AMQP, gRPC"
+    },
+    "interactionType": {
+      "type": "string",
+      "title": "Interaction Style",
+      "enum": [
+        "Synchronous",
+        "Asynchronous"
+      ],
+      "default": "Synchronous"
+    },
+    "tags": {
+      "type": "array",
+      "title": "Relationship Tags",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  }
+}

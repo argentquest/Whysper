@@ -60,15 +60,19 @@ import {
   CodeOutlined,
   EyeOutlined,
   FileTextOutlined,
+  FormOutlined,
   LoadingOutlined,
   RobotOutlined,
   SendOutlined,
 } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
-import { Button, Card, Empty, List, Spin, Tabs,Tag, Tooltip } from 'antd'
+import { Button, Card, Empty, List, message, Select, Spin, Tabs, Tag, Tooltip } from 'antd'
 import * as monaco from 'monaco-editor'
 import React, { useEffect, useRef, useState } from 'react'
 
+import ApiService from '../../../services/api'
+import FormRenderer from '../../forms/FormRenderer'
+import { formatFormDataForClarification } from '../../../utils/formDataFormatters'
 import JsonPreview from '../components/JsonPreview'
 import styles from '../diagram-wizard.module.css'
 
@@ -120,6 +124,8 @@ interface Panel1ChatProps {
   isLoading?: boolean
   sessionActive?: boolean
   isClarifying?: boolean
+  sessionId?: string
+  formsData?: any[]
 }
 
 const Panel1_Chat: React.FC<Panel1ChatProps> = ({
@@ -129,10 +135,17 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   isLoading = false,
   sessionActive = false,
   isClarifying = false,
+  sessionId = 'unknown-session',
+  formsData = [],
 }) => {
   const [userResponse, setUserResponse] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse'>(
+
+  // Form integration state
+  const [formModalVisible, setFormModalVisible] = useState(false)
+  const [publishedForms, setPublishedForms] = useState<any[]>([])
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
+  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse' | 'formsData'>(
     'preview'
   )
   const [editorReady, setEditorReady] = useState(false)
@@ -150,6 +163,32 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Load published forms on mount
+  useEffect(() => {
+    const loadForms = async () => {
+      try {
+        const response = await ApiService.get('/forms/published')
+        if (response.data) {
+          setPublishedForms(response.data)
+        }
+      } catch (error) {
+        console.error('Failed to load forms:', error)
+      }
+    }
+    loadForms()
+  }, [])
+
+  // Handle form submission
+  const handleFormSubmit = (formData: any, formMetadata: any, submissionId?: string) => {
+    const formattedData = formatFormDataForClarification(formData, formMetadata)
+    setUserResponse(formattedData)
+    setFormModalVisible(false)
+    setSelectedFormId(null)
+    message.success('Form data inserted into response')
+    // Note: During clarification phase, session already exists, so FormRenderer
+    // automatically adds the form to the session via DiagramApi.addFormDataToSession
+  }
 
   useEffect(() => {
     if (activeResponseTab === 'json' && editorRef.current) {
@@ -374,6 +413,34 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
           {/* Response Input Section */}
           {sessionActive && isClarifying && (
             <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+              {/* Form Selector */}
+              <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Select
+                  placeholder="Select a form to fill"
+                  style={{ flex: 1 }}
+                  value={selectedFormId}
+                  onChange={setSelectedFormId}
+                  allowClear
+                  onClear={() => setSelectedFormId(null)}
+                  size="small"
+                  disabled={isLoading || submitting}
+                >
+                  {publishedForms.map(form => (
+                    <Select.Option key={form.form_id} value={form.form_id}>
+                      {form.form_name}
+                    </Select.Option>
+                  ))}
+                </Select>
+                <Button
+                  icon={<FormOutlined />}
+                  onClick={() => setFormModalVisible(true)}
+                  disabled={!selectedFormId || isLoading || submitting}
+                  size="small"
+                >
+                  Use Form
+                </Button>
+              </div>
+
               {/* Monaco Editor for clarifications */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div
@@ -466,7 +533,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
             >
               <Tabs
                 activeKey={activeResponseTab}
-                onChange={(key) => setActiveResponseTab(key as 'preview' | 'json' | 'fullResponse')}
+                onChange={(key) => setActiveResponseTab(key as 'preview' | 'json' | 'fullResponse' | 'formsData')}
                 size="middle"
                 animated={false}
                 className={styles.aiResponseTabs}
@@ -576,6 +643,50 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                       </div>
                     ),
                   },
+                  {
+                    key: 'formsData',
+                    label: (
+                      <span>
+                        <FormOutlined style={{ marginRight: 4 }} />
+                        Forms ({formsData.length})
+                      </span>
+                    ),
+                    children: (
+                      <div
+                        className={styles.aiResponseContent}
+                        style={{
+                          border: '1px solid #d9d9d9',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {formsData.length > 0 ? (
+                          <Editor
+                            height="700px"
+                            width="100%"
+                            defaultLanguage="json"
+                            value={JSON.stringify(formsData, null, 2)}
+                            theme="vs-light"
+                            options={{
+                              readOnly: true,
+                              minimap: { enabled: false },
+                              scrollBeyondLastLine: false,
+                              fontSize: 16,
+                              lineNumbers: 'on',
+                              wordWrap: 'on',
+                              automaticLayout: true,
+                            }}
+                          />
+                        ) : (
+                          <Empty
+                            description="No forms submitted yet"
+                            style={{ marginTop: '40px' }}
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          />
+                        )}
+                      </div>
+                    ),
+                  },
                 ]}
               />
             </div>
@@ -588,6 +699,19 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
           )}
         </div>
       </div>
+
+      {/* Form Renderer Modal */}
+      <FormRenderer
+        visible={formModalVisible}
+        onClose={() => {
+          setFormModalVisible(false)
+          setSelectedFormId(null)
+        }}
+        onSubmit={handleFormSubmit}
+        sessionId={sessionId}
+        title="Fill Form for Response"
+        formId={selectedFormId}
+      />
     </Card>
   )
 }

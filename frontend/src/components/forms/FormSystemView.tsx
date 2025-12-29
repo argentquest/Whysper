@@ -11,7 +11,7 @@ interface FormSystemViewProps {
   onFormChange?: (formData: any) => void;
 }
 
-export const FormSystemView: React.FC<FormSystemViewProps> = ({ tab, onFormChange }) => {
+export const FormSystemView: React.FC<FormSystemViewProps> = ({ tab }) => {
   const [publishedForms, setPublishedForms] = useState<any[]>([]);
   const [selectedForm, setSelectedForm] = useState<any>(null);
   const [editingSubmission, setEditingSubmission] = useState<any>(null);
@@ -53,7 +53,7 @@ export const FormSystemView: React.FC<FormSystemViewProps> = ({ tab, onFormChang
   }
 
   return (
-    <Layout style={{ padding: '24px', background: '#fff', height: '100%', overflow: 'auto' }}>
+    <Layout style={{ padding: '24px', background: '#fff', height: '100%', maxWidth: '100%', overflowX: 'hidden', overflowY: 'auto' }}>
       {mode === 'list' && (
         <>
           {/* New Form Section */}

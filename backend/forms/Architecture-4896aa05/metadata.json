@@ -1,0 +1,10 @@
+{
+  "form_id": "Architecture-4896aa05",
+  "form_name": "Component Definition",
+  "form_description": "This dynamic JSON schema defines C4 software components by adapting fields based on the selected type. It captures specific attributes for Front Ends, Back Ends, and Databases, ensuring structured, validated metadata for generating accurate software architecture diagrams and documentation.",
+  "form_type": "Architecture",
+  "version": "1.0",
+  "created_timestamp": "2025-12-24T15:04:21.341252",
+  "created_by": "admin",
+  "status": "published"
+}
