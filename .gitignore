@@ -85,20 +85,7 @@ tmp/
 # =============================================================================
 # GENERATED DOCUMENTATION (Auto-generated from code)
 # =============================================================================
-CHANGES_SUMMARY.md
-CHEAT_SHEET.md
-ENV_CONFIGURATION_GUIDE.md
-EXTERNAL_FOLDER_ACCESS.md
-FINAL_SUMMARY.md
-INDEX.md
-QUICK_ACCESS_EXPANSION_GUIDE.md
-QUICK_START_EXTERNAL_ACCESS.md
-README_IMPLEMENTATION.md
-SECURITY_CODE_LOCATIONS.md
-SECURITY_LAYER_ANALYSIS.md
-SECURITY_LAYER_SUMMARY.md
-USE_CODE_PATH.md
-GITIGNORE_REVIEW.md
+
 
 # =============================================================================
 # HISTORY & SESSION DATA
