@@ -4,10 +4,8 @@ import asyncio
 import json
 import logging
 
-from app.services.diagram_factory_service import (
-    DiagramFactoryService,
-    DiagramSessionStore,
-)
+from app.services.diagram_factory_core import DiagramFactoryService
+from app.services.diagram_factory_session import DiagramSessionStore
 from common.logging_decorator import log_method_call
 from schemas import (
     DiagramStartRequest,
@@ -44,7 +42,7 @@ async def start_diagram_generation(request: DiagramStartRequest):
     Raises:
         HTTPException: If an error occurs during initialization.
     """
-    # Initialize a new diagram generation session with optional model selection
+    # Initialize a new diagram generation session
     try:
         logger.info(
             f"🚀 Starting diagram generation with prompt: {
@@ -58,8 +56,8 @@ async def start_diagram_generation(request: DiagramStartRequest):
         logger.info(f"✅ Session created: {session.session_id}")
         # Instantiate service to manage diagram generation workflow
         service = DiagramFactoryService(session)
-        # Pass model_id to the service if provided
-        await service.start_generation(request.initial_prompt, request.diagram_type, request.model_id)
+        # Start diagram generation with unified prompt system
+        await service.start_generation(request.initial_prompt, request.diagram_type)
 
         # Return session details for client tracking
         logger.info(f"✅ Diagram generation started for session {session.session_id}")

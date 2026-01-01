@@ -56,6 +56,12 @@ def route_after_diagram_type(state: GraphState) -> str:
     Returns:
         str: The next node to transition to.
     """
+    user_selected = state.get("user_selected_diagram_type", False)
+    diagram_type_val = state.get("diagram_type")
+    logger.info(
+        f"🔀 route_after_diagram_type snapshot: user_selected_diagram_type={user_selected}, diagram_type={diagram_type_val}",
+        extra={"session_id": state.get("_session_id")},
+    )
     if state.get("user_selected_diagram_type", False):
         logger.debug(
             "Routing from determine_diagram_type to generate_code "

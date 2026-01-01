@@ -62,16 +62,10 @@ def load_prompts() -> Dict[str, str]:
             # Extract specific section for universal clarification
             _prompt_cache["clarify_universal"] = _extract_section(clarify_path, "Universal Clarification Prompt")
 
-    # Load generic JSON generation prompt
+    # Load unified JSON generation prompt
     json_gen_path = prompt_dir / "JSON_GENERATION_PROMPT.md"
     if json_gen_path.exists():
         _prompt_cache["json_generation"] = _load_full_file(json_gen_path)
-
-    # Load model-specific JSON generation prompts for flexibility across different AI models
-    for model in ["gpt5", "grok", "sonet45", "gemini25pro"]:
-        model_json_path = prompt_dir / f"JSON_GENERATION_{model}.md"
-        if model_json_path.exists():
-            _prompt_cache[f"json_generation_{model}"] = _load_full_file(model_json_path)
 
     # Load optimized generation prompts for different diagram formats
     # These are standalone prompt files optimized for each diagram type
@@ -118,16 +112,15 @@ def load_prompts() -> Dict[str, str]:
     return _prompt_cache
 
 
-def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str]:
+def get_prompt(prompt_name: str) -> Optional[str]:
     """
-    Get a prompt by name and optionally by model ID, with variable substitution.
+    Get a prompt by name with variable substitution.
 
     This function loads prompts from markdown files and performs dynamic variable
     substitution for configurable values like {SCORE_TARGET}.
 
     Args:
-        prompt_name (str): The base name of the prompt (e.g., "clarify_universal").
-        model_id (Optional[str]): Optional model ID for model-specific prompts (e.g., "gpt5", "grok").
+        prompt_name (str): The name of the prompt (e.g., "clarify_universal", "json_generation").
 
     Returns:
         Optional[str]: The prompt string with all variables substituted, or None if not found.
@@ -135,17 +128,8 @@ def get_prompt(prompt_name: str, model_id: Optional[str] = None) -> Optional[str
     # Load all prompts if not already loaded
     prompts = load_prompts()
 
-    # Prioritize model-specific prompts if a model_id is provided
-    prompt_content = None
-    if model_id:
-        model_specific_key = f"{prompt_name}_{model_id}"
-        # Check if a model-specific prompt exists
-        if model_specific_key in prompts:
-            prompt_content = prompts.get(model_specific_key)
-
-    # Fall back to generic prompt if no model-specific version found
-    if prompt_content is None:
-        prompt_content = prompts.get(prompt_name)
+    # Get the prompt content
+    prompt_content = prompts.get(prompt_name)
 
     # Perform variable substitution if prompt was found
     if prompt_content:

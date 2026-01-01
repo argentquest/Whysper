@@ -76,6 +76,7 @@ export interface DiagramUpdate extends DiagramStatus {
   type?: string
   diagram_type?: string
   question?: string
+  questions?: string[] // Array of clarification questions (1-3 questions)
   analysis_summary?: string
   analysis_text?: string
   message_role?: 'assistant' | 'user'
@@ -91,12 +92,11 @@ const API_BASE = getApiBaseUrl()
 
 export class DiagramApi {
   /**
-   * Start a new diagram generation session with optional model selection
+   * Start a new diagram generation session
    */
   static async startDiagramGeneration(
     initialPrompt: string,
     diagramType: string = 'Mermaid',
-    modelId?: string,
     sessionId?: string
   ): Promise<DiagramSession> {
     const body: Record<string, unknown> = {
@@ -107,11 +107,6 @@ export class DiagramApi {
     // Include session_id if provided (links to tab ID for session persistence)
     if (sessionId) {
       body.session_id = sessionId
-    }
-
-    // Include model_id if provided (for model selection feature)
-    if (modelId) {
-      body.model_id = modelId
     }
 
     const response = await fetch(`${API_BASE}/diagram/start`, {

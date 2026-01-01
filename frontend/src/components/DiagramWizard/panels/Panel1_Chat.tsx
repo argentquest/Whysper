@@ -92,7 +92,8 @@ interface ConversationMessage {
   jsonData?: Record<string, unknown>
   fullAiResponse?: string // Full raw AI response for debugging
   analysisSummary?: string // Analysis summary from AI
-  question?: string // Clarification question from AI
+  question?: string // Single clarification question from AI (legacy)
+  questions?: string[] // Array of clarification questions from AI (1-3 questions)
 }
 
 /**
@@ -141,6 +142,9 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   const [userResponse, setUserResponse] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // State to track individual question answers
+  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({})
+
   // Form integration state
   const [formModalVisible, setFormModalVisible] = useState(false)
   const [publishedForms, setPublishedForms] = useState<any[]>([])
@@ -180,12 +184,18 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   }, [])
 
   // Handle form submission
-  const handleFormSubmit = (formData: any, formMetadata: any, submissionId?: string) => {
+  const handleFormSubmit = (formData: any, formMetadata: any) => {
     const formattedData = formatFormDataForClarification(formData, formMetadata)
-    setUserResponse(formattedData)
+    // Append to Additional Info tab instead of replacing
+    setUserResponse(prev => {
+      if (prev.trim()) {
+        return prev + '\n\n---\nForm Data:\n' + formattedData
+      }
+      return formattedData
+    })
     setFormModalVisible(false)
     setSelectedFormId(null)
-    message.success('Form data inserted into response')
+    message.success('Form data appended to Additional Info tab')
     // Note: During clarification phase, session already exists, so FormRenderer
     // automatically adds the form to the session via DiagramApi.addFormDataToSession
   }
@@ -207,16 +217,63 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
     return () => observer.disconnect()
   }, [editorReady])
 
+  // Helper function to generate short tab title from question (2-3 words)
+  const getShortTitle = (question: string): string => {
+    const words = question.split(' ')
+    // Take first 2-3 meaningful words (skip common question words)
+    const skipWords = ['what', 'how', 'when', 'where', 'why', 'who', 'are', 'is', 'the', 'a', 'an']
+    const meaningfulWords = words.filter(w => !skipWords.includes(w.toLowerCase()))
+    return meaningfulWords.slice(0, 3).join(' ')
+  }
+
   const handleSubmit = async () => {
-    if (!userResponse.trim()) return
+    // Check if either free-form text or any question answers are provided
+    const hasAnswers = Object.values(questionAnswers).some(answer => answer.trim())
+    const hasFreeformText = userResponse.trim()
+
+    if (!hasAnswers && !hasFreeformText) {
+      message.warning('Please provide at least one answer or enter text in the response field')
+      return
+    }
 
     try {
       setSubmitting(true)
+
+      // Build combined response
+      let combinedResponse = ''
+
+      // Add individual question answers first
+      const answeredQuestions: string[] = []
+      Object.entries(questionAnswers).forEach(([index, answer]) => {
+        if (answer.trim()) {
+          // Get the question text from the latest assistant message
+          const latestMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.questions)
+          const questionText = latestMsg?.questions?.[parseInt(index)]
+          if (questionText) {
+            answeredQuestions.push(`Q${parseInt(index) + 1}: ${questionText}\nA: ${answer.trim()}`)
+          }
+        }
+      })
+
+      if (answeredQuestions.length > 0) {
+        combinedResponse += answeredQuestions.join('\n\n')
+      }
+
+      // Add free-form text if provided
+      if (hasFreeformText) {
+        if (combinedResponse) {
+          combinedResponse += '\n\n---\nAdditional Information:\n' + userResponse.trim()
+        } else {
+          combinedResponse = userResponse.trim()
+        }
+      }
+
       // Use onSubmitClarification if available (new interface), otherwise use onSubmit (legacy)
       const handler = onSubmitClarification || onSubmit
       if (handler) {
-        await handler(userResponse)
+        await handler(combinedResponse)
         setUserResponse('')
+        setQuestionAnswers({}) // Clear question answers
       }
     } catch (err) {
       console.error('Failed to submit clarification:', err)
@@ -299,8 +356,8 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                           minWidth: '200px',
                         }}
                       >
-                        {/* Display two-column table if both analysisSummary and question are available */}
-                        {msg.role === 'assistant' && msg.analysisSummary && msg.question ? (
+                        {/* Display two-column table if both analysisSummary and questions are available */}
+                        {msg.role === 'assistant' && msg.analysisSummary && (msg.questions || msg.question) ? (
                           <div style={{ width: '100%' }}>
                             <table
                               style={{
@@ -329,7 +386,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                                       fontWeight: 600,
                                     }}
                                   >
-                                    Question
+                                    {msg.questions && msg.questions.length > 1 ? 'Questions' : 'Question'}
                                   </th>
                                 </tr>
                               </thead>
@@ -350,7 +407,20 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                                       verticalAlign: 'top',
                                     }}
                                   >
-                                    {msg.question}
+                                    {/* Display multiple questions as numbered list */}
+                                    {msg.questions && msg.questions.length > 0 ? (
+                                      msg.questions.length > 1 ? (
+                                        <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                                          {msg.questions.map((q, idx) => (
+                                            <li key={idx} style={{ marginBottom: '8px' }}>{q}</li>
+                                          ))}
+                                        </ol>
+                                      ) : (
+                                        msg.questions[0]
+                                      )
+                                    ) : (
+                                      msg.question
+                                    )}
                                   </td>
                                 </tr>
                               </tbody>
@@ -413,92 +483,205 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
           {/* Response Input Section */}
           {sessionActive && isClarifying && (
             <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
-              {/* Form Selector */}
-              <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Select
-                  placeholder="Select a form to fill"
-                  style={{ flex: 1 }}
-                  value={selectedFormId}
-                  onChange={setSelectedFormId}
-                  allowClear
-                  onClear={() => setSelectedFormId(null)}
-                  size="small"
-                  disabled={isLoading || submitting}
-                >
-                  {publishedForms.map(form => (
-                    <Select.Option key={form.form_id} value={form.form_id}>
-                      {form.form_name}
-                    </Select.Option>
-                  ))}
-                </Select>
-                <Button
-                  icon={<FormOutlined />}
-                  onClick={() => setFormModalVisible(true)}
-                  disabled={!selectedFormId || isLoading || submitting}
-                  size="small"
-                >
-                  Use Form
-                </Button>
-              </div>
+              {/* Tabbed Interface for Questions, Additional Info, and Forms */}
+              {(() => {
+                const latestMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.questions && m.questions.length > 0)
 
-              {/* Monaco Editor for clarifications */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div
-                  style={{
-                    border: '1px solid #d9d9d9',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    minHeight: '120px',
-                  }}
-                >
-                  <Editor
-                    height="120px"
-                    defaultLanguage="plaintext"
-                    value={userResponse}
-                    onChange={(value) => setUserResponse(value || '')}
-                    onMount={(editor) => {
-                      inputEditorRef.current = editor
-                      // Focus the editor when it mounts
-                      editor.focus()
-                      // Add keyboard shortcut for submit (Ctrl+Enter or Cmd+Enter)
-                      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
-                        handleSubmit()
+                // Build tab items
+                const tabItems = [
+                  // Default "Additional Info" tab
+                  {
+                    key: 'additional',
+                    label: 'Additional Info',
+                    children: (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div
+                          style={{
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '4px',
+                            overflow: 'hidden',
+                            minHeight: '140px',
+                          }}
+                        >
+                          <Editor
+                            height="140px"
+                            defaultLanguage="plaintext"
+                            value={userResponse}
+                            onChange={(value) => setUserResponse(value || '')}
+                            onMount={(editor) => {
+                              inputEditorRef.current = editor
+                              editor.focus()
+                              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+                                handleSubmit()
+                              )
+                            }}
+                            options={{
+                              minimap: { enabled: false },
+                              scrollBeyondLastLine: false,
+                              fontSize: 16,
+                              lineNumbers: 'off',
+                              wordWrap: 'on',
+                              wrappingStrategy: 'advanced',
+                              automaticLayout: true,
+                              scrollbar: {
+                                vertical: 'auto',
+                                horizontal: 'auto',
+                              },
+                              padding: { top: 8, bottom: 8 },
+                              readOnly: isLoading || submitting,
+                              placeholder: 'Add any additional details or context here...',
+                            }}
+                            loading={<Spin />}
+                          />
+                        </div>
+                      </div>
+                    )
+                  },
+                  // Forms tab
+                  {
+                    key: 'forms',
+                    label: (
+                      <span>
+                        <FormOutlined style={{ marginRight: 4 }} />
+                        Forms
+                      </span>
+                    ),
+                    children: (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '8px' }}>
+                        <div style={{
+                          padding: '12px',
+                          backgroundColor: '#f0f9ff',
+                          borderRadius: '4px',
+                          borderLeft: '3px solid #1890ff'
+                        }}>
+                          <p style={{ margin: 0, fontSize: '14px', color: '#595959' }}>
+                            <strong>📋 About Forms:</strong> Forms provide a structured way to capture detailed system information.
+                            Select a form below, fill it out, and the data will be automatically appended to your Additional Info tab,
+                            making it easier to provide comprehensive responses to AI questions.
+                          </p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <Select
+                            placeholder="Select a form to fill"
+                            style={{ flex: 1 }}
+                            value={selectedFormId}
+                            onChange={setSelectedFormId}
+                            allowClear
+                            onClear={() => setSelectedFormId(null)}
+                            disabled={isLoading || submitting}
+                          >
+                            {publishedForms.map(form => (
+                              <Select.Option key={form.form_id} value={form.form_id}>
+                                {form.form_name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                          <Button
+                            type="primary"
+                            icon={<FormOutlined />}
+                            onClick={() => setFormModalVisible(true)}
+                            disabled={!selectedFormId || isLoading || submitting}
+                          >
+                            Use Form
+                          </Button>
+                        </div>
+
+                        {publishedForms.length === 0 && (
+                          <Empty
+                            description="No forms available"
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            style={{ marginTop: '20px' }}
+                          />
+                        )}
+                      </div>
+                    )
+                  }
+                ]
+
+                // Add question tabs if available
+                if (latestMsg?.questions && latestMsg.questions.length > 0) {
+                  latestMsg.questions.forEach((question, index) => {
+                    tabItems.push({
+                      key: `q${index}`,
+                      label: `Q${index + 1}: ${getShortTitle(question)}`,
+                      children: (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div style={{
+                            padding: '12px',
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            fontWeight: 500
+                          }}>
+                            <strong>Question:</strong> {question}
+                          </div>
+                          <div
+                            style={{
+                              border: '1px solid #d9d9d9',
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <Editor
+                              height="100px"
+                              defaultLanguage="plaintext"
+                              value={questionAnswers[index] || ''}
+                              onChange={(value) => {
+                                setQuestionAnswers(prev => ({
+                                  ...prev,
+                                  [index]: value || ''
+                                }))
+                              }}
+                              options={{
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                fontSize: 16,
+                                lineNumbers: 'off',
+                                wordWrap: 'on',
+                                wrappingStrategy: 'advanced',
+                                automaticLayout: true,
+                                scrollbar: {
+                                  vertical: 'auto',
+                                  horizontal: 'auto'
+                                },
+                                padding: { top: 8, bottom: 8 },
+                                readOnly: isLoading || submitting,
+                                placeholder: 'Type your answer here...',
+                              }}
+                            />
+                          </div>
+                        </div>
                       )
-                    }}
-                    options={{
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      fontSize: 18,
-                      lineNumbers: 'off',
-                      wordWrap: 'on',
-                      wrappingStrategy: 'advanced',
-                      automaticLayout: true,
-                      scrollbar: {
-                        vertical: 'auto',
-                        horizontal: 'auto',
-                      },
-                      padding: { top: 8, bottom: 8 },
-                      readOnly: isLoading || submitting,
-                    }}
-                    loading={<Spin />}
-                  />
-                </div>
+                    })
+                  })
+                }
 
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <span style={{ fontSize: '16px', color: '#999' }}>Press Ctrl+Enter to send</span>
-                  <Button
-                    type="primary"
-                    icon={<SendOutlined />}
-                    onClick={handleSubmit}
-                    loading={isLoading || submitting}
-                    disabled={!userResponse.trim()}
-                  >
-                    Send
-                  </Button>
-                </div>
-              </div>
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                    <Tabs
+                      defaultActiveKey="additional"
+                      items={tabItems}
+                      style={{ marginBottom: '8px' }}
+                    />
+
+                    <div
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    >
+                      <span style={{ fontSize: '14px', color: '#999' }}>Press Ctrl+Enter to send</span>
+                      <Button
+                        type="primary"
+                        icon={<SendOutlined />}
+                        onClick={handleSubmit}
+                        loading={isLoading || submitting}
+                        disabled={!userResponse.trim() && !Object.values(questionAnswers).some(a => a.trim())}
+                      >
+                        Send
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>

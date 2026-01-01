@@ -112,7 +112,6 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
     diagram_type_str = get_diagram_type_str(diagram_type)
     refinement_attempt = state.get("refinement_attempt", 0) + 1
     final_design_summary = state.get("final_design_summary", "")
-    model_id = state.get("model_id")  # Get selected model from state
 
     if refinement_attempt >= 3:
         logger.info(
@@ -126,7 +125,7 @@ async def refine_code(state: GraphState) -> Dict[str, Any]:
 
     # Get refinement prompt template
     prompt_key = f"refine_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(prompt_key, model_id=model_id)
+    prompt_template = get_prompt(prompt_key)
 
     if not prompt_template:
         # Fallback prompt if specific prompt not found
@@ -165,7 +164,7 @@ Attempt: {refinement_attempt}"""
     session_id = state.get("_session_id")
 
     logger.info(
-        f"Refining {diagram_type_str} code using AI - " f"attempt {refinement_attempt} (model: {model_id})",
+        f"Refining {diagram_type_str} code using AI - attempt {refinement_attempt}",
         extra={"session_id": session_id} if session_id else {},
     )
     logger.info(
@@ -174,7 +173,7 @@ Attempt: {refinement_attempt}"""
     )
 
     try:
-        ai_response = await call_llm(prompt_template, error_context, session_id, model_id=model_id)
+        ai_response = await call_llm(prompt_template, error_context, session_id)
         logger.info(f"📥 LLM Response:\n{ai_response}", extra={"session_id": session_id} if session_id else {})
     except Exception as e:
         error_message = str(e)

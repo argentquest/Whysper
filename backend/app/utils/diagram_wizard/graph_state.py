@@ -49,7 +49,6 @@ class GraphState(TypedDict, total=False):
     design_prompt: str
     diagram_type: DiagramType  # Determined in determine_diagram_type_node, not user input
     provider_id: Optional[str]
-    model_id: Optional[str]  # AI model to use (gpt5, grok, claude, gemini)
     keyword_scores: Optional[Dict[str, float]]  # Scoring breakdown for diagram type recommendations
     user_selected_diagram_type: bool  # User has selected their preferred diagram type
 

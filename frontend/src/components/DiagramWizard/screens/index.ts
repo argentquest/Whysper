@@ -1,12 +1,8 @@
 /**
  * Screens Index
  *
- * Exports all three screen components for the DiagramWizard
+ * Exports all screen components for the DiagramWizard
  */
-
-// Export ModelSelectionScreen to make the model selection component reusable
-// Provides access to screen for selecting model configurations
-export { type ModelId,ModelSelectionScreen } from './ModelSelectionScreen'
 
 // Export SystemDescriptionScreen to enable dynamic importing of system description stage
 // Allows flexible wizard navigation and component rendering

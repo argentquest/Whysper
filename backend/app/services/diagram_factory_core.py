@@ -13,16 +13,15 @@ Key Features:
 - LangGraph integration for complex diagram generation workflows
 """
 
-import uuid
 import asyncio
 import logging
 import json
 import os
-import time
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Optional
 
+from app.services.diagram_factory_session import DiagramSession, ToastToSSEHandler
 from app.utils.diagram_wizard.langgraph_builder import get_diagram_factory_graph
 from app.utils.diagram_wizard.graph_state import GraphState, DiagramType
 from common.logging_decorator import log_method_call
@@ -30,185 +29,6 @@ from diagrams.models import ValidationResult
 from diagrams.provider_registry import get_registry
 
 logger = logging.getLogger(__name__)
-
-
-class ToastToSSEHandler(logging.Handler):
-    """Logging handler that forwards TOAST* messages to the session SSE queue."""
-
-    def __init__(self, session: "DiagramSession"):
-        super().__init__(level=logging.INFO)
-        self.session = session
-
-    def emit(self, record: logging.LogRecord):
-        try:
-            message = self.format(record)
-            if "TOAST" not in message:
-                return
-
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                return
-
-            async def push_to_queue():
-                await self.session.update_queue.put(
-                    {
-                        "status": record.levelname.lower(),
-                        "message": message,
-                        "session_id": self.session.session_id,
-                    }
-                )
-
-            loop.create_task(push_to_queue())
-        except Exception:
-            # Avoid breaking logging pipeline on handler errors
-            pass
-
-
-class DiagramSession:
-    """Represents a single diagram generation session.
-
-    This class encapsulates all state information for a user's diagram
-    generation session, including conversation history, current progress,
-    generated code, and real-time update queues for SSE communication.
-
-    Attributes:
-        session_id: Unique identifier for the session
-        history: List of conversation messages (role, content tuples)
-        current_state: Current session state information
-        clarifications: List of clarification questions asked by AI
-        diagram_code: Generated diagram source code
-        svg_output: Rendered SVG output
-        errors: List of any errors encountered
-        update_queue: Async queue for real-time status updates
-        diagram_type: Selected diagram type (Mermaid, D2, PlantUML)
-        graph_state: Current LangGraph state
-        graph_task: Async task running the diagram generation
-        is_running: Whether the session is currently processing
-    """
-
-    def __init__(self, session_id: str):
-        self.session_id = session_id
-        self.history: List[Tuple[str, str]] = []  # [(role, message), ...]
-        self.current_state: Dict[str, Any] = {}  # Current session state
-        self.clarifications: List[str] = []  # AI clarification questions
-        self.diagram_code: str = ""  # Generated diagram code
-        self.svg_output: str = ""  # Rendered SVG output
-        self.errors: List[str] = []  # Error messages
-        self.update_queue: asyncio.Queue = asyncio.Queue()  # Real-time updates
-        self.diagram_type: str = "Mermaid"  # Selected diagram type
-        self.graph_state: Optional[GraphState] = None  # LangGraph state
-        self.graph_task: Optional[asyncio.Task] = None  # Generation task
-        self.is_running: bool = False  # Processing status
-        self.toast_handler: Optional[logging.Handler] = None
-
-
-class DiagramSessionStore:
-    """Thread-safe session management for multiple concurrent diagram sessions.
-
-    This class provides a simple in-memory store for managing multiple
-    diagram generation sessions. In production, this would typically
-    be replaced with a persistent database or Redis store.
-
-    Note: This is a simple implementation using a class variable.
-    For production use, consider using a proper session store with
-    expiration, persistence, and better concurrency handling.
-    """
-
-    _sessions: Dict[str, DiagramSession] = {}
-
-    @classmethod
-    @log_method_call
-    def create_session(cls, session_id: str = None) -> DiagramSession:
-        """Create a new diagram generation session.
-
-        If session_id is provided (from frontend tab), uses that ID;
-        otherwise generates a unique UUID-based session ID.
-        Creates a new DiagramSession instance and stores it in the
-        session registry.
-
-        Also performs cleanup of old sessions (simple TTL implementation)
-        to prevent memory leaks.
-
-        Args:
-            session_id: Optional pre-assigned session ID from frontend tab.
-                       If not provided, a UUID will be generated.
-
-        Returns:
-            DiagramSession: The newly created session instance
-        """
-        # Periodic cleanup: Check on every session creation for simplicity
-        # In high-load production, this should be a background task
-        cls._cleanup_stale_sessions()
-
-        # Use provided session_id or generate a new UUID
-        if not session_id:
-            session_id = str(uuid.uuid4())
-
-        session = DiagramSession(session_id)
-        # Store creation time for TTL using standard time.time() for consistency
-        session.created_at = time.time()
-
-        cls._sessions[session_id] = session
-        logger.debug(f"✅ Created session {session_id}")
-        logger.debug(f"📊 Total sessions in store: {len(cls._sessions)}")
-        return session
-
-    @classmethod
-    def _cleanup_stale_sessions(cls, ttl_seconds: int = 3600):
-        """
-        Remove sessions older than ttl_seconds.
-        Default TTL is 1 hour (3600 seconds).
-        """
-        try:
-            current_time = time.time()
-            keys_to_delete = []
-
-            for sid, session in cls._sessions.items():
-                # Check created_at if it exists (for backward compatibility)
-                created_at = getattr(session, "created_at", 0)
-                # Ensure we don't compare monotonic time with epoch time
-                # If created_at seems too small (monotonic), ignore it or treat as very old
-                # But since we standardized on time.time(), this should be consistent now.
-                if created_at > 0 and (current_time - created_at > ttl_seconds):
-                    keys_to_delete.append(sid)
-
-            if keys_to_delete:
-                logger.info(f"🧹 Cleaning up {len(keys_to_delete)} stale sessions")
-                for sid in keys_to_delete:
-                    del cls._sessions[sid]
-
-        except Exception as e:
-            # Don't let cleanup crash the request
-            logger.info(f"Error during session cleanup: {e}")
-
-    @classmethod
-    @log_method_call
-    def get_session(cls, session_id: str) -> Optional[DiagramSession]:
-        """Retrieve an existing session by ID.
-
-        Args:
-            session_id: The unique identifier
-
-        Returns:
-            DiagramSession or None: The session if found, None otherwise
-        """
-        logger.debug(f"🔍 get_session called for: {session_id}")
-        logger.debug(f"📦 Available sessions: {list(cls._sessions.keys())}")
-        session = cls._sessions.get(session_id)
-        logger.debug(f"🎯 Found session: {session is not None}")
-        return session
-
-    @classmethod
-    @log_method_call
-    def delete_session(cls, session_id: str):
-        """Remove a session from the store.
-
-        Args:
-            session_id: The session ID to remove
-        """
-        if session_id in cls._sessions:
-            del cls._sessions[session_id]
 
 
 class DiagramFactoryService:
@@ -380,18 +200,24 @@ class DiagramFactoryService:
                 self.session.history.append((role, history_message))
                 status["history"] = self.session.history
 
-        question_text = update_data.get("question")
-        if question_text:
-            self.session.clarifications.append(question_text)
+        # Handle questions array from AI
+        questions_array = update_data.get("questions")
+        if questions_array and isinstance(questions_array, list):
+            for q in questions_array:
+                if q and isinstance(q, str) and q not in self.session.clarifications:
+                    self.session.clarifications.append(q)
+            status["clarifications"] = self.session.clarifications
+
+        question = update_data.get("question")
+        if question and isinstance(question, str) and question not in self.session.clarifications:
+            self.session.clarifications.append(question)
             status["clarifications"] = self.session.clarifications
 
         status.update(update_data)
         await self.session.update_queue.put(status)
 
     @log_method_call
-    async def start_generation(
-        self, initial_prompt: str, diagram_type: str = "Mermaid", model_id: Optional[str] = None
-    ):
+    async def start_generation(self, initial_prompt: str, diagram_type: str = "Mermaid"):
         """Start the diagram generation process.
 
         This is the entry point for diagram generation. It handles two modes:
@@ -401,7 +227,6 @@ class DiagramFactoryService:
         Args:
             initial_prompt: User's system description
             diagram_type: Requested diagram type or "auto" for analysis
-            model_id: Prompt System to use (gpt5, grok, claude, gemini)
         """
         try:
             self.session.history.append(("user", initial_prompt))
@@ -417,7 +242,6 @@ class DiagramFactoryService:
                 "question_count": 0,
                 "refinement_attempt": 0,
                 "current_state": "analyzing",
-                "model_id": model_id,  # Store selected model for use in nodes
             }
 
             self.session.graph_state = initial_state
@@ -517,24 +341,45 @@ class DiagramFactoryService:
             initial_state["_update_callback"] = self._push_update
             initial_state["_session_id"] = self.session.session_id
 
+            logger.info(
+                "LangGraph run starting: llm_ready=%s, analysis_complete=%s, first_question_asked=%s, "
+                "question_count=%s, user_confirmed_ready=%s, user_selected_diagram_type=%s",
+                initial_state.get("llm_ready"),
+                initial_state.get("analysis_complete"),
+                initial_state.get("first_question_asked"),
+                initial_state.get("question_count"),
+                initial_state.get("user_confirmed_ready"),
+                initial_state.get("user_selected_diagram_type"),
+                extra={"session_id": self.session.session_id},
+            )
+
             result = await self.graph.ainvoke(initial_state)
+
+            result = self._merge_graph_state(result)
+
+            logger.info(
+                "LangGraph run completed: llm_ready=%s, awaiting_user_confirmation=%s, "
+                "user_selected_diagram_type=%s, analysis_complete=%s, first_question_asked=%s, question_count=%s, "
+                "message=%s",
+                result.get("llm_ready"),
+                result.get("awaiting_user_confirmation"),
+                result.get("user_selected_diagram_type"),
+                result.get("analysis_complete"),
+                result.get("first_question_asked"),
+                result.get("question_count"),
+                result.get("message"),
+                extra={"session_id": self.session.session_id},
+            )
 
             # Always update session with latest results first
             self.session.graph_state = result
             self.session.diagram_code = result.get("diagram_code", "")
             self.session.svg_output = result.get("svg_output", "")
 
-            # Check if the result is the end of the graph
-            if result.get("message") == "__end__":
-                await self._push_update(
-                    {"status": "completed", "message": "Diagram generation completed", "message_role": "assistant"}
-                )
-                return
-
             # If the graph is still waiting for clarification, do not progress further yet.
             if not result.get("llm_ready"):
                 logger.info(
-                    "LangGraph awaiting additional user clarification before continuing",
+                    "LangGraph awaiting additional user clarification before continuing (llm_ready=False)",
                     extra={"session_id": self.session.session_id},
                 )
                 return
@@ -542,7 +387,7 @@ class DiagramFactoryService:
             # If we're waiting on the user to confirm the AI summary, pause as well.
             if result.get("awaiting_user_confirmation"):
                 logger.info(
-                    "LangGraph ready but waiting for user confirmation to proceed",
+                    "LangGraph ready but waiting for user confirmation to proceed (awaiting_user_confirmation=True)",
                     extra={"session_id": self.session.session_id},
                 )
                 return
@@ -550,8 +395,15 @@ class DiagramFactoryService:
             # If we're waiting for the user to select a diagram type, pause as well.
             if not result.get("user_selected_diagram_type", True):
                 logger.info(
-                    "LangGraph awaiting user diagram type selection before continuing",
+                    "LangGraph awaiting user diagram type selection before continuing (user_selected_diagram_type=False)",
                     extra={"session_id": self.session.session_id},
+                )
+                return
+
+            # Check if the result is the end of the graph
+            if result.get("message") == "__end__":
+                await self._push_update(
+                    {"status": "completed", "message": "Diagram generation completed", "message_role": "assistant"}
                 )
                 return
 
@@ -568,7 +420,7 @@ class DiagramFactoryService:
                 message_type = result.get("ai_message_type", "info")
 
                 # Add AI response to clarifications so user can see it
-                self.session.clarifications.append(f"🤖 AI: {ai_message}")
+                self.session.clarifications.append(f"≡ƒñû AI: {ai_message}")
 
                 await self._push_update(
                     {
@@ -589,6 +441,43 @@ class DiagramFactoryService:
             await self._push_update({"status": "error", "message": str(e), "message_role": "assistant"})
         finally:
             self.session.is_running = False
+            pending_reason = self.session.pending_resume_reason
+            if pending_reason:
+                self.session.pending_resume_reason = None
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.call_soon(self._resume_graph_if_idle, pending_reason)
+                except RuntimeError:
+                    self._resume_graph_if_idle(pending_reason)
+
+    def _merge_graph_state(self, result: GraphState) -> GraphState:
+        current_state = self.session.graph_state or {}
+        if not current_state:
+            return result
+
+        merged = dict(result)
+
+        if current_state.get("user_confirmed_ready"):
+            merged["user_confirmed_ready"] = True
+            merged["llm_ready"] = True
+            merged["awaiting_user_confirmation"] = False
+
+        if current_state.get("user_selected_diagram_type"):
+            merged["user_selected_diagram_type"] = True
+            if current_state.get("diagram_type"):
+                merged["diagram_type"] = current_state.get("diagram_type")
+
+        if current_state.get("llm_ready"):
+            merged["llm_ready"] = True
+
+        if current_state.get("analysis_complete"):
+            merged["analysis_complete"] = True
+
+        for key in ("_update_callback", "_session_id"):
+            if key not in merged and key in current_state:
+                merged[key] = current_state[key]
+
+        return merged
 
     @log_method_call
     async def handle_clarification(self, response: str):
@@ -613,9 +502,22 @@ class DiagramFactoryService:
                 clarification_history.append({"role": "user", "content": response})
                 self.session.graph_state["clarification_history"] = clarification_history
                 self.session.graph_state["llm_ready"] = False
+                self.session.graph_state["first_question_asked"] = False
+                logger.info(
+                    "Clarification received: history_len=%s, llm_ready=%s, first_question_asked=%s",
+                    len(clarification_history),
+                    self.session.graph_state.get("llm_ready"),
+                    self.session.graph_state.get("first_question_asked"),
+                    extra={"session_id": self.session.session_id},
+                )
 
             await self._push_update(
-                {"status": "clarification_received", "message": response, "message_role": "user", "skip_history": False}
+                {
+                    "status": "clarification_received",
+                    "message": response,
+                    "message_role": "user",
+                    "skip_history": True,  # history already updated above
+                }
             )
 
             # Resume the LangGraph workflow now that we have more information.
@@ -638,12 +540,19 @@ class DiagramFactoryService:
                 self.session.graph_state["llm_ready"] = True
                 # Clear awaiting_user_confirmation flag to allow graph to proceed
                 self.session.graph_state["awaiting_user_confirmation"] = False
+                logger.info(
+                    "User confirmed ready: llm_ready=%s, awaiting_user_confirmation=%s",
+                    self.session.graph_state.get("llm_ready"),
+                    self.session.graph_state.get("awaiting_user_confirmation"),
+                    extra={"session_id": self.session.session_id},
+                )
 
             await self._push_update(
                 {
                     "status": "confirmed_ready",
-                    "message": "User confirmed ready. Proceeding with diagram generation...",
+                    "message": "Working: Preparing diagram generation...",
                     "message_role": "assistant",
+                    "skip_history": True,
                 }
             )
 
@@ -686,14 +595,21 @@ class DiagramFactoryService:
                     )
 
                 # Set the user's selected diagram type
-                self.session.graph_state["diagram_type"] = diagram_type_map[diagram_type]
+                selected_type = diagram_type_map[diagram_type]
+                self.session.graph_state["diagram_type"] = selected_type
                 self.session.graph_state["user_selected_diagram_type"] = True
                 # Keep session-level diagram type in sync for status responses
                 self.session.diagram_type = diagram_type
                 logger.info(
-                    f"[select_diagram_type] graph_state updated with type {
-                        diagram_type_map[diagram_type]} for session {
-                        self.session.session_id}"
+                    "[select_diagram_type] flags: user_selected_diagram_type=%s, diagram_type=%s",
+                    self.session.graph_state.get("user_selected_diagram_type"),
+                    self.session.graph_state.get("diagram_type"),
+                    extra={"session_id": self.session.session_id},
+                )
+                logger.info(
+                    "[select_diagram_type] graph_state updated with type %s for session %s",
+                    selected_type,
+                    self.session.session_id,
                 )
 
             await self._push_update(
@@ -756,12 +672,19 @@ class DiagramFactoryService:
 
         if self.session.graph_task and not self.session.graph_task.done():
             logger.info(
-                "LangGraph workflow already running; skipping resume request.",
+                "LangGraph workflow already running; queuing resume request.",
                 extra={"session_id": self.session.session_id},
             )
+            self.session.pending_resume_reason = reason
             return
 
-        logger.info("Re-invoking LangGraph workflow (%s)", reason, extra={"session_id": self.session.session_id})
+        logger.info(
+            "Re-invoking LangGraph workflow (%s): pending=%s, is_running=%s",
+            reason,
+            self.session.pending_resume_reason,
+            self.session.is_running,
+            extra={"session_id": self.session.session_id},
+        )
         self.session.graph_task = asyncio.create_task(self._run_graph_workflow(self.session.graph_state))
 
     @log_method_call

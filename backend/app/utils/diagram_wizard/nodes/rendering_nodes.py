@@ -9,7 +9,7 @@ from typing import Dict, Any
 from ..graph_state import GraphState, DiagramType, SessionState
 from common.logging_decorator import log_method_call
 from common.logger import get_logger
-from .llm_helpers import _get_model_for_id
+from .llm_helpers import _get_model
 
 # Import provider registry for rendering
 try:
@@ -31,8 +31,7 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     No fallback logic - simplified approach requires provider system.
 
     The actual AI model used for LLM correction comes from settings.default_model
-    (.env DEFAULT_MODEL). The session's model_id is only used for prompt style
-    selection and is not passed to the provider.
+    (.env DEFAULT_MODEL).
 
     Args:
         state (GraphState): The current graph state.
@@ -46,15 +45,12 @@ async def render_diagram(state: GraphState) -> Dict[str, Any]:
     diagram_code = state.get("diagram_code", "")
     diagram_type = state.get("diagram_type", DiagramType.MERMAID)
     session_id = state.get("_session_id")
-    model_id = state.get("model_id")  # Prompt style identifier (claude, gpt5, etc.)
 
     # Get actual model from settings (e.g., "anthropic/claude-3.5-sonnet")
-    # model_id is just for prompt selection, actual model comes from .env
-    actual_model = _get_model_for_id(model_id)
+    actual_model = _get_model()
 
     logger.info(
-        f"🎨 Rendering {diagram_type} diagram to SVG using provider system "
-        f"(prompt style: {model_id}, actual model: {actual_model})",
+        f"🎨 Rendering {diagram_type} diagram to SVG using provider system (model: {actual_model})",
         extra={"session_id": session_id} if session_id else {},
     )
 

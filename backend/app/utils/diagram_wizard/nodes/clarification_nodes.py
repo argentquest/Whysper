@@ -146,8 +146,7 @@ async def clarify_prompt(state: GraphState) -> Dict[str, Any]:
     # Get the CLARIFY-ONLY prompt for iterative questioning
     # NOTE: First turn analysis already used ANALYSE_CLARIFY.md with full schema context
     # Subsequent turns use CLARIFY_ONLY.md which focuses on iterative refinement
-    model_id = state.get("model_id")  # Get selected model from state
-    clarify_prompt_template = get_prompt("clarify_universal", model_id=model_id)
+    clarify_prompt_template = get_prompt("clarify_universal")
 
     if clarify_prompt_template:
         prompt_template = clarify_prompt_template
@@ -178,9 +177,19 @@ Determine if you have enough information or need to ask more questions."""
     if not user_content:
         user_content = "User wants to create a diagram. Please start the clarification process."
 
+    # Send "Working" notification to frontend to show overlay spinner
+    update_callback = state.get("_update_callback")
+    if update_callback and callable(update_callback):
+        await update_callback(
+            {
+                "message": "Working: AI is analyzing your response and preparing next questions...",
+                "status": "clarifying_processing",
+            }
+        )
+
     # Call AI for clarification decision
     logger.info(
-        f"🤖 Making LLM call for clarification - attempt {question_count + 1} (model: {model_id})",
+        f"🤖 Making LLM call for clarification - attempt {question_count + 1}",
         extra={"session_id": session_id} if session_id else {},
     )
     logger.debug(
@@ -189,7 +198,7 @@ Determine if you have enough information or need to ask more questions."""
     )
 
     try:
-        ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
+        ai_response_str = await call_llm(prompt_template, user_content, session_id)
     except Exception as e:
         error_message = str(e)
         logger.info(f"AI call failed in clarify_prompt: {error_message}", extra={"session_id": session_id})
@@ -198,7 +207,7 @@ Determine if you have enough information or need to ask more questions."""
             await update_callback(
                 {
                     "status": "failed",
-                    "message": f"Clarification failed: {error_message}",
+                    "message": "Working Done",  # Hide working overlay even on error
                     "error": error_message,
                 }
             )
@@ -218,7 +227,21 @@ Determine if you have enough information or need to ask more questions."""
             extra={"session_id": session_id} if session_id else {},
         )
 
-        question = ai_response.get("question")
+        # Support both old format (single "question") and new format (array "questions")
+        questions = ai_response.get("questions")
+        if questions is None:
+            # Fallback to old single question format for backward compatibility
+            single_question = ai_response.get("question")
+            questions = [single_question] if single_question else []
+        elif isinstance(questions, str):
+            # Handle case where AI returns a string instead of array
+            questions = [questions] if questions else []
+        elif not isinstance(questions, list):
+            questions = []
+
+        # Filter out None/empty questions
+        questions = [q for q in questions if q and isinstance(q, str) and q.strip()]
+
         analysis_summary = ai_response.get("analysis_summary", "")
         clarity_score = ai_response.get("clarity_score", 50)
         ready = ai_response.get("ready", False)
@@ -248,7 +271,9 @@ Determine if you have enough information or need to ask more questions."""
             await update_callback(
                 {
                     "status": "clarifying",
-                    "question": question,
+                    "message": "Working Done",  # Hide working overlay
+                    "questions": questions,  # Send array of questions (1-3)
+                    "question": questions[0] if questions else None,  # Keep for backward compatibility
                     "analysis_summary": analysis_summary,
                     "clarity_score": clarity_score,
                     "score_target": score_target,
@@ -267,7 +292,7 @@ Determine if you have enough information or need to ask more questions."""
             await_user_confirmation = not auto_proceed_on_ready
 
             logger.info(
-                f"?? AI gathered enough information (score: {clarity_score}) - "
+                f"✅ AI gathered enough information (score: {clarity_score}) - "
                 f"{'auto-proceeding' if auto_proceed_on_ready else 'waiting for user confirmation'}",
                 extra={"session_id": session_id} if session_id else {},
             )
@@ -311,13 +336,15 @@ Determine if you have enough information or need to ask more questions."""
                 "current_state": SessionState.CLARIFYING,
             }
 
-        # AI wants more clarification - add question to conversation history
+        # AI wants more clarification - add questions to conversation history
         logger.info(
-            f"❓ AI requesting additional clarification (score: {clarity_score}/100)",
+            f"❓ AI requesting additional clarification with {len(questions)} question(s) (score: {clarity_score}/100)",
             extra={"session_id": session_id} if session_id else {},
         )
         updated_history = clarification_history.copy()
-        updated_history.append({"role": "assistant", "content": question or "Please provide more details"})
+        # Join multiple questions with newlines for conversation history
+        questions_text = "\n".join(f"{i+1}. {q}" for i, q in enumerate(questions)) if questions else "Please provide more details"
+        updated_history.append({"role": "assistant", "content": questions_text})
 
         # Store this turn's clarity score
         updated_clarity_scores = clarity_scores + [clarity_score]
@@ -342,6 +369,11 @@ Determine if you have enough information or need to ask more questions."""
             f"❌ Failed to parse clarification response as JSON: {e}",
             extra={"session_id": session_id} if session_id else {},
         )
+        # Send "Working Done" to hide overlay
+        update_callback = state.get("_update_callback")
+        if update_callback:
+            await update_callback({"message": "Working Done"})
+
         # Fallback to simple string parsing
         if ai_response_str and ai_response_str.startswith("READY:"):
             summary = ai_response_str.replace("READY:", "").strip()

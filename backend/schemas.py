@@ -345,7 +345,6 @@ class CodeExtractionResponse(BaseModel):
 class DiagramStartRequest(BaseModel):
     initial_prompt: str
     diagram_type: str = "Mermaid"
-    model_id: Optional[str] = None
     session_id: Optional[str] = None
 
 

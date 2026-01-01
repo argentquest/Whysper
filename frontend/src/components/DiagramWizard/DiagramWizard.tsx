@@ -5,10 +5,9 @@
  * This component orchestrates the entire diagram generation workflow across multiple screens.
  *
  * ## Workflow Phases
- * 1. **Model Selection**: User selects an AI model (gpt5, grok, claude, gemini)
- * 2. **System Description**: User describes their system and engages in clarification Q&A
- * 3. **Generation**: AI generates diagram code (Mermaid/D2/PlantUML)
- * 4. **Rendering**: Diagram is rendered and displayed for preview/export
+ * 1. **System Description**: User describes their system and engages in clarification Q&A
+ * 2. **Generation**: AI generates diagram code (Mermaid/D2/PlantUML)
+ * 3. **Rendering**: Diagram is rendered and displayed for preview/export
  *
  * ## Key Features
  * - Multi-tab support: Each tab maintains independent session
@@ -26,8 +25,8 @@
  * @property {string} sessionId - Pre-assigned backend session ID from tab
  *
  * ## State Management
- * - **Screen Navigation**: Tracks which screen is currently displayed (model/description/generation)
- * - **Session State**: Manages AI model selection, user input, and processing state
+ * - **Screen Navigation**: Tracks which screen is currently displayed (description/generation)
+ * - **Session State**: Manages user input and processing state
  * - **Score Tracking**: Stores clarity scores from AI assessment
  * - **UI State**: Controls modal visibility and error display
  * - **Persistence**: Uses localStorage for session history and preferences
@@ -58,7 +57,6 @@ import { parseAndShowToast } from '../../utils/toastHelper'
 import { useDiagramSession } from './hooks/useDiagramSession'
 import { DiagramTypeSelectionScreen } from './screens/DiagramTypeSelectionScreen'
 import { GenerationScreen } from './screens/GenerationScreen'
-import { type ModelId,ModelSelectionScreen } from './screens/ModelSelectionScreen'
 import { SystemDescriptionScreen } from './screens/SystemDescriptionScreen'
 import type { DiagramWizardPersistedState, SavedSession } from './types/persistence'
 import { getInitialPersistedState } from './types/persistence'
@@ -118,22 +116,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   )
 
   // Screen navigation - controls which UI screen is visible to user
-  // Possible values: 'model' (AI selection), 'description' (input/clarification), 'diagramTypeSelection' (choose diagram type), 'generation' (result display)
+  // Possible values: 'description' (input/clarification), 'diagramTypeSelection' (choose diagram type), 'generation' (result display)
   const [currentScreen, setCurrentScreen] = useState<
-    'model' | 'description' | 'diagramTypeSelection' | 'generation'
-  >('model')
-
-  // Selected AI model - initialized from localStorage to remember user's last choice
-  const [selectedModel, setSelectedModel] = useState<ModelId | null>(() => {
-    try {
-      // Attempt to restore previously selected model from localStorage
-      const saved = localStorage.getItem('diagramWizard.selectedModel')
-      return (saved as ModelId) || null
-    } catch {
-      // If localStorage read fails, start with no selection
-      return null
-    }
-  })
+    'description' | 'diagramTypeSelection' | 'generation'
+  >('description')
 
   // User input - stores the system description text before session starts
   const [userInput, setUserInput] = useState('')
@@ -194,6 +180,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     onUpdate: (update) => {
       // Callback triggered whenever SSE sends status update from backend
       const statusValue = update.status
+      console.log(`🔔 SSE Update Received - Status: "${statusValue}"`, {
+        status: statusValue,
+        message: update.message,
+        hasError: !!(update.error || (statusValue === 'error')),
+      })
 
       // If backend tells us the chosen diagram type, mark it as selected to avoid navigation back
       if (update.diagram_type || update.diagramType) {
@@ -341,6 +332,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         }
         case 'diagram_type_selected':
           // User selected diagram type, AI proceeding to code generation
+          console.log('📋 Diagram type selected, moving to code generation phase')
           setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.success('Diagram type selected')
           setDiagramTypeSelected(true)
@@ -360,6 +352,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // AI actively generating diagram code from structured data
           // Backend should send: "Working: Generating diagram code..." when starting
           // Backend should send: "Working Done" when code is generated
+          console.log('⚙️ Backend is now generating diagram code via LLM')
           setCurrentPhase(2) // Stay in "Generation" phase (index 2)
           message.loading('Generating diagram code...')
           setIsInAnalysisPhase(false)
@@ -425,6 +418,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           // Backend rendering diagram code to SVG using appropriate renderer (Step 4/4)
           // Backend should send: "Working: Rendering diagram..." when starting
           // Backend should send: "Working Done" when rendering is complete
+          console.log('🎨 Backend is now rendering diagram code to SVG')
           setCurrentPhase(3) // Move to "Rendering" phase (index 3)
           message.loading(update.message || 'Rendering SVG...')
           setIsInAnalysisPhase(false)
@@ -488,6 +482,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
           break
         case 'error':
           // Recoverable error occurred during processing
+          console.error('❌ Backend error received:', {
+            message: update.message,
+            error: update.error,
+            status: statusValue,
+            fullUpdate: update,
+          })
           message.error(`Error: ${update.message || 'Unknown error occurred'}`)
           setDiagramTypeLoading(false)
           break
@@ -555,11 +555,14 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         messageObj.fullAiResponse = status.full_ai_response
       }
 
-      // Include analysis summary and question for table display
+      // Include analysis summary and questions for table display
       if (status?.analysis_summary) {
         messageObj.analysisSummary = status.analysis_summary
       }
-      if (status?.question) {
+      // Support both new format (array of questions) and old format (single question)
+      if (status?.questions && Array.isArray(status.questions) && status.questions.length > 0) {
+        messageObj.questions = status.questions
+      } else if (status?.question) {
         messageObj.question = status.question
       }
     }
@@ -666,51 +669,12 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     setManualValidationError(null)
   }, [])
 
-  // Handle AI model selection from ModelSelectionScreen
-  const handleModelSelect = (modelId: ModelId) => {
-    // Store selected model in component state
-    setSelectedModel(modelId)
-
-    // Persist model choice to localStorage for next session
-    try {
-      localStorage.setItem('diagramWizard.selectedModel', modelId)
-    } catch (err) {
-      console.warn('Failed to save model preference to localStorage:', err)
-    }
-
-    // Navigate to system description screen
-    setCurrentScreen('description')
-
-    // Show success feedback to user
-    message.success(`Selected ${modelId} - ready to start!`)
-  }
-
-  // Handle user requesting to change AI model (reset workflow)
-  const handleChangeModel = () => {
-    // Navigate back to model selection screen
-    setCurrentScreen('model')
-
-    // Clear all session state to start fresh
-    setSelectedModel(null)
-    setUserInput('')
-    setCurrentPhase(0)
-    setIsInAnalysisPhase(false)
-
-    // Remove persisted model preference
-    localStorage.removeItem('diagramWizard.selectedModel')
-  }
 
   // Handle user clicking "Start Conversation" to begin diagram generation
   const handleStartDiagram = async (prompt: string) => {
     // Validate user input is not empty
     if (!prompt.trim()) {
       message.warning('Please enter a system description')
-      return
-    }
-
-    // Ensure model was selected
-    if (!selectedModel) {
-      message.warning('Please select an AI model first')
       return
     }
 
@@ -728,10 +692,10 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       setCurrentPhase(0)
       setScore(0)
 
-      console.log('🚀 Starting new diagram session with model:', selectedModel)
+      console.log('🚀 Starting new diagram session')
 
       // Call API to create session and begin AI analysis
-      await startSession(prompt, diagramType, selectedModel)
+      await startSession(prompt, diagramType)
 
       console.log('✅ Session started, waiting for AI analysis...')
     } catch (err) {
@@ -777,6 +741,9 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       return
     }
 
+    setIsWorking(true)
+    setWorkingMessage('Preparing diagram generation...')
+
     // Optimistically move user forward while backend processes readiness
     setDiagramTypeSelected(false)
     setCurrentPhase(2)
@@ -789,6 +756,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     } catch (err) {
       console.error('Confirm ready failed:', err)
       message.error('Failed to confirm ready')
+      setIsWorking(false)
       setDiagramTypeLoading(false)
     }
   }
@@ -902,20 +870,31 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   )
 
   // Handle user clicking "New Diagram" to start completely fresh
-  const handleNewDiagram = () => {
-    // Navigate back to model selection
-    setCurrentScreen('model')
+  const handleNewDiagram = async () => {
+    // Ensure backend session is cleaned up so a fresh Start works
+    try {
+      await endSession()
+    } catch (cleanupErr) {
+      console.error('Error ending previous session', cleanupErr)
+    }
 
-    // Reset all state to initial values
-    setSelectedModel(null)
+    // Reset all UI and local state
+    setCurrentScreen('description')
     setUserInput('')
     setCurrentPhase(0)
     setIsInAnalysisPhase(false)
     setScore(0)
+    setScoreTarget(80)
     setDiagramAnalysisText('')
-
-    // Clear persisted model preference
-    localStorage.removeItem('diagramWizard.selectedModel')
+    setDiagramTypeSelected(false)
+    setJsonGenerationOutput('')
+    setLocalDiagramCode(null)
+    setLocalOriginalDiagramCode('')
+    setLocalSvgOutput(null)
+    setManualRenderError(null)
+    setManualValidationError(null)
+    setErrorModalVisible(false)
+    setDiagramTypeLoading(false)
   }
 
   // Handle showing session state viewer
@@ -1053,36 +1032,16 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
   // Debug logging for screen rendering
   console.log('🖥️ Screen render:', {
     currentScreen,
-    selectedModel,
     sessionId,
     diagramTypeSelected,
     svgOutput: !!svgOutput,
     svgLength: svgOutput?.length || 0,
   })
 
-  // Screen 1: Model Selection
-  // Show if no model selected OR user explicitly navigated back
-  if (!selectedModel || currentScreen === 'model') {
-    screenContent = (
-      <ModelSelectionScreen
-        onSelect={handleModelSelect}
-        loading={loading || isInitializing}
-        currentPhase={currentPhase}
-        phases={phases}
-        sessionId={sessionId}
-        sseConnected={sseConnected}
-        score={score}
-        scoreTarget={scoreTarget}
-        onShowState={handleShowState}
-      />
-    )
-  }
-  // Screen 3: Diagram Type Selection (check before description screen to prioritize)
   // Show after clarification phase when user confirms ready
-  else if (currentScreen === 'diagramTypeSelection') {
+  if (currentScreen === 'diagramTypeSelection') {
     screenContent = (
       <DiagramTypeSelectionScreen
-        selectedModel={selectedModel}
         currentPhase={currentPhase}
         phases={phases}
         sessionId={sessionId}
@@ -1100,12 +1059,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       />
     )
   }
-  // Screen 2: System Description + Analysis + Clarification
-  // Show if model selected but no session started OR explicit description screen navigation
-  else if (currentScreen === 'description' || (!sessionId && selectedModel)) {
+  // Screen 1: System Description + Analysis + Clarification
+  // Show on description screen or if no session started
+  else if (currentScreen === 'description' || !sessionId) {
     screenContent = (
       <SystemDescriptionScreen
-        selectedModel={selectedModel}
         currentPhase={currentPhase}
         phases={phases}
         userInput={userInput}
@@ -1118,7 +1076,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         clarifications={clarifications}
         chatHistory={chatHistory}
         sseConnected={sseConnected}
-        onChangeModel={handleChangeModel}
         onStartDiagram={handleStartDiagram}
         onClearInput={() => setUserInput('')}
         onInputChange={setUserInput}
@@ -1129,12 +1086,11 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
       />
     )
   }
-  // Screen 4: Generation + Rendering
+  // Screen 3: Generation + Rendering
   // Show once session is active and user has moved to generation phase
   else {
     screenContent = (
       <GenerationScreen
-        selectedModel={selectedModel}
         currentPhase={currentPhase}
         phases={phases}
         loading={loading || isManualRendering}
@@ -1152,7 +1108,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         structurizrWorkspace={structurizrWorkspace}
         cleanStructurizr={cleanStructurizr}
         jsonRepresentation={jsonRepresentation}
-        onChangeModel={handleChangeModel}
         onNewDiagram={handleNewDiagram}
         onExportClick={handleExportClick}
         onExportModalClose={handleExportModalClose}

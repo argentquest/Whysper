@@ -10,7 +10,7 @@ The Diagram Wizard is a LangGraph-based intelligent agent designed to generate s
 
 The workflow state is maintained in a `GraphState` TypedDict (in `graph_state.py`), which flows through all nodes. Key fields include:
 
-- **Input**: `design_prompt`, `model_id`
+- **Input**: `design_prompt`
 - **Analysis**: `json_representation` (architecture model), `keyword_scores`
 - **Clarification**: `clarification_history`, `clarity_score`, `llm_ready`
 - **Generation**: `diagram_type` (Mermaid, D2, PlantUML, Structurizr), `diagram_code`

@@ -21,7 +21,6 @@ import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
 import PreviewPanel from '../panels/Panel2_Preview'
 import CodeEditorPanel from '../panels/Panel3_CodeEditor'
-import type { ModelId } from './ModelSelectionScreen'
 
 /**
  * GenerationScreenProps type definition
@@ -29,7 +28,6 @@ import type { ModelId } from './ModelSelectionScreen'
  * Describes the structure and properties of GenerationScreenProps
  */
 interface GenerationScreenProps {
-  selectedModel: ModelId
   currentPhase: number
   phases: Array<{ title: string; description: string; icon: React.ReactNode }>
   loading: boolean
@@ -48,7 +46,6 @@ interface GenerationScreenProps {
   structurizrWorkspace?: string
   cleanStructurizr?: string
   jsonRepresentation?: Record<string, unknown> | null
-  onChangeModel: () => void
   onNewDiagram: () => void
   onExportClick: () => void
   onExportModalClose: () => void
@@ -65,7 +62,6 @@ interface GenerationScreenProps {
  * GenerationScreen component
  */
 export const GenerationScreen: React.FC<GenerationScreenProps> = ({
-  selectedModel,
   currentPhase,
   phases,
   loading,
@@ -81,8 +77,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   onCodeChange,
   sseConnected,
   exportModalOpen,
-  structurizrWorkspace: _structurizrWorkspace,
-  cleanStructurizr: _cleanStructurizr,
+  structurizrWorkspace,
+  cleanStructurizr,
   jsonRepresentation,
   onExportModalClose,
   onRenderClick,
@@ -98,6 +94,8 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   const renderErrorText =
     renderErrorMessage || status?.error_message || status?.error || error?.message || null
   const validationErrorText = renderValidationError || status?.validation_error || null
+  const workspaceContent = structurizrWorkspace || ''
+  const cleanWorkspaceContent = cleanStructurizr || ''
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(diagramCode)
@@ -110,7 +108,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
       <DiagramWizardHeader
         isComplete={isComplete}
         isError={isError}
-        selectedModel={selectedModel}
         sessionId={sessionId}
         sseConnected={sseConnected}
         loading={loading}
@@ -312,6 +309,138 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           />
                         </div>
                       </Card>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'workspace',
+                label: <span style={{ color: '#000000' }}>Workspace</span>,
+                children: (
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => workspaceContent && navigator.clipboard.writeText(workspaceContent)}
+                          title="Copy Structurizr workspace"
+                          disabled={!workspaceContent}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'auto' }}>
+                        {workspaceContent ? (
+                          <Input.TextArea
+                            value={workspaceContent}
+                            readOnly
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 13,
+                              height: '100%',
+                              color: '#000000',
+                            }}
+                            autoSize={{ minRows: 12, maxRows: 40 }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              color: '#999',
+                              textAlign: 'center',
+                              paddingTop: '20px',
+                            }}
+                          >
+                            No Structurizr workspace provided yet
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'cleanWorkspace',
+                label: <span style={{ color: '#000000' }}>Clean Workspace</span>,
+                children: (
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div
+                      className={styles.panel}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginBottom: 8,
+                          gap: 8,
+                        }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => cleanWorkspaceContent && navigator.clipboard.writeText(cleanWorkspaceContent)}
+                          title="Copy cleaned workspace"
+                          disabled={!cleanWorkspaceContent}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflow: 'auto' }}>
+                        {cleanWorkspaceContent ? (
+                          <Input.TextArea
+                            value={cleanWorkspaceContent}
+                            readOnly
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 13,
+                              height: '100%',
+                              color: '#000000',
+                            }}
+                            autoSize={{ minRows: 12, maxRows: 40 }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              color: '#999',
+                              textAlign: 'center',
+                              paddingTop: '20px',
+                            }}
+                          >
+                            No cleaned workspace available yet
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ),

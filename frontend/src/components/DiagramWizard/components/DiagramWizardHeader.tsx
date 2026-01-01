@@ -2,11 +2,10 @@
  * DiagramWizardHeader Component
  *
  * Unified header component for Diagram Wizard screens that displays:
- * - Title and completion status
- * - Model selection and session information
+ * - Completion status tags
  * - Current LLM Assessment Score (prominently displayed)
  * - 4-Phase progression status (Analysis → Clarification → Generation → Rendering)
- * - Connection status indicator
+ * - Action buttons (View State, Generate Diagram)
  */
 
 import {
@@ -17,11 +16,10 @@ import {
   MessageOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import { Badge, Button, Layout, Space, Spin, Steps, Tag, Tooltip } from 'antd'
+import { Button, Layout, Space, Spin, Steps, Tag, Tooltip } from 'antd'
 import React from 'react'
 
 import styles from '../diagram-wizard.module.css'
-import type { ModelId } from '../screens/ModelSelectionScreen'
 
 interface DiagramWizardHeaderProps {
   // Title and status
@@ -29,8 +27,7 @@ interface DiagramWizardHeaderProps {
   isComplete?: boolean
   isError?: boolean
 
-  // Model and session info
-  selectedModel: ModelId
+  // Session info
   sessionId: string | null
   sseConnected: boolean
   loading?: boolean
@@ -55,12 +52,11 @@ interface DiagramWizardHeaderProps {
  * DiagramWizardHeader component
  */
 export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
-  title = 'Diagram Wizard',
+  title: _title = 'Diagram Wizard', // Unused - title display removed
   isComplete = false,
   isError = false,
-  selectedModel,
-  sessionId,
-  sseConnected,
+  sessionId: _sessionId, // Unused - session ID moved to footer
+  sseConnected: _sseConnected, // Unused - connection status moved to footer
   loading = false,
   score,
   scoreTarget = 80, // Default to 80 if not provided by backend
@@ -70,22 +66,6 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
   onConfirmReady,
   onShowState,
 }) => {
-  // Get model display name
-  const getModelDisplayName = (model: ModelId): string => {
-    switch (model) {
-      case 'gpt5':
-        return 'Deep'
-      case 'grok':
-        return 'Fast'
-      case 'claude':
-        return 'Thinking'
-      case 'gemini':
-        return 'Efficient'
-      default:
-        return model
-    }
-  }
-
   // Get score tag color (1-100 scale)
   // Uses dynamic scoreTarget from backend .env (default: 80)
   const getScoreTagColor = (score: number): string => {
@@ -123,34 +103,34 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
             flexWrap: 'wrap',
           }}
         >
-          {/* Left: Title + Score */}
+          {/* Left: Status Tags + Score */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
-            <h2 className={styles.title} style={{ margin: 0 }}>
-              {title}
-              {isComplete && (
-                <Tag color="green" style={{ marginLeft: '8px' }}>
-                  <CheckCircleOutlined /> Complete
-                </Tag>
-              )}
-              {isError && (
-                <Tag color="red" style={{ marginLeft: '8px' }}>
-                  <ExclamationCircleOutlined /> Error
-                </Tag>
-              )}
-            </h2>
+            {/* Status Tags */}
+            {isComplete && (
+              <Tag color="green">
+                <CheckCircleOutlined /> Complete
+              </Tag>
+            )}
+            {isError && (
+              <Tag color="red">
+                <ExclamationCircleOutlined /> Error
+              </Tag>
+            )}
 
             {/* LLM Score */}
             {score > 0 && (
-              <Tag
-                color={getScoreTagColor(score)}
-                style={{
-                  fontSize: '13px',
-                  padding: '4px 10px',
-                  fontWeight: 'bold',
-                }}
-              >
-                📊 {score}/{scoreTarget}
-              </Tag>
+              <Tooltip title={`AI clarity assessment score. Target: ${scoreTarget} or higher to proceed.`}>
+                <Tag
+                  color={getScoreTagColor(score)}
+                  style={{
+                    fontSize: '16px',
+                    padding: '8px 16px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Score: 📊 {score}/{scoreTarget}
+                </Tag>
+              </Tooltip>
             )}
           </div>
 
@@ -158,7 +138,6 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
           <div className={styles.progressSteps}>
             <Steps
               current={currentPhase}
-              size="small"
               items={phases.map((phase, index) => ({
                 title: (
                   <Tooltip title={phase.description} placement="bottom">
@@ -172,11 +151,21 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
             />
           </div>
 
-          {/* Right: Confirm Button + Model + Session + Status */}
-          <Space size="middle" className={styles.headerMeta}>
-            {/* Confirm Ready Button - Prominent placement */}
+          {/* Right: Session Info + Actions */}
+          <Space size="middle" className={styles.headerMeta} align="center">
+            {onShowState && (
+              <Tooltip title="View current session state and debug information">
+                <Button size="large" type="default" onClick={onShowState}>
+                  View State
+                </Button>
+              </Tooltip>
+            )}
+
+            {loading && <Spin size="small" />}
+
+            {/* Generate Diagram Button - Most right placement */}
             {canConfirmReady && onConfirmReady && (
-              <Tooltip title="Confirm that you're ready to proceed to diagram generation">
+              <Tooltip title="Start generating the diagram based on the current description">
                 <Button
                   type="primary"
                   size="large"
@@ -189,49 +178,9 @@ export const DiagramWizardHeader: React.FC<DiagramWizardHeaderProps> = ({
                     boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)',
                   }}
                 >
-                  ✓ Confirm Ready
+                  Generate Diagram
                 </Button>
               </Tooltip>
-            )}
-            {onShowState && (
-              <Tooltip title="View current session state and debug information">
-                <Button size="large" onClick={onShowState}>
-                  View State
-                </Button>
-              </Tooltip>
-            )}
-
-            {selectedModel && (
-              <Tooltip title={`AI Model: ${getModelDisplayName(selectedModel)}`}>
-                <Button size="large" type="default" style={{ cursor: 'default' }}>
-                  🤖 {getModelDisplayName(selectedModel)}
-                </Button>
-              </Tooltip>
-            )}
-            {sessionId && (
-              <>
-                <Tooltip title={`Session ID: ${sessionId}`}>
-                  <Button size="large" type="default" style={{ cursor: 'default' }}>
-                    {sessionId.substring(0, 8)}...
-                  </Button>
-                </Tooltip>
-                <Tooltip title={sseConnected ? 'Real-time connection active' : 'Connection lost'}>
-                  <Button
-                    size="large"
-                    type="default"
-                    style={{ cursor: 'default' }}
-                    icon={
-                      <Badge
-                        status={sseConnected ? 'success' : 'error'}
-                        style={{ marginRight: 4 }}
-                      />
-                    }
-                  >
-                    {sseConnected ? 'Connected' : 'Disconnected'}
-                  </Button>
-                </Tooltip>
-                {loading && <Spin size="small" />}
-              </>
             )}
           </Space>
         </div>

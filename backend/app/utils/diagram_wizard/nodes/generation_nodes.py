@@ -38,8 +38,18 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
                         and 'json_representation', or error information.
     """
     session_id = state.get("_session_id")
-    model_id = state.get("model_id", "claude")  # Get selected model
-    logger.info(f"Generating JSON representation (model: {model_id})...", extra={"session_id": session_id})
+
+    # Skip if we already generated JSON representations (prevents duplicate LLM calls on resume)
+    if state.get("json_generation_complete", False):
+        logger.info("⏭️ Skipping JSON generation - already completed", extra={"session_id": session_id})
+        return {
+            "structurizr_workspace": state.get("structurizr_workspace", ""),
+            "clean_structurizr": state.get("clean_structurizr", ""),
+            "json_representation": state.get("json_representation", {}),
+            "json_generation_complete": True,
+        }
+
+    logger.info("Generating JSON representation...", extra={"session_id": session_id})
 
     update_callback = state.get("_update_callback")
     if update_callback:
@@ -50,10 +60,10 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             }
         )
 
-    # Load model-specific JSON_GENERATION prompt
-    prompt_template = get_prompt("json_generation", model_id=model_id)
+    # Load unified JSON_GENERATION prompt
+    prompt_template = get_prompt("json_generation")
     if not prompt_template:
-        logger.info(f"json_generation prompt not found for model: {model_id}", extra={"session_id": session_id})
+        logger.info("json_generation prompt not found", extra={"session_id": session_id})
         # Fallback: use existing representations from clarify_prompt
         return {
             "structurizr_workspace": state.get("structurizr_workspace", ""),
@@ -65,11 +75,11 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
     clarification_history = state.get("clarification_history", [])
     user_content = "\n".join([msg.get("content", "") for msg in clarification_history if msg.get("role") == "user"])
 
-    logger.debug(f"Preparing LLM (model: {model_id})...", extra={"session_id": session_id})
+    logger.debug("Preparing LLM...", extra={"session_id": session_id})
 
-    # Call LLM with model-specific prompt
+    # Call LLM with unified prompt
     try:
-        ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
+        ai_response_str = await call_llm(prompt_template, user_content, session_id)
     except Exception as e:
         error_message = str(e)
         logger.info(
@@ -135,6 +145,7 @@ async def generate_json_representation(state: GraphState) -> Dict[str, Any]:
             "clean_structurizr": clean_structurizr,
             "json_representation": json_representation,
             "json_generation_output": ai_response_str,
+            "json_generation_complete": True,  # Mark as complete to prevent re-generation on resume
         }
 
     except json.JSONDecodeError as e:
@@ -255,21 +266,12 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
     # Determine diagram type using keyword scoring (get recommended type and all scores)
     recommended_type, keyword_scores = determine_diagram_type(analysis_text)
 
+    mermaid_score = keyword_scores.get('Mermaid', 0)
+    d2_score = keyword_scores.get('D2', 0)
+    plantuml_score = keyword_scores.get('PlantUML', 0)
+    structurizr_score = keyword_scores.get('Structurizr', 0)
     logger.info(
-        f"📊 Diagram type scores calculated: Mermaid={
-            keyword_scores.get(
-                'Mermaid',
-                0):.1f}%, D2={
-            keyword_scores.get(
-                'D2',
-                0):.1f}%, PlantUML={
-                    keyword_scores.get(
-                        'PlantUML',
-                        0):.1f}%, Structurizr={
-                            keyword_scores.get(
-                                'Structurizr',
-                                0):.1f}% | Recommended: {
-                                    recommended_type.value}",
+        f"📊 Diagram type scores calculated: Mermaid={mermaid_score:.1f}%, D2={d2_score:.1f}%, PlantUML={plantuml_score:.1f}%, Structurizr={structurizr_score:.1f}% | Recommended: {recommended_type.value}",
         extra={"session_id": session_id} if session_id else {},
     )
 
@@ -317,18 +319,17 @@ async def generate_code(state: GraphState) -> Dict[str, Any]:
     diagram_type_str = get_diagram_type_str(diagram_type)
     json_representation = state.get("json_representation", {})
     json_generation_output = state.get("json_generation_output", "")
-    model_id = state.get("model_id")  # Get selected model from state
     session_id = state.get("_session_id")
 
     # Try specialized first-pass system prompt per diagram type
     firstpass_key = f"firstpass_{diagram_type_str.lower()}"
-    prompt_template = get_prompt(firstpass_key, model_id=model_id)
+    prompt_template = get_prompt(firstpass_key)
     prompt_source = firstpass_key
 
     # Fallback to standard generation prompt template
     if not prompt_template:
         prompt_key = f"generate_{diagram_type_str.lower()}"
-        prompt_template = get_prompt(prompt_key, model_id=model_id)
+        prompt_template = get_prompt(prompt_key)
         prompt_source = prompt_key
 
     if not prompt_template:
@@ -344,7 +345,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         prompt_source = "inline_fallback"
 
     logger.info(
-        f"Generating {diagram_type_str} code using AI (model: {model_id})",
+        f"Generating {diagram_type_str} code using AI",
         extra={"session_id": session_id} if session_id else {},
     )
 
@@ -365,8 +366,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
         )
 
     logger.info(
-        f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={
-            len(llm_input_payload)}",
+        f"Starting first-pass code generation for {diagram_type_str} using prompt '{prompt_source}'. Payload length={len(llm_input_payload)}",
         extra={"session_id": session_id} if session_id else {},
     )
     logger.debug(
@@ -375,7 +375,7 @@ Generate clean, syntactically correct {diagram_type_str} code:"""
     )
 
     try:
-        ai_response = await call_llm(prompt_template, llm_input_payload, session_id, model_id=model_id)
+        ai_response = await call_llm(prompt_template, llm_input_payload, session_id)
     except Exception as e:
         error_message = str(e)
         logger.info(f"AI call failed in generate_code: {error_message}", extra={"session_id": session_id})

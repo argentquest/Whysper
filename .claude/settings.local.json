@@ -34,7 +34,12 @@
       "Bash(npm run dev:*)",
       "Bash(git checkout:*)",
       "Bash(npm install:*)",
-      "Bash(.venvScriptspython.exe -m pytest tests/forms/test_forms_flow.py -v)"
+      "Bash(.venvScriptspython.exe -m pytest tests/forms/test_forms_flow.py -v)",
+      "Bash(del \"C:\\\\Code2025\\\\Whysper\\\\frontend\\\\src\\\\components\\\\DiagramWizard\\\\screens\\\\ModelSelectionScreen.test.tsx\")",
+      "Bash(del \"C:\\\\Code2025\\\\Whysper\\\\backend\\\\app\\\\utils\\\\diagram_wizard\\\\prompts\\\\CLARIFY_ONLY.md\")",
+      "Bash(.venvScriptspython.exe test_routing.py)",
+      "Bash(del:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

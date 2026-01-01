@@ -85,7 +85,6 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
             - current_state (SessionState): New state enum
     """
     session_id = state.get("_session_id")
-    model_id = state.get("model_id")  # Get selected model from state
 
     # IMPORTANT: Skip re-analysis if we've already analyzed the request
     # This prevents infinite loops when resuming the graph after clarification
@@ -93,7 +92,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         logger.info("⏭️ Skipping re-analysis - already completed", extra={"session_id": session_id})
         return {"next_action": "clarify", "skip_analysis": True}
 
-    logger.info(f"🔬 Analyzing initial user request (model: {model_id})...", extra={"session_id": session_id})
+    logger.info("🔬 Analyzing initial user request...", extra={"session_id": session_id})
 
     # Get dynamic score target from environment
     score_target = env_manager.get_score_target()
@@ -107,7 +106,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
             }
         )
 
-    prompt_template = get_prompt("analyze_request", model_id=model_id)
+    prompt_template = get_prompt("analyze_request")
     if not prompt_template:
         logger.info("analyze_request prompt not found!", extra={"session_id": session_id})
         return {
@@ -120,7 +119,7 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
     user_content = "\n".join([msg.get("content", "") for msg in clarification_history if msg.get("role") == "user"])
 
     try:
-        ai_response_str = await call_llm(prompt_template, user_content, session_id, model_id=model_id)
+        ai_response_str = await call_llm(prompt_template, user_content, session_id)
     except Exception as e:
         error_message = str(e)
         logger.info(f"AI call failed in analyze_request: {error_message}", extra={"session_id": session_id})
@@ -145,7 +144,20 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
         assessment_score = ai_response.get("assessment_score", 20)
         clarity_score = ai_response.get("clarity_score", 50)
         architecture_json = ai_response.get("json_representation") or ai_response.get("architecture_json")
-        follow_up_question = ai_response.get("question")
+
+        # Support both new format (array "questions") and old format (single "question")
+        questions = ai_response.get("questions")
+        if questions is None:
+            # Fallback to old single question format
+            single_question = ai_response.get("question")
+            questions = [single_question] if single_question else []
+        elif isinstance(questions, str):
+            questions = [questions]
+        elif not isinstance(questions, list):
+            questions = []
+        # Filter out None/empty questions
+        questions = [q for q in questions if q and isinstance(q, str) and q.strip()]
+        follow_up_question = questions[0] if questions else None
 
         # Store the architecture_json in the state, even if incomplete
         if architecture_json:
@@ -172,12 +184,20 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
                     "score_target": score_target,
                     "clarity_score": clarity_score,
                     "json_representation": state.get("json_representation", {}),
-                    "question": follow_up_question,
+                    "questions": questions,  # Send array of questions (1-3)
+                    "question": follow_up_question,  # Keep for backward compatibility
                     "full_ai_response": ai_response_str,  # Include full raw response for "Show More"
                 }
             )
 
         # Mark analysis as complete to prevent re-analysis
+        # Format questions for conversation history
+        questions_text = "\n".join(f"{i+1}. {q}" for i, q in enumerate(questions)) if questions else ""
+        question_msg = f"QUESTION: {follow_up_question}" if follow_up_question and len(questions) == 1 else questions_text
+
+        # OPTIMIZATION: We return to END here instead of calling clarify_prompt
+        # This prevents duplicate LLM calls since we already have questions from this analysis
+        # Graph routing will send us to END, user responds, then on resume we go to clarify_prompt
         return {
             "next_action": "clarify",
             "assessment_score": assessment_score,
@@ -185,11 +205,10 @@ async def analyze_request(state: GraphState, service) -> Dict[str, Any]:
             "clarification_history": clarification_history
             + [
                 {"role": "assistant", "content": analysis_summary or ""},
-                {"role": "assistant", "content": f"QUESTION: {follow_up_question}"},
+                {"role": "assistant", "content": question_msg},
             ],
             "current_state": SessionState.CLARIFYING,
             "analysis_complete": True,  # Flag to prevent re-analysis
-            "first_question_asked": True,  # Flag to skip clarify_prompt on first run
         }
 
     except (json.JSONDecodeError, ValueError) as e:

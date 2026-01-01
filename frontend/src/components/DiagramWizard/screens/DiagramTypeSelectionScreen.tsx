@@ -39,8 +39,8 @@ import { Card, Col, Layout, Row, Spin, Table, Tag, Typography } from 'antd'
 import React from 'react'
 
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
-import type { ModelId } from './ModelSelectionScreen'
 
 const { Title, Paragraph } = Typography
 
@@ -55,7 +55,6 @@ interface DiagramTypeRecord {
  * Props for DiagramTypeSelectionScreen component
  */
 interface DiagramTypeSelectionScreenProps {
-  selectedModel: ModelId
   currentPhase: number
   phases: Array<{ title: string; description: string; icon: React.ReactNode }>
   sessionId: string | null
@@ -110,7 +109,6 @@ const DIAGRAM_TYPES = [
  * DiagramTypeSelectionScreen component
  */
 export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProps> = ({
-  selectedModel,
   currentPhase,
   phases,
   sessionId,
@@ -130,7 +128,6 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
     <Layout className={styles.diagramWizard}>
       {/* Unified Header Component */}
       <DiagramWizardHeader
-        selectedModel={selectedModel}
         sessionId={sessionId}
         sseConnected={sseConnected}
         loading={loading}
@@ -331,6 +328,13 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
           )}
         </div>
         </Spin>
+
+        {/* Footer with connection status */}
+        <Footer
+          sessionId={sessionId}
+          sseConnected={sseConnected}
+          currentStatus={loading ? 'analyzing' : undefined}
+        />
       </Layout.Content>
     </Layout>
   )

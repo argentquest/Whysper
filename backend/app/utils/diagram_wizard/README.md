@@ -266,11 +266,13 @@ END (svg_output ready)
 
 ## Integration Points
 
-### Backend Service (app/services/diagram_factory_service.py)
+### Backend Service (app/services/diagram_factory_core.py)
 - Orchestrates graph execution
+- Handles LLM integration
+
+### Session Store (app/services/diagram_factory_session.py)
 - Manages sessions
 - Provides public API
-- Handles LLM integration
 
 ### API Endpoints (app/api/v1/endpoints/diagram.py)
 - POST /diagram/start - Initialize session

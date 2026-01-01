@@ -60,15 +60,15 @@
 }
 
 .progressSteps :global(.ant-steps-item-icon) {
-  font-size: 21px;
-  width: 40px;
-  height: 40px;
-  line-height: 40px;
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  line-height: 48px;
 }
 
 .progressSteps :global(.ant-steps-item-title) {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .progressStepTitle {
@@ -154,9 +154,9 @@
 }
 
 .initialScreen {
-  max-width: 600px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 0;
+  padding: 40px 20px;
 }
 
 .initialScreen h3 {

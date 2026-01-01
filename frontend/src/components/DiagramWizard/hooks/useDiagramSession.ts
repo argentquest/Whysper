@@ -235,15 +235,13 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
    * @function startSession
    * @param {string} initialPrompt - User's system description (e.g., "A Data Processing Pipeline")
    * @param {string} [diagramType='Mermaid'] - Target diagram type: 'Mermaid', 'D2', or 'PlantUML'
-   * @param {string} [modelId] - AI model to use: 'gpt5', 'grok', 'claude', 'gemini'
    * @returns {Promise<void>} Resolves when session is created and SSE connection established
    * @throws {Error} If session creation fails (API error, network issue, etc.)
    *
    * @example
    * await startSession(
    *   'A microservices architecture with API gateway',
-   *   'Mermaid',
-   *   'claude'
+   *   'Mermaid'
    * );
    *
    * Side Effects:
@@ -252,9 +250,9 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
    * - Clears previous messages and error state
    */
   const startSession = useCallback(
-    async (initialPrompt: string, diagramType: string = 'Mermaid', modelId?: string) => {
+    async (initialPrompt: string, diagramType: string = 'Mermaid') => {
       try {
-        logEvent('Starting session', { initialPrompt, diagramType, modelId, sessionId })
+        logEvent('Starting session', { initialPrompt, diagramType, sessionId })
 
         // Set loading state to show UI spinner
         setLoading(true)
@@ -274,7 +272,6 @@ export function useDiagramSession(options: UseDiagramSessionOptions = {}) {
         const result = await DiagramApi.startDiagramGeneration(
           initialPrompt,
           diagramType,
-          modelId,
           initialSessionId || undefined // Pass pre-assigned session ID from tab if available
         )
 

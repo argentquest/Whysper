@@ -55,9 +55,9 @@
  * - Cleanup happens automatically when tab closes
  */
 
-import { ClearOutlined, FormOutlined, LeftOutlined, SendOutlined } from '@ant-design/icons'
+import { ClearOutlined, FormOutlined, SendOutlined } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
-import { Alert, Button, Layout, message, Modal, Select, Space, Tag } from 'antd'
+import { Alert, Button, Layout, message, Select, Space } from 'antd'
 import type * as Monaco from 'monaco-editor'
 import React, { useEffect, useRef, useState } from 'react'
 
@@ -67,15 +67,14 @@ import type { Message } from '../../../types'
 import FormRenderer from '../../forms/FormRenderer'
 import { formatFormDataForPrompt } from '../../../utils/formDataFormatters'
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
-import type { ModelId } from './ModelSelectionScreen'
 
 /**
  * Props for SystemDescriptionScreen component
  *
  * @interface SystemDescriptionScreenProps
- * @property {ModelId} selectedModel - Currently selected AI model (gpt5, grok, claude, gemini)
  * @property {number} currentPhase - Current phase index (0-3) for progress indicator
  * @property {Array} phases - Array of phase objects with title, description, and icon
  * @property {string} userInput - Current value of system description textarea
@@ -88,7 +87,6 @@ import type { ModelId } from './ModelSelectionScreen'
  * @property {Array} clarifications - List of clarification questions asked by AI
  * @property {Array} chatHistory - Array of message objects with role, content, and optional score/jsonData
  * @property {boolean} sseConnected - Whether SSE connection to backend is active
- * @property {Function} onChangeModel - Callback to return to model selection screen
  * @property {Function} onStartDiagram - Callback when user clicks "Start Conversation" with system description
  * @property {Function} onClearInput - Callback to clear textarea content
  * @property {Function} onInputChange - Callback when textarea content changes (value parameter)
@@ -102,7 +100,6 @@ import type { ModelId } from './ModelSelectionScreen'
  * Describes the structure and properties of SystemDescriptionScreenProps
  */
 interface SystemDescriptionScreenProps {
-  selectedModel: ModelId
   currentPhase: number
   phases: Array<{ title: string; description: string; icon: React.ReactNode }>
   userInput: string
@@ -115,7 +112,6 @@ interface SystemDescriptionScreenProps {
   clarifications: Array<{ question: string; answer?: string }>
   chatHistory: Message[]
   sseConnected: boolean
-  onChangeModel: () => void
   onStartDiagram: (prompt: string) => void
   onClearInput: () => void
   onInputChange: (value: string) => void
@@ -129,7 +125,6 @@ interface SystemDescriptionScreenProps {
  * SystemDescriptionScreen component
  */
 export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = ({
-  selectedModel,
   currentPhase,
   phases,
   userInput,
@@ -142,7 +137,6 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   clarifications,
   chatHistory,
   sseConnected,
-  onChangeModel,
   onStartDiagram,
   onClearInput,
   onInputChange,
@@ -223,14 +217,20 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
   const isClarifying = !!(
     isInAnalysisPhase &&
     sessionId &&
-    (status?.status === 'clarifying' ||
+    (status?.status === 'started' ||
+      status?.status === 'analyzing' ||
       status?.status === 'analysis_complete' ||
+      status?.status === 'clarifying' ||
+      status?.status === 'clarifying_processing' ||
+      status?.status === 'clarification_received' ||
+      status?.status === 'clarification_ready' ||
+      status?.status === 'can_proceed' ||
       status?.status === 'waiting' ||
-      status?.status === 'analyzing')
+      clarifications.length > 0)
   )
-  // Loosen visibility: allow confirm button anytime we're in an active analysis/clarification session
-  // Hide only after we leave the analysis phase (e.g., generating/rendering/completed/failed)
-  const canConfirmReady = !!(sessionId && isInAnalysisPhase)
+  // ALWAYS allow user to press "Confirm Ready" button whenever there's an active session
+  // User can skip clarification at any time and proceed to diagram generation
+  const canConfirmReady = !!sessionId
 
   // Debug logging
   console.log('[SystemDescriptionScreen] Debug:', {
@@ -262,24 +262,10 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
     onStartDiagram(userInput)
   }
 
-  const handleClearAndChangeModel = () => {
-    Modal.confirm({
-      title: 'Changge System Prompt?',
-      content:
-        'Are you sure you want to select a different prompt? Your current session will be reset.',
-      okText: 'Yes, Change Prompt',
-      cancelText: 'Cancel',
-      onOk() {
-        onChangeModel()
-      },
-    })
-  }
-
   return (
     <Layout className={styles.diagramWizard}>
       {/* Unified Header Component */}
       <DiagramWizardHeader
-        selectedModel={selectedModel}
         sessionId={sessionId}
         sseConnected={sseConnected}
         loading={loading}
@@ -344,21 +330,6 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
                   conversation to gather all the details needed.
                 </p>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '16px', color: '#999', marginBottom: '4px' }}>Using:</div>
-                <Tag color="blue" style={{ fontSize: '18px', padding: '4px 12px' }}>
-                  {selectedModel.toUpperCase()}
-                </Tag>
-                <Button
-                  type="text"
-                  size="small"
-                  style={{ display: 'block', marginTop: '8px' }}
-                  onClick={handleClearAndChangeModel}
-                  icon={<LeftOutlined />}
-                >
-                  Change Model
-                </Button>
-              </div>
             </div>
 
             {/* Form Selector Section */}
@@ -393,11 +364,11 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
                 border: '1px solid #d9d9d9',
                 borderRadius: '4px',
                 overflow: 'hidden',
-                minHeight: '200px',
+                minHeight: '120px',
               }}
             >
               <Editor
-                height="400px"
+                height="240px"
                 defaultLanguage="plaintext"
                 value={userInput}
                 onChange={(value) => onInputChange(value || '')}
@@ -452,6 +423,13 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
             </Space>
           </div>
         )}
+
+        {/* Footer with connection status */}
+        <Footer
+          sessionId={sessionId}
+          sseConnected={sseConnected}
+          currentStatus={status?.status}
+        />
       </Layout.Content>
 
       {/* Form Renderer Modal */}

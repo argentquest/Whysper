@@ -72,28 +72,20 @@ def get_diagram_type_str(diagram_type: Union[DiagramType, str]) -> str:
     return diagram_type.value if hasattr(diagram_type, "value") else str(diagram_type)
 
 
-def _get_model_for_id(model_id: str = None) -> str:
+def _get_model() -> str:
     """
-    Get the actual AI model to use for API calls.
-
-    NOTE: The model_id parameter is used to select which system PROMPT to use
-    (different prompt styles for gpt5, grok, claude, gemini), but the ACTUAL
-    model used for API calls always comes from DEFAULT_MODEL in .env file.
-
-    Args:
-        model_id (str, optional): Used for prompt selection only (gpt5, grok, claude, gemini).
-                                  Does NOT affect which actual AI model is called.
+    Get the actual AI model to use for API calls from .env settings.
 
     Returns:
         str: Actual model identifier from .env DEFAULT_MODEL for API calls.
     """
     default_model = settings.default_model or "google/gemini-2.5-flash-preview-09-2025"
 
-    logger.info(f"Using actual AI model from .env: {default_model} (prompt style: {model_id or 'default'})")
+    logger.info(f"Using AI model from .env: {default_model}")
     return default_model
 
 
-async def call_llm(prompt: str, user_content: str, session_id: str = None, model_id: str = None) -> str:
+async def call_llm(prompt: str, user_content: str, session_id: str = None) -> str:
     """
     Helper function to call AI/LLM with proper error handling and SSE logging.
 
@@ -101,7 +93,6 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         prompt (str): System prompt template.
         user_content (str): User message content.
         session_id (str, optional): Session ID for SSE filtering.
-        model_id (str, optional): Selected AI model ID (gpt5, grok, claude, gemini).
 
     Returns:
         str: AI response string.
@@ -113,7 +104,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         # Load configuration via settings (.env + environment)
         api_key = settings.api_key
         provider = settings.provider or "openrouter"
-        model = _get_model_for_id(model_id)
+        model = _get_model()
 
         if not api_key:
             logger.info(
@@ -135,9 +126,7 @@ async def call_llm(prompt: str, user_content: str, session_id: str = None, model
         conversation_history = [{"role": "system", "content": prompt}, {"role": "user", "content": user_content}]
 
         logger.info(
-            f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {
-                len(prompt)} chars, content: {
-                len(user_content)} chars)",
+            f"🚀 ACTUAL LLM CALL - Sending request to AI (prompt: {len(prompt)} chars, content: {len(user_content)} chars)",
             extra={"session_id": session_id} if session_id else {},
         )
 
