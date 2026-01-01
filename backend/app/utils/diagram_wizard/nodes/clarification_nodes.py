@@ -7,7 +7,7 @@ targeted questions to gather missing architectural details.
 
 import json
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from ..graph_state import GraphState, SessionState
 from ..prompt_loader import get_prompt
 from .llm_helpers import call_llm, extract_json_from_response
@@ -16,6 +16,101 @@ from common.env_manager import env_manager
 from common.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def check_skip_clarification(state: GraphState) -> Optional[Dict[str, Any]]:
+    """
+    Check if clarification should be skipped on first run to avoid duplicate questions.
+
+    Returns a dict to return early, or None to continue processing.
+    """
+    session_id = state.get("_session_id")
+
+    # IMPORTANT: Skip clarify_prompt on first run (analyze_request already asked a question)
+    # This prevents asking TWO questions immediately after analysis
+    if state.get("first_question_asked", False) and state.get("question_count", 0) == 0:
+        logger.info(
+            "⏭️ Skipping clarify_prompt - analyze_request already asked first question, waiting for user response",
+            extra={"session_id": session_id} if session_id else {},
+        )
+        return {
+            "llm_ready": False,
+            "first_question_asked": False,  # Reset flag for next time
+            "question_count": 1,  # Mark that first question has been asked
+        }
+    return None
+
+
+def check_already_ready(state: GraphState) -> Optional[Dict[str, Any]]:
+    """
+    Check if clarification is already complete and user confirmed readiness.
+
+    Returns a dict to return early, or None to continue processing.
+    """
+    session_id = state.get("_session_id")
+
+    # Check if we're already ready to proceed (skip clarification)
+    # BUT only if user explicitly confirmed readiness, not AI-determined
+    if state.get("llm_ready", False) and state.get("final_design_summary") and state.get("user_confirmed_ready", False):
+        logger.info(
+            "🎯 Skipping clarification - user confirmed ready with complete design summary",
+            extra={"session_id": session_id} if session_id else {},
+        )
+        return {
+            "llm_ready": True,
+            "final_design_summary": state.get("final_design_summary"),
+            "current_state": "generating",
+        }
+    return None
+
+
+def check_clarification_timeout(state: GraphState, score_target: int) -> Optional[Dict[str, Any]]:
+    """
+    Check for clarification timeout (max questions or time elapsed).
+
+    Returns a dict to return early on timeout, or None to continue.
+    """
+    clarification_history = state.get("clarification_history", [])
+    clarity_scores = state.get("clarity_scores", [])
+    question_count = state.get("question_count", 0)
+
+    # Check for clarification timeout (max 20 questions or 30 minutes)
+    current_time = time.time()
+    start_time = state.get("clarification_start_time", current_time)
+    if question_count >= 20 or (current_time - start_time) > 1800:  # 30 minutes
+        logger.info(
+            f"Clarification timeout reached: {question_count} questions, {current_time - start_time:.1f}s elapsed",
+            extra={"session_id": state.get("_session_id")},
+        )
+        # Send update to frontend asking for user confirmation even though timeout reached
+        update_callback = state.get("_update_callback")
+        if update_callback:
+            import asyncio
+            asyncio.create_task(update_callback(
+                {
+                    "status": "clarification_ready",
+                    "message": (
+                        "Maximum clarification attempts reached. "
+                        "Please confirm to proceed with diagram generation."
+                    ),
+                    "clarity_score": state.get("clarity_score", 50),
+                    "awaiting_user_confirmation": True,
+                    "clarification_timeout": True,
+                    "message_type": "clarification_summary",
+                }
+            ))
+        # Wait for user confirmation instead of auto-proceeding
+        return {
+            "llm_ready": False,
+            "final_design_summary": (
+                "TIMEOUT: Maximum clarification attempts reached. "
+                "Awaiting user confirmation to proceed."
+            ),
+            "awaiting_user_confirmation": True,
+            "clarification_timeout": True,
+            "current_state": SessionState.CLARIFYING,
+        }
+    return None
 
 
 @log_method_call

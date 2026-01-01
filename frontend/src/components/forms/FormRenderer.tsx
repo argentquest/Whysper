@@ -154,9 +154,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       key: 'form',
       label: 'Form',
       children: (
-        <div style={{ padding: '16px', maxWidth: '100%', overflow: 'auto', minHeight: '400px' }}>
+        <div style={{ padding: '16px 24px 16px 16px', width: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: '400px' }}>
           {selectedForm ? (
-            <div style={{ maxWidth: '100%' }}>
+            <div style={{ width: '100%', wordWrap: 'break-word' }}>
               <AntDForm
                 schema={selectedForm.schema || {}}
                 uiSchema={selectedForm.ui_schema || {}}
@@ -251,7 +251,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       onCancel={handleClose}
       width="80vw"
       style={{ top: '10vh' }}
-      bodyStyle={{ height: '70vh', overflow: 'auto' }}
+      bodyStyle={{ height: '70vh', overflowY: 'auto', overflowX: 'hidden' }}
       footer={
         <Space>
           <Button onClick={handleClose}>

@@ -1,10 +1,10 @@
-import { CloseOutlined,SaveOutlined } from '@ant-design/icons';
+import { CloseOutlined, SaveOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import { Theme as AntDTheme } from '@rjsf/antd';
 import { withTheme } from '@rjsf/core';
 import validator from '@rjsf/validator-ajv8';
-import { Button, message,Space, Tabs } from 'antd';
-import React, { useEffect,useState } from 'react';
+import { Button, message, Space, Tabs } from 'antd';
+import React, { useEffect, useState } from 'react';
 
 import ApiService from '../../services/api';
 
@@ -36,43 +36,43 @@ const FormEditor: React.FC<FormEditorProps> = ({
 
   useEffect(() => {
     if (mode === 'edit' || mode === 'view') {
-        // Load submission data (includes schema if stored)
-        const loadSubmission = async () => {
-            if (editingSubmission?.submission_id) {
-                try {
-                    const response = await ApiService.get(`/forms/submissions/${editingSubmission.submission_id}`);
-                    if (response.data) {
-                        setFormData(response.data.form_data);
-                        setFormDataText(JSON.stringify(response.data.form_data, null, 2));
-                        setMetadata(response.data.metadata);
+      // Load submission data (includes schema if stored)
+      const loadSubmission = async () => {
+        if (editingSubmission?.submission_id) {
+          try {
+            const response = await ApiService.get(`/forms/submissions/${editingSubmission.submission_id}`);
+            if (response.data) {
+              setFormData(response.data.form_data);
+              setFormDataText(JSON.stringify(response.data.form_data, null, 2));
+              setMetadata(response.data.metadata);
 
-                        // Use stored schema if available (for edit resilience)
-                        if (response.data.schema) {
-                            setFormSchema(response.data.schema);
-                        }
-                        if (response.data.ui_schema) {
-                            setFormUiSchema(response.data.ui_schema);
-                        }
-                    }
-                } catch (e) {
-                    message.error("Failed to load submission data");
-                }
+              // Use stored schema if available (for edit resilience)
+              if (response.data.schema) {
+                setFormSchema(response.data.schema);
+              }
+              if (response.data.ui_schema) {
+                setFormUiSchema(response.data.ui_schema);
+              }
             }
-        };
-        loadSubmission();
+          } catch (e) {
+            message.error("Failed to load submission data");
+          }
+        }
+      };
+      loadSubmission();
     } else if (mode === 'new') {
-        // Initialize with default form data if available
-        if (selectedForm?.form_data) {
-             setFormData(selectedForm.form_data);
-             setFormDataText(JSON.stringify(selectedForm.form_data, null, 2));
-        }
-        // Set schema from selected form
-        if (selectedForm?.schema) {
-            setFormSchema(selectedForm.schema);
-        }
-        if (selectedForm?.ui_schema) {
-            setFormUiSchema(selectedForm.ui_schema);
-        }
+      // Initialize with default form data if available
+      if (selectedForm?.form_data) {
+        setFormData(selectedForm.form_data);
+        setFormDataText(JSON.stringify(selectedForm.form_data, null, 2));
+      }
+      // Set schema from selected form
+      if (selectedForm?.schema) {
+        setFormSchema(selectedForm.schema);
+      }
+      if (selectedForm?.ui_schema) {
+        setFormUiSchema(selectedForm.ui_schema);
+      }
     }
   }, [mode, editingSubmission, selectedForm]);
 
@@ -82,15 +82,15 @@ const FormEditor: React.FC<FormEditorProps> = ({
       const parsedData = JSON.parse(formDataText);
 
       const payload = {
-          form_id: selectedForm?.form_id || editingSubmission?.form_id,
-          form_data: parsedData,
-          session_id: sessionId
+        form_id: selectedForm?.form_id || editingSubmission?.form_id,
+        form_data: parsedData,
+        session_id: sessionId
       };
 
       if (mode === 'edit') {
-           await ApiService.put(`/forms/edit/${editingSubmission.submission_id}`, payload);
+        await ApiService.put(`/forms/edit/${editingSubmission.submission_id}`, payload);
       } else {
-           await ApiService.post('/forms/submit', payload);
+        await ApiService.post('/forms/submit', payload);
       }
 
       message.success('Form saved successfully');
@@ -106,9 +106,9 @@ const FormEditor: React.FC<FormEditorProps> = ({
       key: 'form',
       label: 'Form',
       children: (
-        <div style={{ padding: '16px', maxWidth: '100%', overflow: 'auto' }}>
+        <div style={{ padding: '16px 24px 16px 16px', width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
           {(formSchema || selectedForm) ? (
-            <div style={{ maxWidth: '100%' }}>
+            <div style={{ width: '100%', wordWrap: 'break-word' }}>
               <AntDForm
                 schema={formSchema || selectedForm?.schema || {}}
                 uiSchema={formUiSchema || selectedForm?.ui_schema || {}}
@@ -176,18 +176,18 @@ const FormEditor: React.FC<FormEditorProps> = ({
   ];
 
   return (
-    <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Header with actions */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '16px',
         padding: '16px',
         background: '#fafafa',
         borderRadius: '4px',
         flexWrap: 'wrap',
-        gap: '8px'
+        gap: '8px',
+        flexShrink: 0
       }}>
         <h3>{mode === 'new' ? 'Fill New Form' : mode === 'edit' ? 'Edit Form' : 'View Form'}</h3>
         <Space>
@@ -210,12 +210,16 @@ const FormEditor: React.FC<FormEditorProps> = ({
       </div>
 
       {/* Three-tab interface */}
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={tabItems}
-        size="large"
-      />
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+          size="large"
+          style={{ height: '100%' }}
+          tabBarStyle={{ marginBottom: 0, paddingLeft: '16px' }}
+        />
+      </div>
     </div>
   );
 };
