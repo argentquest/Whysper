@@ -76,6 +76,11 @@ def load_env_defaults() -> Dict[str, Any]:
         # If no default specified, use the first model in the list
         default_model = models[0]
 
+
+    # Extract default model or use first available model
+    default_model_image = env_data.get("DEFAULT_MODEL_IMAGE", "")
+
+
     # Return comprehensive configuration dictionary
     return {
         # Core AI configuration
@@ -84,6 +89,7 @@ def load_env_defaults() -> Dict[str, Any]:
         "provider": env_data.get("PROVIDER", "openrouter"),
         "models": models,
         "default_model": default_model,
+        "default_model_image": default_model_image,
         "system_prompt": env_data.get(
             "SYSTEM_PROMPT", "You are a helpful AI assistant specialized in code analysis and development."
         ),
@@ -204,6 +210,7 @@ class Settings(BaseSettings):
     api_key: str = Field(default="", description="Default API key for AI providers (can be overridden per request)")
     provider: str = Field(default="openrouter", description="Default AI provider (openrouter, anthropic, openai)")
     default_model: str = Field(default="", description="Default AI model to use when none specified")
+    default_model_image: str = Field(default="", description="Default vision-capable AI model for image analysis")
     system_prompt: str = Field(
         default="You are a helpful AI assistant specialized in code analysis and development.",
         description="Default system prompt for AI interactions",
@@ -264,6 +271,13 @@ class Settings(BaseSettings):
     # Limits and settings for code block extraction from AI responses
     max_code_blocks: int = Field(default=50, description="Maximum number of code blocks to extract per request")
     max_code_length: int = Field(default=10000, description="Maximum length of a single code block in characters")
+
+    # ==================== Image Analysis Configuration ====================
+    # Settings for image analysis and vision model responses
+    image_analysis_max_tokens: int = Field(
+        default=4000,
+        description="Maximum tokens for image analysis responses (increase for detailed diagrams)"
+    )
 
     # ==================== Mermaid Configuration ====================
     # Settings for Mermaid diagram rendering

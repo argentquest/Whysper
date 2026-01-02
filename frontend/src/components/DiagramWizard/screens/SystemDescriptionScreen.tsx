@@ -55,18 +55,17 @@
  * - Cleanup happens automatically when tab closes
  */
 
-import { ClearOutlined, FormOutlined, SendOutlined } from '@ant-design/icons'
+import { ClearOutlined, SendOutlined } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
-import { Alert, Button, Layout, message, Select, Space } from 'antd'
+import { Alert, Button, Layout, message, Space } from 'antd'
 import type * as Monaco from 'monaco-editor'
 import React, { useEffect, useRef, useState } from 'react'
 
 import ApiService from '../../../services/api'
 import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
 import type { Message } from '../../../types'
-import FormRenderer from '../../forms/FormRenderer'
-import { formatFormDataForPrompt } from '../../../utils/formDataFormatters'
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
+import { DiagramInputControls } from '../components/DiagramInputControls'
 import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
@@ -84,7 +83,7 @@ import ChatPanel from '../panels/Panel1_Chat'
  * @property {DiagramUpdate | null} status - Latest status update from backend (includes scores, json_representation)
  * @property {number} score - Current clarity_score (0-10) from AI assessment
  * @property {number} scoreTarget - Target clarity_score (usually 80)
- * @property {Array} clarifications - List of clarification questions asked by AI
+ * @property {Array} clarifications - List of AI questions asked
  * @property {Array} chatHistory - Array of message objects with role, content, and optional score/jsonData
  * @property {boolean} sseConnected - Whether SSE connection to backend is active
  * @property {Function} onStartDiagram - Callback when user clicks "Start Conversation" with system description
@@ -147,43 +146,8 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
 }) => {
   const promptEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
 
-  // Form integration state
-  const [formModalVisible, setFormModalVisible] = useState(false)
-  const [publishedForms, setPublishedForms] = useState<any[]>([])
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
-
   // Track submission IDs from forms filled before session starts
   const [preSessionSubmissionIds, setPreSessionSubmissionIds] = useState<string[]>([])
-
-  // Load published forms on mount
-  useEffect(() => {
-    const loadForms = async () => {
-      try {
-        const response = await ApiService.get('/forms/published')
-        if (response.data) {
-          setPublishedForms(response.data)
-        }
-      } catch (error) {
-        console.error('Failed to load forms:', error)
-      }
-    }
-    loadForms()
-  }, [])
-
-  // Handle form submission
-  const handleFormSubmit = (formData: any, formMetadata: any, submissionId?: string) => {
-    const formattedData = formatFormDataForPrompt(formData, formMetadata)
-    onInputChange(formattedData)
-    setFormModalVisible(false)
-    setSelectedFormId(null)
-    message.success('Form data inserted into description')
-
-    // If session hasn't started yet and we have a submission ID, store it
-    if (!sessionId && submissionId) {
-      setPreSessionSubmissionIds(prev => [...prev, submissionId])
-      console.log('Stored pre-session submission ID:', submissionId)
-    }
-  }
 
   // When session starts, add any pre-session forms to the session
   useEffect(() => {
@@ -332,30 +296,22 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
               </div>
             </div>
 
-            {/* Form Selector Section */}
-            <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Select
-                placeholder="Select a form template"
-                style={{ width: 300 }}
-                value={selectedFormId}
-                onChange={setSelectedFormId}
-                allowClear
-                onClear={() => setSelectedFormId(null)}
-                disabled={loading}
-              >
-                {publishedForms.map(form => (
-                  <Select.Option key={form.form_id} value={form.form_id}>
-                    {form.form_name} ({form.form_type})
-                  </Select.Option>
-                ))}
-              </Select>
-              <Button
-                icon={<FormOutlined />}
-                onClick={() => setFormModalVisible(true)}
-                disabled={!selectedFormId || loading}
-              >
-                Use Form
-              </Button>
+            <div style={{ marginBottom: 16 }}>
+              <DiagramInputControls
+                loading={loading}
+                sessionId={sessionId || undefined}
+                onAppendText={(text) => {
+                  const newText = userInput.trim() ? userInput + '\n\n' + text : text.trim()
+                  onInputChange(newText)
+                }}
+                onFormSubmissionId={(submissionId) => {
+                  // If session hasn't started yet, store the submission ID
+                  if (!sessionId && submissionId) {
+                    setPreSessionSubmissionIds(prev => [...prev, submissionId])
+                    console.log('Stored pre-session submission ID:', submissionId)
+                  }
+                }}
+              />
             </div>
 
             <div
@@ -431,21 +387,9 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
           currentStatus={status?.status}
         />
       </Layout.Content>
-
-      {/* Form Renderer Modal */}
-      <FormRenderer
-        visible={formModalVisible}
-        onClose={() => {
-          setFormModalVisible(false)
-          setSelectedFormId(null)
-        }}
-        onSubmit={handleFormSubmit}
-        sessionId={sessionId || 'temp-session'}
-        title="Fill Form Template"
-        formId={selectedFormId}
-      />
-    </Layout>
+    </Layout >
   )
 }
 
 export default SystemDescriptionScreen
+

@@ -693,6 +693,35 @@ export class ApiService {
       }
     }
   }
+  /**
+   * Analyze an infrastructure image to extract architectural details.
+   *
+   * @param file - The image file to analyze
+   * @returns The text description of the architecture
+   */
+  static async analyzeImage(file: File): Promise<ApiResponse<{ description: string }>> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await api.post('/images/analyze', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 120000, // Longer timeout for vision LLM processing
+      })
+
+      return {
+        success: true,
+        data: response.data,
+      }
+    } catch (error: unknown) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to analyze image',
+      }
+    }
+  }
 }
 
 export default ApiService

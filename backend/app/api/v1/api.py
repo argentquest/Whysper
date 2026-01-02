@@ -34,10 +34,11 @@ from .endpoints import (
     diagram_provider,
     diagram_events,
     diagram as diagram_wizard,
+
+    infra_images,
     github_context,
 )
-from app.routers import forms, form_submissions
-from mvp_diagram_generator import rendering_api as diagram_generator_api
+from app.routers import forms
 
 # Create the main API router to aggregate all endpoint routers
 # Serves as a centralized routing mechanism for the entire application
@@ -87,11 +88,7 @@ api_router.include_router(
 )
 
 # Include MVP diagram generator endpoints for basic diagram generation
-api_router.include_router(
-    diagram_generator_api.router,
-    prefix="/diagrams",
-    tags=["diagrams"],
-)
+
 
 # Include documentation generation endpoints
 api_router.include_router(
@@ -121,8 +118,11 @@ api_router.include_router(
     tags=["forms"],
 )
 
+
+
+# Include Infrastructure Image Analysis endpoints
 api_router.include_router(
-    form_submissions.router,
-    prefix="/forms",
-    tags=["form_submissions"],
+    infra_images.router,
+    prefix="/images",
+    tags=["infra-images"],
 )

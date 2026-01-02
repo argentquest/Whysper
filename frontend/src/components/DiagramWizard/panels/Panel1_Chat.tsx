@@ -66,15 +66,14 @@ import {
   SendOutlined,
 } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
-import { Button, Card, Empty, List, message, Select, Spin, Tabs, Tag, Tooltip } from 'antd'
+import { Button, Card, Empty, List, message, Spin, Tabs, Tag, Tooltip } from 'antd'
 import * as monaco from 'monaco-editor'
 import React, { useEffect, useRef, useState } from 'react'
 
-import ApiService from '../../../services/api'
-import FormRenderer from '../../forms/FormRenderer'
-import { formatFormDataForClarification } from '../../../utils/formDataFormatters'
+
 import JsonPreview from '../components/JsonPreview'
 import styles from '../diagram-wizard.module.css'
+import { DiagramInputControls } from '../components/DiagramInputControls'
 
 /**
  * Represents a single message in the conversation
@@ -145,13 +144,6 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
   // State to track individual question answers
   const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({})
 
-  // Form integration state
-  const [formModalVisible, setFormModalVisible] = useState(false)
-  const [publishedForms, setPublishedForms] = useState<any[]>([])
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
-  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse' | 'formsData'>(
-    'preview'
-  )
   const [editorReady, setEditorReady] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -168,37 +160,10 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
     scrollToBottom()
   }, [messages])
 
-  // Load published forms on mount
-  useEffect(() => {
-    const loadForms = async () => {
-      try {
-        const response = await ApiService.get('/forms/published')
-        if (response.data) {
-          setPublishedForms(response.data)
-        }
-      } catch (error) {
-        console.error('Failed to load forms:', error)
-      }
-    }
-    loadForms()
-  }, [])
+  const [activeResponseTab, setActiveResponseTab] = useState<'preview' | 'json' | 'fullResponse' | 'formsData'>(
+    'preview'
+  )
 
-  // Handle form submission
-  const handleFormSubmit = (formData: any, formMetadata: any) => {
-    const formattedData = formatFormDataForClarification(formData, formMetadata)
-    // Append to Additional Info tab instead of replacing
-    setUserResponse(prev => {
-      if (prev.trim()) {
-        return prev + '\n\n---\nForm Data:\n' + formattedData
-      }
-      return formattedData
-    })
-    setFormModalVisible(false)
-    setSelectedFormId(null)
-    message.success('Form data appended to Additional Info tab')
-    // Note: During clarification phase, session already exists, so FormRenderer
-    // automatically adds the form to the session via DiagramApi.addFormDataToSession
-  }
 
   useEffect(() => {
     if (activeResponseTab === 'json' && editorRef.current) {
@@ -501,6 +466,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                             borderRadius: '4px',
                             overflow: 'hidden',
                             minHeight: '140px',
+                            position: 'relative',
                           }}
                         >
                           <Editor
@@ -543,7 +509,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                     label: (
                       <span>
                         <FormOutlined style={{ marginRight: 4 }} />
-                        Forms
+                        Tools
                       </span>
                     ),
                     children: (
@@ -555,45 +521,20 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
                           borderLeft: '3px solid #1890ff'
                         }}>
                           <p style={{ margin: 0, fontSize: '14px', color: '#595959' }}>
-                            <strong>📋 About Forms:</strong> Forms provide a structured way to capture detailed system information.
-                            Select a form below, fill it out, and the data will be automatically appended to your Additional Info tab,
-                            making it easier to provide comprehensive responses to AI questions.
+                            <strong>🛠️ Input Tools:</strong> Use forms to provide structured data or upload images to add context.
                           </p>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <Select
-                            placeholder="Select a form to fill"
-                            style={{ flex: 1 }}
-                            value={selectedFormId}
-                            onChange={setSelectedFormId}
-                            allowClear
-                            onClear={() => setSelectedFormId(null)}
-                            disabled={isLoading || submitting}
-                          >
-                            {publishedForms.map(form => (
-                              <Select.Option key={form.form_id} value={form.form_id}>
-                                {form.form_name}
-                              </Select.Option>
-                            ))}
-                          </Select>
-                          <Button
-                            type="primary"
-                            icon={<FormOutlined />}
-                            onClick={() => setFormModalVisible(true)}
-                            disabled={!selectedFormId || isLoading || submitting}
-                          >
-                            Use Form
-                          </Button>
-                        </div>
-
-                        {publishedForms.length === 0 && (
-                          <Empty
-                            description="No forms available"
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            style={{ marginTop: '20px' }}
-                          />
-                        )}
+                        <DiagramInputControls
+                          loading={isLoading || submitting}
+                          sessionId={sessionId || undefined}
+                          onAppendText={(text) => {
+                            setUserResponse(prev => {
+                              const prefix = prev.trim() ? prev + '\n\n' : ''
+                              return prefix + text.trim()
+                            })
+                          }}
+                        />
                       </div>
                     )
                   }
@@ -884,17 +825,7 @@ const Panel1_Chat: React.FC<Panel1ChatProps> = ({
       </div>
 
       {/* Form Renderer Modal */}
-      <FormRenderer
-        visible={formModalVisible}
-        onClose={() => {
-          setFormModalVisible(false)
-          setSelectedFormId(null)
-        }}
-        onSubmit={handleFormSubmit}
-        sessionId={sessionId}
-        title="Fill Form for Response"
-        formId={selectedFormId}
-      />
+
     </Card>
   )
 }

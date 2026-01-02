@@ -75,6 +75,7 @@ export function useSSE<T = unknown>({
   const reconnectAttempts = useRef(0)
   const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const connectRef = useRef<() => void>(() => {})
+  const isIntentionalDisconnect = useRef(false) // Track intentional disconnections
 
   const scheduleReconnect = useCallback(() => {
     const hasAttemptsLeft =
@@ -105,6 +106,9 @@ export function useSSE<T = unknown>({
   // ============================================================================
 
   const disconnect = useCallback(() => {
+    // Mark this as an intentional disconnect to suppress error logging
+    isIntentionalDisconnect.current = true
+
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
@@ -123,6 +127,11 @@ export function useSSE<T = unknown>({
 
     setIsConnected(false)
     onDisconnect?.()
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isIntentionalDisconnect.current = false
+    }, 100)
   }, [onDisconnect])
 
   // ============================================================================
@@ -152,6 +161,9 @@ export function useSSE<T = unknown>({
       console.log('[useSSE] Connection skipped - enabled:', enabled, 'url:', url)
       return
     }
+
+    // Reset the intentional disconnect flag when starting a new connection
+    isIntentionalDisconnect.current = false
 
     // Close existing connection
     disconnect()
@@ -222,6 +234,13 @@ export function useSSE<T = unknown>({
       // ========================================================================
       eventSource.addEventListener('error', (event) => {
         const es = event.target as EventSource
+
+        // Don't log errors for intentional disconnections
+        if (isIntentionalDisconnect.current) {
+          console.log('[useSSE] Connection closed intentionally')
+          return
+        }
+
         console.error('[useSSE] SSE error occurred, readyState:', es.readyState)
 
         if (es.readyState === EventSource.CLOSED) {
