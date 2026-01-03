@@ -7,11 +7,9 @@ import {
   ClearOutlined,
   CompressOutlined,
   CopyOutlined,
-  DownOutlined,
   ExpandOutlined,
   PlusOutlined,
   SendOutlined,
-  UpOutlined,
 } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
 import { Button, message as antMessage,Select, Tooltip } from 'antd'
@@ -97,7 +95,6 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedCommand, setSelectedCommand] = useState<string>('')
-  const [isPanelExpanded, setIsPanelExpanded] = useState<boolean>(false)
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   const [currentHeight, setCurrentHeight] = useState<number>(120) // Track current height in pixels
   const [previousHeight, setPreviousHeight] = useState<number>(120) // Store previous height for restoration
@@ -254,7 +251,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           background: panelBackground,
           borderTop: `1px solid ${panelBorder}`,
           borderBottom: `1px solid ${panelBorder}`,
-          padding: 0,
+          padding: 4,
           boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.04)',
         }}
       >
@@ -348,105 +345,78 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               }}
             />
 
-            {/* Collapsible Command Panel */}
+            {/* Command Panel */}
             <div
               className="absolute inset-x-0 top-0"
               style={{
                 background: 'rgba(255, 255, 255, 0.98)',
-                borderBottom: isPanelExpanded ? '1px solid rgba(226, 232, 240, 0.8)' : 'none',
+                borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
                 backdropFilter: 'blur(8px)',
                 transition: 'all 0.2s ease',
               }}
             >
-              {/* Toggle Button */}
-              <div
-                className="flex cursor-pointer items-center justify-between px-3 py-2"
-                onClick={() => setIsPanelExpanded(!isPanelExpanded)}
-                style={{
-                  borderBottom: isPanelExpanded ? '1px solid rgba(226, 232, 240, 0.5)' : 'none',
-                }}
-              >
-                <span className="text-xs font-semibold text-gray-600">
-                  {isPanelExpanded ? 'Hide' : 'Show'} Command Panel
-                </span>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={isPanelExpanded ? <UpOutlined /> : <DownOutlined />}
-                  style={{
-                    fontSize: '10px',
-                    height: '20px',
-                    width: '20px',
-                    minWidth: '20px',
-                  }}
-                />
-              </div>
+              <div className="px-3 py-2" style={{ background: 'rgba(248, 250, 252, 0.95)' }}>
+                <div className="flex items-center gap-2">
+                  <span className="whitespace-nowrap text-xs text-gray-600">
+                    Inject Command:
+                  </span>
 
-              {/* Expanded Panel Content */}
-              {isPanelExpanded && (
-                <div className="px-3 py-2" style={{ background: 'rgba(248, 250, 252, 0.95)' }}>
-                  <div className="flex items-center gap-2">
-                    <span className="whitespace-nowrap text-xs text-gray-600">
-                      Inject Command:
-                    </span>
+                  {/* Category Selection */}
+                  <Select
+                    placeholder="Select category"
+                    value={selectedCategory}
+                    onChange={(value) => {
+                      setSelectedCategory(value)
+                      setSelectedCommand('')
+                    }}
+                    className="min-w-[200px]"
+                    size="small"
+                    allowClear
+                  >
+                    {categories.map((category) => (
+                      <Option key={category} value={category}>
+                        {category}
+                      </Option>
+                    ))}
+                  </Select>
 
-                    {/* Category Selection */}
-                    <Select
-                      placeholder="Select category"
-                      value={selectedCategory}
-                      onChange={(value) => {
-                        setSelectedCategory(value)
-                        setSelectedCommand('')
-                      }}
-                      className="min-w-[200px]"
-                      size="small"
-                      allowClear
-                    >
-                      {categories.map((category) => (
-                        <Option key={category} value={category}>
-                          {category}
-                        </Option>
-                      ))}
-                    </Select>
+                  {/* Command Selection */}
+                  <Select
+                    placeholder="Select command"
+                    value={selectedCommand}
+                    onChange={setSelectedCommand}
+                    className="min-w-[280px]"
+                    size="small"
+                    allowClear
+                    disabled={!selectedCategory}
+                  >
+                    {subagentsForCategory.map((subagent, index) => (
+                      <Option
+                        key={`${subagent.category}-${subagent.title}-${index}`}
+                        value={subagent.title}
+                      >
+                        {subagent.title}
+                      </Option>
+                    ))}
+                  </Select>
 
-                    {/* Command Selection */}
-                    <Select
-                      placeholder="Select command"
-                      value={selectedCommand}
-                      onChange={setSelectedCommand}
-                      className="min-w-[280px]"
-                      size="small"
-                      allowClear
-                      disabled={!selectedCategory}
-                    >
-                      {subagentsForCategory.map((subagent, index) => (
-                        <Option
-                          key={`${subagent.category}-${subagent.title}-${index}`}
-                          value={subagent.title}
-                        >
-                          {subagent.title}
-                        </Option>
-                      ))}
-                    </Select>
-
-                    {/* Inject Action Link */}
-                    <ActionLink
-                      icon={<PlusOutlined />}
-                      disabled={!selectedCommand}
-                      onClick={() => {
-                        const command = subagentsForCategory.find(
-                          (cmd) => cmd.title === selectedCommand
-                        )
-                        if (command) {
-                          injectSubagentCommand(command.subcommand)
-                        }
-                      }}
-                    >
-                      Add
-                    </ActionLink>
-                  </div>
+                  {/* Inject Action Link */}
+                  <ActionLink
+                    icon={<PlusOutlined />}
+                    disabled={!selectedCommand}
+                    onClick={() => {
+                      const command = subagentsForCategory.find(
+                        (cmd) => cmd.title === selectedCommand
+                      )
+                      if (command) {
+                        injectSubagentCommand(command.subcommand)
+                      }
+                    }}
+                  >
+                    Add
+                  </ActionLink>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Resize buttons in top-right corner */}

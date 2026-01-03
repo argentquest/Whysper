@@ -66,7 +66,6 @@ import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
 import type { Message } from '../../../types'
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
 import { DiagramInputControls } from '../components/DiagramInputControls'
-import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
 
@@ -380,12 +379,6 @@ export const SystemDescriptionScreen: React.FC<SystemDescriptionScreenProps> = (
           </div>
         )}
 
-        {/* Footer with connection status */}
-        <Footer
-          sessionId={sessionId}
-          sseConnected={sseConnected}
-          currentStatus={status?.status}
-        />
       </Layout.Content>
     </Layout >
   )

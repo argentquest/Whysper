@@ -16,7 +16,6 @@ import type { DiagramUpdate } from '../../../services/diagram/diagramApi'
 import type { Message } from '../../../types'
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
 import ExportModal from '../components/ExportModal'
-import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
 import ChatPanel from '../panels/Panel1_Chat'
 import PreviewPanel from '../panels/Panel2_Preview'
@@ -596,8 +595,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
           )}
         </div>
 
-        {/* Footer with Actions */}
-        <Footer sessionId={sessionId} sseConnected={sseConnected} currentStatus={status?.status} />
       </Layout.Content>
 
       {/* Export Modal */}

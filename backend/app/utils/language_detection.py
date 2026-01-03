@@ -32,8 +32,10 @@ File Extension Mapping:
 """
 
 from typing import Dict
+from common.logging_decorator import log_method_call
 
 
+@log_method_call
 def detect_language(code: str) -> str:
     """
     Detect the programming language of a code block using keyword analysis.
@@ -128,6 +130,7 @@ def detect_language(code: str) -> str:
         return "text"
 
 
+@log_method_call
 def generate_filename(language: str, index: int) -> str:
     """
     Generate a descriptive filename for an extracted code block.

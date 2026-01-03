@@ -3,6 +3,8 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List
+from common.logging_decorator import log_method_call
+
 
 class FormService:
     def __init__(self):
@@ -11,6 +13,7 @@ class FormService:
         os.makedirs(self.forms_directory, exist_ok=True)
         os.makedirs(self.submissions_directory, exist_ok=True)
 
+    @log_method_call
     def publish_form(self, form_data: Dict[str, Any]) -> str:
         """
         Publish a form and return the form_id
@@ -54,6 +57,7 @@ class FormService:
         with open(os.path.join(folder, "metadata.json"), "w") as f:
             json.dump(metadata, f, indent=2)
 
+    @log_method_call
     def get_published_forms(self) -> List[Dict[str, Any]]:
         """List all published forms with metadata"""
         forms = []
@@ -93,6 +97,7 @@ class FormService:
         forms.sort(key=lambda x: x.get("created_timestamp", ""), reverse=True)
         return forms
 
+    @log_method_call
     def submit_form(self, submission_data: Dict[str, Any]) -> str:
         """
         Submit form data and return submission_id
@@ -146,6 +151,7 @@ class FormService:
 
         return submission_id
 
+    @log_method_call
     def get_submissions(self) -> List[Dict[str, Any]]:
         """List all form submissions with metadata"""
         submissions = []
@@ -172,6 +178,7 @@ class FormService:
         submissions.sort(key=lambda x: x.get("created_timestamp", ""), reverse=True)
         return submissions
 
+    @log_method_call
     def get_submission(self, submission_id: str) -> Dict[str, Any]:
         """Get a single submission with all data"""
         submission_folder = os.path.join(self.submissions_directory, submission_id)
@@ -207,6 +214,7 @@ class FormService:
 
         return result
 
+    @log_method_call
     def edit_submission(self, old_submission_id: str, edit_data: Dict[str, Any]) -> str:
         """
         Edit a submission by creating a new version
@@ -253,6 +261,7 @@ class FormService:
 
         return new_submission_id
 
+    @log_method_call
     def get_submission_history(self, submission_id: str) -> List[Dict[str, Any]]:
         """
         Get version history for a submission

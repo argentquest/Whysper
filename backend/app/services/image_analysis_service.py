@@ -2,11 +2,14 @@ import base64
 import httpx
 from app.core.config import settings
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 logger = get_logger(__name__)
 
+
 class ImageAnalysisService:
     @staticmethod
+    @log_method_call
     async def analyze_infra_image(file_content: bytes, content_type: str) -> str:
         """
         Analyzes an infrastructure diagram image using a vision-capable LLM.

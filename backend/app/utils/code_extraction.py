@@ -27,8 +27,10 @@ import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from .language_detection import detect_language, generate_filename
+from common.logging_decorator import log_method_call
 
 
+@log_method_call
 def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict[str, Any]]:
     """
     Extract code blocks from text content using regex patterns.
@@ -110,6 +112,7 @@ def extract_code_blocks_from_content(content: str, message_id: str) -> List[Dict
     return code_blocks
 
 
+@log_method_call
 def clean_html_entities(text: str) -> str:
     """
     Clean up common HTML entities in text content.
@@ -130,6 +133,7 @@ def clean_html_entities(text: str) -> str:
     )
 
 
+@log_method_call
 def find_message_content(message_id: str, conversation_manager) -> Optional[str]:
     """
     Find message content by ID in conversation history.
@@ -149,6 +153,7 @@ def find_message_content(message_id: str, conversation_manager) -> Optional[str]
     return None
 
 
+@log_method_call
 def create_code_preview(code: str, max_lines: int = 3) -> str:
     """
     Create a preview of code content showing first few lines.

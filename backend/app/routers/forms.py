@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
 from app.services.form_service import FormService
+from common.logging_decorator import log_method_call
 
 router = APIRouter()
+
 
 class PublishFormRequest(BaseModel):
     form_name: str
@@ -14,17 +16,21 @@ class PublishFormRequest(BaseModel):
     ui_schema: Dict[str, Any]
     form_data: Dict[str, Any]  # Sample data
 
+
 class SubmitFormRequest(BaseModel):
     form_id: str
     form_data: Dict[str, Any]
     session_id: str
+
 
 class EditFormRequest(BaseModel):
     form_id: str
     form_data: Dict[str, Any]
     session_id: str
 
+
 @router.post("/publish")
+@log_method_call
 async def publish_form(request: PublishFormRequest):
     """Publish a new form definition"""
     service = FormService()
@@ -34,7 +40,9 @@ async def publish_form(request: PublishFormRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/published")
+@log_method_call
 async def get_published_forms():
     """List all published forms with metadata"""
     service = FormService()
@@ -43,7 +51,9 @@ async def get_published_forms():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/submit")
+@log_method_call
 async def submit_form(request: SubmitFormRequest):
     """Submit a form with user data"""
     service = FormService()
@@ -53,7 +63,9 @@ async def submit_form(request: SubmitFormRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/submissions")
+@log_method_call
 async def get_submissions():
     """List all form submissions"""
     service = FormService()
@@ -62,7 +74,9 @@ async def get_submissions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/submissions/{submission_id}")
+@log_method_call
 async def get_submission(submission_id: str):
     """Get a single submission by ID"""
     service = FormService()
@@ -73,7 +87,9 @@ async def get_submission(submission_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.put("/edit/{submission_id}")
+@log_method_call
 async def edit_submission(submission_id: str, request: EditFormRequest):
     """Edit an existing submission (creates new version)"""
     service = FormService()
@@ -85,7 +101,9 @@ async def edit_submission(submission_id: str, request: EditFormRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/submissions/history/{submission_id}")
+@log_method_call
 async def get_submission_history(submission_id: str):
     """Get version history for a submission"""
     service = FormService()

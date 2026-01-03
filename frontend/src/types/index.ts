@@ -130,6 +130,7 @@ export interface FileItem {
   type: 'file' | 'directory'
   is_uploaded?: boolean // Flag to indicate if this is an uploaded file
   content?: string // File content for uploaded files
+  date?: string // Original file date from GitHub (ISO string)
 }
 
 /**

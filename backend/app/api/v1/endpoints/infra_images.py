@@ -5,14 +5,18 @@ from pydantic import BaseModel
 from app.services.image_analysis_service import ImageAnalysisService
 from app.core.config import settings
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 router = APIRouter()
 logger = get_logger(__name__)
 
+
 class ImageAnalysisResponse(BaseModel):
     description: str
 
+
 @router.post("/analyze", response_model=ImageAnalysisResponse)
+@log_method_call
 async def analyze_image(file: UploadFile = File(...)):
     """
     Upload an infrastructure diagram image and get a text description 

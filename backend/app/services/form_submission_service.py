@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, List
 from fastapi import HTTPException
+from common.logging_decorator import log_method_call
 
 
 class FormSubmissionService:
@@ -12,6 +13,7 @@ class FormSubmissionService:
         self.forms_directory = "forms"
         os.makedirs(self.submissions_directory, exist_ok=True)
 
+    @log_method_call
     def submit_form(self, submission_data: Dict[str, Any]) -> str:
         """Submit a new form and return submission_id"""
         submission_id = f"submission-{uuid.uuid4().hex[:8]}"
@@ -61,6 +63,7 @@ class FormSubmissionService:
 
         return submission_id
 
+    @log_method_call
     def edit_form_submission(self, original_submission_id: str, submission_data: Dict[str, Any]) -> str:
         """Edit existing form submission, creates new version"""
         # Create new submission
@@ -111,6 +114,7 @@ class FormSubmissionService:
 
         return new_submission_id
 
+    @log_method_call
     def get_all_submissions(self) -> List[Dict[str, Any]]:
         """Get all form submissions with metadata"""
         submissions = []
@@ -136,6 +140,7 @@ class FormSubmissionService:
         submissions.sort(key=lambda x: x.get("submission_timestamp", ""), reverse=True)
         return submissions
 
+    @log_method_call
     def get_submission(self, submission_id: str) -> Dict[str, Any]:
         """Get specific form submission with data and metadata"""
         submission_folder = os.path.join(self.submissions_directory, submission_id)
@@ -177,6 +182,7 @@ class FormSubmissionService:
 
         return result
 
+    @log_method_call
     def get_version_history(self, root_submission_id: str) -> List[Dict[str, Any]]:
         """Get all versions of a submission (original and all edits)"""
         versions = []

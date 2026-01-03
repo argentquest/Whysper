@@ -39,7 +39,6 @@ import { Card, Col, Layout, Row, Spin, Table, Tag, Typography } from 'antd'
 import React from 'react'
 
 import DiagramWizardHeader from '../components/DiagramWizardHeader'
-import Footer from '../components/Footer'
 import styles from '../diagram-wizard.module.css'
 
 const { Title, Paragraph } = Typography
@@ -329,12 +328,6 @@ export const DiagramTypeSelectionScreen: React.FC<DiagramTypeSelectionScreenProp
         </div>
         </Spin>
 
-        {/* Footer with connection status */}
-        <Footer
-          sessionId={sessionId}
-          sseConnected={sseConnected}
-          currentStatus={loading ? 'analyzing' : undefined}
-        />
       </Layout.Content>
     </Layout>
   )

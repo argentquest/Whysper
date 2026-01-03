@@ -156,7 +156,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       children: (
         <div style={{ padding: '16px 24px 16px 16px', width: '100%', overflowY: 'auto', overflowX: 'hidden', minHeight: '400px' }}>
           {selectedForm ? (
-            <div style={{ width: '100%', wordWrap: 'break-word' }}>
+            <div className="rjsf" style={{ width: '100%', maxWidth: '100%', wordWrap: 'break-word' }}>
               <AntDForm
                 schema={selectedForm.schema || {}}
                 uiSchema={selectedForm.ui_schema || {}}

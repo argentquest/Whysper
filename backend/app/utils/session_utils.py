@@ -1,10 +1,12 @@
 from schemas import ConversationSummaryModel
 from common.logger import get_logger
+from common.logging_decorator import log_method_call
 
 # Initialize logger for tracking and debugging session-related operations
 logger = get_logger(__name__)
 
 
+@log_method_call
 def session_summary_model(session) -> ConversationSummaryModel:
     # Log the start of session summary conversion for debugging purposes
     logger.debug(f"Converting session summary for session: {session.session_id}")

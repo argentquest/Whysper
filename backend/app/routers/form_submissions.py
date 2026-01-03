@@ -2,15 +2,19 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
 from app.services.form_submission_service import FormSubmissionService
+from common.logging_decorator import log_method_call
 
 router = APIRouter()
+
 
 class SubmitFormRequest(BaseModel):
     form_id: str
     form_data: Dict[str, Any]
     session_id: str
 
+
 @router.post("/submit")
+@log_method_call
 async def submit_form(request: SubmitFormRequest):
     """Submit a new filled form"""
     service = FormSubmissionService()
@@ -20,7 +24,9 @@ async def submit_form(request: SubmitFormRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.put("/edit/{submission_id}")
+@log_method_call
 async def edit_form_submission(submission_id: str, request: SubmitFormRequest):
     """Edit an existing form submission (creates new version)"""
     service = FormSubmissionService()
@@ -30,7 +36,9 @@ async def edit_form_submission(submission_id: str, request: SubmitFormRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/submissions")
+@log_method_call
 async def get_form_submissions():
     """List all form submissions with metadata"""
     service = FormSubmissionService()
@@ -39,13 +47,17 @@ async def get_form_submissions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/submissions/{submission_id}")
+@log_method_call
 async def get_form_submission(submission_id: str):
     """Get specific form submission"""
     service = FormSubmissionService()
     return service.get_submission(submission_id)
 
+
 @router.get("/submissions/history/{root_submission_id}")
+@log_method_call
 async def get_submission_history(root_submission_id: str):
     """Get version history of a submission (all edits)"""
     service = FormSubmissionService()

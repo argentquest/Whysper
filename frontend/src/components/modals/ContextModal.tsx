@@ -2,6 +2,7 @@
  * ContextModal Component
  *
  * This module exports the ContextModal component for the application.
+ * Provides GitHub repository import and uploaded file selection for AI conversation context.
  */
 import {
   ApartmentOutlined,
@@ -12,15 +13,16 @@ import {
   UnorderedListOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Checkbox, Input, message, Segmented, Select, Space, Spin, Typography } from 'antd'
+import { Button, Checkbox, Dropdown, Input, Menu, message, Segmented, Space, Spin, Typography } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 
 import ApiService from '../../services/api'
 import type { FileItem, UploadedFile } from '../../types'
 import { Modal } from '../common/Modal'
 import FileTreeModal from './FileTreeModal'
+import type { ProgressEvent } from '../../services/sseClient'
+import { getApiBaseUrl } from '../../utils/apiBase'
 
-const { Option } = Select
 const { Search } = Input
 const { Text } = Typography
 
@@ -48,19 +50,17 @@ interface ContextModalProps {
 /**
  * ContextModal Component
  *
- * A comprehensive file selection modal that provides multiple ways to select files for AI conversation context:
- * - List view: Traditional file listing with search and filtering
- * - Tree view: Hierarchical directory navigation (delegated to FileTreeModal)
+ * A file selection modal for AI conversation context that supports:
+ * - GitHub repository import: Import code from public GitHub repositories
  * - Uploaded files view: Files uploaded in the current session
  *
  * Features:
- * - Multi-view mode interface (List, Tree, Uploaded)
- * - File upload functionality with drag-and-drop support
- * - Directory navigation and filtering
+ * - GitHub repository import with branch/tag and subpath support
+ * - File upload functionality with session-based organization
  * - Batch file selection with select all/none options
  * - File size formatting and type detection
  * - Real-time file selection tracking
- * - Integration with backend file system API
+ * - Session-based file organization using GUIDs
  *
  * @param {ContextModalProps} props - Component props
  * @returns {JSX.Element} Rendered context selection modal
@@ -74,13 +74,11 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   onApply,
   initialFiles = [],
 }) => {
-  // View mode state: 'list', 'tree', or 'uploaded'
-  const [viewMode, setViewMode] = useState<'list' | 'tree' | 'uploaded'>('list')
+  // View mode state: 'github', 'tree', or 'uploaded'
+  const [viewMode, setViewMode] = useState<'github' | 'tree' | 'uploaded'>('github')
   const [loading, setLoading] = useState(false)
   const [files, setFiles] = useState<FileItem[]>([])
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
-  const [searchTerm, setSearchTerm] = useState('')
-  const [currentDirectory, setCurrentDirectory] = useState('Root (All Files)')
   const [uploadedFiles, setUploadedFiles] = useState<FileItem[]>([])
   const [uploadLoading, setUploadLoading] = useState(false)
   const [importLoading, setImportLoading] = useState(false)
@@ -88,6 +86,11 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   const [githubRef, setGithubRef] = useState('main')
   const [githubSubpath, setGithubSubpath] = useState('')
   const [lastImportedPath, setLastImportedPath] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string>('')
+  const [githubProgress, setGithubProgress] = useState<ProgressEvent | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [fileTypeFilter, setFileTypeFilter] = useState<string>('all')
+  const [sizeFilter, setSizeFilter] = useState<'all' | 'small' | 'medium' | 'large'>('all')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   /**
@@ -101,6 +104,27 @@ export const ContextModal: React.FC<ContextModalProps> = ({
       setSelectedFiles(new Set(initialFiles.map((f) => f.path)))
     }
   }, [initialFiles])
+
+  /**
+   * Generate unique session ID when modal opens for the first time
+   * Used for organizing session-specific data like uploads
+   * Format: YYYY-MM-DD-xxxxxxxxxxxx
+   */
+  useEffect(() => {
+    if (open && !sessionId) {
+      const generateGUID = () => {
+        const today = new Date()
+        const datePrefix = today.toISOString().split('T')[0] // YYYY-MM-DD
+        const guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0
+          const v = c === 'x' ? r : (r & 0x3 | 0x8)
+          return v.toString(16)
+        })
+        return `${datePrefix}-${guid}`
+      }
+      setSessionId(generateGUID())
+    }
+  }, [open, sessionId])
 
   /**
    * Load files from backend when modal opens
@@ -139,6 +163,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
       type: item.type === 'directory' ? 'directory' : 'file',
       is_uploaded: item.is_uploaded,
       content: item.content,
+      date: item.modifiedTime || item.date, // Use modifiedTime from backend or fallback to date field
     }))
 
   const loadFiles = async () => {
@@ -176,32 +201,6 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     }
   }
 
-  /**
-   * Loads files from a specific directory
-   * Updates current directory state and fetches files for that path
-   *
-   * @param {string} [path] - Directory path to load, undefined for root
-   * @async
-   * @returns {Promise<void>}
-   */
-  const loadDirectory = async (path?: string) => {
-    setLoading(true)
-    try {
-      const response = await ApiService.getFiles(path === 'Root (All Files)' ? undefined : path)
-      if (response.success && response.data) {
-        setFiles(normalizeFileItems(response.data))
-        setCurrentDirectory(path || 'Root (All Files)')
-        message.success('Directory loaded successfully')
-      } else {
-        message.error(response.error || 'Failed to load directory')
-      }
-    } catch (error) {
-      message.error('Error loading directory')
-      console.error('Error loading directory:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   /**
    * Handles file upload functionality
@@ -230,10 +229,10 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         })
       }
 
-      // Upload files to backend
+      // Upload files to backend using session-specific subfolder
       const response = await ApiService.uploadFiles({
         files: uploadedFiles,
-        target_directory: 'uploads',
+        target_directory: `uploads/${sessionId}`,
       })
 
       if (response.success && response.data) {
@@ -283,21 +282,90 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   }
 
   /**
-   * Filters files based on search term
-   * Searches both file name and path for matches
+   * Performs fuzzy search on text
+   * Returns true if search term matches with some tolerance for typos
+   *
+   * @param {string} text - Text to search in
+   * @param {string} searchTerm - Term to search for
+   * @returns {boolean} Whether the search term fuzzy matches the text
+   */
+  const fuzzyMatch = (text: string, searchTerm: string): boolean => {
+    if (!searchTerm) return true
+    const textLower = text.toLowerCase()
+    const termLower = searchTerm.toLowerCase()
+
+    // Exact match
+    if (textLower.includes(termLower)) return true
+
+    // Fuzzy match: check if all characters of search term appear in order
+    let textIndex = 0
+    for (let i = 0; i < termLower.length; i++) {
+      const char = termLower[i]
+      const foundIndex = textLower.indexOf(char, textIndex)
+      if (foundIndex === -1) return false
+      textIndex = foundIndex + 1
+    }
+    return true
+  }
+
+  /**
+   * Gets file extension from file name
+   *
+   * @param {string} fileName - Name of the file
+   * @returns {string} File extension (lowercase)
+   */
+  const getFileExtension = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || ''
+    return ext
+  }
+
+  /**
+   * Checks if file size matches the size filter
+   *
+   * @param {number} size - File size in bytes
+   * @param {'all' | 'small' | 'medium' | 'large'} filter - Size filter
+   * @returns {boolean} Whether file size matches filter
+   */
+  const matchesSizeFilter = (size: number, filter: 'all' | 'small' | 'medium' | 'large'): boolean => {
+    if (filter === 'all') return true
+    const kb = size / 1024
+    switch (filter) {
+      case 'small': return kb < 10
+      case 'medium': return kb >= 10 && kb < 100
+      case 'large': return kb >= 100
+      default: return true
+    }
+  }
+
+  /**
+   * Filters files based on search term, file type, and size
+   * Uses fuzzy matching for search and applies multiple filters
    *
    * @param {FileItem[]} files - Array of files to filter
    * @returns {FileItem[]} Filtered array of files
    */
-  const filteredFiles = files.filter(
-    (file) =>
-      file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.path.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredFiles = files.filter((file) => {
+    // Search filter with fuzzy matching
+    const matchesSearch = fuzzyMatch(file.name, searchTerm) || fuzzyMatch(file.path, searchTerm)
+
+    // File type filter
+    const extension = getFileExtension(file.name)
+    const matchesType = fileTypeFilter === 'all' ||
+      (fileTypeFilter === 'code' && ['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'c', 'h', 'hpp', 'cs', 'php', 'rb', 'go', 'rs'].includes(extension)) ||
+      (fileTypeFilter === 'config' && ['json', 'yml', 'yaml', 'xml', 'ini', 'cfg', 'conf', 'toml', 'env'].includes(extension)) ||
+      (fileTypeFilter === 'text' && ['txt', 'md', 'rst', 'adoc'].includes(extension)) ||
+      (fileTypeFilter === 'image' && ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(extension)) ||
+      extension === fileTypeFilter
+
+    // Size filter
+    const matchesSize = matchesSizeFilter(file.size, sizeFilter)
+
+    return matchesSearch && matchesType && matchesSize
+  })
 
   /**
    * Handles individual file selection/deselection
-   * Updates selected files set and provides debug logging
+   * Updates selected files set
    *
    * @param {string} filePath - Path of the file to toggle
    * @param {boolean} checked - Whether the file should be selected
@@ -306,14 +374,10 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     const newSelected = new Set(selectedFiles)
     if (checked) {
       newSelected.add(filePath)
-      console.log('🔍 File selected:', filePath)
     } else {
       newSelected.delete(filePath)
-      console.log('🔍 File deselected:', filePath)
     }
     setSelectedFiles(newSelected)
-    console.log('🔍 Total selected files count:', newSelected.size)
-    console.log('🔍 Selected files paths:', Array.from(newSelected))
   }
 
   /**
@@ -347,6 +411,42 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   }
 
   /**
+   * Formats date string for display
+   * Shows relative time for recent dates, absolute date for older ones
+   *
+   * @param {string} dateString - ISO date string
+   * @returns {string} Formatted date string
+   */
+  const formatFileDate = (dateString: string) => {
+    if (!dateString) return '-'
+
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffMs = now.getTime() - date.getTime()
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+      if (diffDays === 0) {
+        return 'Today'
+      } else if (diffDays === 1) {
+        return 'Yesterday'
+      } else if (diffDays < 7) {
+        return `${diffDays} days ago`
+      } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7)
+        return `${weeks} week${weeks !== 1 ? 's' : ''} ago`
+      } else if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30)
+        return `${months} month${months !== 1 ? 's' : ''} ago`
+      } else {
+        return date.toLocaleDateString()
+      }
+    } catch {
+      return dateString
+    }
+  }
+
+  /**
    * Returns appropriate icon component for file type
    *
    * @param {FileItem} file - File item to get icon for
@@ -372,22 +472,13 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     const allFiles = [...files, ...uploadedFiles]
     const selectedFileItems = allFiles.filter((file) => selectedFiles.has(file.path))
 
-    // Debug logging to track the issue
-    console.log('🔍 ContextModal handleApply debug:')
-    console.log('🔍 Total files available:', allFiles.length)
-    console.log('🔍 Selected files paths:', Array.from(selectedFiles))
-    console.log(
-      '🔍 Selected file items:',
-      selectedFileItems.map((f) => ({ path: f.path, name: f.name }))
-    )
-
     onApply(selectedFileItems)
     onCancel()
   }
 
   /**
-   * Handles importing a public GitHub repository
-   * Fetches repository tarball, caches it locally, and loads files into the picker
+   * Handles importing a public GitHub repository with progress feedback
+   * Uses SSE to provide real-time progress updates during file download and caching
    *
    * @async
    * @returns {Promise<void>}
@@ -397,53 +488,100 @@ export const ContextModal: React.FC<ContextModalProps> = ({
       message.warning('Enter a repository in owner/repo or GitHub URL form')
       return
     }
+
     setImportLoading(true)
+    setGithubProgress(null)
+
     try {
-      const response = await ApiService.importGitHubRepo({
-        repository: githubRepo.trim(),
-        ref: githubRef.trim() || 'main',
-        subpath: githubSubpath.trim() || undefined,
+      const API_BASE_URL = getApiBaseUrl()
+      const controller = new AbortController()
+      const signal = controller.signal
+
+      // Start SSE connection for progress updates
+      const sseResponse = await fetch(`${API_BASE_URL}/stream/github-import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repository: githubRepo.trim(),
+          ref: githubRef.trim() || 'main',
+          subpath: githubSubpath.trim() || undefined,
+          session_id: sessionId,
+        }),
+        signal,
       })
 
-      if (response.success && response.data) {
-        const normalized = normalizeFileItems(response.data.files || [])
-        setFiles(normalized)
-        setCurrentDirectory(response.data.scanPath || 'GitHub import')
-        setLastImportedPath(response.data.scanPath || response.data.rootPath || null)
-        setSelectedFiles(new Set())
-        message.success(response.data.message || 'Repository imported')
-      } else {
-        message.error(response.error || 'Failed to import repository')
+      if (!sseResponse.ok) {
+        throw new Error(`HTTP ${sseResponse.status}: ${sseResponse.statusText}`)
+      }
+
+      if (!sseResponse.body) {
+        throw new Error('Response body is null')
+      }
+
+      const reader = sseResponse.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const events = buffer.split('\n\n')
+        buffer = events.pop() || ''
+
+        for (const eventText of events) {
+          if (!eventText.trim()) continue
+
+          try {
+            const lines = eventText.split('\n')
+            let eventType = 'message'
+            let eventData = ''
+
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.substring(6).trim()
+              } else if (line.startsWith('data:')) {
+                eventData = line.substring(5).trim()
+              }
+            }
+
+            const data = JSON.parse(eventData)
+
+            if (eventType === 'progress') {
+              setGithubProgress(data as ProgressEvent)
+            } else if (eventType === 'complete') {
+              const normalized = normalizeFileItems(data.files || [])
+              setFiles(normalized)
+              setLastImportedPath(data.scanPath || data.rootPath || null)
+              setSelectedFiles(new Set())
+              message.success(data.message || 'Repository imported successfully')
+              setGithubProgress(null)
+              break
+            } else if (eventType === 'error') {
+              message.error(data.error || 'Failed to import repository')
+              setGithubProgress(null)
+              break
+            }
+          } catch (error) {
+            console.error('Failed to parse GitHub import event:', eventText, error)
+          }
+        }
       }
     } catch (error) {
-      console.error('Error importing GitHub repo:', error)
-      message.error('Error importing GitHub repository')
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error importing GitHub repo:', error)
+        message.error('Error importing GitHub repository')
+        setGithubProgress(null)
+      }
     } finally {
       setImportLoading(false)
     }
   }
 
-  /**
-   * Predefined directory options for quick navigation
-   * Common project directories for easy access
-   */
-  const directoryOptions = [
-    'Root (All Files)',
-    'backend/',
-    'backend/app/',
-    'backend/app/api/v1/endpoints/',
-    'backend/app/services/',
-    'backend/app/utils/',
-    'backend/common/',
-    'backend/tests/',
-    'frontend/',
-    'frontend/src/',
-    'frontend/src/components/',
-    'frontend/src/services/',
-    'frontend/src/types/',
-    'prompts/',
-    'prompts/coding/agent/',
-  ]
 
   // If tree view mode is selected, render the FileTreeModal
   if (viewMode === 'tree') {
@@ -458,7 +596,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
     )
   }
 
-  // Use uploaded files for the uploaded view mode
+  // Use appropriate files based on view mode
   const displayFiles = viewMode === 'uploaded' ? uploadedFiles : files
 
   // Otherwise render the list view
@@ -477,12 +615,12 @@ export const ContextModal: React.FC<ContextModalProps> = ({
         <div className="flex items-center justify-between">
           <Segmented
             value={viewMode}
-            onChange={(value) => setViewMode(value as 'list' | 'tree' | 'uploaded')}
+            onChange={(value) => setViewMode(value as 'github' | 'tree' | 'uploaded')}
             options={[
               {
-                label: 'List View',
-                value: 'list',
-                icon: <UnorderedListOutlined />,
+                label: 'GitHub Import',
+                value: 'github',
+                icon: <ApartmentOutlined />,
               },
               {
                 label: 'Tree View',
@@ -498,8 +636,8 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           />
         </div>
 
-        {/* GitHub import & Upload controls */}
-        {String(viewMode) !== 'tree' && (
+        {/* GitHub import controls */}
+        {viewMode === 'github' && (
           <div className="space-y-3">
             <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
               <Text className="mb-2 block text-sm font-medium">Import public GitHub repository</Text>
@@ -541,6 +679,21 @@ export const ContextModal: React.FC<ContextModalProps> = ({
               )}
             </div>
 
+            {/* Progress Display */}
+            {githubProgress && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Spin size="small" />
+                  <Text className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    {githubProgress.stage}
+                  </Text>
+                </div>
+                <Text className="text-sm text-blue-700 dark:text-blue-300">
+                  {githubProgress.message}
+                </Text>
+              </div>
+            )}
+
             <div className="flex items-center gap-4">
               <Button
                 type="primary"
@@ -568,52 +721,24 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                   e.target.value = ''
                 }}
               />
-              {viewMode === 'uploaded' && (
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={loadUploadedFiles}
-                  loading={loading}
-                  className="mb-4"
-                >
-                  Refresh
-                </Button>
-              )}
             </div>
           </div>
         )}
 
-        {/* Directory Selection - Hide in uploaded view */}
-        {viewMode !== 'uploaded' && (
+        {/* Upload controls for uploaded view */}
+        {viewMode === 'uploaded' && (
           <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <Text className="mb-2 block text-sm font-medium">Select Folder</Text>
-              <Select
-                value={currentDirectory}
-                onChange={(value) => {
-                  setCurrentDirectory(value)
-                  loadDirectory(value)
-                }}
-                className="w-full"
-                placeholder="Choose directory"
-              >
-                {directoryOptions.map((dir) => (
-                  <Option key={dir} value={dir}>
-                    {dir}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => loadDirectory(currentDirectory)}
+              onClick={loadUploadedFiles}
               loading={loading}
-              className="mt-6"
+              className="mb-4"
             >
-              Load Directory
+              Refresh
             </Button>
           </div>
         )}
+
 
         {/* File Selection Status */}
         <div className="flex items-center justify-between border-b border-gray-200 py-2 dark:border-gray-700">
@@ -630,7 +755,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
           </Text>
         </div>
 
-        {/* File Actions - Hide search in uploaded view */}
+        {/* File Actions */}
         <div className="flex items-center justify-between">
           <Space>
             <Button onClick={handleSelectAll} size="small" disabled={displayFiles.length === 0}>
@@ -641,25 +766,57 @@ export const ContextModal: React.FC<ContextModalProps> = ({
             </Button>
           </Space>
 
-          {viewMode !== 'uploaded' && (
-            <Search
-              placeholder="Filter files..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
-              size="small"
-            />
-          )}
+          {(viewMode === 'github' && (
+            <Space>
+              <Search
+                placeholder="Filter files..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48"
+                size="small"
+              />
+              <Dropdown
+                overlay={
+                  <Menu>
+                    <Menu.SubMenu title="File Type">
+                      <Menu.Item onClick={() => setFileTypeFilter('all')}>All Files</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('code')}>Code Files</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('config')}>Config Files</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('text')}>Text Files</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('image')}>Images</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('js')}>JavaScript</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('ts')}>TypeScript</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('py')}>Python</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('json')}>JSON</Menu.Item>
+                      <Menu.Item onClick={() => setFileTypeFilter('md')}>Markdown</Menu.Item>
+                    </Menu.SubMenu>
+                    <Menu.SubMenu title="File Size">
+                      <Menu.Item onClick={() => setSizeFilter('all')}>All Sizes</Menu.Item>
+                      <Menu.Item onClick={() => setSizeFilter('small')}>Small Less 10KB</Menu.Item>
+                      <Menu.Item onClick={() => setSizeFilter('medium')}>Medium 10KB - 100KB</Menu.Item>
+                      <Menu.Item onClick={() => setSizeFilter('large')}>Large More 100KB</Menu.Item>
+                    </Menu.SubMenu>
+                  </Menu>
+                }
+                trigger={['click']}
+              >
+                <Button size="small" icon={<UnorderedListOutlined />}>
+                  Filters {(fileTypeFilter !== 'all' || sizeFilter !== 'all') && '•'}
+                </Button>
+              </Dropdown>
+            </Space>
+          ))}
         </div>
 
         {/* File List */}
         <div className="rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
             <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-600 dark:text-gray-400">
-              <div className="col-span-7">
+              <div className="col-span-5">
                 {viewMode === 'uploaded' ? 'File Name' : 'File Path'}
               </div>
-              <div className="col-span-3">Size</div>
+              <div className="col-span-2">Size</div>
+              <div className="col-span-3">Date</div>
               <div className="col-span-2 text-right">Type</div>
             </div>
           </div>
@@ -679,7 +836,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                   key={file.path}
                   className="grid grid-cols-12 gap-4 border-b border-gray-100 px-4 py-1.5 last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
                 >
-                  <div className="col-span-7 flex items-center gap-2">
+                  <div className="col-span-5 flex items-center gap-2">
                     <Checkbox
                       checked={selectedFiles.has(file.path)}
                       onChange={(e) => handleFileToggle(file.path, e.target.checked)}
@@ -695,8 +852,12 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                     )}
                   </div>
 
-                  <div className="col-span-3 flex items-center">
+                  <div className="col-span-2 flex items-center">
                     <Text className="text-xs text-gray-500">{formatFileSize(file.size)}</Text>
+                  </div>
+
+                  <div className="col-span-3 flex items-center">
+                    <Text className="text-xs text-gray-500">{formatFileDate(file.date || '')}</Text>
                   </div>
 
                   <div className="col-span-2 flex items-center justify-end">

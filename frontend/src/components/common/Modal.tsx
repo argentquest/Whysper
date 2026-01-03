@@ -44,7 +44,6 @@ export const Modal: React.FC<ModalProps> = ({
       ? null
       : footer || (
           <div className="flex justify-end gap-2">
-            // Render cancel button with configurable text
             <Button onClick={onCancel}>{cancelText}</Button>
             // Conditionally render OK button with optional loading state
             {onOk && (

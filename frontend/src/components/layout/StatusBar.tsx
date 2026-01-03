@@ -251,7 +251,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const logHistoryContent = (
     <div style={{ width: '1000px', maxHeight: '600px', overflowY: 'auto' }}>
       {logHistory.length === 0 ? (
-        <Text style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>No logs yet</Text>
+        <Text style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>No logs yet</Text>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {[...logHistory].reverse().map((log, index) => (
@@ -265,12 +265,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               }}
             >
               <div style={{ display: 'flex', gap: '8px', marginBottom: '2px' }}>
-                <Text style={{ fontSize: '10px', color: '#64748b', fontFamily: 'monospace' }}>
+                <Text style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace' }}>
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </Text>
                 <Text
                   style={{
-                    fontSize: '10px',
+                    fontSize: '12px',
                     color: log.level === 'INFO' ? '#10b981' : '#ef4444',
                     fontWeight: 600,
                   }}
@@ -280,7 +280,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </div>
               <Text
                 style={{
-                  fontSize: '11px',
+                  fontSize: '12px',
                   color: '#1e293b',
                   fontFamily: 'monospace',
                   display: 'block',
@@ -290,7 +290,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               </Text>
               <Text
                 style={{
-                  fontSize: '9px',
+                  fontSize: '12px',
                   color: '#94a3b8',
                   fontStyle: 'italic',
                   display: 'block',
