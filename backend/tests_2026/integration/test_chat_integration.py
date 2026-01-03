@@ -1,5 +1,5 @@
 import pytest
-from backend.tests_2026.integration.utils import skip_if_no_api_key, get_api_key
+from backend.tests_2026.integration.utils import skip_if_no_api_key, get_api_key, api_client
 
 @skip_if_no_api_key()
 class TestChatIntegration:
@@ -28,17 +28,9 @@ class TestChatIntegration:
 
     @pytest.mark.asyncio
     async def test_chat_streaming(self):
-        """Test streaming chat response (requires running server or async client)."""
-        # Note: TestClient doesn't support streaming well for SSE usually,
-        # so we might skip strict SSE validation here or use httpx against a live server if configured.
-        # For integration tests within the app, we can use TestClient but checking streaming is tricky.
-        # We will do a basic check that it returns 200 and correct media type.
-
-        # We need to import the app to use TestClient
+        """Test streaming chat response using AsyncClient."""
         from app.main import app
-        from fastapi.testclient import TestClient
-
-        client = TestClient(app)
+        from httpx import AsyncClient, ASGITransport
 
         payload = {
             "message": "Count to 3",
@@ -48,16 +40,20 @@ class TestChatIntegration:
             }
         }
 
-        # We use stream=True
-        with client.stream("POST", "/api/v1/chat/stream", json=payload) as response:
-            assert response.status_code == 200
-            # Check for SSE headers
-            assert "text/event-stream" in response.headers["content-type"]
+        # Use AsyncClient for proper streaming support with async endpoints
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            async with ac.stream("POST", "/api/v1/chat/stream", json=payload) as response:
+                assert response.status_code == 200
+                assert "text/event-stream" in response.headers["content-type"]
 
-            # Read a few lines to verify data format
-            lines = list(response.iter_lines())
-            assert len(lines) > 0
+                lines = []
+                async for line in response.aiter_lines():
+                    if line:
+                        lines.append(line)
 
-            # Check for at least one "event: progress" or "event: connected"
-            has_event = any(b"event:" in line for line in lines)
-            assert has_event
+                print(f"DEBUG: Lines received: {lines}")
+                assert len(lines) > 0
+
+                # Check for at least one "event: progress" or "event: connected"
+                has_event = any("event:" in line for line in lines)
+                assert has_event

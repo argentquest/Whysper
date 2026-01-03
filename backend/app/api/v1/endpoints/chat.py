@@ -365,9 +365,21 @@ async def send_chat_message_stream(request: ChatRequest):
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 }
 
-                history_service.save_conversation(
+                # Load existing conversation history to accumulate messages
+                existing_history = history_service.load_conversation_history(conversation_id)
+                if existing_history and "messages" in existing_history:
+                    # Append new messages to existing ones
+                    all_messages = existing_history["messages"] + [
+                        user_message,
+                        response_message,
+                    ]
+                else:
+                    # First messages in conversation
+                    all_messages = [user_message, response_message]
+
+                history_service.save_conversation_history(
                     conversation_id=conversation_id,
-                    messages=[user_message, response_message],
+                    messages=all_messages,
                 )
             except Exception as e:
                 logger.info(f"Failed to save conversation history: {str(e)}")
