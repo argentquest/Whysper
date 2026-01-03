@@ -70,10 +70,9 @@ import { Button, Card, Empty, List, message, Spin, Tabs, Tag, Tooltip } from 'an
 import * as monaco from 'monaco-editor'
 import React, { useEffect, useRef, useState } from 'react'
 
-
+import { DiagramInputControls } from '../components/DiagramInputControls'
 import JsonPreview from '../components/JsonPreview'
 import styles from '../diagram-wizard.module.css'
-import { DiagramInputControls } from '../components/DiagramInputControls'
 
 /**
  * Represents a single message in the conversation

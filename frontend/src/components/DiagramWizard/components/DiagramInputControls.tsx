@@ -3,8 +3,8 @@ import { Button, message, Select } from 'antd'
 import React, { useEffect, useState } from 'react'
 
 import ApiService from '../../../services/api'
-import FormRenderer from '../../forms/FormRenderer'
 import { formatFormDataForPrompt } from '../../../utils/formDataFormatters'
+import FormRenderer from '../../forms/FormRenderer'
 import { ImageAnalysisButton } from './ImageAnalysisButton'
 
 interface DiagramInputControlsProps {

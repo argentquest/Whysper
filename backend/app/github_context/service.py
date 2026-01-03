@@ -115,6 +115,7 @@ class GitHubContextService:
         repository: str,
         ref: Optional[str] = None,
         subpath: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> GitHubImportResult:
         """
         Import a public GitHub repository and prepare it for Set Context.
@@ -167,7 +168,7 @@ class GitHubContextService:
         spec: RepoSpec = parse_repository(repository, ref)
 
         # Download and extract (or use cached version)
-        repo_dir = download_and_extract_repo(spec, self.cache_dir)
+        repo_dir = download_and_extract_repo(spec, self.cache_dir, session_id)
 
         # Determine scan path (full repo or subpath)
         scan_path = repo_dir / subpath if subpath else repo_dir

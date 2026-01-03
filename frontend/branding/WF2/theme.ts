@@ -6,19 +6,18 @@
 
 import type { ThemeConfig } from 'antd';
 
-import { WFColors } from './colors';
-
+import wfSansBdWoff from './assets/fonts/wellsfargosans-bd.woff';
+import wfSansBdWoff2 from './assets/fonts/wellsfargosans-bd.woff2';
+import wfSansLtWoff from './assets/fonts/wellsfargosans-lt.woff';
+import wfSansLtWoff2 from './assets/fonts/wellsfargosans-lt.woff2';
+import wfSansRgWoff from './assets/fonts/wellsfargosans-rg.woff';
 // Import font files so Vite can process them
 import wfSansRgWoff2 from './assets/fonts/wellsfargosans-rg.woff2';
-import wfSansRgWoff from './assets/fonts/wellsfargosans-rg.woff';
-import wfSansLtWoff2 from './assets/fonts/wellsfargosans-lt.woff2';
-import wfSansLtWoff from './assets/fonts/wellsfargosans-lt.woff';
-import wfSansSbdWoff2 from './assets/fonts/wellsfargosans-sbd.woff2';
 import wfSansSbdWoff from './assets/fonts/wellsfargosans-sbd.woff';
-import wfSansBdWoff2 from './assets/fonts/wellsfargosans-bd.woff2';
-import wfSansBdWoff from './assets/fonts/wellsfargosans-bd.woff';
-import wfSourceSansItWoff2 from './assets/fonts/wellsfargosourcesans-it.woff2';
+import wfSansSbdWoff2 from './assets/fonts/wellsfargosans-sbd.woff2';
 import wfSourceSansItWoff from './assets/fonts/wellsfargosourcesans-it.woff';
+import wfSourceSansItWoff2 from './assets/fonts/wellsfargosourcesans-it.woff2';
+import { WFColors } from './colors';
 
 type BrandTokenOverrides = NonNullable<ThemeConfig['token']> & Record<string, string | number>;
 

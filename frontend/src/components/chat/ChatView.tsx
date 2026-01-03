@@ -1422,12 +1422,83 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onShowCode }) => {
  * @property {boolean} [loading] - Whether the assistant is typing
  * @property {Function} [onShowCode] - Callback when a code block is opened
  * @property {Function} onExtractCode - Callback to extract code from a message
+ * @property {number} contextFileCount - Number of files in context
+ * @property {Function} [onSetContext] - Callback to open context modal
  */
 interface ChatViewProps {
   messages: Message[]
   loading?: boolean
   onShowCode?: (code: string, language: string, title?: string) => void
   onExtractCode: (messageId: string) => void
+  contextFileCount: number
+  onSetContext?: () => void
+}
+
+/**
+ * ContextIndicator component
+ *
+ * Displays file context status and provides button to set context
+ */
+const ContextIndicator: React.FC<{
+  fileCount: number
+  onSetContext?: () => void
+}> = ({ fileCount, onSetContext }) => {
+  const hasContext = fileCount > 0
+
+  return (
+    <div
+      style={{
+        background: 'rgba(255, 255, 255, 0.98)',
+        borderBottom: '1px solid #e8e8e8',
+        padding: '8px 24px',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 5,
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xs font-medium tracking-wide"
+            style={{
+              color: hasContext ? '#52c41a' : '#ff4d4f',
+              letterSpacing: '0.5px',
+            }}
+          >
+            {hasContext ? '📁 CONTEXT ACTIVE' : '📁 NO CONTEXT'}
+          </span>
+          {hasContext && (
+            <span
+              className="text-xs font-semibold"
+              style={{
+                color: '#1890ff',
+                background: 'rgba(24, 144, 255, 0.1)',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                border: '1px solid rgba(24, 144, 255, 0.2)',
+              }}
+            >
+              {fileCount} file{fileCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <Button
+          type="default"
+          size="small"
+          onClick={onSetContext}
+          style={{
+            fontSize: '12px',
+            height: '28px',
+            borderRadius: '6px',
+          }}
+        >
+          Set Context
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -1443,7 +1514,13 @@ interface ChatViewProps {
  * @param {ChatViewProps} props - Component props
  * @returns {JSX.Element} Rendered chat view
  */
-export const ChatView: React.FC<ChatViewProps> = ({ messages, loading = false, onShowCode }) => {
+export const ChatView: React.FC<ChatViewProps> = ({
+  messages,
+  loading = false,
+  onShowCode,
+  contextFileCount,
+  onSetContext
+}) => {
   const { theme } = useTheme()
   const chatEndRef = useRef<HTMLDivElement>(null)
   const assistantHeaderColor =
@@ -1491,6 +1568,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, loading = false, o
   return (
     <div className="flex-1 overflow-y-auto" style={getChatViewStyles()}>
       <div className="w-full px-0">
+        <ContextIndicator
+          fileCount={contextFileCount}
+          onSetContext={onSetContext}
+        />
         {messages.map((message) => (
           <MessageItem key={message.id} message={message} onShowCode={onShowCode} />
         ))}

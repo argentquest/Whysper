@@ -1,6 +1,6 @@
-import { Modal, Timeline, Button, Space, Typography, Divider } from 'antd';
-import React from 'react';
 import { ClockCircleOutlined, EditOutlined, FileAddOutlined } from '@ant-design/icons';
+import { Button, Divider,Modal, Space, Timeline, Typography } from 'antd';
+import React from 'react';
 
 const { Text, Title } = Typography;
 

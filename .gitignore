@@ -13,6 +13,8 @@ backend/static/d2_diagrams/
 backend/static/assets/
 backend/certs/
 backend/UserFormData/
+backend/app/github_context/cache
+/GitHubCache/
 # =============================================================================
 # PYTHON
 # =============================================================================

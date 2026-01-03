@@ -14,6 +14,7 @@ API Versioning:
 """
 
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 
 from app.github_context.fetch import GitHubFetchError
 from app.github_context.service import github_context_service
@@ -23,6 +24,11 @@ from schemas import GitHubImportRequest, GitHubImportResponse
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+
+class GitHubImportExtendedRequest(GitHubImportRequest):
+    """Extended request model with optional session_id"""
+    session_id: Optional[str] = None
 
 
 @router.post(
@@ -61,7 +67,7 @@ router = APIRouter()
     tags=["GitHub Context"]
 )
 @log_method_call
-def import_github_repository(request: GitHubImportRequest):
+def import_github_repository(request: GitHubImportExtendedRequest):
     """
     Import a public GitHub repository and prepare it for Set Context selection.
 
@@ -117,6 +123,7 @@ def import_github_repository(request: GitHubImportRequest):
             repository=request.repository,
             ref=request.ref,
             subpath=request.subpath,
+            session_id=request.session_id,
         )
     except (ValueError, GitHubFetchError) as exc:
         # Handle expected errors (validation, not found, etc.)

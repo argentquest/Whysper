@@ -39,7 +39,10 @@
       "Bash(del \"C:\\\\Code2025\\\\Whysper\\\\backend\\\\app\\\\utils\\\\diagram_wizard\\\\prompts\\\\CLARIFY_ONLY.md\")",
       "Bash(.venvScriptspython.exe test_routing.py)",
       "Bash(del:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git show:*)",
+      "Bash(.venvScriptspython.exe -m pytest tests_2026/unit/test_context_management.py -v --tb=short)",
+      "Bash(.venvScriptspython.exe -c \"from app.api.v1.endpoints import github_stream; print\\(''Import successful''\\)\")"
     ],
     "deny": [],
     "ask": []

@@ -27,34 +27,29 @@ const ActionLink: React.FC<{
   disabled?: boolean
   loading?: boolean
   children: ReactNode
-}> = ({ icon, onClick, disabled = false, loading = false, children }) => (
-  <Tooltip title={typeof children === 'string' ? children : undefined}>
-    <button
-      type="button"
-      onClick={() => {
-        if (disabled || loading || !onClick) return
-        onClick()
-      }}
-      aria-disabled={disabled || loading}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontWeight: 600,
-        color: disabled ? '#94a3b8' : linkColor,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: loading ? 0.7 : 1,
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        fontSize: 13,
-      }}
-    >
-      {icon}
-      {loading ? 'Sending…' : children}
-    </button>
-  </Tooltip>
-)
+}> = ({ icon, onClick, disabled = false, loading = false, children }) => {
+  const isDisabled = disabled || loading
+
+  return (
+    <Tooltip title={typeof children === 'string' ? children : undefined}>
+      <button
+        type="button"
+        onClick={() => {
+          if (isDisabled || !onClick) return
+          onClick()
+        }}
+        disabled={isDisabled}
+        className="inline-flex items-center gap-1.5 font-semibold text-sm bg-transparent border-none p-0 cursor-pointer disabled:cursor-not-allowed disabled:text-slate-400 disabled:opacity-70 hover:text-blue-600 transition-colors"
+        style={{
+          color: isDisabled ? '#94a3b8' : linkColor,
+        }}
+      >
+        {icon}
+        {loading ? 'Sending…' : children}
+      </button>
+    </Tooltip>
+  )
+}
 
 /**
  * SubagentCommand type definition
@@ -237,30 +232,21 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const panelBorder = BrandColors.neutral?.stroke ?? '#e3ded8'
 
   return (
-    <div
-      className="w-full"
-      style={{
-        background: panelBackground,
-        margin: 0,
-        padding: 0,
-      }}
-    >
+    <div className={`w-full bg-[${panelBackground}] m-0 p-0`}>
       <div
-        className="shadow-sm"
+        className="shadow-sm border-t border-b"
         style={{
           background: panelBackground,
-          borderTop: `1px solid ${panelBorder}`,
-          borderBottom: `1px solid ${panelBorder}`,
-          padding: 4,
+          borderTopColor: panelBorder,
+          borderBottomColor: panelBorder,
+          padding: '16px',
           boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.04)',
         }}
       >
         {/* Action Buttons Row */}
-        <div className="mb-3 flex items-center gap-4">
-          <div className="flex-1" />
-
+        <div className="mb-4 flex items-center justify-end gap-6">
           {/* Submit, Copy, and Clear Buttons */}
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
             <Tooltip title="Submit Question">
               <ActionLink
                 icon={<SendOutlined />}
@@ -290,19 +276,84 @@ export const InputPanel: React.FC<InputPanelProps> = ({
           </div>
         </div>
 
+        {/* Command Panel */}
+        <div className="bg-white/98 border-b border-slate-200/80 transition-all duration-200">
+          <div className="px-4 py-3 bg-slate-50/95">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
+                Inject Command:
+              </span>
+
+              {/* Category Selection */}
+              <Select
+                placeholder="Select category"
+                value={selectedCategory}
+                onChange={(value) => {
+                  setSelectedCategory(value)
+                  setSelectedCommand('')
+                }}
+                className="min-w-[180px]"
+                size="small"
+                allowClear
+              >
+                {categories.map((category) => (
+                  <Option key={category} value={category}>
+                    {category}
+                  </Option>
+                ))}
+              </Select>
+
+              {/* Command Selection */}
+              <Select
+                placeholder="Select command"
+                value={selectedCommand}
+                onChange={setSelectedCommand}
+                className="min-w-[240px]"
+                size="small"
+                allowClear
+                disabled={!selectedCategory}
+              >
+                {subagentsForCategory.map((subagent, index) => (
+                  <Option
+                    key={`${subagent.category}-${subagent.title}-${index}`}
+                    value={subagent.title}
+                  >
+                    {subagent.title}
+                  </Option>
+                ))}
+              </Select>
+
+              {/* Inject Action Link */}
+              <ActionLink
+                icon={<PlusOutlined />}
+                disabled={!selectedCommand}
+                onClick={() => {
+                  const command = subagentsForCategory.find(
+                    (cmd) => cmd.title === selectedCommand
+                  )
+                  if (command) {
+                    injectSubagentCommand(command.subcommand)
+                  }
+                }}
+              >
+                Add
+              </ActionLink>
+            </div>
+          </div>
+        </div>
+
         {/* Input Area */}
         <div className="relative">
           <div
-            className="relative"
+            className="relative overflow-hidden border rounded-lg"
             style={{
-              borderRadius: 0,
-              border: `1px solid ${panelBorder}`,
-              boxShadow: 'none',
-              overflow: 'hidden',
+              borderColor: 'lightgray',
               background: panelBackground,
               minHeight: `${currentHeight}px`,
               height: `${currentHeight}px`,
               maxHeight: '400px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              margin: '10px',
             }}
           >
             <Editor
@@ -334,7 +385,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                   horizontal: 'hidden',
                   verticalScrollbarSize: 8,
                 },
-                readOnly: disabled || loading,
+                readOnly: false,
                 suggest: {
                   showKeywords: false,
                   showSnippets: false,
@@ -345,91 +396,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               }}
             />
 
-            {/* Command Panel */}
-            <div
-              className="absolute inset-x-0 top-0"
-              style={{
-                background: 'rgba(255, 255, 255, 0.98)',
-                borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <div className="px-3 py-2" style={{ background: 'rgba(248, 250, 252, 0.95)' }}>
-                <div className="flex items-center gap-2">
-                  <span className="whitespace-nowrap text-xs text-gray-600">
-                    Inject Command:
-                  </span>
-
-                  {/* Category Selection */}
-                  <Select
-                    placeholder="Select category"
-                    value={selectedCategory}
-                    onChange={(value) => {
-                      setSelectedCategory(value)
-                      setSelectedCommand('')
-                    }}
-                    className="min-w-[200px]"
-                    size="small"
-                    allowClear
-                  >
-                    {categories.map((category) => (
-                      <Option key={category} value={category}>
-                        {category}
-                      </Option>
-                    ))}
-                  </Select>
-
-                  {/* Command Selection */}
-                  <Select
-                    placeholder="Select command"
-                    value={selectedCommand}
-                    onChange={setSelectedCommand}
-                    className="min-w-[280px]"
-                    size="small"
-                    allowClear
-                    disabled={!selectedCategory}
-                  >
-                    {subagentsForCategory.map((subagent, index) => (
-                      <Option
-                        key={`${subagent.category}-${subagent.title}-${index}`}
-                        value={subagent.title}
-                      >
-                        {subagent.title}
-                      </Option>
-                    ))}
-                  </Select>
-
-                  {/* Inject Action Link */}
-                  <ActionLink
-                    icon={<PlusOutlined />}
-                    disabled={!selectedCommand}
-                    onClick={() => {
-                      const command = subagentsForCategory.find(
-                        (cmd) => cmd.title === selectedCommand
-                      )
-                      if (command) {
-                        injectSubagentCommand(command.subcommand)
-                      }
-                    }}
-                  >
-                    Add
-                  </ActionLink>
-                </div>
-              </div>
-            </div>
-
             {/* Resize buttons in top-right corner */}
-            <div
-              className="absolute right-2 top-2 flex gap-1"
-              style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '6px',
-                padding: '2px',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(226, 232, 240, 0.8)',
-              }}
-            >
+            <div className="absolute right-3 top-3 flex gap-1 bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-lg p-1">
               <Tooltip title="Reduce height by 75%">
                 <Button
                   type="text"
@@ -437,16 +405,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                   icon={<CompressOutlined />}
                   onClick={handleReduceHeight}
                   disabled={currentHeight <= 60}
-                  style={{
-                    fontSize: '10px',
-                    height: '20px',
-                    width: '20px',
-                    minWidth: '20px',
-                    padding: '0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  className="h-6 w-6 min-w-6 p-0 flex items-center justify-center text-xs hover:bg-slate-100"
                 />
               </Tooltip>
 
@@ -457,16 +416,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
                   icon={<ExpandOutlined />}
                   onClick={handleRestoreHeight}
                   disabled={currentHeight >= previousHeight}
-                  style={{
-                    fontSize: '10px',
-                    height: '20px',
-                    width: '20px',
-                    minWidth: '20px',
-                    padding: '0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                  className="h-6 w-6 min-w-6 p-0 flex items-center justify-center text-xs hover:bg-slate-100"
                 />
               </Tooltip>
             </div>
@@ -474,23 +424,8 @@ export const InputPanel: React.FC<InputPanelProps> = ({
 
           {/* Floating action area */}
           {message.trim() && (
-            <div
-              className="absolute bottom-3 right-3 flex items-center gap-2"
-              style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '12px',
-                padding: '8px 12px',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#64748b',
-                  fontWeight: 500,
-                }}
-              >
+            <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-white/30 rounded-xl px-3 py-2 shadow-sm">
+              <span className="text-xs font-medium text-slate-500">
                 Press Ctrl+Enter to send
               </span>
             </div>

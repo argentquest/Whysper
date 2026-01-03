@@ -6,7 +6,7 @@
  */
 
 import { DownloadOutlined, FileTextOutlined, SettingOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Divider, Select, Space, Spin,Switch, Typography } from 'antd'
+import { Alert, Button, Card, Divider, message,Select, Space, Spin,Switch, Typography } from 'antd'
 import React, { useEffect,useState } from 'react'
 
 import ApiService from '../../services/api'
@@ -91,11 +91,24 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     setLoading(true)
     setError('')
 
+    // Show loading toast
+    message.loading({
+      content: 'Generating documentation...',
+      duration: 0,
+      key: 'doc-generation'
+    })
+
     try {
       const response = await ApiService.post('/api/v1/documentation/generate', request)
 
       const { content } = response.data
       setDocumentation(content)
+
+      // Show success toast
+      message.success({
+        content: 'Documentation generated successfully!',
+        key: 'doc-generation'
+      })
 
       if (onDocumentationGenerated) {
         onDocumentationGenerated(content)
@@ -103,6 +116,13 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to generate documentation'
       setError(errorMessage)
+
+      // Show error toast
+      message.error({
+        content: 'Failed to generate documentation',
+        key: 'doc-generation'
+      })
+
       console.error('Documentation generation error:', err)
     } finally {
       setLoading(false)
@@ -114,6 +134,13 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
       setError('No documentation to export')
       return
     }
+
+    // Show loading toast for export
+    message.loading({
+      content: `Exporting documentation as ${format.toUpperCase()}...`,
+      duration: 0,
+      key: 'doc-export'
+    })
 
     try {
       const response = await ApiService.post('/api/v1/documentation/export', {
@@ -135,9 +162,22 @@ const DocumentationGenerator: React.FC<DocumentationGeneratorProps> = ({
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
+
+      // Show success toast
+      message.success({
+        content: `Documentation exported as ${format.toUpperCase()} successfully!`,
+        key: 'doc-export'
+      })
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to export documentation'
       setError(errorMessage)
+
+      // Show error toast
+      message.error({
+        content: `Failed to export documentation as ${format.toUpperCase()}`,
+        key: 'doc-export'
+      })
+
       console.error('Documentation export error:', err)
     }
   }

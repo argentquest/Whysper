@@ -37,6 +37,7 @@ from .endpoints import (
 
     infra_images,
     github_context,
+    github_stream,
 )
 from app.routers import forms
 
@@ -109,6 +110,13 @@ api_router.include_router(
     github_context.router,
     prefix="/github",
     tags=["github-context"],
+)
+
+# Include GitHub streaming endpoints for SSE progress updates
+api_router.include_router(
+    github_stream.router,
+    prefix="/stream",
+    tags=["github-stream"],
 )
 
 # Include Form System endpoints

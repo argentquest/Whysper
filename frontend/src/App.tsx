@@ -78,6 +78,8 @@ import type {
   Message, // Individual chat message
   Tab, // Tab management structure
 } from './types'
+// Debug utility for conditional logging
+import { debug, debugError, debugGroup, debugGroupEnd } from './utils/debug'
 
 // Extract Layout.Content for cleaner JSX
 const { Content } = Layout
@@ -157,47 +159,22 @@ function App() {
       const storedFiles = localStorage.getItem('whysper_selected_files')
       if (storedFiles) {
         const parsedFiles = JSON.parse(storedFiles)
-        console.log('📦 Loaded selectedFiles from localStorage:', parsedFiles)
+        debug('Loaded selectedFiles from localStorage:', parsedFiles)
         setSelectedFiles(parsedFiles)
       }
     } catch (error) {
-      console.error('❌ Error loading selectedFiles from localStorage:', error)
+      debugError('Error loading selectedFiles from localStorage:', error)
     }
   }, [])
 
   // Save selectedFiles to localStorage whenever it changes
   useEffect(() => {
     try {
-      if (selectedFiles.length > 0) {
-        localStorage.setItem('whysper_selected_files', JSON.stringify(selectedFiles))
-        console.log('💾 Saved selectedFiles to localStorage:', selectedFiles)
-      } else {
-        // Also save empty array to maintain consistency
-        localStorage.setItem('whysper_selected_files', JSON.stringify([]))
-        console.log('💾 Saved empty selectedFiles to localStorage')
-      }
+      localStorage.setItem('whysper_selected_files', JSON.stringify(selectedFiles))
+      debug('Saved selectedFiles to localStorage:', selectedFiles.length, 'files')
     } catch (error) {
-      console.error('❌ Error saving selectedFiles to localStorage:', error)
+      debugError('Error saving selectedFiles to localStorage:', error)
     }
-  }, [selectedFiles])
-
-  // DEBUG: Expose selectedFiles to browser console for debugging
-  useEffect(() => {
-    ; (window as any).getSelectedFiles = () => {
-      console.log('📋 Current selectedFiles state:', selectedFiles)
-      console.log('📋 Count:', selectedFiles.length)
-      console.log(
-        '📋 Paths:',
-        selectedFiles.map((f) => f.path)
-      )
-      return selectedFiles
-    }
-  }, [selectedFiles])
-
-  // DEBUG: Log whenever selectedFiles changes
-  useEffect(() => {
-    console.log('🔄 selectedFiles state changed:', selectedFiles)
-    console.log('🔄 selectedFiles length:', selectedFiles.length)
   }, [selectedFiles])
 
   // Code blocks extracted from AI responses for download/management
@@ -213,10 +190,10 @@ function App() {
   // ==================== Application Initialization ====================
 
   const loadSettings = useCallback(async () => {
-    console.log('🔧 Loading application settings...')
+    debug('Loading application settings...')
     try {
       const response = await ApiService.getSettings()
-      console.log('📡 Settings API response:', response)
+      debug('Settings API response:', response)
       if (response.success && response.data) {
         const backendSettings = response.data
 
@@ -237,7 +214,7 @@ function App() {
           timeout: backendSettings.timeout || 120, // Frontend timeout in seconds (default: 120)
         }
 
-        console.log('⚙️ Mapped settings:', mappedSettings)
+        debug('Mapped settings:', mappedSettings)
         setSettings(mappedSettings)
 
         // Apply timeout to API client if provided
@@ -251,7 +228,7 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('❌ Failed to load settings:', error)
+      debugError('Failed to load settings:', error)
       // Set fallback defaults if backend is not available
       setSettings((prev) => ({
         ...prev,
@@ -297,17 +274,17 @@ function App() {
   }, [])
 
   const loadConversationFiles = useCallback(async (conversationId: string) => {
-    console.log(`🟡 loadConversationFiles() called for conversation: ${conversationId}`)
+    debug('Loading conversation files for:', conversationId)
     try {
       const response = await ApiService.getConversationFiles(conversationId)
       if (response.success && response.data) {
         const { files, count } = response.data
-        console.log(`🟡 Backend returned ${count} files:`, files)
+        debug(`Backend returned ${count} files for conversation`)
 
         // Only update if we actually got files
         // This prevents overwriting user's selection before first message is sent
         if (count > 0) {
-          console.log(`🟡 Updating selectedFiles state with ${count} files`)
+          debug(`Updating selectedFiles state with ${count} files`)
           // Convert file paths to FileItem objects
           const fileItems: FileItem[] = files.map((path) => ({
             path,
@@ -318,20 +295,14 @@ function App() {
           }))
 
           setSelectedFiles(fileItems)
-          console.log(`🟡 setSelectedFiles() called with ${fileItems.length} items`)
-          console.log(
-            `🟡 getSelectedFiles() after loadConversationFiles:`,
-            (window as any).getSelectedFiles()
-          )
         } else {
-          console.log('🟡 Count is 0, NOT updating state')
+          debug('No files returned from backend, keeping current selection')
         }
       } else {
-        // Session doesn't exist yet - that's OK, don't clear selection
-        console.log('🟡 Backend session not found (probably not created yet)')
+        debug('Backend session not found (probably not created yet)')
       }
     } catch (error) {
-      console.warn('🟡 Could not load conversation files:', error)
+      debug('Could not load conversation files:', error)
     }
   }, [])
 
@@ -373,32 +344,26 @@ function App() {
 
   // Chat functions
   const handleSendMessage = async (messageText: string, command?: string) => {
-    console.group('💬 Sending chat message')
-    console.log('Message text:', messageText)
-    console.log('Command:', command)
-    console.log('Active tab ID:', activeTabId)
-    console.log('All tabs:', tabs)
-    console.log('All conversations:', conversations)
+    debugGroup('Sending chat message')
+    debug('Message:', messageText)
+    debug('Command:', command)
+    debug('Active tab:', activeTabId)
 
     const activeTab = tabs.find((tab) => tab.id === activeTabId)
     if (!activeTab) {
-      console.error('❌ No active tab found')
-      console.error('Available tabs:', tabs)
-      console.error('Looking for activeTabId:', activeTabId)
-      console.groupEnd()
+      debugError('No active tab found. Available tabs:', tabs.length)
+      debugGroupEnd()
       return
     }
 
     const conversation = conversations[activeTab.conversationId]
     if (!conversation) {
-      console.error('❌ No conversation found for tab')
-      console.error('Looking for conversation ID:', activeTab.conversationId)
-      console.error('Available conversations:', Object.keys(conversations))
-      console.groupEnd()
+      debugError('No conversation found for tab:', activeTab.conversationId)
+      debugGroupEnd()
       return
     }
 
-    console.log('Active conversation:', conversation.id)
+    debug('Active conversation:', conversation.id)
 
     // Create user message
     const userMessage: Message = {
@@ -435,13 +400,13 @@ function App() {
     setLoading(true)
 
     try {
-      // Get the latest selectedFiles directly from the global function
-      const currentSelectedFiles = (window as any).getSelectedFiles()
+      // Use the selectedFiles state directly
+      const currentSelectedFiles = selectedFiles
 
       // DEBUG: Check selectedFiles state RIGHT before creating request
       console.log('🔴 BEFORE creating apiRequest:')
       console.log('🔴 selectedFiles (state):', selectedFiles)
-      console.log('🔴 currentSelectedFiles (from getSelectedFiles()):', currentSelectedFiles)
+      console.log('🔴 currentSelectedFiles:', currentSelectedFiles)
       console.log('🔴 selectedFiles.length:', selectedFiles.length)
       console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length)
       console.log('🔴 Type of selectedFiles:', typeof selectedFiles, Array.isArray(selectedFiles))
@@ -452,7 +417,6 @@ function App() {
       )
 
       // Send to API with ALL selected files (no limit)
-      // Use the latest selectedFiles from getSelectedFiles()
       console.log('🔴 Creating API request with currentSelectedFiles:', currentSelectedFiles)
       console.log('🔴 currentSelectedFiles.length:', currentSelectedFiles.length)
       console.log('🔴 currentSelectedFiles content:', currentSelectedFiles)
@@ -1518,6 +1482,8 @@ function App() {
                   if (message) extractCodeFromMessage(message)
                 }}
                 onShowCode={handleShowCode}
+                contextFileCount={selectedFiles.length}
+                onSetContext={() => setContextModalOpen(true)}
               />
 
               <div
@@ -1588,10 +1554,6 @@ function App() {
             setTimeout(() => {
               console.log('🔵 After timeout - selectedFiles:', selectedFiles)
               console.log('🔵 After timeout - selectedFiles.length:', selectedFiles.length)
-              console.log(
-                '🔵 After timeout - getSelectedFiles():',
-                (window as any).getSelectedFiles()
-              )
             }, 0)
 
             console.log('🔵 setSelectedFiles called, state should now have', files.length, 'files')

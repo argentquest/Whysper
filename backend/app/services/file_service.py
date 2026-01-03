@@ -82,6 +82,24 @@ class FileService:
         return self._base_directory or os.getcwd()
 
     @log_method_call
+    def _get_github_cache_directory(self) -> Optional[str]:
+        """
+        Get the GitHub cache directory from environment variables.
+
+        Returns:
+            Optional[str]: The GitHub cache directory path if configured, None otherwise.
+        """
+        env_vars = env_manager.load_env_file()
+        cache_path = env_vars.get("GITHUB_CONTEXT_CACHE")
+        if cache_path:
+            # If it's a relative path, make it absolute relative to CODE_PATH
+            if not os.path.isabs(cache_path):
+                code_path = env_vars.get("CODE_PATH", ".")
+                cache_path = os.path.join(code_path, cache_path)
+            return os.path.abspath(cache_path)
+        return None
+
+    @log_method_call
     def validate_directory(self, directory: str) -> Dict[str, Any]:
         """
         Validate if a given directory path is safe and accessible.
@@ -102,12 +120,13 @@ class FileService:
         }
 
     @log_method_call
-    def scan_directory(self, directory: Optional[str] = None) -> List[Dict[str, Any]]:
+    def scan_directory(self, directory: Optional[str] = None, session_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Return metadata for all supported files under a directory.
 
         Args:
             directory: Directory to scan. If None, uses base directory.
+            session_id: Optional session ID to include GitHub cache for that session.
 
         Returns:
             List[Dict[str, Any]]: List of file metadata dictionaries.
@@ -115,19 +134,40 @@ class FileService:
         scan_dir = directory or self.get_base_directory()
         logger.info(f"Scanning directory: {scan_dir}")
         files: List[Dict[str, Any]] = []
+
+        # Scan the main directory
         for batch in self._scanner.scan_directory_lazy(scan_dir):
             for info in batch:
                 files.append(self._serialize_file_info(info, scan_dir))
+
+        # Also scan GitHub cache for the specified session if session_id is provided
+        if session_id:
+            github_cache_dir = self._get_github_cache_directory()
+            if github_cache_dir and os.path.exists(github_cache_dir):
+                # Look for session-specific cache: cache_dir/YYYYMMDD/session_id/
+                from datetime import datetime
+                date_str = datetime.now().strftime("%Y%m%d")
+                session_cache_dir = os.path.join(github_cache_dir, date_str, session_id)
+
+                if os.path.exists(session_cache_dir):
+                    logger.info(f"Also scanning GitHub cache for session {session_id}: {session_cache_dir}")
+                    for batch in self._scanner.scan_directory_lazy(session_cache_dir):
+                        for info in batch:
+                            files.append(self._serialize_file_info(info, session_cache_dir))
+                else:
+                    logger.debug(f"No GitHub cache found for session {session_id} at {session_cache_dir}")
+
         logger.info(f"Scan complete for {scan_dir}: {len(files)} files")
         return files
 
     @log_method_call
-    def build_directory_tree(self, directory: str) -> Dict[str, Any]:
+    def build_directory_tree(self, directory: str, session_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Return a nested tree of directories and supported files.
 
         Args:
             directory: The root directory path to build the tree from.
+            session_id: Optional session ID to include GitHub cache for that session.
 
         Returns:
             Dict[str, Any]: A dictionary representing the directory tree structure.
@@ -141,6 +181,7 @@ class FileService:
         }
         children_map: Dict[Path, Dict[str, Any]] = {root_path: tree}
 
+        # Build tree from main directory
         for batch in self._scanner.scan_directory_lazy(directory):
             for info in batch:
                 file_path = Path(info.path)
@@ -158,6 +199,47 @@ class FileService:
                         "isSpecial": info.is_special,
                     }
                 )
+
+        # Also include GitHub cache for the specified session if session_id is provided
+        if session_id:
+            github_cache_dir = self._get_github_cache_directory()
+            if github_cache_dir and os.path.exists(github_cache_dir):
+                # Look for session-specific cache: cache_dir/YYYYMMDD/session_id/
+                from datetime import datetime
+                date_str = datetime.now().strftime("%Y%m%d")
+                session_cache_dir = os.path.join(github_cache_dir, date_str, session_id)
+
+                if os.path.exists(session_cache_dir):
+                    logger.info(f"Also building tree for GitHub cache session {session_id}: {session_cache_dir}")
+                    cache_root = Path(session_cache_dir)
+                    # Add GitHub cache as a subdirectory
+                    cache_node = {
+                        "name": f"GitHubCache_{session_id}",
+                        "path": str(cache_root),
+                        "type": "directory",
+                        "children": [],
+                    }
+                    tree.setdefault("children", []).append(cache_node)
+                    cache_children_map: Dict[Path, Dict[str, Any]] = {cache_root: cache_node}
+
+                    for batch in self._scanner.scan_directory_lazy(session_cache_dir):
+                        for info in batch:
+                            file_path = Path(info.path)
+                            parent = file_path.parent
+                            node = self._ensure_directory(cache_children_map, parent, cache_root)
+                            node.setdefault("children", []).append(
+                                {
+                                    "name": file_path.name,
+                                    "path": str(file_path),
+                                    "relativePath": os.path.relpath(info.path, session_cache_dir),
+                                    "type": "file",
+                                    "size": info.size,
+                                    "modifiedTime": info.modified_time,
+                                    "extension": info.extension,
+                                    "isSpecial": info.is_special,
+                                }
+                            )
+
         return tree
 
     # ------------------------------------------------------------------

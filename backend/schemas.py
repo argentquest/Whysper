@@ -146,6 +146,7 @@ class FileContentResponse(BaseModel):
 
 class DirectoryScanRequest(BaseModel):
     path: str
+    session_id: Optional[str] = None
 
 
 class DirectoryScanResponse(BaseModel):

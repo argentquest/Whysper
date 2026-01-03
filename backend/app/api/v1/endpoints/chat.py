@@ -958,18 +958,13 @@ def get_conversation_files(conversation_id: str):
         dict: List of files and count.
     """
     logger.debug(f"get_conversation_files endpoint called for: {conversation_id}")
+
     try:
         session = conversation_manager.get_session(conversation_id)
-        if session:
-            files = session.selected_files
-            logger.info(f"Retrieved {len(files)} context files for session: {conversation_id}")
-            return {"success": True, "conversationId": conversation_id, "files": files, "count": len(files)}
-        else:
-            logger.info(f"Conversation session not found: {conversation_id}")
-            return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
-    except KeyError:
+    except KeyError as exc:
         logger.info(f"Conversation session not found: {conversation_id}")
-        return {"success": False, "error": "Conversation not found", "files": [], "count": 0}
-    except Exception as e:
-        logger.info(f"Failed to get conversation files for {conversation_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get conversation files: {str(e)}")
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    files = session.selected_files
+    logger.info(f"Retrieved {len(files)} context files for session: {conversation_id}")
+    return {"success": True, "conversationId": conversation_id, "files": files, "count": len(files)}

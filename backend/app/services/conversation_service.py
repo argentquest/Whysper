@@ -9,6 +9,7 @@ removing UI dependencies so the same functionality can serve the web client.
 from __future__ import annotations
 
 import os
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -95,6 +96,8 @@ class ConversationSession:
     selected_files: List[str] = field(default_factory=list)
     # Track the last context files to detect changes
     last_context_files: List[str] = field(default_factory=list)
+    # Thread-safe lock for context file operations to prevent race conditions
+    _context_lock: threading.Lock = field(default_factory=threading.Lock)
     logger = get_logger("conversation")
 
     @log_method_call
@@ -338,7 +341,8 @@ class ConversationSession:
         selected_files = selected_files or []
         logger.debug(f"Updating selected files for session {self.session_id}: {len(selected_files)} files")
 
-        # Preserve order while removing duplicates using dict.fromkeys
+        # Preserve order while removing duplicates
+        # Use dict.fromkeys() instead of set() to maintain insertion order
         unique_files = list(dict.fromkeys(selected_files))
         logger.debug(f"After deduplication: {len(unique_files)} unique files")
 
@@ -437,9 +441,9 @@ class ConversationSession:
             file context immediately.
         """
         logger.debug(f"Clearing all files for session {self.session_id}")
-        logger.debug(
-            f"Before clear: {len(self.selected_files)} selected, {len(self.app_state.get_persistent_files())} persistent files"
-        )
+        selected_count = len(self.selected_files)
+        persistent_count = len(self.app_state.get_persistent_files())
+        logger.debug(f"Before clear: {selected_count} selected, {persistent_count} persistent files")
 
         # Clear selections
         self.selected_files = []
@@ -488,24 +492,27 @@ class ConversationSession:
         """
         logger.debug(f"Processing question for session {self.session_id}")
 
+        # Thread-safe context file update to prevent race conditions
         if context_files is not None:
-            # Check if context files have actually changed
-            context_files_changed = len(context_files) != len(self.last_context_files) or set(context_files) != set(
-                self.last_context_files
-            )
+            with self._context_lock:
+                # Check if context files have actually changed
+                context_files_changed = (
+                    len(context_files) != len(self.last_context_files)
+                    or set(context_files) != set(self.last_context_files)
+                )
 
-            if context_files_changed:
-                logger.info(
-                    f"🔄 Context files changed - updating from {len(self.last_context_files)} to {len(context_files)} files"
-                )
-                logger.info(f"📋 Previous context: {self.last_context_files}")
-                logger.info(f"📋 New context: {context_files}")
-                self.update_selected_files(context_files)
-                self.last_context_files = context_files.copy()
-            else:
-                logger.info(
-                    f"✅ Context files unchanged - keeping current selection of {len(self.selected_files)} files"
-                )
+                if context_files_changed:
+                    old_count = len(self.last_context_files)
+                    new_count = len(context_files)
+                    logger.info(f"🔄 Context files changed - updating from {old_count} to {new_count} files")
+                    logger.debug(f"Previous context: {self.last_context_files}")
+                    logger.debug(f"New context: {context_files}")
+                    self.update_selected_files(context_files)
+                    self.last_context_files = context_files.copy()
+                else:
+                    logger.debug(
+                        f"Context files unchanged - keeping current selection of {len(self.selected_files)} files"
+                    )
 
         # Input validation
         if not question.strip():
@@ -554,10 +561,11 @@ class ConversationSession:
         # ALWAYS include context if files are selected, regardless of message number
         has_selected_files = len(self.selected_files) > 0
         needs_codebase_context = is_first_message or self._is_tool_command(question) or has_selected_files
+        file_count = len(self.selected_files)
         logger.info(
-            f"Codebase context needed: {needs_codebase_context} (first_message={is_first_message}, has_files={has_selected_files}, file_count={
-                len(
-                    self.selected_files)})")
+            f"Codebase context needed: {needs_codebase_context} "
+            f"(first_message={is_first_message}, has_files={has_selected_files}, file_count={file_count})"
+        )
 
         # Log context file update information
         if context_files is not None:

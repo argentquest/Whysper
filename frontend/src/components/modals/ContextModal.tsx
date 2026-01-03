@@ -6,9 +6,12 @@
  */
 import {
   ApartmentOutlined,
+  ClearOutlined,
   CloudUploadOutlined,
   FileOutlined,
+  FolderOpenOutlined,
   FolderOutlined,
+  GithubOutlined,
   ReloadOutlined,
   UnorderedListOutlined,
   UploadOutlined,
@@ -17,11 +20,11 @@ import { Button, Checkbox, Dropdown, Input, Menu, message, Segmented, Space, Spi
 import React, { useEffect, useRef, useState } from 'react'
 
 import ApiService from '../../services/api'
+import type { ProgressEvent } from '../../services/sseClient'
 import type { FileItem, UploadedFile } from '../../types'
+import { getApiBaseUrl } from '../../utils/apiBase'
 import { Modal } from '../common/Modal'
 import FileTreeModal from './FileTreeModal'
-import type { ProgressEvent } from '../../services/sseClient'
-import { getApiBaseUrl } from '../../utils/apiBase'
 
 const { Search } = Input
 const { Text } = Typography
@@ -127,14 +130,10 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   }, [open, sessionId])
 
   /**
-   * Load files from backend when modal opens
-   * Fetches file list from the configured code path
+   * Don't auto-load local files - user must click "Scan Local Files" button
+   * This prevents automatic scanning on every modal open
    */
-  useEffect(() => {
-    if (open) {
-      loadFiles()
-    }
-  }, [open])
+  // Removed auto-loading: users should explicitly request local file scanning
 
   /**
    * Load uploaded files when modal opens
@@ -153,18 +152,26 @@ export const ContextModal: React.FC<ContextModalProps> = ({
    * @async
    * @returns {Promise<void>}
    */
-  // Normalize backend items (including GitHub import results) into the UI FileItem shape
+  /**
+   * Normalize backend items into UI FileItem shape
+   * Filters out invalid items (missing path) to prevent errors
+   *
+   * @param items - Array of items from backend API
+   * @returns Array of validated FileItem objects
+   */
   const normalizeFileItems = (items: any[]): FileItem[] =>
-    items.map((item) => ({
-      path: item.path,
-      name: item.name || item.relativePath || item.path?.split(/[\\/]/).pop() || item.path,
-      size: item.size ?? 0,
-      isSelected: Boolean(item.isSelected),
-      type: item.type === 'directory' ? 'directory' : 'file',
-      is_uploaded: item.is_uploaded,
-      content: item.content,
-      date: item.modifiedTime || item.date, // Use modifiedTime from backend or fallback to date field
-    }))
+    items
+      .filter((item) => item && item.path) // Filter out invalid items
+      .map((item) => ({
+        path: item.path,
+        name: item.name || item.relativePath || item.path.split(/[\\/]/).pop() || item.path,
+        size: item.size ?? 0,
+        isSelected: Boolean(item.isSelected),
+        type: item.type === 'directory' ? 'directory' : 'file',
+        is_uploaded: item.is_uploaded,
+        content: item.content,
+        date: item.modifiedTime || item.date, // Use modifiedTime from backend or fallback to date field
+      }))
 
   const loadFiles = async () => {
     setLoading(true)
@@ -205,6 +212,7 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   /**
    * Handles file upload functionality
    * Reads selected files, uploads them to backend, and updates uploaded files list
+   * Includes error handling for individual file failures
    *
    * @param {File[]} fileList - Array of files to upload
    * @async
@@ -217,16 +225,36 @@ export const ContextModal: React.FC<ContextModalProps> = ({
 
     try {
       const uploadedFiles: UploadedFile[] = []
+      const failedFiles: string[] = []
 
       // Process each file: read content and create UploadedFile objects
       for (const file of fileList) {
-        const content = await readFileAsText(file)
-        uploadedFiles.push({
-          name: file.name,
-          content,
-          size: file.size,
-          type: file.type || 'text/plain',
-        })
+        try {
+          const content = await readFileAsText(file)
+          uploadedFiles.push({
+            name: file.name,
+            content,
+            size: file.size,
+            type: file.type || 'text/plain',
+          })
+        } catch (error) {
+          console.warn(`Failed to read file ${file.name}:`, error)
+          failedFiles.push(file.name)
+          // Continue processing other files
+        }
+      }
+
+      // Show warning if some files failed
+      if (failedFiles.length > 0) {
+        message.warning(
+          `Skipped ${failedFiles.length} file(s): ${failedFiles.slice(0, 3).join(', ')}${failedFiles.length > 3 ? '...' : ''}`
+        )
+      }
+
+      // Only proceed if we have files to upload
+      if (uploadedFiles.length === 0) {
+        message.error('No files could be uploaded')
+        return
       }
 
       // Upload files to backend using session-specific subfolder
@@ -477,6 +505,31 @@ export const ContextModal: React.FC<ContextModalProps> = ({
   }
 
   /**
+   * Handles reset action - clears all selections
+   */
+  const handleReset = () => {
+    setSelectedFiles(new Set())
+    setFiles([])
+    setUploadedFiles([])
+    setGithubRepo('')
+    setGithubRef('main')
+    setGithubSubpath('')
+    setLastImportedPath(null)
+    setSearchTerm('')
+    setFileTypeFilter('all')
+    setSizeFilter('all')
+    message.info('Context reset - all selections cleared')
+  }
+
+  /**
+   * Handles local file scan button click
+   */
+  const handleScanLocalFiles = async () => {
+    await loadFiles()
+    message.success('Local files scanned successfully')
+  }
+
+  /**
    * Handles importing a public GitHub repository with progress feedback
    * Uses SSE to provide real-time progress updates during file download and caching
    *
@@ -611,30 +664,66 @@ export const ContextModal: React.FC<ContextModalProps> = ({
       cancelText="Cancel"
     >
       <div className="space-y-4">
-        {/* View Mode Toggle */}
-        <div className="flex items-center justify-between">
-          <Segmented
-            value={viewMode}
-            onChange={(value) => setViewMode(value as 'github' | 'tree' | 'uploaded')}
-            options={[
-              {
-                label: 'GitHub Import',
-                value: 'github',
-                icon: <ApartmentOutlined />,
-              },
-              {
-                label: 'Tree View',
-                value: 'tree',
-                icon: <ApartmentOutlined />,
-              },
-              {
-                label: 'Uploaded Files',
-                value: 'uploaded',
-                icon: <CloudUploadOutlined />,
-              },
-            ]}
-          />
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-700">
+          <div className="flex gap-2">
+            <Button
+              icon={<GithubOutlined />}
+              onClick={() => setViewMode('github')}
+              type={viewMode === 'github' ? 'primary' : 'default'}
+            >
+              GitHub
+            </Button>
+            <Button
+              icon={<FolderOpenOutlined />}
+              onClick={handleScanLocalFiles}
+              loading={loading}
+            >
+              Scan Local Files
+            </Button>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={handleUploadButtonClick}
+              loading={uploadLoading}
+            >
+              Upload Files
+            </Button>
+          </div>
+          <Button
+            icon={<ClearOutlined />}
+            onClick={handleReset}
+            danger
+          >
+            Reset
+          </Button>
         </div>
+
+        {/* View Mode Toggle - Now for uploaded/tree only */}
+        {viewMode !== 'github' && (
+          <div className="flex items-center justify-between">
+            <Segmented
+              value={viewMode}
+              onChange={(value) => setViewMode(value as 'github' | 'tree' | 'uploaded')}
+              options={[
+                {
+                  label: 'List View',
+                  value: 'github',
+                  icon: <UnorderedListOutlined />,
+                },
+                {
+                  label: 'Tree View',
+                  value: 'tree',
+                  icon: <ApartmentOutlined />,
+                },
+                {
+                  label: 'Uploaded Files',
+                  value: 'uploaded',
+                  icon: <CloudUploadOutlined />,
+                },
+              ]}
+            />
+          </div>
+        )}
 
         {/* GitHub import controls */}
         {viewMode === 'github' && (
@@ -681,8 +770,8 @@ export const ContextModal: React.FC<ContextModalProps> = ({
 
             {/* Progress Display */}
             {githubProgress && (
-              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                <div className="mb-2 flex items-center gap-2">
                   <Spin size="small" />
                   <Text className="text-sm font-medium text-blue-800 dark:text-blue-200">
                     {githubProgress.stage}
@@ -693,37 +782,27 @@ export const ContextModal: React.FC<ContextModalProps> = ({
                 </Text>
               </div>
             )}
-
-            <div className="flex items-center gap-4">
-              <Button
-                type="primary"
-                icon={<UploadOutlined />}
-                onClick={handleUploadButtonClick}
-                loading={uploadLoading}
-                className="mb-4"
-              >
-                Upload Files
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".txt,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,.yml,.yaml,.xml,.csv,.sql,.sh,.bat,.ps1,.go,.rs,.java,.cpp,.c,.h,.hpp,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.dart,.lua,.r,.m,.nim,.v,.zig,.cr,.ex,.exs,.elm,.purs,.tsv,.ini,.cfg,.conf,.toml,.env,.gitignore,.dockerfile,.makefile,.cmake"
-                style={{ display: 'none' }}
-                aria-label="Upload files for context"
-                title="Upload files to use as context in conversations"
-                onChange={(e) => {
-                  const files = e.target.files
-                  if (files) {
-                    handleFileUpload(Array.from(files))
-                  }
-                  // Reset input value to allow uploading the same file again
-                  e.target.value = ''
-                }}
-              />
-            </div>
           </div>
         )}
+
+        {/* Hidden file input for upload functionality */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".txt,.py,.js,.ts,.jsx,.tsx,.html,.css,.json,.md,.yml,.yaml,.xml,.csv,.sql,.sh,.bat,.ps1,.go,.rs,.java,.cpp,.c,.h,.hpp,.php,.rb,.swift,.kt,.scala,.clj,.hs,.ml,.fs,.dart,.lua,.r,.m,.nim,.v,.zig,.cr,.ex,.exs,.elm,.purs,.tsv,.ini,.cfg,.conf,.toml,.env,.gitignore,.dockerfile,.makefile,.cmake"
+          style={{ display: 'none' }}
+          aria-label="Upload files for context"
+          title="Upload files to use as context in conversations"
+          onChange={(e) => {
+            const files = e.target.files
+            if (files) {
+              handleFileUpload(Array.from(files))
+            }
+            // Reset input value to allow uploading the same file again
+            e.target.value = ''
+          }}
+        />
 
         {/* Upload controls for uploaded view */}
         {viewMode === 'uploaded' && (
@@ -732,9 +811,9 @@ export const ContextModal: React.FC<ContextModalProps> = ({
               icon={<ReloadOutlined />}
               onClick={loadUploadedFiles}
               loading={loading}
-              className="mb-4"
+              size="small"
             >
-              Refresh
+              Refresh Uploaded Files
             </Button>
           </div>
         )}

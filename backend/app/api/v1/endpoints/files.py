@@ -139,9 +139,9 @@ def scan_directory(request: DirectoryScanRequest):
     if not validation["is_valid"]:
         raise HTTPException(status_code=400, detail=validation["error"])
 
-    files = file_service.scan_directory(request.path)
+    files = file_service.scan_directory(request.path, request.session_id)
     logger.info(f"Scan complete: {len(files)} files found")
-    tree = file_service.build_directory_tree(request.path)
+    tree = file_service.build_directory_tree(request.path, request.session_id)
     return DirectoryScanResponse(
         directory=request.path,
         files=files,

@@ -22,8 +22,9 @@ import shutil
 import tarfile
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import requests
 
@@ -128,7 +129,7 @@ def parse_repository(value: str, ref: Optional[str] = None) -> RepoSpec:
     raise ValueError("Repository must be in the form owner/repo or a GitHub URL")
 
 
-def download_and_extract_repo(spec: RepoSpec, cache_dir: Path) -> Path:
+def download_and_extract_repo(spec: RepoSpec, cache_dir: Path, session_id: Optional[str] = None) -> Path:
     """
     Download a GitHub repository tarball and extract it to the local cache.
 
@@ -146,6 +147,8 @@ def download_and_extract_repo(spec: RepoSpec, cache_dir: Path) -> Path:
     Args:
         spec: Repository specification with owner, name, and ref.
         cache_dir: Base directory for caching downloaded repositories.
+        session_id: Optional session identifier for organizing cache subfolders.
+            If provided, cache will be organized as cache_dir/date/session_id/owner/name/ref.
 
     Returns:
         Path to the extracted repository root directory.
@@ -159,10 +162,14 @@ def download_and_extract_repo(spec: RepoSpec, cache_dir: Path) -> Path:
         >>> cache = Path("/tmp/github_cache")
         >>> repo_path = download_and_extract_repo(spec, cache)
         >>> repo_path
-        Path('/tmp/github_cache/python/cpython/main')
+        Path('/tmp/github_cache/20240103/default/python/cpython/main')
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
-    target_dir = cache_dir / spec.owner / spec.name / spec.ref
+
+    # Generate subfolders based on current date and session
+    date_str = datetime.now().strftime("%Y%m%d")
+    session_str = session_id or "default"
+    target_dir = cache_dir / date_str / session_str / spec.owner / spec.name / spec.ref
     marker_file = target_dir / ".whysper_ready"
 
     # Check if repository is already cached and valid
