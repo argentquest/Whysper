@@ -29,3 +29,4 @@ black==24.2.0
 ruff==0.2.2
 pre-commit==3.6.2
 fastmcp==0.1.0 # Added per test requirements
+pytest-cov
