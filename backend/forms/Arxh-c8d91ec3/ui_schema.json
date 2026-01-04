@@ -1,0 +1,38 @@
+{
+  "scopePurpose": {
+    "ui:widget": "textarea",
+    "ui:options": {
+      "rows": 3
+    }
+  },
+  "infrastructureDeployment": {
+    "ui:widget": "checkboxes"
+  },
+  "applicationComponents": {
+    "ui:widget": "checkboxes"
+  },
+  "trafficPatterns": {
+    "ui:widget": "checkboxes"
+  },
+  "complianceRequirements": {
+    "ui:widget": "checkboxes"
+  },
+  "loggingStrategy": {
+    "ui:widget": "checkboxes"
+  },
+  "resiliencyPatterns": {
+    "ui:widget": "checkboxes"
+  },
+  "performancePatterns": {
+    "ui:widget": "checkboxes"
+  },
+  "associatedAnalytics": {
+    "ui:widget": "checkboxes"
+  },
+  "downstreamIntegration": {
+    "ui:help": "Example: App 1 (Kafka), App 2 (MQ)..."
+  },
+  "upstreamIntegration": {
+    "ui:help": "Example: App 4 (API/REST), App 5 (API on APIxChange)..."
+  }
+}

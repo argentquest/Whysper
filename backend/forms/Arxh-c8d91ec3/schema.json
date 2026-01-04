@@ -1,0 +1,190 @@
+{
+  "title": "Application Porting Questionnaire",
+  "type": "object",
+  "properties": {
+    "applicationID": {
+      "type": "string",
+      "title": "Application ID"
+    },
+    "appID": {
+      "type": "string",
+      "title": "App ID"
+    },
+    "applicationName": {
+      "type": "string",
+      "title": "Application Name"
+    },
+    "scopePurpose": {
+      "type": "string",
+      "title": "Scope and Purpose of Application"
+    },
+    "capabilityPortedFrom": {
+      "type": "string",
+      "title": "Capability being ported from which App ID?"
+    },
+    "wfcmDomain": {
+      "type": "string",
+      "title": "Wells Fargo Domain (WFCM Domain)"
+    },
+    "wfcmCapability": {
+      "type": "string",
+      "title": "Wells Fargo Capability (WFCM Capability)"
+    },
+    "publiclyAccessible": {
+      "type": "string",
+      "title": "Publicly Accessible App?",
+      "enum": [
+        "Yes",
+        "No"
+      ]
+    },
+    "expectedUsers": {
+      "type": "string",
+      "title": "Expected Number of Users"
+    },
+    "tps": {
+      "type": "string",
+      "title": "Transactions Per Second"
+    },
+    "infrastructureDeployment": {
+      "type": "array",
+      "title": "Infrastructure Deployment",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Single DC",
+          "Active-Passive",
+          "Active-Active",
+          "Multi-Region",
+          "Cloud-native"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "applicationComponents": {
+      "type": "array",
+      "title": "Expected Application Components",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Database",
+          "Messaging",
+          "Cache",
+          "Middleware",
+          "API Gateway",
+          "Load Balancer",
+          "Microservices"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "trafficPatterns": {
+      "type": "array",
+      "title": "Traffic Patterns",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Steady",
+          "Peak during business hours",
+          "Seasonal spikes",
+          "Unpredictable",
+          "Global 24x7",
+          "Burst traffic",
+          "Batch processing windows"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "complianceRequirements": {
+      "type": "array",
+      "title": "Compliance Requirements",
+      "items": {
+        "type": "string",
+        "enum": [
+          "PCI",
+          "SOX",
+          "GDPR",
+          "HIPAA",
+          "GLBA",
+          "FFIEC",
+          "ISO 27001"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "loggingStrategy": {
+      "type": "array",
+      "title": "Planned Logging Strategy",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Basic",
+          "Structured",
+          "Enterprise logs with PII handling",
+          "Centralized Logging",
+          "Audit Trail"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "resiliencyPatterns": {
+      "type": "array",
+      "title": "Resiliency Patterns",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Circuit Breaker",
+          "Retry",
+          "Bulkhead",
+          "Failover",
+          "Graceful Degradation",
+          "Timeout",
+          "Rate Limiting"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "associatedArcheTypes": {
+      "type": "string",
+      "title": "Associated ArcheTypes"
+    },
+    "performancePatterns": {
+      "type": "array",
+      "title": "Performance Patterns",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CQRS",
+          "Load Balancer Pattern",
+          "Cache-Aside",
+          "Sharding",
+          "Async Messaging"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "downstreamIntegration": {
+      "type": "string",
+      "title": "Downstream Applications & Integration Pattern"
+    },
+    "upstreamIntegration": {
+      "type": "string",
+      "title": "Upstream Applications & Integration Pattern"
+    },
+    "associatedAnalytics": {
+      "type": "array",
+      "title": "Associated Analytics",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Tableau",
+          "PowerBI",
+          "QlikView",
+          "SAS Analytics",
+          "Splunk"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}

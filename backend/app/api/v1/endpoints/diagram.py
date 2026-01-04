@@ -105,13 +105,20 @@ async def stream_diagram_updates(session_id: str):
                 try:
                     # Wait for an update with a short timeout for responsiveness
                     update = await asyncio.wait_for(session.update_queue.get(), timeout=3)
+                    
+                    # refresh history to make sure we don't send stale history
+                    update["history"] = session.history
+                    update["clarifications"] = session.clarifications
+                    # ensure we send latest outputs 
+                    update["diagramCode"] = session.diagram_code
+                    update["svgOutput"] = session.svg_output
+
                     # Serialize and yield update as Server-Sent Event
                     yield f"data: {json.dumps(update)}\n\n"
 
                     # Terminate streaming if generation is complete
                     if update.get("status") in ["completed", "error"]:
                         break
-
                 except asyncio.TimeoutError:
                     # Send periodic "waiting" status to keep client informed
                     waiting_status = {
@@ -120,6 +127,14 @@ async def stream_diagram_updates(session_id: str):
                         "message": "AI is processing your request... (no response yet)",
                         "session_id": session_id,
                     }
+                    # refresh history to make sure we don't send stale history
+                    waiting_status["history"] = session.history
+                    waiting_status["clarifications"] = session.clarifications
+                    # ensure we send latest outputs 
+                    waiting_status["diagramCode"] = session.diagram_code
+                    waiting_status["svgOutput"] = session.svg_output
+
+                    # Serialize and yield update as Server-Sent Event
                     logger.info(f"[SSE] Sending waiting status for session {session_id}")
                     yield f"data: {json.dumps(waiting_status)}\n\n"
                 except asyncio.CancelledError:

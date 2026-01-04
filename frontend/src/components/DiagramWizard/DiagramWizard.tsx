@@ -49,7 +49,7 @@
 
 import Editor from '@monaco-editor/react'
 import { message, Modal, Spin } from 'antd'
-import React, { useCallback,useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { DiagramApi } from '../../services/diagram/diagramApi'
@@ -180,11 +180,6 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
     onUpdate: (update) => {
       // Callback triggered whenever SSE sends status update from backend
       const statusValue = update.status
-      console.log(`🔔 SSE Update Received - Status: "${statusValue}"`, {
-        status: statusValue,
-        message: update.message,
-        hasError: !!(update.error || (statusValue === 'error')),
-      })
 
       // If backend tells us the chosen diagram type, mark it as selected to avoid navigation back
       if (update.diagram_type || update.diagramType) {
@@ -948,7 +943,7 @@ export const DiagramWizard: React.FC<DiagramWizardProps> = ({
         if (!validation.exists) {
           console.warn(
             `⚠️ Session ${initialSessionId} not found on backend (likely stale from localStorage after restart). ` +
-              `User will need to start a new session.`
+            `User will need to start a new session.`
           )
 
           // Clean up stale session from localStorage session history

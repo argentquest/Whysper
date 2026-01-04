@@ -42,7 +42,12 @@
       "Bash(grep:*)",
       "Bash(git show:*)",
       "Bash(.venvScriptspython.exe -m pytest tests_2026/unit/test_context_management.py -v --tb=short)",
-      "Bash(.venvScriptspython.exe -c \"from app.api.v1.endpoints import github_stream; print\\(''Import successful''\\)\")"
+      "Bash(.venvScriptspython.exe -c \"from app.api.v1.endpoints import github_stream; print\\(''Import successful''\\)\")",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(..venvScriptspython.exe -c \"from app.api.v1.endpoints import chat; print\\(''✅ Chat endpoint imports successfully''\\)\")",
+      "Bash(...venvScriptspython.exe -c \"from app.api.v1.endpoints import chat; print\\(''✅ Chat endpoint imports successfully''\\)\")",
+      "Bash(.venvScriptspython.exe -c \"import sys; sys.path.insert\\(0, ''backend''\\); from app.api.v1.endpoints import chat; print\\(''OK''\\)\")"
     ],
     "deny": [],
     "ask": []

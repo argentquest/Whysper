@@ -27,7 +27,6 @@ import logging
 import uuid  # For generating unique message IDs
 
 # Third-party imports
-import markdown2  # Markdown to HTML conversion for frontend
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 import json
@@ -42,8 +41,6 @@ from common.logger import get_logger
 from common.log_broadcaster import log_broadcaster  # Log broadcasting
 from common.logging_decorator import log_method_call
 from schemas import (
-    AskQuestionRequest,  # Chat message request schema
-    AskQuestionResponse,  # Chat message response schema
     ChatRequest,  # Frontend chat request schema
     ChatResponse,  # Frontend chat response schema
     ConversationCreateRequest,  # New conversation request schema
@@ -54,6 +51,11 @@ from schemas import (
     UpdateApiKeyRequest,  # API key update request schema
     UpdateModelRequest,  # Model update request schema
 )
+
+# Import diagram provider for D2 self-healing
+from diagrams.provider_registry import get_provider_registry
+import re
+from typing import Optional, Tuple, List
 
 # Import validation with error handling
 try:
@@ -70,6 +72,152 @@ logger = get_logger(__name__)
 # Create FastAPI router for chat endpoints
 # This router will be included in the main API with /chat prefix
 router = APIRouter()
+
+
+# =====================================================================
+# D2 DIAGRAM SELF-HEALING UTILITIES
+# =====================================================================
+
+
+def extract_d2_code_blocks(response: str) -> List[Tuple[str, str]]:
+    """
+    Extract all D2 code blocks from LLM response.
+
+    Args:
+        response: The LLM response text
+
+    Returns:
+        List of tuples (original_code_block, extracted_code)
+    """
+    code_blocks = []
+
+    # Pattern for D2 code blocks: ```d2 ... ``` or ```D2 ... ```
+    pattern = r'```[dD]2\s*\n(.*?)```'
+    matches = re.finditer(pattern, response, re.DOTALL)
+
+    for match in matches:
+        full_block = match.group(0)  # Full ```d2...``` block
+        code_content = match.group(1).strip()  # Just the code
+        code_blocks.append((full_block, code_content))
+
+    return code_blocks
+
+
+async def validate_and_heal_d2_diagram(
+    d2_code: str,
+    progress_callback=None
+) -> Tuple[bool, Optional[str], Optional[str], dict]:
+    """
+    Validate and auto-correct D2 diagram code using the diagram provider system.
+
+    This function implements a three-tier self-healing approach:
+    1. Pattern-based fixes (fast, deterministic)
+    2. LLM-based correction (AI-powered, iterative up to 8 retries)
+    3. Return error if all attempts fail
+
+    Args:
+        d2_code: The D2 diagram code to validate
+        progress_callback: Optional callback function(stage, message) for progress updates
+
+    Returns:
+        Tuple of (success, corrected_code, error_message, metadata)
+        - success: True if valid diagram
+        - corrected_code: The corrected code (or None if validation failed)
+        - error_message: Error message if validation failed
+        - metadata: Dict with correction info (auto_fixed, llm_corrected, attempts)
+    """
+    try:
+        # Get D2 provider
+        registry = get_provider_registry()
+        provider = registry.get("d2v1")
+        if not provider:
+            logger.error("D2 provider not available")
+            return False, None, "D2 diagram provider not available", {}
+
+        if progress_callback:
+            progress_callback("d2_validation", "Checking D2 syntax...")
+
+        # Use the provider's correction pipeline with all features enabled
+        validation_result = await provider.correction_pipeline(
+            d2_code,
+            auto_fix=True,  # Enable pattern-based fixes
+            llm_correction=True,  # Enable LLM-based correction
+            max_retries=8,  # Maximum LLM correction attempts
+        )
+
+        metadata = {
+            "auto_fixed": validation_result.auto_fixed,
+            "llm_corrected": validation_result.llm_corrected,
+            "correction_method": validation_result.correction_method,
+        }
+
+        if validation_result.is_valid and validation_result.fixed_code:
+            # Success!
+            if progress_callback:
+                progress_callback("d2_validated", "✅ D2 diagram validated successfully")
+
+            return True, validation_result.fixed_code, None, metadata
+        else:
+            # All correction attempts failed
+            error_msg = validation_result.error or "D2 validation failed"
+            if progress_callback:
+                progress_callback("d2_validation_failed", f"❌ D2 validation failed: {error_msg}")
+
+            return False, None, error_msg, metadata
+
+    except Exception as e:
+        logger.error(f"Error during D2 validation: {e}", exc_info=True)
+        return False, None, f"D2 validation error: {str(e)}", {}
+
+
+def create_correction_notice(metadata: dict) -> str:
+    """
+    Create a user-friendly notice about automatic corrections.
+
+    Args:
+        metadata: Metadata dict with correction info
+
+    Returns:
+        Markdown-formatted notice string
+    """
+    if metadata.get("llm_corrected"):
+        return (
+            "\n\n> ✨ **Auto-correction applied:** This D2 diagram was "
+            "automatically corrected using AI to fix syntax errors.\n"
+        )
+    elif metadata.get("auto_fixed"):
+        return (
+            "\n\n> ✨ **Auto-correction applied:** This D2 diagram was "
+            "automatically corrected using pattern-based fixes.\n"
+        )
+    return ""
+
+
+def create_error_notice(error_message: str, original_code: str) -> str:
+    """
+    Create a user-friendly error notice with the problematic code.
+
+    Args:
+        error_message: The validation error message
+        original_code: The original D2 code that failed
+
+    Returns:
+        Markdown-formatted error notice with code
+    """
+    return f"""
+
+> ❌ **D2 Diagram Validation Failed**
+>
+> The following D2 diagram could not be automatically corrected:
+>
+> **Error:** {error_message}
+
+```d2
+{original_code}
+```
+
+> Please review the error and the D2 syntax, then try again.
+"""
 
 
 @log_method_call
@@ -236,7 +384,8 @@ async def send_chat_message_stream(request: ChatRequest):
             settings = request.settings or {}
 
             # Send initial progress event
-            yield f"event: progress\ndata: {json.dumps({'stage': 'initializing', 'message': 'Starting AI processing...'})}\n\n"
+            progress_data = json.dumps({'stage': 'initializing', 'message': 'Starting AI processing...'})
+            yield f"event: progress\ndata: {progress_data}\n\n"
             await asyncio.sleep(0.1)  # Small delay to ensure client receives
 
             if not message.strip():
@@ -247,7 +396,8 @@ async def send_chat_message_stream(request: ChatRequest):
             env_config = load_env_defaults()
             api_key = env_config.get("api_key", "")
             provider = env_config.get("provider", "openrouter")
-            model = settings.get("model") or env_config.get("default_model", "google/gemini-2.5-flash-preview-09-2025")
+            default_model = env_config.get("default_model", "google/gemini-2.5-flash-preview-09-2025")
+            model = settings.get("model") or default_model
             models_list = env_config.get("models", [])
 
             if not api_key:
@@ -264,13 +414,16 @@ async def send_chat_message_stream(request: ChatRequest):
             )
 
             if was_created:
-                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': f'Successfully created new session: {conversation_id}'})}\n\n"
+                msg = f'Successfully created new session: {conversation_id}'
+                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': msg})}\n\n"
             else:
-                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': 'Retrieved existing session'})}\n\n"
+                msg = 'Retrieved existing session'
+                yield f"event: progress\ndata: {json.dumps({'stage': 'session', 'message': msg})}\n\n"
 
             # Add context files
             if context_files:
-                yield f"event: progress\ndata: {json.dumps({'stage': 'files', 'message': f'Adding {len(context_files)} context files...'})}\n\n"
+                msg = f'Adding {len(context_files)} context files...'
+                yield f"event: progress\ndata: {json.dumps({'stage': 'files', 'message': msg})}\n\n"
                 for file_path in context_files:
                     session.add_file(file_path)
 
@@ -290,7 +443,8 @@ async def send_chat_message_stream(request: ChatRequest):
                 session.set_model(settings["model"])
 
             # Send to AI
-            yield f"event: progress\ndata: {json.dumps({'stage': 'ai_processing', 'message': 'Sending request to AI...'})}\n\n"
+            msg = 'Sending request to AI...'
+            yield f"event: progress\ndata: {json.dumps({'stage': 'ai_processing', 'message': msg})}\n\n"
 
             agent_prompt = settings.get("systemPrompt") if settings else None
 
@@ -310,21 +464,69 @@ async def send_chat_message_stream(request: ChatRequest):
                 extra={"session_id": conversation_id},
             )
 
-            # Send any D2-related progress events
-            if "d2" in message.lower() or "diagram" in message.lower():
-                yield f"event: progress\ndata: {json.dumps({'stage': 'd2_validation', 'message': 'Validating D2 diagram syntax...'})}\n\n"
-                await asyncio.sleep(0.1)
-                yield f"event: progress\ndata: {json.dumps({'stage': 'd2_rendering', 'message': 'Rendering diagram to SVG...'})}\n\n"
-                await asyncio.sleep(0.1)
-
             # Clean response
             response_content = result.get("response", "")
             if "<system-reminder>" in response_content:
-                import re
-
                 response_content = re.sub(
                     r"<system-reminder>.*?</system-reminder>", "", response_content, flags=re.DOTALL
                 )
+
+            # =====================================================================
+            # D2 DIAGRAM SELF-HEALING
+            # =====================================================================
+            # Extract and validate D2 diagrams, apply auto-correction if needed
+            d2_blocks = extract_d2_code_blocks(response_content)
+
+            if d2_blocks:
+                logger.info(f"Found {len(d2_blocks)} D2 code blocks in response")
+                msg = f'Found {len(d2_blocks)} D2 diagram(s), validating...'
+                progress_data = json.dumps({'stage': 'd2_detected', 'message': msg})
+                yield f"event: progress\ndata: {progress_data}\n\n"
+                await asyncio.sleep(0.1)
+
+                for idx, (full_block, d2_code) in enumerate(d2_blocks, 1):
+                    logger.info(f"Processing D2 block {idx}/{len(d2_blocks)}")
+
+                    prefix = f"[Diagram {idx}/{len(d2_blocks)}] " if len(d2_blocks) > 1 else ""
+                    msg = f'{prefix}Validating D2 syntax...'
+                    progress_data = json.dumps({'stage': 'd2_validating', 'message': msg})
+                    yield f"event: progress\ndata: {progress_data}\n\n"
+                    await asyncio.sleep(0.1)
+
+                    # Validate and heal the D2 diagram
+                    success, corrected_code, error_msg, metadata = await validate_and_heal_d2_diagram(
+                        d2_code,
+                        progress_callback=None  # We send progress events directly
+                    )
+
+                    if success and corrected_code:
+                        # Replace the original code with corrected code
+                        corrected_block = f"```d2\n{corrected_code}\n```"
+                        response_content = response_content.replace(full_block, corrected_block, 1)
+
+                        # Add correction notice
+                        notice = create_correction_notice(metadata)
+                        if notice:
+                            # Insert notice after the code block
+                            response_content = response_content.replace(
+                                corrected_block, corrected_block + notice, 1
+                            )
+                            logger.info(f"D2 block {idx} auto-corrected: {metadata}")
+
+                        msg = f'✅ Diagram {idx} validated successfully'
+                        progress_data = json.dumps({'stage': 'd2_success', 'message': msg})
+                        yield f"event: progress\ndata: {progress_data}\n\n"
+                        await asyncio.sleep(0.1)
+                    else:
+                        # Validation failed - add error notice
+                        error_notice = create_error_notice(error_msg or "Unknown error", d2_code)
+                        response_content = response_content.replace(full_block, error_notice, 1)
+                        logger.warning(f"D2 block {idx} validation failed: {error_msg}")
+
+                        msg = f'❌ Diagram {idx} validation failed'
+                        progress_data = json.dumps({'stage': 'd2_failed', 'message': msg})
+                        yield f"event: progress\ndata: {progress_data}\n\n"
+                        await asyncio.sleep(0.1)
 
             # Extract token usage
             token_usage = result.get("token_usage", {}) or {}
@@ -404,7 +606,7 @@ async def send_chat_message_stream(request: ChatRequest):
 
 
 @router.post(
-    "/",
+    "",
     response_model=ChatResponse,
     summary="Send chat message",
     description="Send chat message to AI and return response.",
