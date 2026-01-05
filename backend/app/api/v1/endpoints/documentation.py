@@ -66,6 +66,8 @@ async def generate_documentation(request: GenerateDocumentationRequest):
             session_guid=session_guid,
             documentation_results={"content": result.content, "metadata": result.metadata}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         # Catch and convert any errors to an HTTP 500 server error
         raise HTTPException(status_code=500, detail=str(e))
@@ -113,6 +115,8 @@ async def download_documentation(session_guid: str):
             media_type="application/zip",
             headers={"Content-Disposition": f"attachment; filename={session_guid}-documentation.zip"},
         )
+    except HTTPException:
+        raise
     except Exception as e:
         # Catch and convert any errors to an HTTP 500 server error
         raise HTTPException(status_code=500, detail=str(e))

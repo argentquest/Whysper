@@ -894,7 +894,8 @@ class ConversationSession:
         if self.selected_files:
             logger.info(f"📁 LOADING CONTEXT FILES - {len(self.selected_files)} files")
 
-            # For first message, make files persistent
+            # For first message, make files persistent if not already set
+            # This ensures explicitly selected files for the first message become the persistent context
             if is_first_message:
                 logger.info(f"🚀 FIRST MESSAGE - Making {len(self.selected_files)} files persistent")
                 self.app_state.set_persistent_files(self.selected_files)

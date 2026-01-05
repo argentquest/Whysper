@@ -27,6 +27,14 @@ def mock_ai_processor():
     processor.process_question.return_value = "Mock response"
     processor.set_api_key = Mock()
     processor.set_provider = Mock()
+    # Mock token usage to return valid integers
+    processor._provider = Mock()
+    processor._provider._last_detailed_usage = {
+        "total_tokens": 100,
+        "input_tokens": 50,
+        "output_tokens": 50,
+        "cached_tokens": 0
+    }
     return processor
 
 
@@ -232,7 +240,7 @@ class TestContextPersistence:
         files = ['file1.py', 'file2.py']
         conversation_session.selected_files = files.copy()
 
-        with patch.object(conversation_session, '_get_codebase_content', return_value='mock content'):
+        with patch.object(conversation_session, '_load_files', return_value='mock content'):
             with patch.object(conversation_session, '_inject_or_update_system_message'):
                 with patch.object(conversation_session, '_process_with_ai', return_value='mock response'):
                     # First message - conversation history is empty
