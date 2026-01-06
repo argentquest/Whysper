@@ -540,6 +540,28 @@ class DiagramFactoryService:
                 self.session.graph_state["llm_ready"] = True
                 # Clear awaiting_user_confirmation flag to allow graph to proceed
                 self.session.graph_state["awaiting_user_confirmation"] = False
+
+                # BUGFIX: Ensure final_design_summary is set for keyword scoring
+                # If AI never reached "ready" state, final_design_summary might be empty
+                # This causes keyword scoring to return 25% for all diagram types
+                if not self.session.graph_state.get("final_design_summary"):
+                    # Build summary from clarification history
+                    clarification_history = self.session.graph_state.get("clarification_history", [])
+                    if clarification_history:
+                        # Extract all user messages to create a design summary
+                        user_messages = [
+                            msg.get("content", "")
+                            for msg in clarification_history
+                            if msg.get("role") == "user" and msg.get("content")
+                        ]
+                        if user_messages:
+                            final_design_summary = " ".join(user_messages)
+                            self.session.graph_state["final_design_summary"] = final_design_summary
+                            logger.info(
+                                f"Created final_design_summary from clarification history ({len(final_design_summary)} chars)",
+                                extra={"session_id": self.session.session_id},
+                            )
+
                 logger.info(
                     "User confirmed ready: llm_ready=%s, awaiting_user_confirmation=%s",
                     self.session.graph_state.get("llm_ready"),

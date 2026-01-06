@@ -23,8 +23,6 @@ A -> B
 vars: {
   d2-config: {
     layout-engine: elk
-    theme-id: 0
-    center: true
   }
 }
 
@@ -144,16 +142,15 @@ style: { fill: "#f0f0f0" }
 vars: {
   d2-config: {
     layout-engine: elk
-    theme-id: 0
-    center: true
   }
 }
 
 direction: right
-spacing: 48
 ```
 
 Place this at the very beginning, before any object definitions.
+
+**Note:** Do NOT include `theme`, `theme-id`, `center`, or other config options - they are not valid in D2 code.
 
 ## Naming Conventions
 
@@ -169,13 +166,10 @@ Place this at the very beginning, before any object definitions.
 vars: {
   d2-config: {
     layout-engine: elk
-    theme-id: 0
-    center: true
   }
 }
 
 direction: right
-spacing: 48
 
 user: "End User" {
   shape: person
@@ -211,13 +205,10 @@ api_gateway -> cache: "Get/Set"
 vars: {
   d2-config: {
     layout-engine: elk
-    theme-id: 0
-    center: true
   }
 }
 
 direction: right
-spacing: 48
 
 user: "User" {
   shape: person
@@ -296,13 +287,10 @@ Connections:
 vars: {
   d2-config: {
     layout-engine: elk
-    theme-id: 0
-    center: true
   }
 }
 
 direction: right
-spacing: 48
 
 customer: "Customer" {
   shape: person

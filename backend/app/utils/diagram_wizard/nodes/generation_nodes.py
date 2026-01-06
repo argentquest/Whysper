@@ -263,6 +263,21 @@ async def determine_diagram_type_node(state: GraphState) -> Dict[str, Any]:
 
     analysis_text = "\n".join(part for part in analysis_parts if part).strip()
 
+    # DEBUG: Log what we're analyzing for diagram type scoring
+    logger.info(
+        f"🔍 Analysis text for scoring (length={len(analysis_text)}): {analysis_text[:500]}...",
+        extra={"session_id": session_id} if session_id else {},
+    )
+
+    # Warn if analysis text is too short for meaningful scoring
+    if len(analysis_text) < 50:
+        logger.warning(
+            f"⚠️ Analysis text is very short ({len(analysis_text)} chars) - "
+            f"scoring may default to 25% for all types. "
+            f"This usually means final_design_summary is empty.",
+            extra={"session_id": session_id} if session_id else {},
+        )
+
     # Determine diagram type using keyword scoring (get recommended type and all scores)
     recommended_type, keyword_scores = determine_diagram_type(analysis_text)
 

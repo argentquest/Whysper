@@ -76,8 +76,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   onCodeChange,
   sseConnected,
   exportModalOpen,
-  structurizrWorkspace,
-  cleanStructurizr,
   jsonRepresentation,
   onExportModalClose,
   onRenderClick,
@@ -93,8 +91,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
   const renderErrorText =
     renderErrorMessage || status?.error_message || status?.error || error?.message || null
   const validationErrorText = renderValidationError || status?.validation_error || null
-  const workspaceContent = structurizrWorkspace || ''
-  const cleanWorkspaceContent = cleanStructurizr || ''
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(diagramCode)
@@ -313,138 +309,6 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                 ),
               },
               {
-                key: 'workspace',
-                label: <span style={{ color: '#000000' }}>Workspace</span>,
-                children: (
-                  <div
-                    style={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div
-                      className={styles.panel}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          marginBottom: 8,
-                          gap: 8,
-                        }}
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => workspaceContent && navigator.clipboard.writeText(workspaceContent)}
-                          title="Copy Structurizr workspace"
-                          disabled={!workspaceContent}
-                        />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'auto' }}>
-                        {workspaceContent ? (
-                          <Input.TextArea
-                            value={workspaceContent}
-                            readOnly
-                            style={{
-                              fontFamily: 'monospace',
-                              fontSize: 13,
-                              height: '100%',
-                              color: '#000000',
-                            }}
-                            autoSize={{ minRows: 12, maxRows: 40 }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              color: '#999',
-                              textAlign: 'center',
-                              paddingTop: '20px',
-                            }}
-                          >
-                            No Structurizr workspace provided yet
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'cleanWorkspace',
-                label: <span style={{ color: '#000000' }}>Clean Workspace</span>,
-                children: (
-                  <div
-                    style={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div
-                      className={styles.panel}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          marginBottom: 8,
-                          gap: 8,
-                        }}
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => cleanWorkspaceContent && navigator.clipboard.writeText(cleanWorkspaceContent)}
-                          title="Copy cleaned workspace"
-                          disabled={!cleanWorkspaceContent}
-                        />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'auto' }}>
-                        {cleanWorkspaceContent ? (
-                          <Input.TextArea
-                            value={cleanWorkspaceContent}
-                            readOnly
-                            style={{
-                              fontFamily: 'monospace',
-                              fontSize: 13,
-                              height: '100%',
-                              color: '#000000',
-                            }}
-                            autoSize={{ minRows: 12, maxRows: 40 }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              color: '#999',
-                              textAlign: 'center',
-                              paddingTop: '20px',
-                            }}
-                          >
-                            No cleaned workspace available yet
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
                 key: 'svg',
                 label: <span style={{ color: '#000000' }}>SVG</span>,
                 children: (
@@ -552,14 +416,30 @@ export const GenerationScreen: React.FC<GenerationScreenProps> = ({
                           disabled={!jsonRepresentation}
                         />
                       </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <CodeEditorPanel
-                          code={
-                            jsonRepresentation ? JSON.stringify(jsonRepresentation, null, 2) : ''
-                          }
-                          diagramType="JSON"
-                          isLoading={loading}
-                        />
+                      <div style={{ flex: 1, overflow: 'auto' }}>
+                        {jsonRepresentation ? (
+                          <Input.TextArea
+                            value={JSON.stringify(jsonRepresentation, null, 2)}
+                            readOnly
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                              height: '100%',
+                              color: '#000000',
+                            }}
+                            autoSize={{ minRows: 12, maxRows: 40 }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              color: '#999',
+                              textAlign: 'center',
+                              paddingTop: '20px',
+                            }}
+                          >
+                            No JSON available yet
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -76,12 +76,17 @@ Determine the D2 `shape`, `icon`, and `style` based on the `technology` or `type
 
 # Output Requirements
 1.  **D2 Code Only**: Do not output markdown explanation, only the code block.
-2.  **Header**: Start with comments describing the system.
-3.  **Footer**: End with global config:
+2.  **Header**: Start with layout configuration:
     ```d2
+    vars: {
+      d2-config: {
+        layout-engine: elk
+      }
+    }
+
     direction: right
-    *style: { stroke-width: 1.5 }
     ```
+3.  **Important**: Do NOT include `theme`, `theme-id`, `center`, or `spacing` in the config - they are not valid in D2 code.
 
 # Processing Example
 
