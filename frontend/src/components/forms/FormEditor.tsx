@@ -111,9 +111,9 @@ const FormEditor: React.FC<FormEditorProps> = ({
             <div style={{ width: '100%', wordWrap: 'break-word' }}>
               <AntDForm
                 schema={formSchema || selectedForm?.schema || {}}
-                uiSchema={formUiSchema || selectedForm?.ui_schema || {}}
+                uiSchema={(formUiSchema || selectedForm?.ui_schema || {}) as any}
                 formData={formData}
-                validator={validator}
+                validator={validator as any}
                 onChange={({ formData: newData }) => {
                   setFormData(newData || {});
                   setFormDataText(JSON.stringify(newData || {}, null, 2));

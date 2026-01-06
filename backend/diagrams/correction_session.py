@@ -55,8 +55,7 @@ class CorrectionSession(BaseModel):
     is_expired: bool = False
     final_result: Optional[str] = None  # "success", "user_intervention_needed", "failed"
 
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = {"json_encoders": {datetime: lambda v: v.isoformat()}}
 
     @log_method_call
     def add_attempt(

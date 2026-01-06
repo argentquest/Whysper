@@ -21,7 +21,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
-from mcp_server.fastmcp_server import get_mcp_router
+from mcp_server.fastmcp_server import get_diagram_router
 from app.utils.ssl_utils import build_ssl_kwargs
 from common.logger import get_logger
 
@@ -47,11 +47,10 @@ async def lifespan(app: FastAPI):
     setup_log_broadcasting()
     logger.info("Real-time log broadcasting enabled - connect to GET /api/v1/logs/stream")
 
-    # Log MCP server integration details for system observability
-    logger.info("FastMCP server integration initialized")
-    logger.info("MCP endpoints available at /mcp/*")
-    logger.info("MCP tools: generate_diagram, render_diagram, generate_and_render")
-    logger.info("MCP WebSocket endpoint: /mcp/ws")
+    # Log diagram API integration details for system observability
+    logger.info("Diagram API initialized")
+    logger.info("Diagram endpoints available at /api/v1/diagrams/*")
+    logger.info("Available endpoints: /generate, /render, /generate-and-render")
 
     yield  # Application runs here with managed resources
 
@@ -80,9 +79,9 @@ app.add_middleware(
 # Include main API router with versioned prefix for structured routing
 app.include_router(api_router, prefix="/api/v1")
 
-# Include MCP router for specialized microservice communication
-mcp_router = get_mcp_router()
-app.include_router(mcp_router)
+# Include diagram router for diagram generation and rendering
+diagram_router = get_diagram_router()
+app.include_router(diagram_router)
 
 # Mount static files with flexible directory configuration
 

@@ -161,7 +161,6 @@ class Settings(BaseSettings):
     ssl_certfile: Optional[str] = Field(default=None, validation_alias="SSL_CERTFILE")
     ssl_keyfile: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE")
     ssl_keyfile_password: Optional[str] = Field(default=None, validation_alias="SSL_KEYFILE_PASSWORD")
-    ssl_self_signed: bool = Field(default=False, validation_alias="SSL_SELF_SIGNED")
     history_dir: str = Field(default="history", validation_alias="HISTORY_DIR")
 
     # ==================== CORS Configuration ====================

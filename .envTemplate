@@ -187,8 +187,10 @@ API_HOST="0.0.0.0"
 
 # Enable HTTPS for FastAPI (set to true when providing certificate paths)
 SSL_ENABLED="false"
-# Automatically generate a local self-signed cert/key when SSL is enabled
-SSL_SELF_SIGNED="false"
+# SSL Certificate paths (if SSL_ENABLED=true)
+# SSL_CERTFILE="backend/certs/cert.pem"
+# SSL_KEYFILE="backend/certs/key.pem"
+# SSL_KEYFILE_PASSWORD=""
 
 # TLS certificate and key paths (absolute paths recommended; self-signed certs work for local dev)
 SSL_CERTFILE=""

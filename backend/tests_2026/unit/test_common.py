@@ -9,7 +9,7 @@ from common.base_ai import BaseAIProvider, AIProviderConfig
 from common.logger import get_logger, CodeChatLogger
 
 # Concrete implementation for testing BaseAIProvider
-class TestProvider(BaseAIProvider):
+class MockProvider(BaseAIProvider):
     def _get_provider_config(self) -> AIProviderConfig:
         return AIProviderConfig(name="test_provider", api_url="http://test.url")
 
@@ -30,7 +30,7 @@ class TestProvider(BaseAIProvider):
 
 class TestBaseAIProvider(unittest.TestCase):
     def setUp(self):
-        self.provider = TestProvider(api_key="test_key")
+        self.provider = MockProvider(api_key="test_key")
 
     def test_initialization(self):
         self.assertEqual(self.provider.api_key, "test_key")

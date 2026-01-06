@@ -15,7 +15,7 @@ class TestChatIntegration:
             }
         }
 
-        response = api_client.post("/api/v1/chat/", json=payload)
+        response = api_client.post("/api/v1/chat", json=payload)
 
         assert response.status_code == 200
         data = response.json()

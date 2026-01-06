@@ -33,7 +33,7 @@ def test_publish_form_endpoint(mock_service_cls):
         "form_description": "Desc",
         "form_type": "survey",
         "version": "1.0",
-        "schema": {"type": "object"},
+        "form_schema": {"type": "object"},
         "ui_schema": {},
         "form_data": {}
     }

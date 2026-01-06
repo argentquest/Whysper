@@ -39,14 +39,15 @@ class DiagramRenderRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(None, description="Optional metadata")
     save_to_file: bool = Field(False, description="Whether to save output to file")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "code": "flowchart TD\n  A[Start] --> B[End]",
                 "diagram_type": "mermaid",
                 "output_format": "svg",
             }
         }
+    }
 
 
 class DiagramRenderResponse(BaseModel):
@@ -94,14 +95,15 @@ class DiagramGenerationRequest(BaseModel):
     output_format: str = Field("svg", description="Output format: 'svg', 'png', or native")
     provider_id: Optional[str] = Field(None, description="Specific provider ID (optional)")
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "prompt": "Create a simple architecture showing frontend connecting to backend",
                 "diagram_type": "mermaid",
                 "output_format": "svg",
             }
         }
+    }
 
 
 class DiagramGenerationResponse(BaseModel):

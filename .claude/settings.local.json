@@ -47,7 +47,11 @@
       "Bash(ls:*)",
       "Bash(..venvScriptspython.exe -c \"from app.api.v1.endpoints import chat; print\\(''✅ Chat endpoint imports successfully''\\)\")",
       "Bash(...venvScriptspython.exe -c \"from app.api.v1.endpoints import chat; print\\(''✅ Chat endpoint imports successfully''\\)\")",
-      "Bash(.venvScriptspython.exe -c \"import sys; sys.path.insert\\(0, ''backend''\\); from app.api.v1.endpoints import chat; print\\(''OK''\\)\")"
+      "Bash(.venvScriptspython.exe -c \"import sys; sys.path.insert\\(0, ''backend''\\); from app.api.v1.endpoints import chat; print\\(''OK''\\)\")",
+      "Bash(.venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(../.venv/Scripts/python.exe -m pytest:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

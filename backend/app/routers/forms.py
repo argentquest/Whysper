@@ -8,11 +8,13 @@ router = APIRouter()
 
 
 class PublishFormRequest(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
     form_name: str
     form_description: str
     form_type: str
     version: str
-    schema: Dict[str, Any]
+    form_schema: Dict[str, Any]
     ui_schema: Dict[str, Any]
     form_data: Dict[str, Any]  # Sample data
 
@@ -35,7 +37,11 @@ async def publish_form(request: PublishFormRequest):
     """Publish a new form definition"""
     service = FormService()
     try:
-        form_id = service.publish_form(request.model_dump())
+        # Map form_schema back to schema for internal storage
+        form_data = request.model_dump()
+        form_data['schema'] = form_data.pop('form_schema')
+
+        form_id = service.publish_form(form_data)
         return {"form_id": form_id, "message": "Form published successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

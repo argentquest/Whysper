@@ -389,9 +389,9 @@ export const RJSFPlayground: React.FC = () => {
               </Paragraph>
               <AntDForm
                 schema={schemaResult.data}
-                uiSchema={uiSchemaResult.data}
+                uiSchema={uiSchemaResult.data as any}
                 formData={formDataResult.data}
-                validator={validator}
+                validator={validator as any}
                 onChange={(event) => {
                   setFormDataText(JSON.stringify(event.formData ?? {}, null, 2))
                 }}

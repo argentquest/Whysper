@@ -33,6 +33,8 @@ class CorrectionStrategy(str, Enum):
 class LLMCorrectionConfig(BaseModel):
     """LLM correction configuration"""
 
+    model_config = {"protected_namespaces": ()}
+
     enabled: bool = True
     max_retries: int = Field(default=3, ge=0, le=10)
     temperature: float = Field(default=0.3, ge=0.0, le=2.0)

@@ -159,9 +159,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             <div className="rjsf" style={{ width: '100%', maxWidth: '100%', wordWrap: 'break-word' }}>
               <AntDForm
                 schema={selectedForm.schema || {}}
-                uiSchema={selectedForm.ui_schema || {}}
+                uiSchema={(selectedForm.ui_schema || {}) as any}
                 formData={formData}
-                validator={validator}
+                validator={validator as any}
                 onChange={({ formData: newData }) => {
                   setFormData(newData || {});
                   setFormDataText(JSON.stringify(newData || {}, null, 2));

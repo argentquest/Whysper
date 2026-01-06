@@ -420,12 +420,6 @@ gcloud sql users create whysper-user \
 gcloud sql instances describe whysper-db \
     --format='value(connectionName)'
 
-# Update Cloud Run to connect to Cloud SQL
-gcloud run services update $SERVICE_NAME \
-    --region=$REGION \
-    --add-cloudsql-instances=whysper-db \
-    --update-env-vars="DATABASE_URL=postgresql://whysper-user:PASSWORD@/whysper?host=/cloudsql/CONNECTION_NAME"
-```
 
 ---
 

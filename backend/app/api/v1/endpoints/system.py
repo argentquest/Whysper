@@ -14,7 +14,7 @@ from common.logger import get_logger
 from common.logging_decorator import log_method_call
 import sys
 import platform
-from datetime import datetime
+from datetime import datetime, UTC
 from pydantic import BaseModel
 
 # Initialize logger for tracking method calls and debugging
@@ -98,7 +98,7 @@ def health_check() -> Dict[str, str]:
         "service": settings.api_title,
         "version": settings.api_version,
         # Use UTC timestamp for consistent time reporting
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         # Include Python and system details for diagnostic purposes
         "python_version": sys.version,
         "platform": platform.platform(),
