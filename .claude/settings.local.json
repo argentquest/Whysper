@@ -51,7 +51,8 @@
       "Bash(.venv\\\\Scripts\\\\python.exe:*)",
       "Bash(../.venv/Scripts/python.exe -m pytest:*)",
       "Bash(npm cache clean:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git mv backend/mcp_server/fastmcp_server.py backend/mcp_server/diagram_router.py)"
     ],
     "deny": [],
     "ask": []
